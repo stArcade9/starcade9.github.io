@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NOVA64 — Because JavaScript Deserves a GPU That Doesn't Suck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+      
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      
+      :root {
+        --neon-cyan: #00ffff;
+        --neon-pink: #ff0080;
+        --neon-purple: #8338ec;
+        --dark-bg: #0a0e14;
+        --panel-bg: #151822;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--dark-bg);
+        color: #fff;
+        overflow-x: hidden;
+        line-height: 1.6;
+      }
+      
+      /* Animated grid background */
+      
+      .grid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+          linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, .05) 25%, rgba(0, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, .05) 75%, rgba(0, 255, 255, .05) 76%, transparent 77%, transparent),
+          linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, .05) 25%, rgba(0, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, .05) 75%, rgba(0, 255, 255, .05) 76%, transparent 77%, transparent);
+        background-size: 50px 50px;
+        animation: gridScroll 20s linear infinite;
+        z-index: 0;
+      }
+      
+      @keyframes gridScroll {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(50px); }
+      }
+      
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      
+      /* Hero Section */
+      
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        padding: 40px 20px;
+      }
+      
+      .logo {
+        font-size: 6rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 50%, var(--neon-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: glow 2s ease-in-out infinite alternate;
+        margin-bottom: 20px;
+        text-shadow: 0 0 80px rgba(0, 255, 255, 0.5);
+      }
+      
+      @keyframes glow {
+        from { filter: drop-shadow(0 0 20px var(--neon-cyan)); }
+        to { filter: drop-shadow(0 0 40px var(--neon-pink)); }
+      }
+      
+      .tagline {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        color: var(--neon-cyan);
+        animation: slideInLeft 1s ease-out;
+      }
+      
+      .subtitle {
+        font-size: 1.2rem;
+        color: #99a1b3;
+        max-width: 800px;
+        margin: 0 auto 40px;
+        animation: slideInRight 1s ease-out;
+      }
+      
+      @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(50px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      /* CRT Terminal Effect */
+      
+      .terminal {
+        background: #000;
+        border: 3px solid var(--neon-cyan);
+        border-radius: 10px;
+        padding: 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        max-width: 600px;
+        margin: 30px auto;
+        box-shadow: 
+          0 0 20px var(--neon-cyan),
+          inset 0 0 20px rgba(0, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .terminal::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 255, 255, 0.03) 0px,
+          rgba(0, 255, 255, 0.03) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+        animation: scanlines 8s linear infinite;
+      }
+      
+      @keyframes scanlines {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(10px); }
+      }
+      
+      .terminal-line {
+        margin: 8px 0;
+        color: var(--neon-cyan);
+      }
+      
+      .terminal-line.error { color: var(--neon-pink); }
+      
+      .terminal-line.success { color: #00ff00; }
+      
+      .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 15px;
+        background: var(--neon-cyan);
+        animation: blink 1s step-end infinite;
+      }
+      
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+      
+      /* Action Buttons */
+      
+      .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 50px 0;
+      }
+      
+      .action-card {
+        background: var(--panel-bg);
+        border: 2px solid var(--neon-cyan);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .action-card:hover::before {
+        left: 100%;
+      }
+      
+      .action-card:hover {
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
+        border-color: var(--neon-pink);
+      }
+      
+      .action-card .icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        display: block;
+      }
+      
+      .action-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: var(--neon-cyan);
+      }
+      
+      .action-card p {
+        color: #99a1b3;
+        font-size: 0.95rem;
+      }
+      
+      /* Features Grid */
+      
+      .features {
+        padding: 80px 20px;
+      }
+      
+      .section-title {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 60px;
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+      }
+      
+      .feature-card {
+        background: var(--panel-bg);
+        border: 1px solid #2a324a;
+        border-radius: 10px;
+        padding: 25px;
+        transition: all 0.3s ease;
+      }
+      
+      .feature-card:hover {
+        border-color: var(--neon-cyan);
+        transform: translateY(-5px);
+      }
+      
+      .feature-card h4 {
+        color: var(--neon-cyan);
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+      }
+      
+      .feature-card ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      
+      .feature-card li {
+        padding: 5px 0;
+        color: #99a1b3;
+      }
+      
+      .feature-card li::before {
+        content: '▸ ';
+        color: var(--neon-pink);
+        font-weight: bold;
+      }
+      
+      /* Demo Showcase */
+      
+      .demo-showcase {
+        padding: 80px 20px;
+        background: linear-gradient(135deg, #0f1115 0%, #1a1625 50%, #0f1115 100%);
+      }
+      
+      .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 40px;
+      }
+      
+      .demo-card {
+        background: var(--panel-bg);
+        border: 2px solid #2a324a;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .demo-card:hover {
+        border-color: var(--neon-purple);
+        transform: scale(1.05);
+      }
+      
+      .demo-card .emoji {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 10px;
+      }
+      
+      .demo-card h4 {
+        color: #fff;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+      }
+      
+      .demo-card p {
+        color: #99a1b3;
+        font-size: 0.85rem;
+      }
+      
+      /* Why Section */
+      
+      .why-section {
+        padding: 80px 20px;
+        text-align: center;
+      }
+      
+      .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+      }
+      
+      .why-card {
+        background: var(--panel-bg);
+        padding: 30px;
+        border-radius: 15px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+      
+      .why-card:hover {
+        border-color: var(--neon-cyan);
+      }
+      
+      .why-card h3 {
+        color: var(--neon-pink);
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+      }
+      
+      .why-card p {
+        color: #99a1b3;
+        font-size: 1.05rem;
+      }
+      
+      /* Footer */
+      
+      footer {
+        padding: 40px 20px;
+        text-align: center;
+        border-top: 1px solid #2a324a;
+        color: #99a1b3;
+      }
+      
+      footer a {
+        color: var(--neon-cyan);
+        text-decoration: none;
+      }
+      
+      footer a:hover {
+        text-decoration: underline;
+      }
+      
+      /* Floating particles */
+      
+      .particle {
+        position: fixed;
+        width: 4px;
+        height: 4px;
+        background: var(--neon-cyan);
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+        animation: float 10s infinite;
+      }
+      
+      @keyframes float {
+        0% {
+          transform: translateY(100vh) translateX(0) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(100px) scale(1);
+          opacity: 0;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .logo { font-size: 3rem; }
+        .tagline { font-size: 1.3rem; }
+        .subtitle { font-size: 1rem; }
+        .section-title { font-size: 2rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-bg"></div>
+    
+    <!-- Floating particles -->
+    <script>
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 10 + 's';
+        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+        document.body.appendChild(particle);
+      }
+    </script>
+
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1 class="logo">NOVA64</h1>
+        <p class="tagline">Because JavaScript Deserves a GPU That Doesn't Suck</p>
+        <p class="subtitle">
+          A fantasy console that actually lets you make N64/PS1 era games without selling your soul to WebGL boilerplate. 
+          It's like if the Nintendo 64 had a baby with modern web tech and that baby was really good at math.
+        </p>
+
+        <!-- Terminal Animation -->
+        <div class="terminal">
+          <div class="terminal-line">$ npm install nova64</div>
+          <div class="terminal-line success">✓ GPU acceleration initialized</div>
+          <div class="terminal-line success">✓ 3D engine loaded (with actual lighting!)</div>
+          <div class="terminal-line success">✓ Voxel renderer standing by</div>
+          <div class="terminal-line success">✓ Physics engine activated</div>
+          <div class="terminal-line success">✓ NovaOS shell... wait what?</div>
+          <div class="terminal-line">$ nova64 --start-demo</div>
+          <div class="terminal-line">>>> Let's make something cool <span class="cursor"></span></div>
+        </div>
+
+        <!-- Main Action Cards -->
+        <div class="action-grid">
+          <div class="action-card" onclick="window.location.href='/console.html'">
+            <span class="icon">🎮</span>
+            <h3>Launch Console</h3>
+            <p>Jump straight into the action. Play 20+ demos including F-Zero racing, Star Fox combat, and voxel Minecraft.</p>
+          </div>
+
+          <div class="action-card" onclick="window.open('/os9-shell/index.html', '_blank')">
+            <span class="icon">🖥️</span>
+            <h3>NovaOS</h3>
+            <p>A fully functional retro OS interface in your browser. Because nostalgia is a feature, not a bug.</p>
+          </div>
+
+          <div class="action-card" onclick="window.open('/docs/index.html', '_blank')">
+            <span class="icon">📚</span>
+            <h3>Documentation</h3>
+            <p>Learn the API. We promise it's easier than reading Three.js docs at 3 AM.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why Nova64? -->
+      <section class="why-section">
+        <h2 class="section-title">Why Nova64 Exists</h2>
+        <div class="why-grid">
+          <div class="why-card">
+            <h3>🎯 No Boilerplate Hell</h3>
+            <p>Write actual game code, not 500 lines of WebGL initialization. We did the hard parts so you don't have to.</p>
+          </div>
+          <div class="why-card">
+            <h3>🚀 Real 3D Performance</h3>
+            <p>Three.js powered GPU acceleration. Runs at 60 FPS with lighting, shadows, and fog. Your GPU will actually break a sweat.</p>
+          </div>
+          <div class="why-card">
+            <h3>🎨 Complete Ecosystem</h3>
+            <p>3D engine, voxel renderer, physics, sprite editor, and a full OS shell. It's basically a game dev studio in a browser tab.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="features">
+        <h2 class="section-title">What's Inside This Beast?</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4>🎮 3D Graphics Engine</h4>
+            <ul>
+              <li>Full Three.js GPU acceleration</li>
+              <li>Directional & point lighting</li>
+              <li>Real-time shadows</li>
+              <li>Volumetric fog effects</li>
+              <li>Skybox support</li>
+              <li>N64/PS1 retro aesthetic</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🧱 Voxel Engine</h4>
+            <ul>
+              <li>Minecraft-style worlds</li>
+              <li>Chunk-based rendering</li>
+              <li>Greedy meshing optimization</li>
+              <li>Block breaking/placing</li>
+              <li>Texture atlases</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>⚛️ Physics System</h4>
+            <ul>
+              <li>AABB collision detection</li>
+              <li>Gravity & friction</li>
+              <li>Raycasting</li>
+              <li>Trigger volumes</li>
+              <li>Character controllers</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🖥️ NovaOS</h4>
+            <ul>
+              <li>Authentic Platinum theme</li>
+              <li>Window management</li>
+              <li>Virtual filesystem</li>
+              <li>Application framework</li>
+              <li>Paint & Notes apps</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🎨 Creative Tools</h4>
+            <ul>
+              <li>Sprite editor with live preview</li>
+              <li>Color picker & brush tools</li>
+              <li>Layer support</li>
+              <li>Export to game assets</li>
+              <li>Font rendering system</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🎯 Developer Friendly</h4>
+            <ul>
+              <li>Clean, simple API</li>
+              <li>TypeScript support</li>
+              <li>Hot reloading</li>
+              <li>Extensive documentation</li>
+              <li>20+ working examples</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Demo Showcase -->
+      <section class="demo-showcase">
+        <h2 class="section-title">Check Out The Demos</h2>
+        <p style="text-align: center; color: #99a1b3; margin-bottom: 20px;">
+          These aren't just tech demos. They're actual playable games you can learn from.
+        </p>
+        <div class="demo-grid">
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=crystal-cathedral-3d'">
+            <span class="emoji">🏛️</span>
+            <h4>Crystal Cathedral</h4>
+            <p>Ultimate graphics showcase</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=f-zero-nova-3d'">
+            <span class="emoji">🏁</span>
+            <h4>F-Zero Racing</h4>
+            <p>High-speed arcade action</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=star-fox-nova-3d'">
+            <span class="emoji">🚀</span>
+            <h4>Star Fox Combat</h4>
+            <p>Space shooter mayhem</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=minecraft-demo'">
+            <span class="emoji">⛏️</span>
+            <h4>Voxel Minecraft</h4>
+            <p>Block building sandbox</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=super-plumber-64'">
+            <span class="emoji">🍄</span>
+            <h4>Super Plumber 64</h4>
+            <p>3D platformer classic</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=cyberpunk-city-3d'">
+            <span class="emoji">🌃</span>
+            <h4>Cyberpunk City</h4>
+            <p>Open world exploration</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=strider-demo-3d'">
+            <span class="emoji">⚔️</span>
+            <h4>Knight Platformer</h4>
+            <p>Action adventure</p>
+          </div>
+          <div class="demo-card" onclick="window.location.href='/console.html?demo=demoscene'">
+            <span class="emoji">🎬</span>
+            <h4>Tron Demoscene</h4>
+            <p>Visual effects showcase</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer>
+        <p>Built with ❤️ for retro computing enthusiasts and modern game developers</p>
+        <p style="margin-top: 10px;">
+          <a href="https://github.com/seacloud9/nova64" target="_blank">GitHub</a> • 
+          <a href="/docs/index.html">API Docs</a> • 
+          <a href="/console.html">Console</a> • 
+          <a href="/os9-shell/index.html">NovaOS</a>
+        </p>
+        <p style="margin-top: 20px; font-size: 0.9rem;">
+          MIT License • No Nintendo 64s were harmed in the making of this project
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
