@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nova64 Console — Play Now</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { 
+        --bg: linear-gradient(135deg, #0f1115 0%, #1a1625 50%, #0f1115 100%); 
+        --panel: #151822; 
+        --text: #dcdfe4; 
+        --muted: #99a1b3; 
+        --accent: #00ffff;
+        --neon: #ff0080;
+      }
+      html, body {
+        background: var(--bg);
+        margin: 0;
+        height: 100%;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #0f1115 0%, #1a1625 50%, #0f1115 100%);
+        background-attachment: fixed;
+      }
+      .shell { display: grid; grid-template-columns: 1fr 350px; gap: 16px; padding: 16px; height: 100%; box-sizing: border-box; }
+      .stage { display: grid; place-items: center; background: radial-gradient(1200px 600px at 50% 0%, #151922 20%, transparent 60%); border-radius: 12px; }
+      canvas {
+        image-rendering: pixelated; width: 1280px; height: 720px;
+        background: #000; border-radius: 8px; outline: 2px solid #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.1);
+      }
+      .panel { 
+        background: var(--panel); 
+        border: 1px solid #1f2433; 
+        border-radius: 12px; 
+        padding: 20px; 
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+        overflow-y: auto;
+        max-height: 100%;
+      }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+      .row label { font-size: 12px; color: var(--muted); }
+      select, button {
+        background: #202538; color: var(--text); border: 1px solid #2a324a; border-radius: 8px; padding: 6px 10px; font-size: 14px;
+      }
+      select { width: 100%; max-width: 100%; }
+      button { cursor: pointer; }
+      button:hover { background: #26304a; }
+      .badge { font-size: 12px; color: var(--muted); }
+      .hr { height: 1px; background: #222a3b; margin: 6px 0; }
+      .stat { font-variant-numeric: tabular-nums; font-size: 12px; }
+      .title { 
+        font-weight: 700; 
+        font-size: 16px; 
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        padding-bottom: 8px;
+        margin-bottom: 4px;
+      }
+      .footer { font-size: 11px; color: var(--muted); }
+      .back-btn {
+        background: linear-gradient(135deg, #8338EC 0%, #3A86FF 100%);
+        color: white;
+        font-weight: bold;
+        border: 2px solid #8338EC;
+        box-shadow: 0 0 15px rgba(131, 56, 236, 0.3);
+        padding: 10px 20px;
+        text-decoration: none;
+        display: inline-block;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(131, 56, 236, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="stage">
+        <canvas id="screen" width="640" height="360"></canvas>
+      </div>
+      <div class="panel">
+        <a href="/" class="back-btn">← Back to Home</a>
+        <div class="title">🎮 NOVA64 3D • Nintendo 64 / PlayStation GPU Console</div>
+        <div class="row">
+          <label>3D Demo</label>
+          <select id="cart">
+            <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
+            <option value="/examples/crystal-cathedral-3d/code.js">🏛️ Crystal Cathedral (Ultimate Graphics)</option>
+            <option value="/examples/mystical-realm-3d/code.js">🏰 Mystical Realm (Fantasy World)</option>
+            <option value="/examples/star-fox-nova-3d/code.js">🚀 Star Fox Nova (Space Combat)</option>
+            <option value="/examples/f-zero-nova-3d/code.js">🏁 F-Zero Nova (Racing)</option>
+            <option value="/examples/cyberpunk-city-3d/code.js">🌃 Cyberpunk City (Open World)</option>
+            <option value="/examples/physics-demo-3d/code.js">⚛️ Physics Lab (Simulation)</option>
+            <option value="/examples/shooter-demo-3d/code.js">🔫 Space Shooter (Combat)</option>
+            <option value="/examples/strider-demo-3d/code.js">⚔️ Knight Platformer (Adventure)</option>
+            <option value="/examples/super-plumber-64/code.js">🍄 Super Plumber 64 (Mario-Style 3D Platformer)</option>
+            <option value="/examples/minecraft-demo/code.js">⛏️ Minecraft Voxel World (Sandbox)</option>
+            <option value="/examples/3d-advanced/code.js">🎯 Advanced 3D (Technical)</option>
+            <option value="/examples/demoscene/code.js">🎬 Demoscene - Tron Odyssey (Visual Showcase)</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="pause">Pause</button>
+          <button id="step">Step</button>
+          <button id="shot">Screenshot</button>
+        </div>
+        <div class="row">
+          <button id="editor" onclick="window.open('/os9-shell/index.html?app=sprite-editor', '_blank')" style="width: 100%; background: linear-gradient(135deg, #8338EC 0%, #3A86FF 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border: 2px solid #8338EC; box-shadow: 0 0 20px rgba(131,56,236,0.4);">
+            🎨 Sprite Editor
+          </button>
+        </div>
+        <div class="row">
+          <button id="os-shell" onclick="window.open('/os9-shell/index.html', '_blank')" style="width: 100%; background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border: 2px solid #FF006E; box-shadow: 0 0 20px rgba(255,0,110,0.4);">
+            🖥️ LAUNCH NovaOS
+          </button>
+        </div>
+        <div class="row">
+          <button id="docs" onclick="window.open('/docs/index.html', '_blank')" style="width: 100%; background: linear-gradient(135deg, #00ffff 0%, #ff0080 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">📚 API Documentation</button>
+        </div>
+        <div class="hr"></div>
+        <div class="row badge">
+          <span>🎮 Three.js GPU • Nintendo 64 / PlayStation Style • Full 3D Acceleration</span>
+        </div>
+        <div class="row stat">
+          <span id="stats">fps: -, update: -, draw: - ms</span>
+        </div>
+        <div class="footer">Controls: arrows to move, Z/X to act. Built with ❤️</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+    <script>
+      // Check for demo parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const demoParam = urlParams.get('demo');
+      if (demoParam) {
+        // Wait for the page to fully load before setting the select value
+        window.addEventListener('DOMContentLoaded', () => {
+          const select = document.getElementById('cart');
+          const demoMap = {
+            'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
+            'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
+            'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
+            'minecraft-demo': '/examples/minecraft-demo/code.js',
+            'super-plumber-64': '/examples/super-plumber-64/code.js',
+            'cyberpunk-city-3d': '/examples/cyberpunk-city-3d/code.js',
+            'strider-demo-3d': '/examples/strider-demo-3d/code.js',
+            'demoscene': '/examples/demoscene/code.js',
+          };
+          if (demoMap[demoParam]) {
+            select.value = demoMap[demoParam];
+            // Trigger change event to load the demo
+            const event = new Event('change', { bubbles: true });
+            select.dispatchEvent(event);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
