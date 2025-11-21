@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skybox API - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🌌 Skybox API</h1>
+            <p class="subtitle">Beautiful space backgrounds with stars, nebulae, and procedural effects</p>
+        </header>
+
+        
+      <section>
+        <h2>📋 Overview</h2>
+        <p>The Skybox API creates stunning space backgrounds with procedural star fields, colorful nebulae, galaxy spirals, and atmospheric fog perfect for space games.</p>
+        
+        <div class="note">
+          <div class="note-title">💡 Key Features</div>
+          <ul><li><strong>Procedural Stars</strong> - Thousands of stars with depth and twinkling</li><li><strong>Nebula Effects</strong> - Colorful cloud gradients</li><li><strong>Galaxy Spirals</strong> - Rotating galaxy arms</li><li><strong>Fog System</strong> - Distance-based atmospheric effects</li><li><strong>Performance</strong> - Optimized rendering for smooth 60 FPS</li></ul>
+        </div>
+      
+        
+      </section>
+    
+      <section>
+        <h2>🌟 Skybox Functions</h2>
+        
+        
+        
+        <div class="function">
+          <div class="function-sig">createSpaceSkybox(options)</div>
+          <p>Creates a complete space environment.</p>
+          
+          <div class="param-list">
+            
+              <div class="param">
+                <span class="param-name">options.starCount</span> 
+                <span class="param-type">number</span> - Number of stars (default: 5000)
+              </div>
+            
+              <div class="param">
+                <span class="param-name">options.nebulaColor</span> 
+                <span class="param-type">hex</span> - Nebula color tint
+              </div>
+            
+              <div class="param">
+                <span class="param-name">options.galaxySpiral</span> 
+                <span class="param-type">boolean</span> - Include galaxy spiral (default: false)
+              </div>
+            
+          </div>
+        
+          
+          <div class="return-info">
+            <strong>Returns:</strong> <span class="param-type">object</span> - Skybox object
+          </div>
+        
+          
+          <div class="example">
+            <div class="example-title">Example:</div>
+            <pre><code>createSpaceSkybox({ starCount: 10000, nebulaColor: 0x8800ff });</code></pre>
+          </div>
+        
+        </div>
+      
+        <div class="function">
+          <div class="function-sig">setSkyboxRotation(x, y, z)</div>
+          <p>Rotates the skybox (animated background).</p>
+          
+          <div class="param-list">
+            
+              <div class="param">
+                <span class="param-name">x, y, z</span> 
+                <span class="param-type">number</span> - Rotation in radians
+              </div>
+            
+          </div>
+        
+          
+          <div class="return-info">
+            <strong>Returns:</strong> <span class="param-type">void</span> - No return value
+          </div>
+        
+          
+          <div class="example">
+            <div class="example-title">Example:</div>
+            <pre><code>setSkyboxRotation(0, time * 0.001, 0);</code></pre>
+          </div>
+        
+        </div>
+      
+      </section>
+    
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

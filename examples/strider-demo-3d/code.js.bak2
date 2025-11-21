@@ -1,0 +1,1169 @@
+// SHADOW NINJA 3D - True 3.5D Ninja Platformer
+// Nintendo 64 / PlayStation style 3D ninja action with parkour and stealth
+// Inspired by Strider, Shinobi, and Ninja Gaiden
+
+// Game state
+let gameTime = 0;
+let gameState = 'start'; // 'start', 'playing', 'gameOver'
+let startScreenTime = 0;
+let uiButtons = [];
+let score = 0;
+let level = 1;
+let combo = 0;
+let comboTimer = 0;
+
+// 3D Game objects
+let playerKnight = null;
+let platforms = [];
+let enemies = [];
+let coins = [];
+let particles = [];
+let environment = [];
+
+// Player state - NINJA POWERS!
+let player = {
+  x: 0, y: 0, z: 0,
+  vx: 0, vy: 0, vz: 0,
+  onGround: false,
+  health: 100,
+  energy: 100,
+  coins: 0,
+  shuriken: 20,
+  facingRight: true,
+  jumpPower: 10,
+  speed: 8,
+  doubleJump: true,
+  attackCooldown: 0,
+  // Ninja abilities
+  wallRunning: false,
+  wallRunTime: 0,
+  maxWallRunTime: 1.5,
+  dashCooldown: 0,
+  dashDuration: 0,
+  crouching: false,
+  stealth: false,
+  grapplePoints: [],
+  grappling: false,
+  grappleTarget: null,
+  airDashAvailable: true,
+  slideDuration: 0
+};
+
+// Camera state
+let camera = {
+  x: 0, y: 8, z: 15,
+  targetX: 0, targetY: 5, targetZ: 0,
+  smoothing: 0.1
+};
+
+export function init() {
+  // Clear all arrays to prevent mesh errors
+  enemies = []
+  coins = []
+  particles = []
+  platforms = []
+  environment = []
+  playerKnight = null
+  
+  // Reset player state completely
+  player = {
+    pos: vec3(0, 5, 0),
+    vel: vec3(0, 0, 0),
+    yaw: 0,
+    grounded: false,
+    attacking: false,
+    attackTime: 0,
+    health: 100,
+    maxHealth: 100,
+    stamina: 100,
+    maxStamina: 100,
+    isDashing: false,
+    dashTime: 0,
+    wallRunning: false,
+    wallRunTime: 0,
+    wallSide: 0,
+    doubleJumpAvailable: true,
+    grappling: false,
+    grappleTarget: null,
+    sliding: false,
+    slideTime: 0,
+    shurikenCount: 10
+  }
+  
+  score = 0
+  combo = 0
+  comboTime = 0
+  gameTime = 0
+  level = 1
+  gameState = 'start'
+  startScreenTime = 0
+  
+  // Force canvas focus for keyboard events
+  console.log('🎮 Focusing canvas for input...')
+  const canvas = document.querySelector('canvas')
+  if (canvas) {
+    canvas.focus()
+    canvas.tabIndex = 1
+  }
+  
+  createNinjaPlayer()
+  createNinjaWorld()
+  createPlatforms()
+  createGrapplePoints()
+  spawnEnemies()
+  spawnCoins()
+}
+
+function initStartScreen() {
+  uiButtons = [];
+  console.log('🥷 Start screen initialized');
+}
+
+export function update() {
+  const dt = 1/60;
+  
+  // Handle start screen
+  if (gameState === 'start') {
+    startScreenTime += dt;
+    
+    // KEYBOARD FALLBACK: Press ENTER or SPACE to start
+    if (isKeyPressed('Enter') || isKeyPressed(' ') || isKeyPressed('Space')) {
+      console.log('🥷 Starting Shadow Ninja 3D via keyboard!');
+      gameState = 'playing';
+      return;
+    }
+    
+    // Check for any button press to start
+    for (let i = 0; i < 10; i++) {
+      if (btnp(i)) {
+        console.log(`🥷 Starting Shadow Ninja 3D via button ${i}!`);
+        gameState = 'playing';
+        return;
+      }
+    }
+    
+    return;
+  }
+  
+  // Playing state - main game loop
+  gameTime += dt;
+  
+  // Update input
+  updateInput(dt);
+  
+  // Update player
+  updatePlayer(dt);
+  
+  // Update enemies
+  updateEnemies(dt);
+  
+  // Update coins
+  updateCoins(dt);
+  
+  // Update particles
+  updateParticles(dt);
+  
+  // Update combo timer
+  if (comboTime > 0) {
+    comboTime -= dt;
+    if (comboTime <= 0) {
+      combo = 0;
+    }
+  }
+  
+  // Check for player death
+  if (player.health <= 0) {
+    gameState = 'gameover';
+    console.log('💀 Game Over! Final Score:', score);
+  }
+}
+
+export function draw() {
+  if (gameState === 'start') {
+
+export function draw() {
+  if (gameState === 'start') {
+    drawStartScreen();
+    return;
+  }
+  
+  // 3D scene is automatically rendered by GPU backend
+  // Draw UI overlay using 2D API
+  drawUI();
+}
+
+function drawStartScreen() {
+  // Dark background
+  rect(0, 0, 640, 360, rgba8(10, 5, 30, 255), true);
+  
+  // Title with glow effect
+  print('SHADOW NINJA 3D', 180, 70, rgba8(180, 80, 255, 255));
+  
+  // Subtitle
+  const pulse = Math.sin(startScreenTime * 3) * 0.25 + 0.75;
+  print('Strider-Style 3.5D Ninja Platformer', 160, 100, rgba8(200, 150, 255, Math.floor(pulse * 255)));
+  
+  // Controls panel
+  rect(100, 140, 440, 160, rgba8(20, 10, 40, 220), true);
+  rect(100, 140, 440, 160, rgba8(150, 80, 255, 255), false);
+  
+  // Controls title
+  print('NINJA ABILITIES:', 220, 155, rgba8(255, 200, 255, 255));
+  
+  // Controls - two columns
+  print('ARROWS = Move', 120, 180, rgba8(200, 200, 255, 255));
+  print('DOWN = Slide', 120, 200, rgba8(200, 200, 255, 255));
+  print('UP = Jump/Double Jump', 120, 220, rgba8(200, 200, 255, 255));
+  print('Z = Attack', 120, 240, rgba8(200, 200, 255, 255));
+  print('X = Dash/Air Dash', 120, 260, rgba8(200, 200, 255, 255));
+  
+  print('C = Throw Shuriken', 340, 180, rgba8(200, 200, 255, 255));
+  print('G = Grappling Hook', 340, 200, rgba8(200, 200, 255, 255));
+  print('Wall Running Active', 340, 220, rgba8(150, 255, 150, 255));
+  print('Combo System', 340, 240, rgba8(255, 255, 150, 255));
+  print('Energy Management', 340, 260, rgba8(150, 200, 255, 255));
+  
+  // Pulsing prompt - larger and centered
+  const alpha = Math.floor((Math.sin(startScreenTime * 5) * 0.5 + 0.5) * 255);
+  print('CLICK SCREEN OR PRESS ANY KEY', 180, 320, rgba8(255, 180, 255, alpha));
+  
+  // Debug helper - show if keys are being detected
+  if (startScreenTime > 1) {
+    print('(Click on game screen to focus)', 190, 335, rgba8(150, 150, 150, 200));
+  }
+}
+
+function createNinjaPlayer() {
+  // Create ninja body - sleek and dark
+  const body = createCube(0.6, 0x2a2a3a, [0, 0, 0]);
+  setScale(body, 0.7, 1.1, 0.5);
+  
+  // Create ninja mask/head - mysterious
+  const head = createCube(0.5, 0x1a1a2a, [0, 0.75, 0]);
+  setScale(head, 0.6, 0.5, 0.5);
+  
+  // Create eyes - glowing
+  const eyes = createCube(0.1, 0x00ffff, [0, 0.8, 0.25]);
+  setScale(eyes, 0.4, 0.1, 0.1);
+  
+  // Create katana - sleek blade
+  const katana = createCube(0.1, 0xccccff, [0.7, 0.5, 0]);
+  setScale(katana, 0.1, 1.3, 0.1);
+  
+  // Create scarf - flowing
+  const scarf = createCube(0.3, 0x8833aa, [0, 0.3, -0.5]);
+  setScale(scarf, 0.8, 0.6, 0.3);
+  
+  return { body, head, eyes, katana, scarf };
+}
+
+async function createNinjaWorld() {
+  // Create dark ground - rooftop aesthetic
+  const ground = createPlane(150, 150, 0x1a1a2a, [0, -1, 0]);
+  setRotation(ground, -Math.PI/2, 0, 0);
+  
+  // Create cyberpunk city buildings in background
+  for (let i = 0; i < 12; i++) {
+    const building = createCube(6 + Math.random() * 4, 15 + Math.random() * 20, 0x2a2a4a, [
+      (i - 6) * 18 + (Math.random() - 0.5) * 8,
+      8,
+      -50 - Math.random() * 30
+    ]);
+    setScale(building, 1, 1, 1);
+    
+    // Add neon accents on buildings
+    if (Math.random() > 0.5) {
+      const neon = createCube(0.3, 1, 0xff00ff, [
+        (i - 6) * 18 + (Math.random() - 0.5) * 8,
+        12 + Math.random() * 10,
+        -50 - Math.random() * 30
+      ]);
+      setScale(neon, 4, 0.2, 0.1);
+    }
+  }
+  
+  // Create vertical wall structures - for wall running
+  for (let i = 0; i < 8; i++) {
+    const wall = createCube(0.5, 8, 0x3a3a5a, [
+      (i - 4) * 15,
+      4,
+      -20 + (Math.random() - 0.5) * 10
+    ]);
+    setScale(wall, 4, 1, 0.5);
+  }
+  
+  // Create neon light posts
+  for (let i = 0; i < 10; i++) {
+    const post = createCube(0.2, 4, 0x4a4a6a, [
+      (Math.random() - 0.5) * 100,
+      2,
+      (Math.random() - 0.5) * 80
+    ]);
+    setScale(post, 1, 1, 1);
+    
+    // Neon light on top
+    const light = createSphere(0.3, 0x00ffff, [
+      (Math.random() - 0.5) * 100,
+      4.5,
+      (Math.random() - 0.5) * 80
+    ]);
+  }
+}
+
+function createPlatforms() {
+  platforms = [];
+  
+  // Ground level platforms - rooftop tiles
+  for (let i = -6; i <= 6; i++) {
+    const platform = {
+      mesh: createCube(4, 0.4, 0x3a3a4a, [i * 7, -0.2, 0]),
+      x: i * 7, y: -0.2, z: 0,
+      width: 4, height: 0.4, depth: 5,
+      type: 'ground'
+    };
+    setScale(platform.mesh, 1, 1, 5);
+    platforms.push(platform);
+  }
+  
+  // Floating platforms - ninja parkour course with varied heights
+  const platformData = [
+    { x: 12, y: 3, z: 8, color: 0x4a4a6a },
+    { x: 22, y: 6, z: 12, color: 0x5a3a7a },
+    { x: 32, y: 9, z: 10, color: 0x4a4a6a },
+    { x: 42, y: 12, z: 5, color: 0x5a3a7a },
+    { x: 28, y: 15, z: -5, color: 0x4a4a6a },
+    { x: 15, y: 18, z: -12, color: 0x5a3a7a },
+    { x: 0, y: 20, z: -15, color: 0x4a4a6a },
+    { x: -15, y: 17, z: -18, color: 0x5a3a7a },
+    { x: -28, y: 13, z: -12, color: 0x4a4a6a },
+    { x: -35, y: 9, z: -5, color: 0x5a3a7a },
+    { x: -42, y: 6, z: 5, color: 0x4a4a6a },
+    { x: -30, y: 4, z: 10, color: 0x5a3a7a }
+  ];
+  
+  platformData.forEach((data, i) => {
+    const platform = {
+      mesh: createCube(3.5, 0.6, data.color, [data.x, data.y, data.z]),
+      x: data.x, y: data.y, z: data.z,
+      width: 3.5, height: 0.6, depth: 3.5,
+      type: 'floating',
+      id: i
+    };
+    setScale(platform.mesh, 1, 1, 1);
+    platforms.push(platform);
+    
+    // Add neon edge lights to floating platforms
+    const edgeLight = createCube(3.6, 0.1, 0xff00ff, [data.x, data.y - 0.3, data.z]);
+    setScale(edgeLight, 1, 1, 1);
+  });
+}
+
+function createGrapplePoints() {
+  player.grapplePoints = [];
+  
+  // Add grapple points in strategic locations
+  const grappleData = [
+    { x: 18, y: 12, z: 5 },
+    { x: 35, y: 15, z: 8 },
+    { x: 20, y: 22, z: -8 },
+    { x: -5, y: 24, z: -18 },
+    { x: -30, y: 18, z: -10 },
+    { x: -40, y: 12, z: 2 }
+  ];
+  
+  grappleData.forEach(data => {
+    const point = {
+      mesh: createSphere(0.4, 0x00ffff, [data.x, data.y, data.z]),
+      x: data.x, y: data.y, z: data.z,
+      active: true
+    };
+    player.grapplePoints.push(point);
+  });
+}
+
+function spawnEnemies() {
+  enemies = [];
+  
+  // Ground patrol enemies
+  for (let i = 0; i < 5; i++) {
+    const enemy = {
+      mesh: createCube(0.6, 0xff4444, [(i - 2) * 15, 0.5, 8]),
+      x: (i - 2) * 15, y: 0.5, z: 8,
+      vx: (Math.random() > 0.5 ? 1 : -1) * 2,
+      health: 3,
+      type: 'patrol',
+      patrolRange: 10,
+      originalX: (i - 2) * 15,
+      attackCooldown: 0
+    };
+    setScale(enemy.mesh, 0.8, 0.8, 0.8);
+    enemies.push(enemy);
+  }
+  
+  // Flying enemies
+  for (let i = 0; i < 3; i++) {
+    const enemy = {
+      mesh: createSphere(0.4, 0xff8844, [i * 20 - 20, 8 + i * 2, 0]),
+      x: i * 20 - 20, y: 8 + i * 2, z: 0,
+      vx: Math.sin(i) * 3, vy: 0, vz: Math.cos(i) * 2,
+      health: 2,
+      type: 'flyer',
+      orbitCenter: { x: i * 20 - 20, y: 8 + i * 2, z: 0 },
+      orbitRadius: 5,
+      orbitAngle: i * 2,
+      attackCooldown: 0
+    };
+    enemies.push(enemy);
+  }
+}
+
+function spawnCoins() {
+  coins = [];
+  
+  // Place coins on platforms
+  platforms.forEach((platform, i) => {
+    if (i > 8) { // Skip ground platforms
+      const coin = {
+        mesh: createSphere(0.3, 0xffdd00, [platform.x, platform.y + 1.5, platform.z]),
+        x: platform.x, y: platform.y + 1.5, z: platform.z,
+        collected: false,
+        rotationY: 0,
+        bobOffset: Math.random() * Math.PI * 2
+      };
+      coins.push(coin);
+    }
+  });
+  
+  // Bonus coins in hard to reach places
+  for (let i = 0; i < 8; i++) {
+    const coin = {
+      mesh: createSphere(0.25, 0xffaa00, [
+        (Math.random() - 0.5) * 60,
+        5 + Math.random() * 10,
+        (Math.random() - 0.5) * 30
+      ]),
+      x: 0, y: 0, z: 0,
+      collected: false,
+      rotationY: 0,
+      bobOffset: Math.random() * Math.PI * 2
+    };
+    const pos = getPosition(coin.mesh);
+    coin.x = pos[0]; coin.y = pos[1]; coin.z = pos[2];
+    coins.push(coin);
+  }
+}
+
+function updateInput(dt) {
+  const moveSpeed = player.dashDuration > 0 ? player.speed * 2.5 : player.speed;
+  
+  // Update cooldowns
+  player.attackCooldown -= dt;
+  player.dashCooldown -= dt;
+  player.dashDuration -= dt;
+  player.slideDuration -= dt;
+  
+  // Sliding
+  if (player.slideDuration > 0) {
+    player.vx = (player.facingRight ? 1 : -1) * moveSpeed * 1.5;
+    player.crouching = true;
+    return; // Override other controls during slide
+  } else {
+    player.crouching = false;
+  }
+  
+  // Grappling hook movement
+  if (player.grappling && player.grappleTarget) {
+    const dx = player.grappleTarget.x - player.x;
+    const dy = player.grappleTarget.y - player.y;
+    const dz = player.grappleTarget.z - player.z;
+    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    
+    if (dist > 1.5) {
+      const pullSpeed = 20;
+      player.vx = (dx / dist) * pullSpeed;
+      player.vy = (dy / dist) * pullSpeed;
+      player.vz = (dz / dist) * pullSpeed;
+    } else {
+      player.grappling = false;
+      player.grappleTarget = null;
+    }
+    return; // Override other controls during grapple
+  }
+  
+  // Horizontal movement
+  if (btn(0)) { // Left
+    player.vx = -moveSpeed;
+    player.facingRight = false;
+  } else if (btn(1)) { // Right
+    player.vx = moveSpeed;
+    player.facingRight = true;
+  } else {
+    player.vx *= 0.85; // Friction
+  }
+  
+  // Forward/backward movement
+  if (btn(3) && player.onGround && !player.crouching) { // Down + on ground = slide
+    player.slideDuration = 0.5;
+    player.energy -= 5;
+    createSlideParticles();
+  } else if (btn(3)) { // Down in air
+    player.vz = moveSpeed * 0.6;
+  } else {
+    player.vz *= 0.85;
+  }
+  
+  // Jump and double jump
+  if (btnp(2) && player.onGround) { // Up - jump when on ground
+    player.vy = player.jumpPower;
+    player.onGround = false;
+    player.doubleJump = true;
+    player.airDashAvailable = true;
+    createJumpParticles();
+  } else if (btnp(2) && player.doubleJump && player.energy >= 15) { // Double jump
+    player.vy = player.jumpPower * 0.9;
+    player.doubleJump = false;
+    player.energy -= 15;
+    createDoubleJumpParticles();
+  }
+  
+  // Dash (X key) - ground dash or air dash
+  if (btnp(5) && player.dashCooldown <= 0 && player.energy >= 20) {
+    if (player.onGround) {
+      // Ground dash
+      player.dashDuration = 0.3;
+      player.dashCooldown = 0.8;
+      player.energy -= 20;
+      createDashParticles();
+    } else if (player.airDashAvailable) {
+      // Air dash
+      player.vx = (player.facingRight ? 1 : -1) * player.speed * 3;
+      player.vy = 0;
+      player.airDashAvailable = false;
+      player.dashCooldown = 1.0;
+      player.energy -= 25;
+      createAirDashParticles();
+    }
+  }
+  
+  // Shuriken throw (C key)
+  if (btnp(6) && player.shuriken > 0 && player.energy >= 5) {
+    throwShuriken();
+    player.shuriken--;
+    player.energy -= 5;
+  }
+  
+  // Grapple hook (G key or Space)
+  if (btnp(7) || btnp(4)) {
+    const nearestGrapple = findNearestGrapplePoint();
+    if (nearestGrapple && !player.grappling) {
+      player.grappling = true;
+      player.grappleTarget = nearestGrapple;
+      createGrappleEffect();
+    }
+  }
+  
+  // Melee attack (Z key)
+  if (btn(4) && player.attackCooldown <= 0) {
+    performAttack();
+    player.attackCooldown = 0.4;
+  }
+}
+
+function updatePlayer(dt) {
+  // Update combo timer
+  if (comboTimer > 0) {
+    comboTimer -= dt;
+    if (comboTimer <= 0) {
+      combo = 0;
+    }
+  }
+  
+  // Check for wall running
+  player.wallRunning = false;
+  if (!player.onGround && Math.abs(player.vx) > 5) {
+    // Check if near any wall structure
+    for (let i = 0; i < 8; i++) {
+      const wallX = (i - 4) * 15;
+      const wallZ = i % 2 === 0 ? -20 : -30;
+      
+      const distToWall = Math.sqrt((player.x - wallX) ** 2 + (player.z - wallZ) ** 2);
+      if (distToWall < 3) {
+        player.wallRunning = true;
+        player.wallRunTime += dt;
+        
+        // Wall running slows vertical fall and provides slight upward boost
+        player.vy = Math.max(player.vy, -5);
+        if (player.wallRunTime < player.maxWallRunTime) {
+          player.vy += 3 * dt; // Slight upward boost
+        }
+        break;
+      }
+    }
+  }
+  
+  // Reset wall run time if not wall running
+  if (!player.wallRunning) {
+    player.wallRunTime = 0;
+  }
+  
+  // Apply gravity (reduced during wall run)
+  const gravityMultiplier = player.wallRunning ? 0.3 : 1.0;
+  player.vy -= 25 * gravityMultiplier * dt;
+  
+  // Update position
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+  player.z += player.vz * dt;
+  
+  // Platform collision detection
+  player.onGround = false;
+  
+  for (const platform of platforms) {
+    // Simple AABB collision - adjust for crouching
+    const hitboxHeight = player.crouching ? 0.8 : 1.0;
+    
+    if (player.x > platform.x - platform.width/2 && 
+        player.x < platform.x + platform.width/2 &&
+        player.z > platform.z - platform.depth/2 && 
+        player.z < platform.z + platform.depth/2) {
+      
+      if (player.y <= platform.y + platform.height && 
+          player.y + player.vy * dt > platform.y + platform.height) {
+        player.y = platform.y + platform.height;
+        player.vy = 0;
+        player.onGround = true;
+        player.doubleJump = true;
+        player.airDashAvailable = true; // Reset air dash on landing
+      }
+    }
+  }
+  
+  // World boundaries
+  if (player.x < -50) player.x = -50;
+  if (player.x > 50) player.x = 50;
+  if (player.z < -30) player.z = -30;
+  if (player.z > 30) player.z = 30;
+  
+  // Fall reset
+  if (player.y < -10) {
+    player.x = 0;
+    player.y = 2;
+    player.z = 0;
+    player.vx = 0;
+    player.vy = 0;
+    player.vz = 0;
+    player.health -= 20;
+    combo = 0;
+    comboTimer = 0;
+  }
+  
+  // Update ninja meshes
+  updatePlayerMeshes();
+  
+  // Regenerate energy
+  if (player.energy < 100) {
+    player.energy += 25 * dt;
+  }
+}
+
+function updatePlayerMeshes() {
+  // Safety check - make sure player meshes exist
+  if (!playerKnight || !playerKnight.body || !playerKnight.head || 
+      !playerKnight.eyes || !playerKnight.katana || !playerKnight.scarf) {
+    return;
+  }
+  
+  const bodyY = player.crouching ? player.y - 0.2 : player.y;
+  
+  setPosition(playerKnight.body, player.x, bodyY, player.z);
+  setPosition(playerKnight.head, player.x, bodyY + 0.75, player.z);
+  setPosition(playerKnight.eyes, player.x, bodyY + 0.8, player.z + (player.facingRight ? 0.25 : -0.25));
+  
+  // Katana position based on facing direction
+  const katanaX = player.facingRight ? player.x + 0.7 : player.x - 0.7;
+  const katanaRotY = player.facingRight ? -0.3 : Math.PI + 0.3;
+  setPosition(playerKnight.katana, katanaX, bodyY + 0.5, player.z);
+  setRotation(playerKnight.katana, 0, katanaRotY, 0);
+  
+  // Animate based on movement
+  const speed = Math.sqrt(player.vx * player.vx + player.vz * player.vz);
+  const walkCycle = Math.sin(gameTime * (speed + 1) * 2) * 0.08;
+  const facing = player.facingRight ? 0 : Math.PI;
+  setRotation(playerKnight.body, walkCycle, facing, 0);
+  
+  // Scarf physics - flowing behind ninja
+  const scarfSwing = Math.sin(gameTime * 5) * 0.25;
+  const scarfZ = player.z + (player.facingRight ? -0.5 : 0.5);
+  setPosition(playerKnight.scarf, player.x, bodyY + 0.3, scarfZ);
+  setRotation(playerKnight.scarf, scarfSwing, facing, 0);
+  
+  // Dash effect - tilt body
+  if (player.dashDuration > 0) {
+    const tilt = player.facingRight ? -0.4 : 0.4;
+    setRotation(playerKnight.body, tilt, facing, 0);
+  }
+}
+
+function performAttack() {
+  // Create katana slash effect - purple arc
+  const slashAngle = player.facingRight ? 0 : Math.PI;
+  const slashX = player.x + (player.facingRight ? 1.5 : -1.5);
+  
+  // Multiple slash particles for arc effect
+  for (let i = 0; i < 8; i++) {
+    const angle = slashAngle + (i - 4) * 0.3;
+    const offset = 1.5;
+    particles.push({
+      mesh: createSphere(0.15, 0xaa44ff, [
+        slashX + Math.cos(angle) * offset,
+        player.y + 0.5 + Math.sin(i * 0.5) * 0.5,
+        player.z
+      ]),
+      vx: Math.cos(angle) * 3,
+      vy: Math.sin(i * 0.5) * 2,
+      vz: 0,
+      life: 0.3,
+      maxLife: 0.3
+    });
+  }
+  
+  // Check for enemy hits
+  enemies.forEach(enemy => {
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    const dz = enemy.z - player.z;
+    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    
+    if (distance < 3) {
+      // Combo system - more damage with higher combo
+      const damage = 2 + Math.floor(combo / 5);
+      enemy.health -= damage;
+      
+      // Award combo
+      combo++;
+      comboTimer = 2.0;
+      
+      createHitParticles(enemy.x, enemy.y, enemy.z);
+      
+      if (enemy.health <= 0) {
+        destroyMesh(enemy.mesh);
+        enemy.dead = true;
+        score += 100 * (1 + Math.floor(combo / 10)); // Bonus score for combos
+      }
+    }
+  });
+}
+
+function updateEnemies(dt) {
+  enemies.forEach(enemy => {
+    if (enemy.dead) return;
+    
+    enemy.attackCooldown -= dt;
+    
+    switch (enemy.type) {
+      case 'patrol':
+        // Patrol back and forth
+        enemy.x += enemy.vx * dt;
+        
+        if (Math.abs(enemy.x - enemy.originalX) > enemy.patrolRange) {
+          enemy.vx *= -1;
+        }
+        
+        setPosition(enemy.mesh, enemy.x, enemy.y, enemy.z);
+        
+        // Attack player if close
+        const distToPlayer = Math.sqrt(
+          Math.pow(enemy.x - player.x, 2) + 
+          Math.pow(enemy.z - player.z, 2)
+        );
+        
+        if (distToPlayer < 4 && enemy.attackCooldown <= 0) {
+          // Simple attack - damage player
+          if (distToPlayer < 2) {
+            player.health -= 10;
+            enemy.attackCooldown = 2;
+          }
+        }
+        break;
+        
+      case 'flyer':
+        // Orbit around center point
+        enemy.orbitAngle += dt * 2;
+        enemy.x = enemy.orbitCenter.x + Math.cos(enemy.orbitAngle) * enemy.orbitRadius;
+        enemy.z = enemy.orbitCenter.z + Math.sin(enemy.orbitAngle) * enemy.orbitRadius;
+        enemy.y = enemy.orbitCenter.y + Math.sin(enemy.orbitAngle * 2) * 2;
+        
+        setPosition(enemy.mesh, enemy.x, enemy.y, enemy.z);
+        rotateMesh(enemy.mesh, 0, dt * 3, 0);
+        break;
+    }
+  });
+  
+  // Remove dead enemies
+  enemies = enemies.filter(enemy => !enemy.dead);
+}
+
+function updateCoins(dt) {
+  coins.forEach(coin => {
+    if (coin.collected) return;
+    
+    // Animate coins
+    coin.rotationY += dt * 4;
+    coin.bobOffset += dt * 3;
+    const newY = coin.y + Math.sin(coin.bobOffset) * 0.3;
+    
+    setPosition(coin.mesh, coin.x, newY, coin.z);
+    setRotation(coin.mesh, 0, coin.rotationY, 0);
+    
+    // Check collection
+    const distance = Math.sqrt(
+      Math.pow(coin.x - player.x, 2) +
+      Math.pow(newY - player.y, 2) +
+      Math.pow(coin.z - player.z, 2)
+    );
+    
+    if (distance < 1.5) {
+      coin.collected = true;
+      destroyMesh(coin.mesh);
+      player.coins += 10;
+      score += 50;
+      createCoinParticles(coin.x, coin.y, coin.z);
+    }
+  });
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.life -= dt;
+    
+    const pos = getPosition(particle.mesh);
+    pos[0] += particle.vx * dt;
+    pos[1] += particle.vy * dt;
+    pos[2] += particle.vz * dt;
+    
+    // Shuriken don't have gravity and spin
+    if (particle.isShuriken) {
+      particle.rotation += dt * 20;
+      setRotation(particle.mesh, 0, 0, particle.rotation);
+    } else {
+      particle.vy -= 10 * dt; // Gravity for normal particles
+    }
+    
+    setPosition(particle.mesh, pos[0], pos[1], pos[2]);
+    
+    if (!particle.isShuriken) {
+      const scale = particle.life / particle.maxLife;
+      setScale(particle.mesh, scale, scale, scale);
+    }
+    
+    if (particle.life <= 0) {
+      destroyMesh(particle.mesh);
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function updateCamera(dt) {
+  // Smooth camera following
+  camera.targetX = player.x;
+  camera.targetY = player.y + 5;
+  camera.targetZ = player.z;
+  
+  camera.x += (player.x - camera.x) * camera.smoothing;
+  camera.y += (player.y + 8 - camera.y) * camera.smoothing;
+  camera.z += (player.z + 15 - camera.z) * camera.smoothing;
+  
+  setCameraPosition(camera.x, camera.y, camera.z);
+  setCameraTarget(camera.targetX, camera.targetY, camera.targetZ);
+}
+
+function checkCollisions(dt) {
+  // Already handled in updatePlayer and updateEnemies
+}
+
+function updateGameLogic(dt) {
+  // Check for level completion
+  const remainingCoins = coins.filter(coin => !coin.collected).length;
+  if (remainingCoins === 0) {
+    level++;
+    score += 1000;
+    // Could spawn new level here
+  }
+  
+  // Game over check
+  if (player.health <= 0) {
+    gameState = 'gameOver';
+  }
+}
+
+function createJumpParticles() {
+  for (let i = 0; i < 5; i++) {
+    const particle = {
+      mesh: createSphere(0.1, 0x88ccff, [player.x, player.y - 0.5, player.z]),
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 3,
+      vz: (Math.random() - 0.5) * 4,
+      life: 1,
+      maxLife: 1
+    };
+    particles.push(particle);
+  }
+}
+
+function createDoubleJumpParticles() {
+  for (let i = 0; i < 8; i++) {
+    const particle = {
+      mesh: createSphere(0.15, 0xffff44, [player.x, player.y, player.z]),
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      vz: (Math.random() - 0.5) * 6,
+      life: 1.5,
+      maxLife: 1.5
+    };
+    particles.push(particle);
+  }
+}
+
+function createHitParticles(x, y, z) {
+  for (let i = 0; i < 10; i++) {
+    const particle = {
+      mesh: createSphere(0.08, 0xff4444, [x, y, z]),
+      vx: (Math.random() - 0.5) * 8,
+      vy: Math.random() * 6,
+      vz: (Math.random() - 0.5) * 8,
+      life: 0.8,
+      maxLife: 0.8
+    };
+    particles.push(particle);
+  }
+}
+
+function createCoinParticles(x, y, z) {
+  for (let i = 0; i < 6; i++) {
+    const particle = {
+      mesh: createSphere(0.05, 0xffdd00, [x, y, z]),
+      vx: (Math.random() - 0.5) * 5,
+      vy: Math.random() * 4 + 2,
+      vz: (Math.random() - 0.5) * 5,
+      life: 1.2,
+      maxLife: 1.2
+    };
+    particles.push(particle);
+  }
+}
+
+function createDashParticles() {
+  for (let i = 0; i < 10; i++) {
+    const particle = {
+      mesh: createSphere(0.12, 0xaa44ff, [player.x, player.y + 0.5, player.z]),
+      vx: (Math.random() - 0.5) * 3 - (player.facingRight ? 5 : -5),
+      vy: (Math.random() - 0.5) * 2,
+      vz: (Math.random() - 0.5) * 3,
+      life: 0.5,
+      maxLife: 0.5
+    };
+    particles.push(particle);
+  }
+}
+
+function createAirDashParticles() {
+  for (let i = 0; i < 15; i++) {
+    const particle = {
+      mesh: createSphere(0.15, 0x00ffff, [player.x, player.y, player.z]),
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      vz: (Math.random() - 0.5) * 8,
+      life: 0.8,
+      maxLife: 0.8
+    };
+    particles.push(particle);
+  }
+}
+
+function createSlideParticles() {
+  for (let i = 0; i < 8; i++) {
+    const particle = {
+      mesh: createSphere(0.08, 0x8844aa, [player.x, player.y - 0.3, player.z]),
+      vx: (Math.random() - 0.5) * 4 - (player.facingRight ? 3 : -3),
+      vy: Math.random() * 2,
+      vz: (Math.random() - 0.5) * 4,
+      life: 0.6,
+      maxLife: 0.6
+    };
+    particles.push(particle);
+  }
+}
+
+function createGrappleEffect() {
+  for (let i = 0; i < 12; i++) {
+    const t = i / 12;
+    const x = player.x + (player.grappleTarget.x - player.x) * t;
+    const y = player.y + (player.grappleTarget.y - player.y) * t;
+    const z = player.z + (player.grappleTarget.z - player.z) * t;
+    
+    const particle = {
+      mesh: createSphere(0.1, 0x00ffff, [x, y, z]),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      life: 0.4,
+      maxLife: 0.4
+    };
+    particles.push(particle);
+  }
+}
+
+function throwShuriken() {
+  const shuriken = {
+    mesh: createCube(0.3, 0xcccccc, [
+      player.x + (player.facingRight ? 1 : -1),
+      player.y + 0.5,
+      player.z
+    ]),
+    vx: (player.facingRight ? 1 : -1) * 25,
+    vy: 0,
+    vz: 0,
+    life: 2,
+    maxLife: 2,
+    rotation: 0,
+    isShuriken: true
+  };
+  setScale(shuriken.mesh, 0.8, 0.1, 0.8);
+  particles.push(shuriken);
+  
+  // Check for enemy hits
+  setTimeout(() => {
+    enemies.forEach(enemy => {
+      const dx = enemy.x - (player.x + (player.facingRight ? 5 : -5));
+      const dy = enemy.y - player.y;
+      const dz = enemy.z - player.z;
+      const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      
+      if (distance < 3 && !enemy.dead) {
+        enemy.health -= 1;
+        createHitParticles(enemy.x, enemy.y, enemy.z);
+        combo++;
+        comboTimer = 2;
+        
+        if (enemy.health <= 0) {
+          destroyMesh(enemy.mesh);
+          enemy.dead = true;
+          score += 150;
+        }
+      }
+    });
+  }, 100);
+}
+
+function findNearestGrapplePoint() {
+  let nearest = null;
+  let minDist = 20; // Max grapple range
+  
+  player.grapplePoints.forEach(point => {
+    if (!point.active) return;
+    
+    const dx = point.x - player.x;
+    const dy = point.y - player.y;
+    const dz = point.z - player.z;
+    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = point;
+    }
+  });
+  
+  return nearest;
+}
+
+function drawUI() {
+  // Ninja HUD Background - dark with purple/cyan accents
+  rect(16, 16, 420, 100, rgba8(10, 10, 26, 200), true);
+  rect(16, 16, 420, 100, rgba8(136, 51, 170, 180), false);
+  rect(17, 17, 418, 98, rgba8(0, 255, 255, 80), false);
+  
+  // Score and Level
+  print(`SCORE: ${score.toString().padStart(8, '0')}`, 24, 24, rgba8(0, 255, 255, 255));
+  print(`LEVEL: ${level}`, 24, 40, rgba8(170, 68, 255, 255));
+  print(`COINS: ${player.coins}`, 24, 56, rgba8(255, 215, 0, 255));
+  
+  // Shuriken count
+  print(`SHURIKEN: ${player.shuriken}`, 24, 72, rgba8(200, 200, 200, 255));
+  
+  // Combo meter
+  if (combo > 0) {
+    print(`COMBO x${combo}`, 24, 88, rgba8(255, 100, 255, 255));
+    const comboBarWidth = Math.floor((comboTimer / 2.0) * 80);
+    rect(100, 90, 80, 6, rgba8(50, 20, 60, 255), true);
+    rect(100, 90, comboBarWidth, 6, rgba8(255, 100, 255, 255), true);
+  }
+  
+  // Health bar - red with dark background
+  print('HEALTH:', 220, 24, rgba8(255, 255, 255, 255));
+  rect(285, 22, 120, 10, rgba8(50, 0, 0, 255), true);
+  rect(285, 22, Math.floor((player.health / 100) * 120), 10, rgba8(255, 0, 80, 255), true);
+  rect(285, 22, 120, 10, rgba8(255, 0, 80, 100), false);
+  
+  // Energy bar - cyan with dark background
+  print('ENERGY:', 220, 42, rgba8(255, 255, 255, 255));
+  rect(285, 40, 120, 10, rgba8(0, 20, 40, 255), true);
+  rect(285, 40, Math.floor((player.energy / 100) * 120), 10, rgba8(0, 255, 255, 255), true);
+  rect(285, 40, 120, 10, rgba8(0, 255, 255, 100), false);
+  
+  // Ability indicators
+  print('ABILITIES:', 220, 60, rgba8(200, 200, 200, 255));
+  
+  // Dash indicator
+  const dashReady = player.dashCooldown <= 0 && player.energy >= 20;
+  rect(285, 58, 24, 8, dashReady ? rgba8(170, 68, 255, 255) : rgba8(50, 20, 60, 255), true);
+  print('DSH', 288, 60, rgba8(255, 255, 255, 255));
+  
+  // Air Dash indicator
+  const airDashReady = player.airDashAvailable && player.energy >= 25;
+  rect(312, 58, 24, 8, airDashReady ? rgba8(0, 255, 255, 255) : rgba8(20, 50, 60, 255), true);
+  print('AIR', 315, 60, rgba8(255, 255, 255, 255));
+  
+  // Grapple indicator
+  const grappleReady = findNearestGrapplePoint() !== null;
+  rect(339, 58, 24, 8, grappleReady ? rgba8(0, 255, 255, 255) : rgba8(20, 50, 60, 255), true);
+  print('GRP', 342, 60, rgba8(255, 255, 255, 255));
+  
+  // Shuriken indicator  
+  const shurikenReady = player.shuriken > 0 && player.energy >= 5;
+  rect(366, 58, 24, 8, shurikenReady ? rgba8(200, 200, 200, 255) : rgba8(40, 40, 40, 255), true);
+  print('SHR', 369, 60, rgba8(255, 255, 255, 255));
+  
+  // 3D Stats - smaller and in corner
+  const stats = get3DStats();
+  if (stats) {
+    print(`${stats.meshes || 0}m`, 580, 24, rgba8(100, 100, 100, 200));
+  }
+  
+  // Position info - debug mode
+  // print(`POS: ${player.x.toFixed(1)}, ${player.y.toFixed(1)}, ${player.z.toFixed(1)}`, 220, 90, rgba8(100, 100, 100, 150));
+  
+  // Controls hint
+  print('X=DASH  C=SHURIKEN  G=GRAPPLE  Z=ATTACK', 16, 340, rgba8(136, 51, 170, 200));
+  
+  if (gameState === 'gameOver') {
+    rect(0, 0, 640, 360, rgba8(0, 0, 0, 200), true);
+    print('GAME OVER', 260, 150, rgba8(255, 50, 50, 255));
+    print(`FINAL SCORE: ${score}`, 230, 180, rgba8(255, 255, 0, 255));
+    print(`COINS COLLECTED: ${player.coins}`, 220, 200, rgba8(255, 215, 0, 255));
+    print('PRESS R TO RESTART', 220, 240, rgba8(255, 255, 255, 255));
+    
+    if (btnp(17)) { // R key
+      // Reset game
+      score = 0;
+      level = 1;
+      player.health = 100;
+      player.energy = 100;
+      player.coins = 0;
+      player.x = 0; player.y = 2; player.z = 0;
+      gameState = 'playing';
+      clearScene();
+      init();
+    }
+  }
+}

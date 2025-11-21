@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Drawing API - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🎨 2D Drawing API</h1>
+            <p class="subtitle">Core 2D drawing functions for pixels, lines, rectangles, circles, and text rendering</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The 2D Drawing API provides fundamental drawing primitives for creating retro-style graphics. It includes pixel-perfect drawing, geometric shapes, a camera system, and a sophisticated 64-bit color system (RGBA64) for high-precision color values.</p>
+            
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Pixel-perfect rendering</strong> - Direct pixel manipulation for retro aesthetics</li>
+                    <li><strong>Camera system</strong> - Easy scrolling and viewport management</li>
+                    <li><strong>RGBA64 color</strong> - 16-bit per channel for precise color control</li>
+                    <li><strong>Shape primitives</strong> - Lines, rectangles, circles with fill/outline options</li>
+                    <li><strong>Text rendering</strong> - Bitmap font system with scaling</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎨 Color System</h2>
+            <p>Nova64 uses a 64-bit color system (RGBA64) with 16 bits per channel for precise color representation. Use the helper functions to work with colors easily.</p>
+
+            <div class="function">
+                <div class="function-sig">rgba8(r, g, b, a = 255)</div>
+                <p>Creates a 64-bit color from 8-bit RGB values (0-255).</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">r</span> <span class="param-type">number (0-255)</span> - Red component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">g</span> <span class="param-type">number (0-255)</span> - Green component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">b</span> <span class="param-type">number (0-255)</span> - Blue component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">a</span> <span class="param-type">number (0-255)</span> - Alpha (opacity), default: 255 (opaque)
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">BigInt</span> - 64-bit color value
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">const</span> red = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>);
+<span class="keyword">const</span> transparentBlue = <span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>, <span class="number">128</span>);
+<span class="keyword">const</span> white = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">packRGBA64(r16, g16, b16, a16)</div>
+                <p>Creates a 64-bit color from 16-bit RGB values (0-65535). Advanced use only.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">r16</span> <span class="param-type">number (0-65535)</span> - Red component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">g16</span> <span class="param-type">number (0-65535)</span> - Green component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">b16</span> <span class="param-type">number (0-65535)</span> - Blue component
+                    </div>
+                    <div class="param">
+                        <span class="param-name">a16</span> <span class="param-type">number (0-65535)</span> - Alpha component
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">BigInt</span> - 64-bit color value
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📷 Camera System</h2>
+            <p>The camera system allows you to scroll the viewport by offsetting all drawing coordinates automatically.</p>
+
+            <div class="function">
+                <div class="function-sig">setCamera(x, y)</div>
+                <p>Sets the camera offset for all subsequent drawing operations.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x</span> <span class="param-type">number</span> - Camera X offset
+                    </div>
+                    <div class="param">
+                        <span class="param-name">y</span> <span class="param-type">number</span> - Camera Y offset
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Scrolling camera following a player</div>
+                    <pre><code><span class="comment">// Follow player with centered camera</span>
+<span class="keyword">function</span> <span class="function-name">update</span>() {
+  <span class="keyword">const</span> camX = player.x - <span class="number">320</span>; <span class="comment">// Center horizontally (640/2)</span>
+  <span class="keyword">const</span> camY = player.y - <span class="number">180</span>; <span class="comment">// Center vertically (360/2)</span>
+  <span class="function-name">setCamera</span>(camX, camY);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getCamera()</div>
+                <p>Gets the current camera offset.</p>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Object</span> - <code>{x: number, y: number}</code>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🖌️ Drawing Functions</h2>
+
+            <div class="function">
+                <div class="function-sig">cls(color)</div>
+                <p>Clears the screen with the specified color.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Color to fill (use rgba8())
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">function</span> <span class="function-name">draw</span>() {
+  <span class="function-name">cls</span>(<span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">20</span>)); <span class="comment">// Dark blue background</span>
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">pset(x, y, color)</div>
+                <p>Draws a single pixel at the specified coordinates.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x</span> <span class="param-type">number</span> - X coordinate
+                    </div>
+                    <div class="param">
+                        <span class="param-name">y</span> <span class="param-type">number</span> - Y coordinate
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Pixel color
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Draw random stars</div>
+                    <pre><code><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < <span class="number">100</span>; i++) {
+  <span class="keyword">const</span> x = Math.<span class="function-name">random</span>() * <span class="number">640</span>;
+  <span class="keyword">const</span> y = Math.<span class="function-name">random</span>() * <span class="number">360</span>;
+  <span class="function-name">pset</span>(x, y, <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>));
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">line(x0, y0, x1, y1, color)</div>
+                <p>Draws a line between two points using Bresenham's algorithm.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x0, y0</span> <span class="param-type">number</span> - Start point coordinates
+                    </div>
+                    <div class="param">
+                        <span class="param-name">x1, y1</span> <span class="param-type">number</span> - End point coordinates
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Line color
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Draw a crosshair</div>
+                    <pre><code><span class="keyword">const</span> centerX = <span class="number">320</span>, centerY = <span class="number">180</span>;
+<span class="keyword">const</span> white = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>);
+
+<span class="function-name">line</span>(centerX - <span class="number">10</span>, centerY, centerX + <span class="number">10</span>, centerY, white);
+<span class="function-name">line</span>(centerX, centerY - <span class="number">10</span>, centerX, centerY + <span class="number">10</span>, white);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">rect(x, y, w, h, color, fill = false)</div>
+                <p>Draws a rectangle (outline or filled).</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x, y</span> <span class="param-type">number</span> - Top-left corner position
+                    </div>
+                    <div class="param">
+                        <span class="param-name">w, h</span> <span class="param-type">number</span> - Width and height
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Rectangle color
+                    </div>
+                    <div class="param">
+                        <span class="param-name">fill</span> <span class="param-type">boolean</span> - If true, draws filled rectangle (default: false)
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="comment">// Draw window with border</span>
+<span class="keyword">const</span> blue = <span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">100</span>, <span class="number">200</span>);
+<span class="keyword">const</span> white = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>);
+
+<span class="function-name">rect</span>(<span class="number">100</span>, <span class="number">100</span>, <span class="number">200</span>, <span class="number">150</span>, blue, <span class="keyword">true</span>);  <span class="comment">// Fill</span>
+<span class="function-name">rect</span>(<span class="number">100</span>, <span class="number">100</span>, <span class="number">200</span>, <span class="number">150</span>, white, <span class="keyword">false</span>); <span class="comment">// Border</span></code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">rectfill(x, y, w, h, color)</div>
+                <p>Shortcut for drawing a filled rectangle (equivalent to <code>rect(x, y, w, h, color, true)</code>).</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">circle(x, y, radius, color, fill = false)</div>
+                <p>Draws a circle using midpoint circle algorithm (Bresenham).</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x, y</span> <span class="param-type">number</span> - Center position
+                    </div>
+                    <div class="param">
+                        <span class="param-name">radius</span> <span class="param-type">number</span> - Circle radius in pixels
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Circle color
+                    </div>
+                    <div class="param">
+                        <span class="param-name">fill</span> <span class="param-type">boolean</span> - If true, draws filled circle (default: false)
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Draw sun</div>
+                    <pre><code><span class="keyword">const</span> yellow = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">0</span>);
+<span class="keyword">const</span> orange = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">150</span>, <span class="number">0</span>);
+
+<span class="function-name">circle</span>(<span class="number">100</span>, <span class="number">100</span>, <span class="number">30</span>, yellow, <span class="keyword">true</span>);  <span class="comment">// Filled inner</span>
+<span class="function-name">circle</span>(<span class="number">100</span>, <span class="number">100</span>, <span class="number">40</span>, orange, <span class="keyword">false</span>); <span class="comment">// Outline glow</span></code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">print(text, x, y, color = rgba8(255,255,255,255), scale = 1)</div>
+                <p>Draws text using the bitmap font system.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">text</span> <span class="param-type">string</span> - Text to display
+                    </div>
+                    <div class="param">
+                        <span class="param-name">x, y</span> <span class="param-type">number</span> - Position
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Text color (default: white)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">scale</span> <span class="param-type">number</span> - Text scale multiplier (default: 1)
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: HUD display</div>
+                    <pre><code><span class="keyword">const</span> white = <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>);
+<span class="keyword">const</span> cyan = <span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">255</span>, <span class="number">255</span>);
+
+<span class="function-name">print</span>(<span class="string">"SCORE: "</span> + score, <span class="number">10</span>, <span class="number">10</span>, white);
+<span class="function-name">print</span>(<span class="string">"GAME OVER"</span>, <span class="number">250</span>, <span class="number">180</span>, cyan, <span class="number">2</span>); <span class="comment">// 2x scale</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>💡 Usage Tips</h2>
+            
+            <div class="note">
+                <div class="note-title">Performance</div>
+                <ul>
+                    <li>Use <code>rectfill()</code> or <code>cls()</code> for large filled areas instead of many <code>pset()</code> calls</li>
+                    <li>Cache color values (rgba8 returns) instead of recalculating each frame</li>
+                    <li>Camera offset is applied to all coordinates automatically - no need for manual adjustment</li>
+                </ul>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">Common Patterns</div>
+                <ul>
+                    <li><strong>HUD Elements:</strong> Set camera to (0, 0) before drawing UI to keep it fixed on screen</li>
+                    <li><strong>Layering:</strong> Draw background first, then objects, then foreground/UI</li>
+                    <li><strong>Alpha Transparency:</strong> Lower alpha values (< 255) create semi-transparent effects</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>📚 Related APIs</h2>
+            <ul>
+                <li><a href="api-sprites.html" style="color: var(--accent-cyan);">Sprite System</a> - For drawing sprites and animations</li>
+                <li><a href="input.html" style="color: var(--accent-cyan);">Input System</a> - For handling user input</li>
+                <li><a href="ui.html" style="color: var(--accent-cyan);">UI System</a> - For advanced text rendering and UI components</li>
+                <li><a href="font.html" style="color: var(--accent-cyan);">Font System</a> - Low-level bitmap font details</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

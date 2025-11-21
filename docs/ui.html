@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI System - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115; --bg-secondary: #151822; --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4; --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff; --accent-magenta: #ff0080; --accent-yellow: #ffff00;
+            --border: #2a324a; --code-bg: #1a1d2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed; color: var(--text-primary); line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            background: var(--bg-secondary); border: 2px solid var(--accent-cyan);
+            border-radius: 12px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        h1 {
+            color: var(--accent-cyan); font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6); margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block; color: var(--accent-cyan); text-decoration: none;
+            margin-bottom: 15px; transition: color 0.3s ease;
+        }
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        section {
+            background: var(--bg-secondary); border-left: 4px solid var(--accent-cyan);
+            padding: 25px; margin-bottom: 30px; border-radius: 8px;
+        }
+        h2 {
+            color: var(--accent-magenta); font-size: 2em; margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        h3 { color: var(--accent-cyan); font-size: 1.4em; margin: 25px 0 15px 0; }
+        .function {
+            background: var(--bg-tertiary); border: 1px solid var(--border);
+            border-radius: 8px; padding: 20px; margin-bottom: 25px;
+        }
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace; font-size: 1.2em;
+            color: var(--accent-yellow); margin-bottom: 15px; padding: 10px;
+            background: var(--code-bg); border-radius: 4px; border-left: 3px solid var(--accent-yellow);
+        }
+        .param-list, .return-info { margin: 15px 0; }
+        .param { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .param:last-child { border-bottom: none; }
+        .param-name {
+            color: var(--accent-cyan); font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .param-type { color: var(--accent-magenta); font-style: italic; font-size: 0.9em; }
+        .example {
+            background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 20px; margin: 15px 0; overflow-x: auto;
+        }
+        .example-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .note {
+            background: var(--bg-tertiary); border-left: 4px solid var(--accent-yellow);
+            padding: 15px; margin: 15px 0; border-radius: 4px;
+        }
+        .note-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        footer {
+            text-align: center; padding: 30px 20px; color: var(--text-secondary);
+            border-top: 1px solid var(--border); margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🖼️ UI System</h1>
+            <p class="subtitle">Professional UI components: buttons, panels, text rendering, and layout helpers</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The UI System provides high-level components for building game interfaces. It includes interactive buttons with callbacks, decorative panels, advanced text rendering with shadows/outlines, progress bars, and layout utilities.</p>
+            
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Button System</strong> - Interactive buttons with hover/press states and callbacks</li>
+                    <li><strong>Panel System</strong> - Decorative windows with borders, gradients, and titles</li>
+                    <li><strong>Text Rendering</strong> - Shadows, outlines, alignment, and font sizes</li>
+                    <li><strong>Progress Bars</strong> - Health bars, loading indicators, etc.</li>
+                    <li><strong>Layout Helpers</strong> - Centering, grid systems, responsive design</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🔘 Button System</h2>
+
+            <div class="function">
+                <div class="function-sig">createButton(x, y, width, height, text, callback, options = {})</div>
+                <p>Creates an interactive button with hover effects and click callback.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x, y</span> <span class="param-type">number</span> - Button position
+                    </div>
+                    <div class="param">
+                        <span class="param-name">width, height</span> <span class="param-type">number</span> - Button size
+                    </div>
+                    <div class="param">
+                        <span class="param-name">text</span> <span class="param-type">string</span> - Button label
+                    </div>
+                    <div class="param">
+                        <span class="param-name">callback</span> <span class="param-type">function</span> - Called when button clicked
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options</span> <span class="param-type">object</span> - Optional: normalColor, hoverColor, textColor, enabled, visible, etc.
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> - Button object (store to modify later)
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Menu buttons</div>
+                    <pre><code><span class="keyword">const</span> startBtn = <span class="function-name">createButton</span>(<span class="number">220</span>, <span class="number">150</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"START GAME"</span>, () => {
+  gameState = <span class="string">'playing'</span>;
+});
+
+<span class="keyword">const</span> quitBtn = <span class="function-name">createButton</span>(<span class="number">220</span>, <span class="number">200</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"QUIT"</span>, () => {
+  <span class="comment">// Quit game</span>
+}, {
+  normalColor: <span class="function-name">rgba8</span>(<span class="number">200</span>, <span class="number">50</span>, <span class="number">50</span>),
+  hoverColor: <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">80</span>, <span class="number">80</span>)
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">updateAllButtons()</div>
+                <p>Updates all button states (hover, click detection). Call in update() function.</p>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">boolean</span> - true if any button was clicked
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Update loop</div>
+                    <pre><code><span class="keyword">function</span> <span class="function-name">update</span>() {
+  <span class="function-name">updateAllButtons</span>(); <span class="comment">// Check button interactions</span>
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">drawAllButtons()</div>
+                <p>Renders all created buttons. Call in draw() function.</p>
+                
+                <div class="example">
+                    <div class="example-title">Example: Draw loop</div>
+                    <pre><code><span class="keyword">function</span> <span class="function-name">draw</span>() {
+  <span class="function-name">cls</span>(<span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">20</span>));
+  <span class="function-name">drawAllButtons</span>(); <span class="comment">// Render buttons</span>
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">clearButtons()</div>
+                <p>Removes all buttons (useful for screen transitions).</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">removeButton(button)</div>
+                <p>Removes a specific button.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>📦 Panel System</h2>
+
+            <div class="function">
+                <div class="function-sig">createPanel(x, y, width, height, options = {})</div>
+                <p>Creates a decorative panel/window with borders, gradients, and optional title bar.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x, y, width, height</span> <span class="param-type">number</span> - Panel position and size
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options</span> <span class="param-type">object</span> - bgColor, borderColor, borderWidth, title, shadow, gradient, etc.
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> - Panel object
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Info panel</div>
+                    <pre><code><span class="keyword">const</span> infoPanel = <span class="function-name">createPanel</span>(<span class="number">50</span>, <span class="number">50</span>, <span class="number">300</span>, <span class="number">200</span>, {
+  title: <span class="string">"Game Info"</span>,
+  bgColor: <span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">50</span>, <span class="number">200</span>),
+  borderColor: uiColors.primary,
+  borderWidth: <span class="number">3</span>,
+  shadow: <span class="keyword">true</span>,
+  gradient: <span class="keyword">true</span>
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">drawAllPanels()</div>
+                <p>Renders all panels. Call before drawing panel contents.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">clearPanels()</div>
+                <p>Removes all panels.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>✍️ Text Rendering</h2>
+
+            <div class="function">
+                <div class="function-sig">drawText(text, x, y, color = uiColors.white, scale = 1)</div>
+                <p>Draws text with current alignment and font settings.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">text</span> <span class="param-type">string</span> - Text to display
+                    </div>
+                    <div class="param">
+                        <span class="param-name">x, y</span> <span class="param-type">number</span> - Position (affected by alignment)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">color</span> <span class="param-type">BigInt</span> - Text color
+                    </div>
+                    <div class="param">
+                        <span class="param-name">scale</span> <span class="param-type">number</span> - Size multiplier
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Centered title</div>
+                    <pre><code><span class="function-name">setTextAlign</span>(<span class="string">'center'</span>);
+<span class="function-name">setTextBaseline</span>(<span class="string">'middle'</span>);
+<span class="function-name">drawText</span>(<span class="string">"MY GAME"</span>, <span class="number">320</span>, <span class="number">50</span>, uiColors.primary, <span class="number">3</span>);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">drawTextShadow(text, x, y, color, shadowColor, offset = 2, scale = 1)</div>
+                <p>Draws text with drop shadow effect.</p>
+                
+                <div class="example">
+                    <div class="example-title">Example: Title with shadow</div>
+                    <pre><code><span class="function-name">drawTextShadow</span>(<span class="string">"LEVEL 1"</span>, <span class="number">320</span>, <span class="number">100</span>, 
+  uiColors.white, uiColors.black, <span class="number">3</span>, <span class="number">2</span>);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">drawTextOutline(text, x, y, color, outlineColor, scale = 1)</div>
+                <p>Draws text with outline (8-direction) for visibility on any background.</p>
+                
+                <div class="example">
+                    <div class="example-title">Example: Outlined score</div>
+                    <pre><code><span class="function-name">drawTextOutline</span>(<span class="string">"SCORE: "</span> + score, <span class="number">10</span>, <span class="number">10</span>, 
+  uiColors.white, uiColors.black, <span class="number">1</span>);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setTextAlign(align)</div>
+                <p>Sets text horizontal alignment: "left", "center", or "right".</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setTextBaseline(baseline)</div>
+                <p>Sets text vertical alignment: "top", "middle", or "bottom".</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setFont(fontName)</div>
+                <p>Sets current font: "tiny", "small", "normal", "large", or "huge".</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">measureText(text, scale = 1)</div>
+                <p>Calculates text dimensions.</p>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> - {width, height}
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📊 Progress Bars</h2>
+
+            <div class="function">
+                <div class="function-sig">drawProgressBar(x, y, width, height, value, maxValue, options = {})</div>
+                <p>Draws a progress bar (health, loading, etc.).</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">value</span> <span class="param-type">number</span> - Current value
+                    </div>
+                    <div class="param">
+                        <span class="param-name">maxValue</span> <span class="param-type">number</span> - Maximum value
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options</span> <span class="param-type">object</span> - fillColor, bgColor, borderColor, showText
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Health bar</div>
+                    <pre><code><span class="function-name">drawProgressBar</span>(<span class="number">10</span>, <span class="number">10</span>, <span class="number">200</span>, <span class="number">20</span>, player.hp, player.maxHp, {
+  fillColor: uiColors.success,
+  bgColor: <span class="function-name">rgba8</span>(<span class="number">50</span>, <span class="number">0</span>, <span class="number">0</span>),
+  showText: <span class="keyword">true</span>
+});</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📐 Layout Helpers</h2>
+
+            <div class="function">
+                <div class="function-sig">centerX(width, screenWidth = 640)</div>
+                <p>Calculates X coordinate to center an element horizontally.</p>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">number</span> - Centered X position
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Center button</div>
+                    <pre><code><span class="keyword">const</span> btnX = <span class="function-name">centerX</span>(<span class="number">200</span>); <span class="comment">// Center 200px wide button</span>
+<span class="function-name">createButton</span>(btnX, <span class="number">150</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"START"</span>, startGame);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">centerY(height, screenHeight = 360)</div>
+                <p>Calculates Y coordinate to center an element vertically.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">grid(cols, rows, cellWidth, cellHeight, paddingX = 0, paddingY = 0)</div>
+                <p>Creates a grid layout array for positioning elements.</p>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">array</span> - Array of {x, y, width, height, col, row} objects
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Button grid</div>
+                    <pre><code><span class="keyword">const</span> cells = <span class="function-name">grid</span>(<span class="number">3</span>, <span class="number">2</span>, <span class="number">100</span>, <span class="number">50</span>, <span class="number">10</span>, <span class="number">10</span>);
+cells.<span class="function-name">forEach</span>((cell, i) => {
+  <span class="function-name">createButton</span>(cell.x + <span class="number">50</span>, cell.y + <span class="number">100</span>, 
+    cell.width, cell.height, <span class="string">`BTN </span><span class="keyword">${</span>i<span class="keyword">}</span><span class="string">`</span>, () => {});
+});</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎨 Color Palette</h2>
+            <p>The UI system provides a built-in color palette accessible via <code>uiColors</code>:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Color Name</th>
+                        <th>Value (RGB)</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>uiColors.primary</td><td>rgba8(0, 120, 255)</td><td>Primary buttons, borders</td></tr>
+                    <tr><td>uiColors.secondary</td><td>rgba8(100, 100, 255)</td><td>Secondary elements</td></tr>
+                    <tr><td>uiColors.success</td><td>rgba8(0, 255, 100)</td><td>Health bars, positive</td></tr>
+                    <tr><td>uiColors.warning</td><td>rgba8(255, 200, 0)</td><td>Warnings, caution</td></tr>
+                    <tr><td>uiColors.danger</td><td>rgba8(255, 50, 50)</td><td>Errors, critical</td></tr>
+                    <tr><td>uiColors.white</td><td>rgba8(255, 255, 255)</td><td>Text, highlights</td></tr>
+                    <tr><td>uiColors.black</td><td>rgba8(0, 0, 0)</td><td>Shadows, backgrounds</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>💡 Complete Example</h2>
+            
+            <div class="example">
+                <div class="example-title">Full UI System Example</div>
+                <pre><code><span class="keyword">let</span> gameState = <span class="string">'menu'</span>;
+<span class="keyword">let</span> menuButtons = [];
+
+<span class="keyword">function</span> <span class="function-name">init</span>() {
+  <span class="comment">// Create menu panel</span>
+  <span class="function-name">createPanel</span>(<span class="number">170</span>, <span class="number">80</span>, <span class="number">300</span>, <span class="number">200</span>, {
+    title: <span class="string">"MAIN MENU"</span>,
+    bgColor: <span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">50</span>, <span class="number">220</span>),
+    borderColor: uiColors.primary,
+    shadow: <span class="keyword">true</span>,
+    gradient: <span class="keyword">true</span>
+  });
+  
+  <span class="comment">// Create buttons</span>
+  <span class="keyword">const</span> btnX = <span class="function-name">centerX</span>(<span class="number">200</span>);
+  <span class="function-name">createButton</span>(btnX, <span class="number">120</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"START GAME"</span>, () => {
+    gameState = <span class="string">'playing'</span>;
+    <span class="function-name">clearButtons</span>();
+    <span class="function-name">clearPanels</span>();
+  });
+  
+  <span class="function-name">createButton</span>(btnX, <span class="number">170</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"OPTIONS"</span>, () => {
+    gameState = <span class="string">'options'</span>;
+  });
+  
+  <span class="function-name">createButton</span>(btnX, <span class="number">220</span>, <span class="number">200</span>, <span class="number">40</span>, <span class="string">"QUIT"</span>, () => {
+    <span class="comment">// Quit</span>
+  }, { normalColor: uiColors.danger });
+}
+
+<span class="keyword">function</span> <span class="function-name">update</span>() {
+  <span class="keyword">if</span> (gameState === <span class="string">'menu'</span>) {
+    <span class="function-name">updateAllButtons</span>();
+  }
+}
+
+<span class="keyword">function</span> <span class="function-name">draw</span>() {
+  <span class="function-name">cls</span>(<span class="function-name">rgba8</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">20</span>));
+  
+  <span class="keyword">if</span> (gameState === <span class="string">'menu'</span>) {
+    <span class="comment">// Draw title</span>
+    <span class="function-name">setTextAlign</span>(<span class="string">'center'</span>);
+    <span class="function-name">setFont</span>(<span class="string">'large'</span>);
+    <span class="function-name">drawTextShadow</span>(<span class="string">"MY AWESOME GAME"</span>, <span class="number">320</span>, <span class="number">40</span>, 
+      uiColors.primary, uiColors.black, <span class="number">3</span>, <span class="number">2</span>);
+    
+    <span class="comment">// Draw UI</span>
+    <span class="function-name">drawAllPanels</span>();
+    <span class="function-name">drawAllButtons</span>();
+  }
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>📚 Related APIs</h2>
+            <ul>
+                <li><a href="input.html" style="color: var(--accent-cyan);">Input System</a> - Mouse events for UI interaction</li>
+                <li><a href="api.html" style="color: var(--accent-cyan);">2D Drawing API</a> - Low-level drawing functions</li>
+                <li><a href="font.html" style="color: var(--accent-cyan);">Font System</a> - Bitmap font rendering</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

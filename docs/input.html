@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input System - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🕹️ Input System</h1>
+            <p class="subtitle">Keyboard, mouse, and gamepad input handling</p>
+        </header>
+
+        
+        <section>
+            <h2>📋 Overview</h2>
+            <p>Unified input system supporting keyboard, mouse, and gamepad with button state tracking.</p>
+            
+        </section>
+        
+        <section>
+            <h2>⌨️ Keyboard Functions</h2>
+            
+            
+            <div class='function'>
+                <div class='function-sig'>btn(buttonIndex)</div>
+                <p>Checks if a button is currently held down.</p>
+                <div class='param-list'>
+                    <div class='param'>
+                        <span class='param-name'>buttonIndex</span> 
+                        <span class='param-type'>number (0-13)</span> - Button index to check
+                    </div>
+                    </div>
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true if button is held
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (btn(0)) player.x -= 2; // Move left</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>btnp(buttonIndex)</div>
+                <p>Checks if a button was just pressed (one-shot).</p>
+                <div class='param-list'>
+                    <div class='param'>
+                        <span class='param-name'>buttonIndex</span> 
+                        <span class='param-type'>number (0-13)</span> - Button index to check
+                    </div>
+                    </div>
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true only on first frame of press
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (btnp(4)) player.jump(); // Jump on Z key press</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>isKeyDown(keyCode)</div>
+                <p>Checks if a specific keyboard key is currently held.</p>
+                <div class='param-list'>
+                    <div class='param'>
+                        <span class='param-name'>keyCode</span> 
+                        <span class='param-type'>string</span> - Key code (e.g., "w", "Space", "ArrowLeft")
+                    </div>
+                    </div>
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true if key is held
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (isKeyDown("w")) player.moveForward();</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>isKeyPressed(keyCode)</div>
+                <p>Checks if a key was just pressed (one-shot).</p>
+                <div class='param-list'>
+                    <div class='param'>
+                        <span class='param-name'>keyCode</span> 
+                        <span class='param-type'>string</span> - Key code
+                    </div>
+                    </div>
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true only on first frame
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (isKeyPressed("Enter")) selectMenuItem();</code></pre>
+                </div>
+                
+            </div>
+            
+        </section>
+        
+        <section>
+            <h2>🖱️ Mouse Functions</h2>
+            
+            
+            <div class='function'>
+                <div class='function-sig'>mouseX()</div>
+                <p>Gets the current mouse X position (0-640).</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Mouse X coordinate
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>const mx = mouseX();</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>mouseY()</div>
+                <p>Gets the current mouse Y position (0-360).</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Mouse Y coordinate
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>const my = mouseY();</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>mouseDown()</div>
+                <p>Checks if mouse button is held.</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true if mouse button is down
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (mouseDown()) dragObject();</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>mousePressed()</div>
+                <p>Checks if mouse button was just clicked (one-shot).</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true only on first frame of click
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (mousePressed()) handleClick();</code></pre>
+                </div>
+                
+            </div>
+            
+        </section>
+        
+        <section>
+            <h2>🎮 Gamepad Functions</h2>
+            
+            
+            <div class='function'>
+                <div class='function-sig'>gamepadConnected()</div>
+                <p>Checks if a gamepad is connected.</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>boolean</span> - true if gamepad is connected
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>if (gamepadConnected()) useAnalogStick();</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>leftStickX()</div>
+                <p>Gets left analog stick X axis (-1.0 to 1.0).</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Left stick X value with deadzone
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>player.x += leftStickX() * speed;</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>leftStickY()</div>
+                <p>Gets left analog stick Y axis (-1.0 to 1.0).</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Left stick Y value with deadzone
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>player.y += leftStickY() * speed;</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>rightStickX()</div>
+                <p>Gets right analog stick X axis.</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Right stick X value
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>camera.rotateY(rightStickX() * 0.05);</code></pre>
+                </div>
+                
+            </div>
+            
+            <div class='function'>
+                <div class='function-sig'>rightStickY()</div>
+                <p>Gets right analog stick Y axis.</p>
+                
+                
+                <div class='return-info'>
+                    <strong>Returns:</strong> <span class='param-type'>number</span> - Right stick Y value
+                </div>
+                
+                
+                <div class='example'>
+                    <div class='example-title'>Example:</div>
+                    <pre><code>camera.rotateX(rightStickY() * 0.05);</code></pre>
+                </div>
+                
+            </div>
+            
+        </section>
+        
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio System - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115; --bg-secondary: #151822; --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4; --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff; --accent-magenta: #ff0080; --accent-yellow: #ffff00;
+            --border: #2a324a; --code-bg: #1a1d2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed; color: var(--text-primary); line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            background: var(--bg-secondary); border: 2px solid var(--accent-cyan);
+            border-radius: 12px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        h1 { color: var(--accent-cyan); font-size: 2.5em; text-shadow: 0 0 20px rgba(0, 255, 255, 0.6); margin-bottom: 10px; }
+        .back-link { display: inline-block; color: var(--accent-cyan); text-decoration: none; margin-bottom: 15px; transition: color 0.3s ease; }
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        section { background: var(--bg-secondary); border-left: 4px solid var(--accent-cyan); padding: 25px; margin-bottom: 30px; border-radius: 8px; }
+        h2 { color: var(--accent-magenta); font-size: 2em; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255, 0, 128, 0.5); }
+        h3 { color: var(--accent-cyan); font-size: 1.4em; margin: 25px 0 15px 0; }
+        .function { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .function-sig { font-family: 'Courier New', Courier, monospace; font-size: 1.2em; color: var(--accent-yellow); margin-bottom: 15px; padding: 10px; background: var(--code-bg); border-radius: 4px; border-left: 3px solid var(--accent-yellow); }
+        .param-list, .return-info { margin: 15px 0; }
+        .param { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .param:last-child { border-bottom: none; }
+        .param-name { color: var(--accent-cyan); font-weight: bold; font-family: 'Courier New', Courier, monospace; }
+        .param-type { color: var(--accent-magenta); font-style: italic; font-size: 0.9em; }
+        .example { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 15px 0; overflow-x: auto; }
+        .example-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .note { background: var(--bg-tertiary); border-left: 4px solid var(--accent-yellow); padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .note-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        footer { text-align: center; padding: 30px 20px; color: var(--text-secondary); border-top: 1px solid var(--border); margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🔊 Audio System</h1>
+            <p class="subtitle">Sound effects and music with Web Audio API synthesis</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The Audio System provides retro-style sound effect generation using the Web Audio API. Create classic game sounds with square waves, sine waves, sawtooth, and noise using simple parameters.</p>
+            
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Waveform Synthesis</strong> - Square, sine, sawtooth, and noise</li>
+                    <li><strong>Frequency Sweep</strong> - Pitch changes over time (laser, explosion effects)</li>
+                    <li><strong>Multi-Channel</strong> - 8 simultaneous sound channels</li>
+                    <li><strong>Volume Control</strong> - Per-sound and master volume</li>
+                    <li><strong>Preset System</strong> - Pre-configured sound effects (0-2)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎵 Main Function</h2>
+
+            <div class="function">
+                <div class="function-sig">sfx(options)</div>
+                <p>Plays a sound effect with custom parameters or preset ID.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options</span> <span class="param-type">object or number</span> - Sound parameters or preset ID (0-2)
+                    </div>
+                </div>
+                
+                <h3>Parameters (when options is an object):</h3>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">wave</span> <span class="param-type">string</span> - Waveform: "square", "sine", "sawtooth", or "noise" (default: "square")
+                    </div>
+                    <div class="param">
+                        <span class="param-name">freq</span> <span class="param-type">number (Hz)</span> - Base frequency (default: 440)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">dur</span> <span class="param-type">number (seconds)</span> - Duration (default: 0.2)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">vol</span> <span class="param-type">number (0-1)</span> - Volume (default: 0.5)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">sweep</span> <span class="param-type">number (Hz/sec)</span> - Frequency change rate (default: 0)
+                    </div>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example: Custom sound effects</div>
+                    <pre><code><span class="comment">// Jump sound (rising pitch)</span>
+<span class="function-name">sfx</span>({ wave: <span class="string">'square'</span>, freq: <span class="number">200</span>, dur: <span class="number">0.15</span>, sweep: <span class="number">800</span>, vol: <span class="number">0.3</span> });
+
+<span class="comment">// Laser shot (falling pitch)</span>
+<span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">1000</span>, dur: <span class="number">0.3</span>, sweep: <span class="number">-1500</span>, vol: <span class="number">0.4</span> });
+
+<span class="comment">// Explosion (noise)</span>
+<span class="function-name">sfx</span>({ wave: <span class="string">'noise'</span>, dur: <span class="number">0.5</span>, vol: <span class="number">0.6</span> });
+
+<span class="comment">// Power-up (major chord sweep)</span>
+<span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">440</span>, dur: <span class="number">0.4</span>, sweep: <span class="number">400</span>, vol: <span class="number">0.3</span> });</code></pre>
+                </div>
+            </div>
+
+            <h3>Preset Sounds (ID-based)</h3>
+            <div class="function">
+                <div class="function-sig">sfx(id)</div>
+                <p>Plays a pre-configured sound effect by ID.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sound</th>
+                            <th>Parameters</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>Blip/Menu</td>
+                            <td>Square wave, 880 Hz, 0.1s</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>Coin/Pickup</td>
+                            <td>Sine wave, 220 Hz → 120 Hz, 0.3s</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Hit/Impact</td>
+                            <td>Noise, 0.2s</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="example">
+                    <div class="example-title">Example: Using presets</div>
+                    <pre><code><span class="comment">// Menu navigation</span>
+<span class="keyword">if</span> (<span class="function-name">btnp</span>(<span class="number">2</span>)) {
+  menuIndex--;
+  <span class="function-name">sfx</span>(<span class="number">0</span>); <span class="comment">// Blip sound</span>
+}
+
+<span class="comment">// Collect coin</span>
+<span class="keyword">if</span> (collectedCoin) {
+  score += <span class="number">10</span>;
+  <span class="function-name">sfx</span>(<span class="number">1</span>); <span class="comment">// Coin sound</span>
+}
+
+<span class="comment">// Take damage</span>
+<span class="keyword">if</span> (hitByEnemy) {
+  health -= <span class="number">10</span>;
+  <span class="function-name">sfx</span>(<span class="number">2</span>); <span class="comment">// Hit sound</span>
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎼 Waveform Guide</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Waveform</th>
+                        <th>Sound Character</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>square</strong></td>
+                        <td>Hollow, retro, chip-tune</td>
+                        <td>Blips, beeps, menu sounds, retro games</td>
+                    </tr>
+                    <tr>
+                        <td><strong>sine</strong></td>
+                        <td>Pure, smooth, musical</td>
+                        <td>Lasers, power-ups, melodic effects</td>
+                    </tr>
+                    <tr>
+                        <td><strong>sawtooth</strong></td>
+                        <td>Buzzy, harsh, aggressive</td>
+                        <td>Alarms, engines, intense action</td>
+                    </tr>
+                    <tr>
+                        <td><strong>noise</strong></td>
+                        <td>Static, explosion-like</td>
+                        <td>Explosions, impacts, wind, crashes</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>🎨 Sound Design Examples</h2>
+
+            <div class="example">
+                <div class="example-title">Classic Game Sounds</div>
+                <pre><code><span class="comment">// Jump (8-bit platformer)</span>
+<span class="keyword">function</span> <span class="function-name">playJumpSound</span>() {
+  <span class="function-name">sfx</span>({ wave: <span class="string">'square'</span>, freq: <span class="number">300</span>, dur: <span class="number">0.1</span>, sweep: <span class="number">600</span>, vol: <span class="number">0.25</span> });
+}
+
+<span class="comment">// Laser shoot</span>
+<span class="keyword">function</span> <span class="function-name">playLaserSound</span>() {
+  <span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">800</span>, dur: <span class="number">0.2</span>, sweep: <span class="number">-1200</span>, vol: <span class="number">0.35</span> });
+}
+
+<span class="comment">// Explosion</span>
+<span class="keyword">function</span> <span class="function-name">playExplosionSound</span>() {
+  <span class="function-name">sfx</span>({ wave: <span class="string">'noise'</span>, dur: <span class="number">0.6</span>, vol: <span class="number">0.7</span> });
+  <span class="comment">// Add bass rumble</span>
+  <span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">60</span>, dur: <span class="number">0.4</span>, vol: <span class="number">0.5</span> });
+}
+
+<span class="comment">// Power-up collected</span>
+<span class="keyword">function</span> <span class="function-name">playPowerUpSound</span>() {
+  <span class="comment">// Arpeggio effect</span>
+  <span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">523</span>, dur: <span class="number">0.08</span>, vol: <span class="number">0.3</span> }); <span class="comment">// C</span>
+  <span class="function-name">setTimeout</span>(() => {
+    <span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">659</span>, dur: <span class="number">0.08</span>, vol: <span class="number">0.3</span> }); <span class="comment">// E</span>
+  }, <span class="number">80</span>);
+  <span class="function-name">setTimeout</span>(() => {
+    <span class="function-name">sfx</span>({ wave: <span class="string">'sine'</span>, freq: <span class="number">784</span>, dur: <span class="number">0.15</span>, vol: <span class="number">0.3</span> }); <span class="comment">// G</span>
+  }, <span class="number">160</span>);
+}
+
+<span class="comment">// Enemy hit</span>
+<span class="keyword">function</span> <span class="function-name">playHitSound</span>() {
+  <span class="function-name">sfx</span>({ wave: <span class="string">'noise'</span>, dur: <span class="number">0.1</span>, vol: <span class="number">0.4</span> });
+  <span class="function-name">sfx</span>({ wave: <span class="string">'square'</span>, freq: <span class="number">150</span>, dur: <span class="number">0.15</span>, sweep: <span class="number">-100</span>, vol: <span class="number">0.3</span> });
+}
+
+<span class="comment">// Menu select</span>
+<span class="keyword">function</span> <span class="function-name">playMenuSelectSound</span>() {
+  <span class="function-name">sfx</span>({ wave: <span class="string">'square'</span>, freq: <span class="number">660</span>, dur: <span class="number">0.05</span>, vol: <span class="number">0.2</span> });
+}
+
+<span class="comment">// Game over</span>
+<span class="keyword">function</span> <span class="function-name">playGameOverSound</span>() {
+  <span class="comment">// Descending notes</span>
+  <span class="keyword">const</span> notes = [<span class="number">523</span>, <span class="number">494</span>, <span class="number">440</span>, <span class="number">392</span>, <span class="number">349</span>];
+  notes.<span class="function-name">forEach</span>((freq, i) => {
+    <span class="function-name">setTimeout</span>(() => {
+      <span class="function-name">sfx</span>({ wave: <span class="string">'square'</span>, freq, dur: <span class="number">0.25</span>, vol: <span class="number">0.3</span> });
+    }, i * <span class="number">200</span>);
+  });
+}</code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>💡 Usage Tips</h2>
+            
+            <div class="note">
+                <div class="note-title">Best Practices</div>
+                <ul>
+                    <li><strong>Volume Control:</strong> Keep vol between 0.2-0.5 to avoid overpowering music/other sounds</li>
+                    <li><strong>Frequency Range:</strong> 20 Hz (bass) to 20,000 Hz (high pitch). Use 200-2000 Hz for most game sounds</li>
+                    <li><strong>Duration:</strong> Short sounds (0.05-0.2s) for UI, longer (0.3-1.0s) for ambience</li>
+                    <li><strong>Sweep:</strong> Positive values = rising pitch (jump), negative = falling (laser)</li>
+                    <li><strong>Layering:</strong> Combine multiple sfx() calls for complex sounds (explosion = noise + bass)</li>
+                    <li><strong>Timing:</strong> Use setTimeout() for sequential notes (melodies, arpeggios)</li>
+                </ul>
+            </div>
+            
+            <div class="note">
+                <div class="note-title">Performance</div>
+                <ul>
+                    <li>Maximum 8 sounds playing simultaneously</li>
+                    <li>Audio context initializes on first sfx() call (user interaction required)</li>
+                    <li>Master volume set to 0.2 by default to prevent clipping</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎹 Frequency Reference (Musical Notes)</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Note</th>
+                        <th>Frequency (Hz)</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>C3</td><td>131</td><td>Bass rumble</td></tr>
+                    <tr><td>C4 (Middle C)</td><td>262</td><td>Low effects</td></tr>
+                    <tr><td>A4</td><td>440</td><td>Standard reference pitch</td></tr>
+                    <tr><td>C5</td><td>523</td><td>Medium effects</td></tr>
+                    <tr><td>C6</td><td>1047</td><td>High effects</td></tr>
+                    <tr><td>C7</td><td>2093</td><td>Very high, sharp sounds</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>📚 Related APIs</h2>
+            <ul>
+                <li><a href="input.html" style="color: var(--accent-cyan);">Input System</a> - Trigger sounds on button press</li>
+                <li><a href="collision.html" style="color: var(--accent-cyan);">Collision Detection</a> - Play impact sounds on collision</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

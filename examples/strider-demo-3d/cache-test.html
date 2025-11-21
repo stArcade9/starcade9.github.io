@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Knight Platformer - Cache Diagnostic</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .good { background: #002200; border: 2px solid #00ff00; }
+        .bad { background: #220000; border: 2px solid #ff0000; color: #ff6666; }
+        .info { background: #001122; border: 2px solid #6666ff; color: #aaaaff; }
+        button {
+            background: #4444ff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #6666ff; }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🥷 Knight Platformer - Cache Diagnostic</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="runTest()">🔍 Test Cache Status</button>
+    <button onclick="clearAndReload()">🔄 Clear & Reload Game</button>
+    <button onclick="openIncognito()">🕵️ Instructions for Incognito</button>
+    
+    <script>
+        async function runTest() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Testing...</h2>';
+            
+            try {
+                // Fetch the code.js file with cache-busting
+                const response = await fetch('./code.js?t=' + Date.now());
+                const code = await response.text();
+                
+                let html = '<h2>Test Results:</h2>';
+                
+                // Check for triple emoji (correct code)
+                if (code.includes('🎯🎯🎯 START BUTTON CLICKED AT')) {
+                    html += '<div class="status good">✅ SERVER HAS CORRECT CODE (Triple emoji found)</div>';
+                } else if (code.includes('🎯 START BUTTON CLICKED!')) {
+                    html += '<div class="status bad">❌ SERVER HAS OLD CODE (Single emoji found)</div>';
+                } else {
+                    html += '<div class="status bad">❌ CANNOT FIND BUTTON CALLBACK</div>';
+                }
+                
+                // Check cache buster
+                if (code.includes('CACHE-BUST-FINAL-001-REFRESH-NOW')) {
+                    html += '<div class="status good">✅ Latest cache-buster present</div>';
+                } else {
+                    html += '<div class="status bad">❌ Old or missing cache-buster</div>';
+                }
+                
+                // Check for module-level callback
+                if (code.includes('const startGameCallback = ()')) {
+                    html += '<div class="status good">✅ Callback at module level</div>';
+                } else {
+                    html += '<div class="status bad">❌ Callback not at module level</div>';
+                }
+                
+                // Show first 50 lines
+                const lines = code.split('\n').slice(0, 50);
+                html += '<div class="status info">';
+                html += '<h3>First 50 lines of code.js from server:</h3>';
+                html += '<pre>' + lines.join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+                html += '</div>';
+                
+                // Instructions
+                html += '<div class="status info">';
+                html += '<h3>📋 To Fix Browser Cache:</h3>';
+                html += '<ol>';
+                html += '<li><strong>Mac:</strong> Press Cmd + Shift + R</li>';
+                html += '<li><strong>Windows/Linux:</strong> Press Ctrl + Shift + F5</li>';
+                html += '<li><strong>Or:</strong> Open Developer Tools (F12) → Right-click refresh → "Empty Cache and Hard Reload"</li>';
+                html += '<li><strong>Or:</strong> Open in incognito/private window</li>';
+                html += '</ol>';
+                html += '</div>';
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="status bad">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function clearAndReload() {
+            // Try to clear cache via JavaScript (limited effect)
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            
+            alert('Cache cleared (partial). Now do a HARD RELOAD:\n\nMac: Cmd + Shift + R\nWindows: Ctrl + Shift + F5');
+            
+            // Reload with cache bust
+            setTimeout(() => {
+                window.location.href = '../strider-demo-3d/?cachebust=' + Date.now();
+            }, 1000);
+        }
+        
+        function openIncognito() {
+            const url = window.location.origin + '/examples/strider-demo-3d/';
+            alert(`Open this URL in an incognito/private window:\n\n${url}\n\nChrome/Edge: Ctrl+Shift+N\nFirefox: Ctrl+Shift+P\nSafari: Cmd+Shift+N`);
+        }
+        
+        // Run test on load
+        runTest();
+    </script>
+</body>
+</html>

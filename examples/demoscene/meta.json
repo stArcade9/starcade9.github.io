@@ -1,0 +1,21 @@
+{
+  "title": "Demoscene - Tron Odyssey",
+  "author": "Nova64 Team",
+  "description": "An epic visual showcase featuring bloom, post-processing, particles, dynamic shaders, and cinematic camera work. Journey through 5 unique scenes in a neon digital realm.",
+  "version": "1.0.0",
+  "category": "demo",
+  "tags": ["demoscene", "effects", "3d", "tron", "neon", "particles", "bloom", "postprocessing"],
+  "features": [
+    "Advanced bloom and post-processing",
+    "Dynamic particle systems",
+    "5 unique animated scenes",
+    "Cinematic camera choreography",
+    "Procedural neon geometry",
+    "GPU-accelerated effects"
+  ],
+  "controls": {
+    "mouse": "Navigate UI buttons",
+    "keyboard": "Space/Enter to start"
+  },
+  "thumbnail": "thumbnail.png"
+}

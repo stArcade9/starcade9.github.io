@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Runtime API Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+            --link-hover: #33ffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 3em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+        }
+        
+        .version {
+            display: inline-block;
+            background: var(--accent-magenta);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+        
+        .intro {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 40px;
+            border-radius: 8px;
+        }
+        
+        .intro h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+        }
+        
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .api-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .api-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .api-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+        
+        .api-card:hover::before {
+            opacity: 1;
+        }
+        
+        .api-card h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        
+        .api-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .api-card .description {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            min-height: 60px;
+        }
+        
+        .api-card .features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        
+        .api-card .features li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .api-card .features li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+        
+        .api-link {
+            display: inline-block;
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .api-link:hover {
+            background: var(--link-hover);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        .category-header {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+        
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .quick-links {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-links h3 {
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+        }
+        
+        .quick-links ul {
+            list-style: none;
+            columns: 3;
+            column-gap: 20px;
+        }
+        
+        .quick-links li {
+            padding: 8px 0;
+        }
+        
+        .quick-links a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .quick-links a:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-links ul {
+                columns: 1;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Nova64 Runtime API</h1>
+            <p class="subtitle">Complete Documentation for the Nintendo 64 / PlayStation Style Fantasy Console</p>
+            <span class="version">v0.2.0</span>
+        </header>
+
+        <div class="intro">
+            <h2>📘 Welcome to Nova64 Documentation</h2>
+            <p>Nova64 is a JavaScript fantasy console inspired by classic 3D gaming consoles like the Nintendo 64 and PlayStation. This documentation covers all runtime APIs available for creating games and demos.</p>
+            <p style="margin-top: 15px;"><strong>Key Features:</strong> Full 3D acceleration with Three.js, retro-style graphics rendering, sprite system, physics engine, audio support, voxel engine, and much more!</p>
+        </div>
+
+        <div class="quick-links">
+            <h3>⚡ Quick Links</h3>
+            <ul>
+                <li><a href="api.html">2D Drawing API</a></li>
+                <li><a href="api-3d.html">3D Graphics API</a></li>
+                <li><a href="api-sprites.html">Sprite System</a></li>
+                <li><a href="api-skybox.html">Skybox API</a></li>
+                <li><a href="api-effects.html">Visual Effects</a></li>
+                <li><a href="api-voxel.html">Voxel Engine</a></li>
+                <li><a href="input.html">Input System</a></li>
+                <li><a href="audio.html">Audio System</a></li>
+                <li><a href="physics.html">Physics Engine</a></li>
+                <li><a href="collision.html">Collision Detection</a></li>
+                <li><a href="ui.html">UI System</a></li>
+                <li><a href="storage.html">Storage API</a></li>
+            </ul>
+        </div>
+
+        <h2 class="category-header">🎨 Graphics APIs</h2>
+        <div class="api-grid">
+            <div class="api-card">
+                <div class="icon">🎨</div>
+                <h3>2D Drawing API</h3>
+                <p class="description">Core 2D drawing functions for pixels, lines, rectangles, circles, and sprites.</p>
+                <ul class="features">
+                    <li>Pixel-perfect drawing</li>
+                    <li>Geometric shapes</li>
+                    <li>Camera system</li>
+                    <li>Color management (RGBA64)</li>
+                </ul>
+                <a href="api.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🎮</div>
+                <h3>3D Graphics API</h3>
+                <p class="description">Complete 3D rendering system using Three.js for meshes, materials, lighting, and cameras.</p>
+                <ul class="features">
+                    <li>Primitive shapes (cubes, spheres, etc.)</li>
+                    <li>Material system with PBR</li>
+                    <li>Lighting and shadows</li>
+                    <li>GLB model loading</li>
+                </ul>
+                <a href="api-3d.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">👾</div>
+                <h3>Sprite System</h3>
+                <p class="description">Retro-style sprite rendering with animations, transformations, and sprite sheets.</p>
+                <ul class="features">
+                    <li>8×8 sprite tiles</li>
+                    <li>Animations and flipping</li>
+                    <li>Sprite editor integration</li>
+                    <li>Layering and sorting</li>
+                </ul>
+                <a href="api-sprites.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🌌</div>
+                <h3>Skybox API</h3>
+                <p class="description">Beautiful space backgrounds with stars, nebulae, and animated effects.</p>
+                <ul class="features">
+                    <li>Procedural star fields</li>
+                    <li>Nebula gradients</li>
+                    <li>Galaxy spiral effects</li>
+                    <li>Fog system</li>
+                </ul>
+                <a href="api-skybox.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">✨</div>
+                <h3>Visual Effects</h3>
+                <p class="description">Post-processing effects like bloom, chromatic aberration, and scanlines.</p>
+                <ul class="features">
+                    <li>Bloom glow effects</li>
+                    <li>Chromatic aberration</li>
+                    <li>CRT scanlines</li>
+                    <li>FXAA anti-aliasing</li>
+                </ul>
+                <a href="api-effects.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🧱</div>
+                <h3>Voxel Engine</h3>
+                <p class="description">Minecraft-style voxel world with chunk management and block manipulation.</p>
+                <ul class="features">
+                    <li>Chunk-based terrain</li>
+                    <li>Block types and textures</li>
+                    <li>Efficient meshing</li>
+                    <li>World generation</li>
+                </ul>
+                <a href="api-voxel.html" class="api-link">View Documentation →</a>
+            </div>
+        </div>
+
+        <h2 class="category-header">🎯 Input & Interaction</h2>
+        <div class="api-grid">
+            <div class="api-card">
+                <div class="icon">🕹️</div>
+                <h3>Input System</h3>
+                <p class="description">Keyboard, mouse, and gamepad input handling with button states and axes.</p>
+                <ul class="features">
+                    <li>Keyboard key detection</li>
+                    <li>Mouse position and buttons</li>
+                    <li>Gamepad support (analog sticks)</li>
+                    <li>Button press/release states</li>
+                </ul>
+                <a href="input.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🖼️</div>
+                <h3>UI System</h3>
+                <p class="description">User interface components like buttons, panels, and text rendering.</p>
+                <ul class="features">
+                    <li>Buttons with callbacks</li>
+                    <li>Panels and containers</li>
+                    <li>Text with shadows/outlines</li>
+                    <li>Layout management</li>
+                </ul>
+                <a href="ui.html" class="api-link">View Documentation →</a>
+            </div>
+        </div>
+
+        <h2 class="category-header">🔊 Audio & Physics</h2>
+        <div class="api-grid">
+            <div class="api-card">
+                <div class="icon">🔊</div>
+                <h3>Audio System</h3>
+                <p class="description">Sound effects and music playback with volume control and synthesis.</p>
+                <ul class="features">
+                    <li>Sound effect playback</li>
+                    <li>Music streaming</li>
+                    <li>Volume control</li>
+                    <li>Audio synthesis (SFXR)</li>
+                </ul>
+                <a href="audio.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">⚛️</div>
+                <h3>Physics Engine</h3>
+                <p class="description">Simple physics simulation with gravity, velocity, and forces.</p>
+                <ul class="features">
+                    <li>Gravity simulation</li>
+                    <li>Velocity and acceleration</li>
+                    <li>Force application</li>
+                    <li>Particle systems</li>
+                </ul>
+                <a href="physics.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">💥</div>
+                <h3>Collision Detection</h3>
+                <p class="description">AABB, circle, and tilemap collision detection utilities.</p>
+                <ul class="features">
+                    <li>AABB box collisions</li>
+                    <li>Circle collisions</li>
+                    <li>Tilemap raycasting</li>
+                    <li>Collision responses</li>
+                </ul>
+                <a href="collision.html" class="api-link">View Documentation →</a>
+            </div>
+        </div>
+
+        <h2 class="category-header">🛠️ Utilities & Systems</h2>
+        <div class="api-grid">
+            <div class="api-card">
+                <div class="icon">💾</div>
+                <h3>Storage API</h3>
+                <p class="description">LocalStorage wrapper for saving and loading game data.</p>
+                <ul class="features">
+                    <li>Save/load game state</li>
+                    <li>High scores</li>
+                    <li>Settings persistence</li>
+                    <li>JSON serialization</li>
+                </ul>
+                <a href="storage.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">📺</div>
+                <h3>Screen Manager</h3>
+                <p class="description">Multi-screen game state management (title, gameplay, game over).</p>
+                <ul class="features">
+                    <li>Screen transitions</li>
+                    <li>State management</li>
+                    <li>Lifecycle callbacks</li>
+                    <li>Screen stacking</li>
+                </ul>
+                <a href="screens.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">⌨️</div>
+                <h3>Text Input</h3>
+                <p class="description">Keyboard text input handling for game UI.</p>
+                <ul class="features">
+                    <li>Text field input</li>
+                    <li>Cursor management</li>
+                    <li>Character filtering</li>
+                    <li>Clipboard support</li>
+                </ul>
+                <a href="textinput.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🖌️</div>
+                <h3>Sprite Editor</h3>
+                <p class="description">Built-in pixel art editor for creating and editing sprites.</p>
+                <ul class="features">
+                    <li>8×8 pixel editor</li>
+                    <li>Color palette</li>
+                    <li>Drawing tools</li>
+                    <li>Export/import</li>
+                </ul>
+                <a href="editor.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🖥️</div>
+                <h3>Fullscreen Button</h3>
+                <p class="description">Universal fullscreen toggle button for all demos.</p>
+                <ul class="features">
+                    <li>One-click fullscreen</li>
+                    <li>ESC key support</li>
+                    <li>Auto-positioning</li>
+                    <li>Cross-browser support</li>
+                </ul>
+                <a href="fullscreen-button.html" class="api-link">View Documentation →</a>
+            </div>
+        </div>
+
+        <h2 class="category-header">🔧 Internal Systems</h2>
+        <div class="api-grid">
+            <div class="api-card">
+                <div class="icon">🎬</div>
+                <h3>Console System</h3>
+                <p class="description">Core runtime console for loading and managing game cartridges.</p>
+                <ul class="features">
+                    <li>Cart loading</li>
+                    <li>Scene management</li>
+                    <li>Lifecycle hooks</li>
+                    <li>Error handling</li>
+                </ul>
+                <a href="console.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🖼️</div>
+                <h3>Framebuffer</h3>
+                <p class="description">Low-level pixel buffer for 2D rendering operations.</p>
+                <ul class="features">
+                    <li>Direct pixel access</li>
+                    <li>Buffer operations</li>
+                    <li>Color blending</li>
+                    <li>Memory management</li>
+                </ul>
+                <a href="framebuffer.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🔤</div>
+                <h3>Font System</h3>
+                <p class="description">Bitmap font rendering for text display.</p>
+                <ul class="features">
+                    <li>Bitmap font loading</li>
+                    <li>Character rendering</li>
+                    <li>Text measurement</li>
+                    <li>Unicode support</li>
+                </ul>
+                <a href="font.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">📦</div>
+                <h3>Asset Loader</h3>
+                <p class="description">Loading and caching of images, sounds, and models.</p>
+                <ul class="features">
+                    <li>Image loading</li>
+                    <li>Sound loading</li>
+                    <li>Model loading</li>
+                    <li>Cache management</li>
+                </ul>
+                <a href="assets.html" class="api-link">View Documentation →</a>
+            </div>
+
+            <div class="api-card">
+                <div class="icon">🎨</div>
+                <h3>GPU Systems</h3>
+                <p class="description">Low-level rendering backends (Canvas2D, WebGL2, Three.js).</p>
+                <ul class="features">
+                    <li>Canvas2D renderer</li>
+                    <li>WebGL2 renderer</li>
+                    <li>Three.js renderer</li>
+                    <li>Abstraction layer</li>
+                </ul>
+                <a href="gpu-systems.html" class="api-link">View Documentation →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="https://github.com/seacloud9/nova64" target="_blank">GitHub Repository</a></p>
+            <p style="margin-top: 10px;">Built with ❤️ for retro gaming enthusiasts</p>
+        </footer>
+    </div>
+</body>
+</html>
