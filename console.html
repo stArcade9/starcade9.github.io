@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <title>NOVA-64 Console</title>
-    <script type="module">
-
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-
-import { OrbitControls } from
-"https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
 </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -413,7 +413,7 @@ import { OrbitControls } from
       </div>
     </div>
     
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.js"></>
     <script>
       const urlParams = new URLSearchParams(window.location.search);
       const demoParam = urlParams.get('demo');
