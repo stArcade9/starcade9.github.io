@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Plumber 64 - Nova64</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      color: white;
+    }
+    #game-container {
+      position: relative;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: 24px;
+      color: #ff0000;
+      text-shadow: 2px 2px 4px #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="loading">🎮 Loading Super Plumber 64...</div>
+    <canvas id="screen"></canvas>
+  </div>
+  <script type="module">
+    import { createRuntime } from '../../runtime/core.js';
+    
+    const loadingEl = document.getElementById('loading');
+    
+    async function startGame() {
+      try {
+        loadingEl.textContent = '🎮 Initializing Nova64...';
+        
+        const gameModule = await import('./code.js');
+        
+        loadingEl.textContent = '🎮 Starting Super Plumber 64...';
+        
+        const runtime = createRuntime({
+          canvas: document.getElementById('screen'),
+          width: 640,
+          height: 360,
+          scale: 2,
+          game: gameModule
+        });
+        
+        runtime.start();
+        
+        loadingEl.style.display = 'none';
+        
+        console.log('🎮 SUPER PLUMBER 64 - Ready!');
+        console.log('Controls:');
+        console.log('  Arrow Keys / WASD - Move');
+        console.log('  Space / Z - Jump (triple jump!)');
+        console.log('  Down + Jump in air - Ground Pound');
+        console.log('  Q/E - Rotate Camera');
+        console.log('  Gamepad supported!');
+      } catch (error) {
+        console.error('Failed to start game:', error);
+        loadingEl.textContent = '❌ Error loading game. Check console.';
+        loadingEl.style.color = '#ff0000';
+      }
+    }
+    
+    startGame();
+  </script>
+</body>
+</html>
