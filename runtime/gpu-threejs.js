@@ -1,6 +1,7 @@
 // runtime/gpu-threejs.js
 // Three.js backend for 3D rendering with N64-style effects and 2D overlay support
 import * as THREE from 'three';
+import { PMREMGenerator } from 'three';
 import { Framebuffer64 } from './framebuffer.js';
 
 export class GpuThreeJS {
@@ -30,7 +31,8 @@ export class GpuThreeJS {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.6;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Note: PCFSoftShadowMap is deprecated in r182, PCFShadowMap now provides soft shadows
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.shadowMap.autoUpdate = true;
     
     // Enable advanced rendering features (using modern Three.js approach)
@@ -129,6 +131,21 @@ export class GpuThreeJS {
     pointLight2.shadow.mapSize.height = 1024;
     this.scene.add(pointLight2);
 
+    // Generate a procedural environment map so metallic/holographic surfaces
+    // actually show specular reflections (envMapIntensity was previously inert).
+    // We use a simple gradient sky as the env source.
+    try {
+      const pmremGenerator = new PMREMGenerator(this.renderer);
+      pmremGenerator.compileEquirectangularShader();
+      const skyColor = new THREE.Color(0x1a2040);
+      const envScene = new THREE.Scene();
+      envScene.background = skyColor;
+      this.scene.environment = pmremGenerator.fromScene(envScene).texture;
+      pmremGenerator.dispose();
+    } catch (_) {
+      // Envmap setup is non-critical; silently skip on unsupported renderers
+    }
+
     // Dramatic volumetric fog with color gradients
     this.scene.fog = new THREE.FogExp2(0x202050, 0.008);
     
@@ -151,24 +168,30 @@ export class GpuThreeJS {
     const overlay2DScene = new THREE.Scene();
 
     // Create texture from framebuffer for 2D overlay
+    // Keep a persistent Uint8Array - modify in-place rather than replacing ref
+    const overlayPixels = new Uint8Array(w * h * 4);
     const overlayTexture = new THREE.DataTexture(
-      new Uint8Array(w * h * 4), 
+      overlayPixels, 
       w, h, THREE.RGBAFormat
     );
     overlayTexture.needsUpdate = true;
+    // flipY=false means data row 0 = bottom of screen; we account for this in update
+    overlayTexture.flipY = false;
 
     // Create plane for 2D overlay
     const overlayGeometry = new THREE.PlaneGeometry(w, h);
     const overlayMaterial = new THREE.MeshBasicMaterial({ 
       map: overlayTexture,
       transparent: true,
+      depthTest: false,
+      depthWrite: false,
       blending: THREE.NormalBlending
     });
     const overlayMesh = new THREE.Mesh(overlayGeometry, overlayMaterial);
     overlayMesh.position.set(w/2, h/2, 0);
     overlay2DScene.add(overlayMesh);
 
-    return { camera: overlay2DCamera, scene: overlay2DScene, texture: overlayTexture };
+    return { camera: overlay2DCamera, scene: overlay2DScene, texture: overlayTexture, pixels: overlayPixels };
   }
 
   beginFrame() {
@@ -204,24 +227,33 @@ export class GpuThreeJS {
     // Update 2D overlay texture from framebuffer
     // Framebuffer is Uint16Array with R,G,B,A as separate 16-bit values
     const fb = this.fb.pixels;
-    const textureData = new Uint8Array(this.fb.width * this.fb.height * 4);
+    const W = this.fb.width;
+    const H = this.fb.height;
+    // Modify the persistent pixel buffer in-place (more reliable than replacing ref)
+    const textureData = this.overlay2D.pixels;
     
-    // fb.pixels stores: [r16, g16, b16, a16, r16, g16, b16, a16, ...]
-    // We need to convert to: [r8, g8, b8, a8, r8, g8, b8, a8, ...]
-    for (let i = 0; i < fb.length; i += 4) {
-      const idx = (i / 4) * 4; // Output index
-      
-      // Convert 16-bit (0-65535) to 8-bit (0-255) by dividing by 257
-      textureData[idx]     = fb[i]     / 257; // R
-      textureData[idx + 1] = fb[i + 1] / 257; // G
-      textureData[idx + 2] = fb[i + 2] / 257; // B
-      textureData[idx + 3] = fb[i + 3] / 257; // A
+    // fb row 0 = top of screen; WebGL textures have row 0 at bottom (flipY=false).
+    // Flip Y only: fb row y → texture row (H-1-y) so the image appears right-side-up.
+    // No X flip: fb col x → texture col x → UV u=x/W → screen position x (left→right). 
+    for (let y = 0; y < H; y++) {
+      const srcRow = y * W * 4;            // framebuffer row (y=0 = top of screen)
+      const dstRow = (H - 1 - y) * W * 4; // texture row  (row 0 = GL bottom = UV v=0)
+      for (let x = 0; x < W; x++) {
+        const src = srcRow + x * 4;
+        const dst = dstRow + x * 4;        // same column — no X flip
+        textureData[dst]     = fb[src]     / 257; // R
+        textureData[dst + 1] = fb[src + 1] / 257; // G
+        textureData[dst + 2] = fb[src + 2] / 257; // B
+        textureData[dst + 3] = fb[src + 3] / 257; // A
+      }
     }
     
-    this.overlay2D.texture.image.data = textureData;
+    // Mark texture for GPU upload on this frame
     this.overlay2D.texture.needsUpdate = true;
     
-    // Render 2D overlay on top of 3D scene
+    // CRITICAL: Reset render target to screen (null) before overlay render.
+    // EffectComposer can leave the renderer pointing at an internal buffer.
+    this.renderer.setRenderTarget(null);
     this.renderer.autoClear = false;
     this.renderer.render(this.overlay2D.scene, this.overlay2D.camera);
     this.renderer.autoClear = true;
@@ -268,9 +300,12 @@ export class GpuThreeJS {
     }
   }
 
-  setAmbientLight(color) {
+  setAmbientLight(color, intensity) {
     if (this.lights && this.lights.ambient) {
       this.lights.ambient.color.setHex(color);
+      if (typeof intensity === 'number') {
+        this.lights.ambient.intensity = intensity;
+      }
     }
   }
 
@@ -474,21 +509,15 @@ export class GpuThreeJS {
       }
     });
     
-    // Dynamic lighting effects
+      // Dynamic lighting effects — position only, no HSL cycling
     if (this.lights) {
       // Subtle light movement for atmosphere
       this.lights.point1.position.x = 10 + Math.sin(time * 0.5) * 3;
       this.lights.point1.position.y = 15 + Math.cos(time * 0.7) * 2;
-      
+
       this.lights.point2.position.x = -10 + Math.cos(time * 0.6) * 4;
       this.lights.point2.position.z = -10 + Math.sin(time * 0.4) * 3;
-      
-      // Color cycling for dramatic effect
-      const hue1 = (time * 50) % 360;
-      const hue2 = (time * 30 + 180) % 360;
-      
-      this.lights.fill2.color.setHSL(hue1 / 360, 0.7, 0.5);
-      this.lights.fill3.color.setHSL(hue2 / 360, 0.6, 0.4);
+      // NOTE: fill2 / fill3 colors are now static — carts own mood lighting
     }
     
     // Fog animation for atmospheric depth

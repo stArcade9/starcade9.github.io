@@ -88,7 +88,7 @@ export async function init() {
   for (let i = 0; i < 40; i++) spawnSpeedLine();
   for (let i = 0; i < 5; i++) {
     g.propTimer += 0.5; updateTrackSpawns(1);
-    g.rivalTimer += 0.5; updateRivals(1);
+    g.rivalTimer += 0.5; updateRivalsSpawn(1);
   }
 
   initStartScreen();

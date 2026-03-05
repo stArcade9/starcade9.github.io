@@ -146,6 +146,11 @@ function setupLighting() {
   setAmbientLight(0x222244);
   setLightColor(0xffffee);
   setLightDirection(0.3, -0.5, -0.8);
+  // Post-processing for cinematic cockpit feel
+  enableBloom(1.0, 0.4, 0.2); // Engine glow & weapon flash
+  enableFXAA();               // Smooth starfield
+  enableVignette(1.8, 0.85);  // Cockpit-style dark border
+  enableChromaticAberration(0.0015); // Subtle lens dispersion
 }
 
 function createStarField() {

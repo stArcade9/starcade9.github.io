@@ -118,6 +118,11 @@ export async function init() {
   
   // Create UI
   createUI();
+
+  // Post-processing: N64 platformer look
+  enableBloom(0.8, 0.5, 0.3);
+  enableFXAA();
+  enableVignette(1.2, 0.9);
   
   // Focus canvas for input
   const canvas = document.querySelector('canvas');

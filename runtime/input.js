@@ -153,6 +153,8 @@ class Input {
   
   // Helper functions for easier key checking
   isKeyDown(keyCode) { 
+    // Space must be checked before single-char conversion (' ' → 'Key ' is wrong)
+    if (keyCode === ' ') keyCode = 'Space';
     // Handle single character keys by converting to KeyCode format
     if (keyCode.length === 1) {
       keyCode = 'Key' + keyCode.toUpperCase();
@@ -161,12 +163,12 @@ class Input {
   }
   
   isKeyPressed(keyCode) { 
+    // Space must be checked before single-char conversion (' ' → 'Key ' is wrong)
+    if (keyCode === ' ') keyCode = 'Space';
     // Handle single character keys by converting to KeyCode format
     if (keyCode.length === 1) {
       keyCode = 'Key' + keyCode.toUpperCase();
     }
-    // Handle space key specially
-    if (keyCode === ' ') keyCode = 'Space';
     return !!this.keys.get(keyCode) && !this.prev.get(keyCode); 
   }
 }

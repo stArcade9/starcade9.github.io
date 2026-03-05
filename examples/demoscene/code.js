@@ -77,17 +77,9 @@ export async function init() {
     console.log('✅ Effects system active:', isEffectsEnabled());
   }
   
-  // Additional effects if available
-  try {
-    if (typeof enableChromaticAberration !== 'undefined') {
-      enableChromaticAberration(0.003);
-    }
-    if (typeof enableVignette !== 'undefined') {
-      enableVignette(0.4);
-    }
-  } catch (e) {
-    console.log('Advanced effects not available, continuing...');
-  }
+  // Additional effects
+  enableChromaticAberration(0.003);
+  enableVignette(1.5, 0.85);
   
   // Scene lighting - Balanced for visibility with neon contrast
   setLightDirection(-0.5, -0.8, -0.3);

@@ -16,6 +16,8 @@ import { uiApi } from '../runtime/ui.js';
 import { effectsApi } from '../runtime/api-effects.js';
 import { voxelApi } from '../runtime/api-voxel.js';
 import { createFullscreenButton } from '../runtime/fullscreen-button.js';
+import { storeApi } from '../runtime/store.js';
+import { api2d } from '../runtime/api-2d.js';
 
 const canvas = document.getElementById('screen');
 
@@ -46,6 +48,8 @@ const scrApi = screenApi();
 const skyApi = skyboxApi(gpu);
 const fxApi = effectsApi(gpu);
 const vxApi = voxelApi(gpu);
+const storeApiInst = storeApi();
+const api2dInst = api2d(gpu);
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -66,6 +70,8 @@ scrApi.exposeTo(g);
 skyApi.exposeTo(g);
 fxApi.exposeTo(g);
 vxApi.exposeTo(g);
+storeApiInst.exposeTo(g);
+api2dInst.exposeTo(g);
 
 // Now create UI API after g has rgba8 and other functions
 uiApiInstance = uiApi(gpu, g);
@@ -132,10 +138,20 @@ function loop() {
     iApi.step();
     const u0 = performance.now();
     
+    // Tick the global novaStore time counter
+    storeApiInst.tick(dt);
+
     // Update cart first (for manual screen management)
     // Check if cart exists to prevent errors during scene transitions
     if (nova.cart && nova.cart.update) {
-      nova.cart.update(dt);
+      try {
+        if (typeof globalThis.updateAnimations === "function") {
+          globalThis.updateAnimations(dt);
+        }
+        nova.cart.update(dt);
+      } catch (e) {
+        console.error('❌ Cart update() error:', e.message);
+      }
     }
     
     // Then update screen manager (for automatic screen management)
@@ -150,7 +166,11 @@ function loop() {
     // Draw cart first (for manual rendering)
     // Check if cart exists to prevent errors during scene transitions
     if (nova.cart && nova.cart.draw) {
-      nova.cart.draw();
+      try {
+        nova.cart.draw();
+      } catch (e) {
+        console.error('❌ Cart draw() error:', e.message, e.stack);
+      }
     }
     
     // Then draw screen manager (for automatic screen rendering)
@@ -158,7 +178,11 @@ function loop() {
     
     const d1 = performance.now();
     dMs = d1 - d0;
-    gpu.endFrame();
+    try {
+      gpu.endFrame();
+    } catch (e) {
+      console.error('❌ gpu.endFrame() error:', e.message, e.stack);
+    }
   }
   if (stepOnce) { stepOnce = false; }
 
@@ -185,9 +209,11 @@ attachUI();
 const urlParams = new URLSearchParams(window.location.search);
 const gameParam = urlParams.get('game');
 const gamePathParam = urlParams.get('path'); // Allow direct path parameter
+const demoParam = urlParams.get('demo'); // Also handle ?demo= from console.html links
 
 // Map game IDs to their paths
 const gameMap = {
+  'space-harrier': '/examples/space-harrier-3d/code.js',
   'fzero': '/examples/f-zero-nova-3d/code.js',
   'knight': '/examples/strider-demo-3d/code.js',
   'cyberpunk': '/examples/cyberpunk-city-3d/code.js',
@@ -197,12 +223,36 @@ const gameMap = {
   'minecraft': '/examples/minecraft-demo/code.js',
 };
 
-// default cart - load from URL param or default to hello-3d
+// Map demo names (from ?demo= URL param) to paths
+const demoMap = {
+  'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
+  'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
+  'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
+  'minecraft-demo': '/examples/minecraft-demo/code.js',
+  'super-plumber-64': '/examples/super-plumber-64/code.js',
+  'cyberpunk-city-3d': '/examples/cyberpunk-city-3d/code.js',
+  'strider-demo-3d': '/examples/strider-demo-3d/code.js',
+  'demoscene': '/examples/demoscene/code.js',
+  'space-harrier-3d': '/examples/space-harrier-3d/code.js',
+  'hello-3d': '/examples/hello-3d/code.js',
+  'mystical-realm-3d': '/examples/mystical-realm-3d/code.js',
+  'physics-demo-3d': '/examples/physics-demo-3d/code.js',
+  'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
+  'hello-skybox': '/examples/hello-skybox/code.js',
+};
+
+// default cart - load from URL param or default to space-harrier-3d
 (async () => {
-  let gamePath = '/examples/hello-3d/code.js';
+  let gamePath = '/examples/space-harrier-3d/code.js';
   
   if (gamePathParam) {
     gamePath = gamePathParam;
+  } else if (demoParam && demoMap[demoParam]) {
+    // Handle ?demo= parameter (from console.html links / index.html demo cards)
+    gamePath = demoMap[demoParam];
+  } else if (demoParam) {
+    // Fallback: try constructing path from demo name directly
+    gamePath = `/examples/${demoParam}/code.js`;
   } else if (gameParam && gameMap[gameParam]) {
     gamePath = gameMap[gameParam];
   }

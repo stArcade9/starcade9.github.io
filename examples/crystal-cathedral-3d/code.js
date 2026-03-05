@@ -35,11 +35,12 @@ export async function init() {
   setCameraTarget(0, 5, 0);
   setCameraFOV(70);
   
-  // Enable all advanced effects
+  // Enable all advanced effects — use real post-processing API
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(true);
-  enableMotionBlur(0.3);
+  enableBloom(1.2, 0.4, 0.1); // UnrealBloomPass: strength, radius, threshold
+  enableFXAA();               // Smooth jagged edges
+  enableVignette(1.4, 0.9);   // Cinematic dark border
   
   // Build the magnificent cathedral
   await buildCathedral();
@@ -481,33 +482,39 @@ export function draw() {
 }
 
 function drawStartScreen() {
-  // Holographic cyan gradient background
-  drawGradientRect(0, 0, 640, 360,
-    rgba8(10, 30, 60, 230),
-    rgba8(5, 15, 40, 245),
-    true
-  );
-  
+  // Deep space gradient background
+  drawGradient(0, 0, 640, 360, rgba8(5, 10, 40, 245), rgba8(10, 30, 60, 230), 'v');
+
+  // Radial glow behind title
+  drawRadialGradient(320, 100, 220, rgba8(0, 140, 255, 55), rgba8(0, 0, 0, 0));
+
+  // Noise grain for depth
+  drawNoise(0, 0, 640, 360, 12, Math.floor(startScreenTime * 10));
+
+  // Corner starbursts
+  const cornerPulse = Math.sin(startScreenTime * 2) * 0.5 + 0.5;
+  drawStarburst(28, 28, 18, 8, 6, rgba8(100, 200, 255, Math.floor(cornerPulse * 210)), true);
+  drawStarburst(612, 28, 18, 8, 6, rgba8(100, 200, 255, Math.floor(cornerPulse * 210)), true);
+  drawStarburst(28, 332, 13, 5, 5, rgba8(60, 150, 255, Math.floor(cornerPulse * 160)), true);
+  drawStarburst(612, 332, 13, 5, 5, rgba8(60, 150, 255, Math.floor(cornerPulse * 160)), true);
+
   // Animated holographic title
-  const hologramGlow = Math.sin(startScreenTime * 3) * 0.4 + 0.6;
   const hueShift = (startScreenTime * 50) % 360;
-  const hologramColor = hslToRgba8(hueShift, 80, Math.floor(hologramGlow * 80), 255);
-  
-  setFont('huge');
-  setTextAlign('center');
+  const hologramColor = hslToRgba8(hueShift, 80, 70, 255);
   const float = Math.sin(startScreenTime * 2) * 10;
-  drawTextShadow('CRYSTAL', 320, 50 + float, hologramColor, rgba8(0, 0, 0, 255), 6, 1);
-  drawTextShadow('CATHEDRAL', 320, 105 + float, rgba8(100, 200, 255, 255), rgba8(0, 0, 0, 255), 6, 1);
-  
+
+  drawGlowTextCentered('CRYSTAL', 320, 48 + float, hologramColor, rgba8(0, 80, 200, 180), 2);
+  drawGlowTextCentered('CATHEDRAL', 320, 100 + float, rgba8(100, 220, 255, 255), rgba8(0, 40, 120, 160), 2);
+
   // Holographic subtitle
   setFont('large');
+  setTextAlign('center');
   const pulse = Math.sin(startScreenTime * 4) * 0.2 + 0.8;
-  drawTextOutline('◆ Ultimate Graphics Showcase ◆', 320, 165, 
-    rgba8(150, 220, 255, Math.floor(pulse * 255)), 
-    rgba8(0, 0, 0, 255), 1);
-  
+  drawText('◆ Ultimate Graphics Showcase ◆', 320, 162,
+    rgba8(150, 220, 255, Math.floor(pulse * 255)), 1);
+
   // Info panel with holographic border
-  const panel = createPanel(centerX(480), 210, 480, 190, {
+  const panel = createPanel(centerX(480), 208, 480, 118, {
     bgColor: rgba8(10, 25, 50, 210),
     borderColor: rgba8(70, 150, 255, 255),
     borderWidth: 3,
@@ -516,31 +523,34 @@ function drawStartScreen() {
     gradientColor: rgba8(20, 40, 80, 210)
   });
   drawPanel(panel);
-  
+
   setFont('normal');
   setTextAlign('center');
-  drawText('ADVANCED FEATURES', 320, 230, rgba8(100, 200, 255, 255), 1);
-  
+  drawText('ADVANCED FEATURES', 320, 225, rgba8(100, 200, 255, 255), 1);
+
   setFont('small');
-  drawText('◆ Holographic Materials & Dynamic Lighting', 320, 255, uiColors.light, 1);
-  drawText('◆ Motion Blur, Bloom & Atmospheric Effects', 320, 270, uiColors.light, 1);
-  drawText('◆ 12 Sacred Pillars + Floating Crystal Array', 320, 285, uiColors.light, 1);
-  drawText('◆ Nintendo 64 / PlayStation Retro Aesthetics', 320, 300, uiColors.light, 1);
-  
+  drawText('◆ Holographic Materials & Dynamic Lighting', 320, 247, uiColors.light, 1);
+  drawText('◆ Motion Blur, Bloom & Atmospheric Effects', 320, 262, uiColors.light, 1);
+  drawText('◆ 12 Sacred Pillars + Floating Crystal Array', 320, 277, uiColors.light, 1);
+  drawText('◆ Nintendo 64 / PlayStation Retro Aesthetics', 320, 292, uiColors.light, 1);
+
   setFont('tiny');
-  drawText('Camera orbits automatically - Pure visual experience', 320, 320, uiColors.secondary, 1);
-  
+  drawText('Camera orbits automatically - Pure visual experience', 320, 310, uiColors.secondary, 1);
+
   // Draw buttons
   drawAllButtons();
-  
+
   // Pulsing crystal prompt
   const alpha = Math.floor((Math.sin(startScreenTime * 5) * 0.5 + 0.5) * 255);
   setFont('normal');
   drawText('◆ WITNESS THE ULTIMATE 3D GRAPHICS ◆', 320, 430, rgba8(100, 200, 255, alpha), 1);
-  
+
   // Tech info
   setFont('tiny');
-  drawText('Powered by Three.js + WebGL 2.0', 320, 345, rgba8(120, 160, 200, 150), 1);
+  drawText('Powered by Three.js + WebGL 2.0', 320, 340, rgba8(120, 160, 200, 150), 1);
+
+  // CRT scanlines for retro feel
+  drawScanlines(40, 2);
 }
 
 // Helper to convert HSL to rgba8

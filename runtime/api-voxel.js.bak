@@ -39,20 +39,20 @@ export function voxelApi(gpu) {
 
   // Block colors (for texture-less rendering)
   const BLOCK_COLORS = {
-    [BLOCK_TYPES.GRASS]: 0x44aa22,
-    [BLOCK_TYPES.DIRT]: 0x885533,
-    [BLOCK_TYPES.STONE]: 0x999999,
-    [BLOCK_TYPES.SAND]: 0xffdd88,
-    [BLOCK_TYPES.WATER]: 0x33aaff,
-    [BLOCK_TYPES.WOOD]: 0x774422,
-    [BLOCK_TYPES.LEAVES]: 0x228822,
-    [BLOCK_TYPES.COBBLESTONE]: 0x888888,
-    [BLOCK_TYPES.PLANKS]: 0xddaa55,
-    [BLOCK_TYPES.GLASS]: 0xccffff, 
-    [BLOCK_TYPES.BRICK]: 0xcc4433,
-    [BLOCK_TYPES.SNOW]: 0xffffff,
-    [BLOCK_TYPES.ICE]: 0xbbffff,
-    [BLOCK_TYPES.BEDROCK]: 0x333333
+    [BLOCK_TYPES.GRASS]: 0x4a9d2e,
+    [BLOCK_TYPES.DIRT]: 0x8b5a3c,
+    [BLOCK_TYPES.STONE]: 0x7f7f7f,
+    [BLOCK_TYPES.SAND]: 0xe0d68a,
+    [BLOCK_TYPES.WATER]: 0x3a5fcd,
+    [BLOCK_TYPES.WOOD]: 0x6f4e37,
+    [BLOCK_TYPES.LEAVES]: 0x228b22,
+    [BLOCK_TYPES.COBBLESTONE]: 0x696969,
+    [BLOCK_TYPES.PLANKS]: 0xdaa520,
+    [BLOCK_TYPES.GLASS]: 0xadd8e6,
+    [BLOCK_TYPES.BRICK]: 0x8b0000,
+    [BLOCK_TYPES.SNOW]: 0xfffafa,
+    [BLOCK_TYPES.ICE]: 0xb0e0e6,
+    [BLOCK_TYPES.BEDROCK]: 0x2f2f2f
   };
 
   // World data
@@ -210,7 +210,6 @@ export function voxelApi(gpu) {
     const vertices = [];
     const normals = [];
     const colors = [];
-    const uvs = [];
     const indices = [];
     let vertexCount = 0;
 
@@ -317,8 +316,6 @@ export function voxelApi(gpu) {
         normals.push(normal[0], normal[1], normal[2]);
         colors.push(color.r, color.g, color.b);
       }
-      // Add standard UV mapping
-      uvs.push(0, 1, 1, 1, 1, 0, 0, 0);
 
       // Add indices (two triangles per face)
       const offset = vertexCount;
@@ -350,7 +347,6 @@ export function voxelApi(gpu) {
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
       geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
       geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
       geometry.setIndex(indices);
       geometry.computeBoundingSphere();
     }
@@ -375,11 +371,9 @@ export function voxelApi(gpu) {
     // Create new mesh
     const geometry = createChunkMesh(chunk);
     if (geometry.attributes.position) {
-            const material = window.VOXEL_MATERIAL || new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshLambertMaterial({
         vertexColors: true,
-        flatShading: true,
-        roughness: 0.8,
-        metalness: 0.1
+        flatShading: true
       });
       
       const mesh = new THREE.Mesh(geometry, material);

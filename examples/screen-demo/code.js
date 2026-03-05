@@ -43,26 +43,41 @@ export async function init() {
     },
     
     draw() {
-      const centerX = 160;
-      
-      // Animated title
-      const titleY = 40 + Math.sin(this.animTime * 2) * 3;
-      print('NOVA64 SCREENS', centerX - 50, titleY, rgba8(100, 255, 100));
-      
+      const cx = 160;
+
+      // Dark gradient background
+      drawGradient(0, 0, 320, 240, rgba8(5, 5, 22, 255), rgba8(16, 8, 42, 255), 'v');
+
+      // Radial spotlight behind title
+      drawRadialGradient(cx, 42, 80, rgba8(0, 180, 120, 35), rgba8(0, 0, 0, 0));
+
+      // Title with glow
+      const titleY = 24 + Math.sin(this.animTime * 2) * 3;
+      drawGlowTextCentered('NOVA64', cx, titleY, rgba8(100, 255, 200, 255), rgba8(0, 100, 80, 140));
+
+      // Pixel-bordered option box
+      const boxY = 68;
+      const boxH = this.options.length * 25 + 18;
+      drawPixelBorder(28, boxY, 264, boxH, rgba8(70, 150, 255, 180), rgba8(18, 45, 110, 180), 2);
+
       // Menu options
       this.options.forEach((option, i) => {
-        const y = 100 + i * 25;
+        const y = 78 + i * 25;
         const selected = i === this.selectedOption;
-        const color = selected ? rgba8(255, 255, 0) : rgba8(200, 200, 200);
-        
+
         if (selected) {
-          print('> ' + option + ' <', centerX - 40, y, color);
+          // Highlight bar
+          drawGradient(30, y - 3, 260, 22, rgba8(50, 110, 255, 130), rgba8(25, 55, 190, 80), 'v');
+          drawGlowTextCentered('> ' + option + ' <', cx, y, rgba8(255, 255, 80, 255), rgba8(120, 100, 0, 90));
         } else {
-          print(option, centerX - 30, y, color);
+          printCentered(option, cx, y, rgba8(175, 180, 205, 255));
         }
       });
-      
-      print('WASD = Navigate, Space = Select', centerX - 70, 200, rgba8(150, 150, 150));
+
+      printCentered('W/S  Navigate    Space  Select', cx, 192, rgba8(110, 115, 135, 255));
+
+      // CRT scanlines overlay
+      drawScanlines(48, 2);
     }
   });
   
@@ -231,5 +246,3 @@ export function draw() {
   cls();
   // Screen manager handles drawing automatically
 }
-
-init();

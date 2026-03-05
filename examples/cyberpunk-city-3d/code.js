@@ -53,16 +53,10 @@ export async function init() {
   // 🎨 Enable ALL visual effects for maximum impact
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(true); // Critical for neon glow!
-  
-  // 🎆 Add post-processing effects if available
-  try {
-    enableChromaticAberration && enableChromaticAberration(0.002);
-    enableVignette && enableVignette(0.3);
-    enableScanlines && enableScanlines(0.15);
-  } catch (e) {
-    // Effects not available, continue
-  }
+  enableBloom(2.0, 0.3, 0.0); // Strong neon glow
+  enableFXAA();               // Anti-aliasing
+  enableChromaticAberration(0.003); // Cyberpunk lens distortion
+  enableVignette(1.6, 0.85);        // Dark vignette for immersion
   
   await buildCyberpunkCity();
   createPlayer();
@@ -144,38 +138,34 @@ export function draw() {
 }
 
 function drawStartScreen() {
-  // Neon gradient background
-  drawGradientRect(0, 0, 640, 360,
-    rgba8(50, 10, 50, 230),
-    rgba8(10, 5, 20, 245),
-    true
-  );
-  
-  // Neon title with glow
+  // Neon gradient background — dual-band
+  drawGradient(0, 0, 640, 200, rgba8(50, 10, 50, 235), rgba8(10, 5, 20, 245), 'v');
+  drawGradient(0, 200, 640, 160, rgba8(10, 5, 20, 245), rgba8(20, 5, 40, 240), 'v');
+
+  // Animated noise "digital rain" static
+  drawNoise(0, 0, 640, 360, 22, Math.floor(startScreenTime * 30));
+
+  // Radial spotlight behind title
+  drawRadialGradient(320, 88, 200, rgba8(180, 0, 120, 35), rgba8(0, 0, 0, 0));
+
+  // Neon title with glow effect
   const neonPulse = Math.sin(startScreenTime * 4) * 0.3 + 0.7;
-  const pinkNeon = rgba8(
-    255,
-    Math.floor(neonPulse * 100),
-    Math.floor(neonPulse * 200),
-    255
-  );
+  const pinkNeon = rgba8(255, Math.floor(neonPulse * 100), Math.floor(neonPulse * 200), 255);
   const cyanNeon = rgba8(0, Math.floor(neonPulse * 255), 255, 255);
-  
-  setFont('huge');
-  setTextAlign('center');
+
   const flicker = Math.random() > 0.95 ? -2 : 0;
-  drawTextShadow('CYBERPUNK', 320, 50 + flicker, pinkNeon, rgba8(0, 0, 0, 255), 7, 1);
-  drawTextShadow('CITY 3D', 320, 105 + flicker, cyanNeon, rgba8(0, 0, 0, 255), 7, 1);
-  
-  // Subtitle
-  setFont('large');
+  drawGlowTextCentered('CYBERPUNK', 320, 50 + flicker, pinkNeon, rgba8(150, 0, 100, 150), 2);
+  drawGlowTextCentered('CITY 3D', 320, 105 + flicker, cyanNeon, rgba8(0, 80, 140, 150), 2);
+
+  // Glitch subtitle
   const glitch = Math.random() > 0.97 ? Math.floor(Math.random() * 4) - 2 : 0;
-  drawTextOutline('▶ Nintendo 64 / PlayStation Style ◀', 320 + glitch, 165, 
-    rgba8(255, 255, 0, 255), 
-    rgba8(0, 0, 0, 255), 1);
-  
+  setFont('large');
+  setTextAlign('center');
+  drawText('▶ Nintendo 64 / PlayStation Style ◀', 320 + glitch, 162,
+    rgba8(255, 255, 0, 255), 1);
+
   // Info panel
-  const panel = createPanel(centerX(480), 210, 480, 190, {
+  const panel = createPanel(centerX(480), 208, 480, 118, {
     bgColor: rgba8(30, 10, 30, 210),
     borderColor: rgba8(255, 0, 100, 255),
     borderWidth: 3,
@@ -184,31 +174,38 @@ function drawStartScreen() {
     gradientColor: rgba8(50, 20, 50, 210)
   });
   drawPanel(panel);
-  
+
   setFont('normal');
   setTextAlign('center');
-  drawText('EXPLORE THE NEON METROPOLIS', 320, 230, rgba8(255, 0, 255, 255), 1);
-  
+  drawText('EXPLORE THE NEON METROPOLIS', 320, 225, rgba8(255, 0, 255, 255), 1);
+
   setFont('small');
-  drawText('▶ 50+ Procedural Buildings with Neon Lights', 320, 255, uiColors.light, 1);
-  drawText('▶ Flying Vehicles & Dynamic Particle System', 320, 270, uiColors.light, 1);
-  drawText('▶ Full Player Control + Flying Mode', 320, 285, uiColors.light, 1);
-  drawText('▶ Retro N64 Effects: Pixelation, Dithering, Bloom', 320, 300, uiColors.light, 1);
-  
+  drawText('▶ 50+ Procedural Buildings with Neon Lights', 320, 247, uiColors.light, 1);
+  drawText('▶ Flying Vehicles & Dynamic Particle System', 320, 262, uiColors.light, 1);
+  drawText('▶ Full Player Control + Flying Mode', 320, 277, uiColors.light, 1);
+  drawText('▶ Retro N64 Effects: Pixelation, Dithering, Bloom', 320, 292, uiColors.light, 1);
+
   setFont('tiny');
-  drawText('WASD: Move | SHIFT: Fly | SPACE: Boost', 320, 320, uiColors.secondary, 1);
-  
+  drawText('WASD: Move | SHIFT: Fly | SPACE: Boost', 320, 310, uiColors.secondary, 1);
+
   // Draw buttons
   drawAllButtons();
-  
+
+  // Animated neon wave at horizon
+  drawWave(0, 348, 640, 7, 0.032, startScreenTime * 2.5, rgba8(255, 0, 255, 110), 2);
+  drawWave(0, 353, 640, 5, 0.045, startScreenTime * 2.5 + 1.2, rgba8(0, 255, 255, 85), 2);
+
   // Pulsing neon prompt
   const alpha = Math.floor((Math.sin(startScreenTime * 6) * 0.5 + 0.5) * 255);
   setFont('normal');
   drawText('▶ WELCOME TO THE FUTURE ◀', 320, 430, rgba8(255, 0, 255, alpha), 1);
-  
+
   // Build info
   setFont('tiny');
-  drawText('GPU-Accelerated 3D City Simulation', 320, 345, rgba8(150, 100, 200, 150), 1);
+  drawText('GPU-Accelerated 3D City Simulation', 320, 338, rgba8(150, 100, 200, 150), 1);
+
+  // CRT scanlines
+  drawScanlines(52, 2);
 }
 
 async function buildCyberpunkCity() {

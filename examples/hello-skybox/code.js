@@ -29,6 +29,11 @@ export async function init() {
   setLightDirection(-0.3, -1, -0.5);
   setLightColor(0xffffff);
   setAmbientLight(0x404060);
+
+  // Post-processing: deep space cinematic look
+  enableBloom(1.0, 0.5, 0.2);
+  enableFXAA();
+  enableVignette(1.2, 0.9);
   
   // Create your game objects
   const ship = createCube(2, 0x0099ff, [0, 0, 0]);

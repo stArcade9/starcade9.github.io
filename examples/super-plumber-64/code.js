@@ -1,495 +1,553 @@
-// SUPER PLUMBER 64 - A Super Mario 64 inspired 3D platformer
-// Features: Triple jump, ground pound, coins, stars, platforming
+// ⭐ SUPER PLUMBER 64 — 3D Platforming Adventure ⭐
+// Ultimate Edition: Vibrant Colors, Smooth Physics, & Dynamic Shadows
 
-/* eslint-disable no-undef */
-// Nova64 runtime provides these globals
-
-let gameState = 'start';  // Start with start screen
-let camera = { x: 0, y: 15, z: 30, rotY: 0, distance: 25 };
-let player = {
-  x: 0, y: 5, z: 0,
-  vx: 0, vy: 0, vz: 0,
-  rotY: 0,
-  onGround: false,
-  jumpCount: 0,      // For triple jump
-  lastJumpTime: 0,
-  groundPounding: false,
-  groundPoundTime: 0
+// ── Globals & State ──────────────────────────────────────────
+const C = {
+  sky:        0x44aaff,
+  grass:      0x228811,
+  dirt:       0x553311,
+  plumberHat: 0xff0000,
+  plumberFace:0xffccaa,
+  plumberBody:0x0022cc,
+  coin:       0xffcc00,
+  enemyBody:  0xaa4400,
+  brick:      0xcc6600,
+  water:      0x0055ff,
 };
 
-let coins = [];
-let stars = [];
-let platforms = [];
-let objects = {
-  player: null,
-  coins: [],
-  stars: [],
-  platforms: []
+let gameState = 'start'; // start, playing, gameover, win
+let t = 0;
+let inputLock = 0;
+
+let g = {
+  score: 0,
+  coins: 0,
+  health: 3,
+  
+  // Plumber physics
+  p: {
+    x: 0, y: 10, z: 0,
+    vx: 0, vy: 0, vz: 0,
+    rotY: 0,
+    isGrounded: false,
+    jumpTimer: 0,
+    punchTimer: 0,
+    invuln: 0,
+    meshGroup: [],
+  },
+
+  platforms: [],
+  coinsList: [],
+  enemies: [],
+  particles: [],
 };
 
-let score = 0;
-let starsCollected = 0;
-let time = 0;
+// ── Initialization ─────────────────────────────────────────
+export async function init() {
+  console.log('🍄 SUPER PLUMBER 64 (Ultimate) — Initializing...');
 
-// Level data
-const LEVEL_PLATFORMS = [
-  // Starting platform
-  { x: 0, y: 0, z: 0, w: 12, h: 2, d: 12, color: 0x00aa00 },
-  
-  // Path platforms
-  { x: 15, y: 2, z: 0, w: 8, h: 2, d: 8, color: 0x00cc00 },
-  { x: 30, y: 5, z: -5, w: 10, h: 2, d: 10, color: 0x00dd00 },
-  { x: 45, y: 8, z: 0, w: 8, h: 2, d: 8, color: 0x00ee00 },
-  
-  // Side platforms
-  { x: 0, y: 10, z: -20, w: 10, h: 2, d: 10, color: 0x0099ff },
-  { x: 20, y: 12, z: -25, w: 8, h: 2, d: 8, color: 0x0088ff },
-  
-  // High platform with star
-  { x: 60, y: 20, z: 5, w: 12, h: 2, d: 12, color: 0xffaa00 },
-  
-  // Lower platforms for exploration
-  { x: -15, y: 3, z: 15, w: 8, h: 2, d: 8, color: 0xff6600 },
-  { x: -25, y: 6, z: 25, w: 10, h: 2, d: 10, color: 0xff8800 },
-  
-  // Moving platform path
-  { x: 35, y: 15, z: -15, w: 6, h: 2, d: 6, color: 0xff0088 },
-  { x: 50, y: 18, z: -20, w: 8, h: 2, d: 8, color: 0xff0088 }
-];
+  // Joyful cartoony look
+  setCameraFOV(60);
+  setCameraPosition(0, 15, 20);
+  setCameraTarget(0, 0, 0);
 
-const COIN_POSITIONS = [
-  // Path coins
-  { x: 15, y: 5, z: 0 },
-  { x: 22, y: 7, z: -2 },
-  { x: 30, y: 9, z: -5 },
-  { x: 38, y: 11, z: -2 },
-  { x: 45, y: 12, z: 0 },
-  
-  // Side path coins
-  { x: 0, y: 14, z: -20 },
-  { x: 5, y: 14, z: -22 },
-  { x: 15, y: 16, z: -25 },
-  { x: 20, y: 16, z: -25 },
-  
-  // Low area coins
-  { x: -15, y: 7, z: 15 },
-  { x: -20, y: 9, z: 20 },
-  { x: -25, y: 10, z: 25 },
-  
-  // High area coins
-  { x: 35, y: 19, z: -15 },
-  { x: 42, y: 21, z: -17 },
-  { x: 50, y: 22, z: -20 }
-];
+  setAmbientLight(0xffffff, 0.8);
+  setLightDirection(1, 2, 1);
+  setLightColor(0xffffff);
 
-const STAR_POSITIONS = [
-  { x: 60, y: 25, z: 5 },   // High platform
-  { x: -25, y: 12, z: 25 }, // Far exploration
-  { x: 50, y: 24, z: -20 }  // Upper path
-];
+  setFog(C.sky, 50, 150);
 
-export function init() {
-  console.log('🎮 SUPER PLUMBER 64 - Starting!');
-  
-  // Setup camera
-  setCameraFOV(75);
-  
-  // Lighting
-  setAmbientLight(0x404040);
-  setDirectionalLight(0xffffff, 1.0);
-  setLightDirection(-0.5, -1, -0.3);
-  
-  // Sky and fog - create beautiful space background
-  createSpaceSkybox({
-    starCount: 500,
-    starSize: 1.5,
-    nebulae: true,
-    nebulaColor: 0x87CEEB
-  });
-  setFog(0x87CEEB, 80, 200);
-  
-  // Create player (colorful character)
-  objects.player = createAdvancedCube(1.5, {
-    color: 0xff0000,        // Red like Mario
-    emissive: 0xff0000,
-    emissiveIntensity: 0.3,
-    flatShading: true
-  }, [player.x, player.y, player.z]);
-  
-  // Create platforms
-  LEVEL_PLATFORMS.forEach((plat) => {
-    const platform = createAdvancedCube(1, {
-      color: plat.color,
-      emissive: plat.color,
-      emissiveIntensity: 0.2,
-      flatShading: true
-    }, [plat.x, plat.y, plat.z]);
-    
-    setScale(platform, [plat.w, plat.h, plat.d]);
-    objects.platforms.push(platform);
-    platforms.push(plat);
-  });
-  
-  // Create coins (yellow spinning)
-  COIN_POSITIONS.forEach(pos => {
-    const coin = createAdvancedCube(0.5, {
-      color: 0xffff00,
-      emissive: 0xffff00,
-      emissiveIntensity: 0.8,
-      flatShading: true
-    }, [pos.x, pos.y, pos.z]);
-    
-    objects.coins.push(coin);
-    coins.push({ ...pos, collected: false, mesh: coin, rotY: 0 });
-  });
-  
-  // Create stars (shiny collectibles)
-  STAR_POSITIONS.forEach(pos => {
-    const star = createAdvancedCube(0.8, {
-      color: 0xffaa00,
-      emissive: 0xffff88,
-      emissiveIntensity: 1.2,
-      flatShading: true
-    }, [pos.x, pos.y, pos.z]);
-    
-    objects.stars.push(star);
-    stars.push({ ...pos, collected: false, mesh: star, rotY: 0, bobY: 0 });
-  });
-  
-  // Enable bloom for shiny collectibles
-  enableBloom(1.0, 0.6, 0.4);
-  enableFXAA();
+  if (typeof enableBloom === 'function') enableBloom(0.6, 0.8, 0.2); 
+  if (typeof enableFXAA === 'function') enableFXAA();
+  if (typeof createSkybox === 'function') {
+    createSkybox({ colorTop: 0x44bbff, colorBottom: 0xcceeaa });
+  }
+
+  buildLevel();
+  buildPlumber();
+
+  initStartScreen();
 }
 
-export function update(dt) {
-  time += dt;
+// ── Level Building ─────────────────────────────────────────
+function buildLevel() {
+  // Main Island
+  addPlatform(0, -1, 0, 30, 2, 30, C.grass);
   
-  // Handle start screen
-  if (gameState === 'start') {
-    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown('z') || btnp(4) || btnp(13)) {
-      gameState = 'playing';
-      console.log('🎮 Super Plumber 64 - Game Started!');
-    }
+  // Surrounding water
+  const water = createPlane(200, 200, C.water, [0, -3, 0], { material: 'standard', transparent: true, opacity: 0.6 });
+  rotateMesh(water, -Math.PI/2, 0, 0);
+
+  // Stepping stones
+  addPlatform(0, 2, -25, 8, 1, 8, C.grass);
+  addPlatform(-15, 5, -35, 6, 1, 6, C.grass);
+  addPlatform(15, 8, -45, 6, 1, 6, C.grass);
+  
+  // Giant mountain
+  addPlatform(0, 5, -60, 20, 15, 20, C.dirt);
+  addPlatform(0, 12, -60, 22, 1, 22, C.grass); // Top grass
+
+  // Floating Bricks
+  addPlatform(0, 6, -10, 3, 3, 3, C.brick, true);
+  addPlatform(-5, 6, -10, 3, 3, 3, C.brick, true);
+  addPlatform(5, 6, -10, 3, 3, 3, C.brick, true);
+
+  // Spawn Coins
+  spawnCoin(-5, 8, -10);
+  spawnCoin(0, 8, -10);
+  spawnCoin(5, 8, -10);
+  
+  spawnCoin(0, 4, -25);
+  spawnCoin(-15, 7, -35);
+  spawnCoin(15, 10, -45);
+  
+  // Coin ring on mountain
+  for(let i=0; i<8; i++) {
+    const a = (i/8)*Math.PI*2;
+    spawnCoin(Math.cos(a)*6, 14, -60 + Math.sin(a)*6);
+  }
+
+  // Spawn Enemies
+  spawnEnemy(10, 0, -5);
+  spawnEnemy(-10, 0, -5);
+  spawnEnemy(0, 13, -60); // Mountain guard
+}
+
+function addPlatform(x, y, z, sx, sy, sz, color, isBrick = false) {
+  const mesh = createCube(1, color, [x, y, z], { 
+    material: 'standard', 
+    roughness: isBrick ? 0.9 : 0.6 
+  });
+  setScale(mesh, sx, sy, sz);
+  g.platforms.push({ mesh, x, y, z, sx, sy, sz, isBrick });
+}
+
+function spawnCoin(x, y, z) {
+  const mesh = createSphere(0.8, C.coin, [x, y, z], 12, { material: 'metallic', metalness: 0.8, roughness: 0.2 });
+  setScale(mesh, 1, 1, 0.2); // Flatten into a coin
+  g.coinsList.push({ mesh, x, y, z, t: Math.random() * 10 });
+}
+
+function spawnEnemy(x, y, z) {
+  const mesh = createSphere(1.2, C.enemyBody, [x, y+0.6, z], 8, { material: 'standard' });
+  const eyeL = createCube(0.2, 0x000000, [x-0.4, y+1, z+1], { material: 'standard' });
+  const eyeR = createCube(0.2, 0x000000, [x+0.4, y+1, z+1], { material: 'standard' });
+  
+  g.enemies.push({
+    meshes: [mesh, eyeL, eyeR],
+    x, y, z,
+    vx: (Math.random()>0.5?1:-1) * 3,
+    startZ: z,
+    alive: true
+  });
+}
+
+function buildPlumber() {
+  const p = g.p;
+  // Body (Overalls)
+  const body = createCube(1.2, C.plumberBody, [0,0,0], { material: 'standard', roughness: 0.8 });
+  setScale(body, 1, 1.2, 1);
+  
+  // Head
+  const head = createSphere(0.8, C.plumberFace, [0, 1.2, 0], 12, { material: 'standard' });
+  
+  // Hat
+  const hat = createSphere(0.82, C.plumberHat, [0, 1.5, 0], 12, { material: 'standard' });
+  setScale(hat, 1, 0.5, 1);
+  const brim = createCube(1, C.plumberHat, [0, 1.4, 0.5], { material: 'standard' });
+  setScale(brim, 1.2, 0.1, 0.6);
+
+  p.meshGroup = [
+    { m: body, ox: 0, oy: 0.6, oz: 0 },
+    { m: head, ox: 0, oy: 1.6, oz: 0 },
+    { m: hat,  ox: 0, oy: 2.0, oz: 0 },
+    { m: brim, ox: 0, oy: 1.9, oz: 0.5 }
+  ];
+}
+
+function createFX(cx, cy, cz, color, count=10, speed=10) {
+  for (let i = 0; i < count; i++) {
+    const mesh = createCube(0.4, color, [cx, cy, cz], { material: 'emissive', emissive: color });
+    const a = Math.random() * Math.PI * 2;
+    const a2 = Math.random() * Math.PI - Math.PI/2;
+    g.particles.push({
+      mesh, x: cx, y: cy, z: cz,
+      vx: Math.cos(a) * Math.cos(a2) * speed,
+      vy: Math.abs(Math.sin(a2)) * speed + 5,
+      vz: Math.sin(a) * Math.cos(a2) * speed,
+      life: 0.3 + Math.random() * 0.4
+    });
+  }
+}
+
+// ── Game Loop ──────────────────────────────────────────────
+export function update(dt) {
+  t += dt;
+
+  if (gameState !== 'playing') {
+    if (inputLock > 0) inputLock -= dt;
+    updateAllButtons();
+    if (gameState === 'start' && inputLock <= 0 && isKeyPressed('Space')) startGame();
     return;
   }
-  
-  if (gameState !== 'playing') return;
-  
-  // Input handling
-  const moveSpeed = 12;
-  const turnSpeed = 3;
-  
-  // Camera rotation with shoulder buttons / QE keys
-  if (btn(8) || isKeyDown('q')) {
-    camera.rotY += turnSpeed * dt;
+
+  const p = g.p;
+  if (p.invuln > 0) p.invuln -= dt;
+
+  // Falling out of bounds
+  if (p.y < -10) {
+    p.y = 15; p.x = 0; p.z = 0; p.vx = 0; p.vz = 0;
+    takeDamage();
   }
-  if (btn(9) || isKeyDown('e')) {
-    camera.rotY -= turnSpeed * dt;
+
+  handlePlayerInput(dt);
+  updatePhysics(dt);
+  updatePlayerMeshes();
+  
+  updateCoins(dt);
+  updateEnemies(dt);
+  updateParticles(dt);
+
+  // Camera Orbit & Follow
+  // Smoothly trail player
+  const camDist = 12;
+  const camH = 6;
+  const targetCamX = p.x - Math.sin(p.rotY) * camDist;
+  const targetCamZ = p.z - Math.cos(p.rotY) * camDist;
+
+  // Simple interpolation logic for camera isn't strictly necessary for a retro feel, 
+  // but let's just stick to a fixed tracking for stability
+  setCameraPosition(p.x, p.y + camH + 2, p.z + 14);
+  setCameraTarget(p.x, p.y + 2, p.z);
+}
+
+function handlePlayerInput(dt) {
+  const p = g.p;
+  let ax = 0, az = 0;
+  
+  // Movement
+  if (key('ArrowLeft')  || key('KeyA') || btn(14)) ax = -1;
+  if (key('ArrowRight') || key('KeyD') || btn(15)) ax =  1;
+  if (key('ArrowUp')    || key('KeyW') || btn(12)) az = -1;
+  if (key('ArrowDown')  || key('KeyS') || btn(13)) az =  1;
+
+  const moveSpd = 30;
+  p.vx += ax * moveSpd * dt;
+  p.vz += az * moveSpd * dt;
+
+  // Friction
+  const fric = p.isGrounded ? 8 : 2;
+  p.vx *= (1 - fric * dt);
+  p.vz *= (1 - fric * dt);
+
+  // Facing rotation
+  if (Math.abs(p.vx) > 0.1 || Math.abs(p.vz) > 0.1) {
+    p.rotY = Math.atan2(p.vx, p.vz);
   }
-  
-  // Gamepad right stick camera
-  if (gamepadConnected()) {
-    camera.rotY -= rightStickX() * turnSpeed * dt;
+
+  // Jump
+  if ((key('Space') || btn(0)) && p.isGrounded && p.jumpTimer <= 0) {
+    p.vy = 22; // Boing!
+    p.isGrounded = false;
+    p.jumpTimer = 0.2;
+    createFX(p.x, p.y, p.z, 0xffffff, 5, 2); // Dust jump
   }
-  
-  // Movement relative to camera
-  let moveX = 0;
-  let moveZ = 0;
-  
-  if (btn(0) || isKeyDown('ArrowLeft') || isKeyDown('a')) moveX = -1;   // Left
-  if (btn(1) || isKeyDown('ArrowRight') || isKeyDown('d')) moveX = 1;   // Right
-  if (btn(2) || isKeyDown('ArrowUp') || isKeyDown('w')) moveZ = -1;     // Forward
-  if (btn(3) || isKeyDown('ArrowDown') || isKeyDown('s')) moveZ = 1;    // Backward
-  
-  // Gamepad left stick
-  if (gamepadConnected()) {
-    const lx = leftStickX();
-    const ly = leftStickY();
-    if (Math.abs(lx) > 0.1) moveX = lx;
-    if (Math.abs(ly) > 0.1) moveZ = ly;
-  }
-  
-  // Apply camera rotation to movement
-  if (moveX !== 0 || moveZ !== 0) {
-    const angle = Math.atan2(moveX, moveZ) + camera.rotY;
-    const speed = Math.sqrt(moveX * moveX + moveZ * moveZ);
-    player.vx = Math.sin(angle) * moveSpeed * speed;
-    player.vz = Math.cos(angle) * moveSpeed * speed;
-    player.rotY = angle;
-  } else {
-    // Friction
-    player.vx *= 0.85;
-    player.vz *= 0.85;
-  }
-  
-  // Jump mechanics (Triple jump!)
-  const jumpPressed = btnp(4) || btnp(13) || isKeyPressed('Space') || isKeyPressed('z');
-  if (jumpPressed && player.onGround && !player.groundPounding) {
-    const now = time;
-    const timeSinceLastJump = now - player.lastJumpTime;
-    
-    // Triple jump logic
-    if (timeSinceLastJump < 0.5) {
-      player.jumpCount++;
-    } else {
-      player.jumpCount = 1;
-    }
-    
-    // Higher jumps for combos
-    if (player.jumpCount === 1) {
-      player.vy = 12;  // Normal jump
-    } else if (player.jumpCount === 2) {
-      player.vy = 14;  // Double jump - higher
-    } else if (player.jumpCount >= 3) {
-      player.vy = 18;  // Triple jump - highest!
-      player.jumpCount = 0; // Reset
-    }
-    
-    player.lastJumpTime = now;
-    player.onGround = false;
-  }
-  
-  // Ground pound (press down + jump in air)
-  const downPressed = btn(3) || isKeyDown('ArrowDown') || isKeyDown('s');
-  if ((btnp(4) || isKeyPressed('Space') || isKeyPressed('z')) && !player.onGround && !player.groundPounding && downPressed) {
-    player.groundPounding = true;
-    player.vy = -25; // Fast downward
-    player.groundPoundTime = time;
-  }
-  
+  if (p.jumpTimer > 0) p.jumpTimer -= dt;
+}
+
+function updatePhysics(dt) {
+  const p = g.p;
+
   // Gravity
-  if (!player.onGround || player.groundPounding) {
-    player.vy -= 35 * dt;
-  }
-  
-  // Apply velocity
-  player.x += player.vx * dt;
-  player.y += player.vy * dt;
-  player.z += player.vz * dt;
-  
-  // Collision with platforms
-  player.onGround = false;
-  platforms.forEach(plat => {
-    const halfW = plat.w / 2;
-    const halfD = plat.d / 2;
-    const platTop = plat.y + plat.h / 2;
-    const platBottom = plat.y - plat.h / 2;
+  p.vy -= 60 * dt; 
+  p.isGrounded = false;
+
+  // Move Y
+  p.y += p.vy * dt;
+  handleCollisions('y');
+
+  // Move X
+  p.x += p.vx * dt;
+  handleCollisions('x');
+
+  // Move Z
+  p.z += p.vz * dt;
+  handleCollisions('z');
+}
+
+// Simple AABB Collision
+function handleCollisions(axis) {
+  const p = g.p;
+  // Plumber size
+  const pr = 0.6; 
+  const ph = 2.0; 
+
+  g.platforms.forEach(plat => {
+    const hx = plat.sx/2, hy = plat.sy/2, hz = plat.sz/2;
     
-    // Check if player is above platform
-    if (player.x > plat.x - halfW && player.x < plat.x + halfW &&
-        player.z > plat.z - halfD && player.z < plat.z + halfD) {
-      
-      // Landing on top
-      if (player.y - 0.75 <= platTop && player.y - 0.75 >= platBottom && player.vy <= 0) {
-        player.y = platTop + 0.75;
-        player.vy = 0;
-        player.onGround = true;
-        
-        // Ground pound bounce
-        if (player.groundPounding) {
-          player.vy = 8; // Small bounce
-          player.groundPounding = false;
-          player.jumpCount = 0;
+    const overlapX = (p.x + pr > plat.x - hx) && (p.x - pr < plat.x + hx);
+    const overlapY = (p.y + ph > plat.y - hy) && (p.y < plat.y + hy);
+    const overlapZ = (p.z + pr > plat.z - hz) && (p.z - pr < plat.z + hz);
+
+    if (overlapX && overlapY && overlapZ) {
+      if (axis === 'y') {
+        if (p.vy < 0) { // Landing
+          p.y = plat.y + hy;
+          p.vy = 0;
+          p.isGrounded = true;
+        } else if (p.vy > 0) { // Bonk head
+          p.y = plat.y - hy - ph;
+          p.vy = -2;
+          // Break brick?
+          if (plat.isBrick) {
+             createFX(plat.x, plat.y, plat.z, C.brick, 15, 10);
+             g.score += 50;
+             destroyMesh(plat.mesh);
+             plat.destroyed = true; // Mark for cleanup
+          }
         }
       }
-    }
-  });
-  
-  // Fall detection - respawn
-  if (player.y < -10) {
-    player.x = 0;
-    player.y = 10;
-    player.z = 0;
-    player.vx = 0;
-    player.vy = 0;
-    player.vz = 0;
-    player.groundPounding = false;
-  }
-  
-  // Update player mesh
-  setPosition(objects.player, [player.x, player.y, player.z]);
-  setRotation(objects.player, [0, player.rotY, 0]);
-  
-  // Scale player during ground pound
-  if (player.groundPounding) {
-    const scale = 1.0 + Math.sin(time * 20) * 0.2;
-    setScale(objects.player, [1.5, scale * 1.5, 1.5]);
-  } else {
-    setScale(objects.player, [1.5, 1.5, 1.5]);
-  }
-  
-  // Animate coins (spin)
-  coins.forEach((coin) => {
-    if (!coin.collected) {
-      coin.rotY += 3 * dt;
-      setRotation(coin.mesh, [0, coin.rotY, 0]);
-      
-      // Collect coins
-      const dist = Math.sqrt(
-        (player.x - coin.x) ** 2 +
-        (player.y - coin.y) ** 2 +
-        (player.z - coin.z) ** 2
-      );
-      
-      if (dist < 2) {
-        coin.collected = true;
-        score += 10;
-        destroyMesh(coin.mesh);
+      else if (axis === 'x') {
+        if (p.vx > 0) { p.x = plat.x - hx - pr; p.vx = 0; }
+        else if (p.vx < 0) { p.x = plat.x + hx + pr; p.vx = 0; }
+      }
+      else if (axis === 'z') {
+        if (p.vz > 0) { p.z = plat.z - hz - pr; p.vz = 0; }
+        else if (p.vz < 0) { p.z = plat.z + hz + pr; p.vz = 0; }
       }
     }
   });
-  
-  // Animate stars (bob and spin)
-  stars.forEach((star, i) => {
-    if (!star.collected) {
-      star.rotY += 2 * dt;
-      star.bobY = Math.sin(time * 2 + i) * 1;
-      setRotation(star.mesh, [0, star.rotY, Math.sin(time * 3 + i) * 0.3]);
-      setPosition(star.mesh, [star.x, star.y + star.bobY, star.z]);
-      
-      // Collect stars
-      const dist = Math.sqrt(
-        (player.x - star.x) ** 2 +
-        (player.y - (star.y + star.bobY)) ** 2 +
-        (player.z - star.z) ** 2
-      );
-      
-      if (dist < 3) {
-        star.collected = true;
-        starsCollected++;
-        score += 100;
-        destroyMesh(star.mesh);
-      }
-    }
-  });
-  
-  // Camera follow player (3rd person)
-  const camDist = camera.distance;
-  const camHeight = 8;
-  camera.x = player.x - Math.sin(camera.rotY) * camDist;
-  camera.z = player.z - Math.cos(camera.rotY) * camDist;
-  camera.y = player.y + camHeight;
-  
-  setCameraPosition(camera.x, camera.y, camera.z);
-  setCameraTarget(player.x, player.y + 2, player.z);
+
+  // Cleanup destroyed bricks
+  for(let i = g.platforms.length - 1; i>=0; i--) {
+     if(g.platforms[i].destroyed) g.platforms.splice(i, 1);
+  }
 }
 
-export function draw() {
-  // Start screen
-  if (gameState === 'start') {
-    drawStartScreen();
-    return;
-  }
+function updatePlayerMeshes() {
+  const p = g.p;
+  // Make invisible if hit/flashing
+  const visible = (p.invuln <= 0 || Math.floor(t * 15) % 2 === 0);
   
-  // HUD - 2D overlay
+  const cr = Math.cos(p.rotY), sr = Math.sin(p.rotY);
+
+  p.meshGroup.forEach(part => {
+    if(!visible) { setPosition(part.m, 0, -100, 0); return; }
+    
+    // Rotate offset around Y
+    const rx = part.ox * cr + part.oz * sr;
+    const rz = -part.ox * sr + part.oz * cr;
+
+    // Bobbing walk animation
+    let animY = 0;
+    if (p.isGrounded && (Math.abs(p.vx)>1 || Math.abs(p.vz)>1)) {
+        animY = Math.abs(Math.sin(t * 15)) * 0.2;
+    }
+
+    setPosition(part.m, p.x + rx, p.y + part.oy + animY, p.z + rz);
+    setRotation(part.m, 0, p.rotY, 0);
+  });
+}
+
+function updateCoins(dt) {
+  for (let i = g.coinsList.length - 1; i >= 0; i--) {
+    let c = g.coinsList[i];
+    c.t += dt;
+    
+    // Spin & hover
+    c.y += Math.sin(c.t * 5) * 0.005;
+    setPosition(c.mesh, c.x, c.y, c.z);
+    setRotation(c.mesh, 0, c.t * 3, 0);
+
+    // Collect
+    const dx = c.x - g.p.x;
+    const dy = c.y - (g.p.y + 1);
+    const dz = c.z - g.p.z;
+    if (dx*dx + dy*dy + dz*dz < 4) {
+      g.score += 100;
+      g.coins++;
+      createFX(c.x, c.y, c.z, C.coin, 8, 8);
+      destroyMesh(c.mesh);
+      g.coinsList.splice(i, 1);
+      
+      // Win?
+      if (g.coinsList.length === 0) {
+        gameState = 'win';
+        inputLock = 1.0;
+        initWinScreen();
+      }
+    }
+  }
+}
+
+function updateEnemies(dt) {
+  const p = g.p;
+  for (let i = g.enemies.length - 1; i >= 0; i--) {
+    let e = g.enemies[i];
+    if (!e.alive) continue;
+
+    e.x += e.vx * dt;
+    // Patrol back and forth
+    if (Math.abs(e.x - 0) > 12) e.vx *= -1; // simple bound
+
+    // Wobble walk
+    e.y += Math.sin(t * 10 + i) * 0.01;
+
+    e.meshes[0] && setPosition(e.meshes[0], e.x, e.y+0.6, e.z);
+    e.meshes[1] && setPosition(e.meshes[1], e.x + (e.vx>0?0.4:-0.4), e.y+1, e.z+1);
+    e.meshes[2] && setPosition(e.meshes[2], e.x + (e.vx>0?0.8:-0.0), e.y+1, e.z+1);
+
+    // Collision with player
+    const dx = e.x - p.x;
+    const dy = (e.y+0.6) - (p.y+1);
+    const dz = e.z - p.z;
+    
+    if (dx*dx + dy*dy + dz*dz < 2.5) {
+      // Goomba Stomp
+      if (p.vy < 0 && p.y > e.y + 0.5) {
+        p.vy = 15; // Bounce off enemy
+        e.alive = false;
+        createFX(e.x, e.y+0.5, e.z, C.enemyBody, 15);
+        e.meshes.forEach(m => destroyMesh(m));
+        g.enemies.splice(i, 1);
+        g.score += 200;
+      } else if (p.invuln <= 0) {
+        takeDamage();
+      }
+    }
+  }
+}
+
+function takeDamage() {
+  if (g.p.invuln > 0) return;
+  g.health--;
+  g.p.invuln = 1.5;
+  g.p.vy = 12; // knockback
+  createFX(g.p.x, g.p.y+1, g.p.z, C.plumberFace, 15);
+  
+  if (g.health <= 0) {
+    gameState = 'gameover';
+    inputLock = 1.0;
+    g.p.meshGroup.forEach(part => setPosition(part.m, 0,-100,0));
+    initGameOverScreen();
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = g.particles.length - 1; i >= 0; i--) {
+    let p = g.particles[i];
+    p.x += p.vx * dt; 
+    p.y += p.vy * dt; 
+    p.z += p.vz * dt;
+    p.vy -= 30 * dt; // grav
+    p.life -= dt;
+    
+    let a = Math.max(0.01, p.life);
+    setScale(p.mesh, a, a, a);
+    setPosition(p.mesh, p.x, p.y, p.z);
+
+    if (p.life <= 0) {
+      destroyMesh(p.mesh);
+      g.particles.splice(i, 1);
+    }
+  }
+}
+
+// ── Screens & UI ───────────────────────────────────────────
+export function draw() {
+  if (gameState === 'start') { drawStartScreen(); return; }
+  if (gameState === 'gameover') { drawGameOver(); return; }
+  if (gameState === 'win') { drawWinScreen(); return; }
+  
+  drawHUD();
+}
+
+function drawHUD() {
+  setFont('large'); setTextAlign('left');
+  
+  // Coin UI
+  drawCircle(30, 25, 12, rgba8(255, 200, 0, 255));
+  drawTextShadow(`x ${g.coins.toString().padStart(2, '0')}`, 50, 32, rgba8(255, 255, 255, 255), rgba8(0,0,0,255), 2);
   
   // Score
-  drawTextOutline(
-    `COINS: ${score}`,
-    10, 10,
-    rgba8(255, 255, 0, 255),
-    rgba8(0, 0, 0, 255),
-    2
-  );
-  
-  // Stars
-  drawTextOutline(
-    `STARS: ${starsCollected}/3`,
-    10, 30,
-    rgba8(255, 170, 0, 255),
-    rgba8(0, 0, 0, 255),
-    2
-  );
-  
-  // Jump indicator
-  if (player.jumpCount > 0 && time - player.lastJumpTime < 0.5) {
-    const jumps = ['JUMP!', 'DOUBLE!', 'TRIPLE!!!'][player.jumpCount - 1] || 'JUMP!';
-    drawTextOutline(
-      jumps,
-      280, 50,
-      rgba8(255, 255, 255, 255),
-      rgba8(255, 100, 0, 255),
-      2
-    );
-  }
-  
-  // Ground pound indicator
-  if (player.groundPounding) {
-    drawTextOutline(
-      'GROUND POUND!',
-      240, 80,
-      rgba8(255, 50, 50, 255),
-      rgba8(0, 0, 0, 255),
-      2
-    );
-  }
-  
-  // Controls
-  print('ARROWS: Move  SPACE: Jump', 10, 340, rgba8(255, 255, 255, 200), 1);
-  print('Q/E: Rotate Camera  DOWN+JUMP: Ground Pound', 10, 352, rgba8(255, 255, 255, 200), 1);
-  
-  // Win condition
-  if (starsCollected >= 3) {
-    drawTextShadow(
-      'ALL STARS COLLECTED!',
-      200, 180,
-      rgba8(255, 255, 0, 255),
-      rgba8(255, 100, 0, 255),
-      3, 3
-    );
-    drawTextShadow(
-      'YOU WIN!',
-      280, 200,
-      rgba8(0, 255, 0, 255),
-      rgba8(0, 100, 0, 255),
-      3, 3
-    );
+  setTextAlign('right');
+  drawTextShadow(`SCORE ${g.score.toString().padStart(6, '0')}`, 620, 32, rgba8(255, 255, 255, 255), rgba8(0,0,0,255), 2);
+
+  // Health
+  for (let i = 0; i < 3; i++) {
+    const c = i < g.health ? rgba8(255, 50, 50, 255) : rgba8(50, 50, 50, 150);
+    drawCircle(30 + i*30, 60, 10, c);
   }
 }
 
 function drawStartScreen() {
-  // Dark background overlay
-  rect(0, 0, 640, 360, rgba8(10, 10, 30, 220), true);
+  drawRadialGradient(320, 180, 400, rgba8(100, 200, 255, 100), rgba8(0,0,0,0));
+
+  const bob = Math.sin(t * 3) * 8;
   
-  // Title with shadow effect (centered manually)
-  drawTextShadow(
-    'SUPER PLUMBER 64',
-    200, 80,
-    rgba8(255, 0, 0, 255),
-    rgba8(100, 0, 0, 255),
-    3, 3
-  );
+  setFont('huge'); setTextAlign('center');
+  drawGlowTextCentered('SUPER PLUMBER', 320, 80 + bob, rgba8(255, 50, 50, 255), rgba8(150, 0, 0, 200), 5);
+  drawGlowTextCentered('NOVA 64', 320, 140 + bob, rgba8(255, 200, 0, 255), rgba8(150, 100, 0, 200), 3);
+
+  const panel = createPanel(centerX(360), 200, 360, 80, {
+    bgColor: rgba8(10, 30, 80, 200), borderColor: rgba8(255, 255, 255, 200), borderWidth: 3
+  });
+  drawPanel(panel);
+
+  setFont('small');
+  drawText('◆ ARROWS / WASD to Move', 320, 220, rgba8(255, 255, 255, 255));
+  drawText('◆ SPACE to Jump & Stomp Enemies!', 320, 240, rgba8(255, 255, 0, 255));
+  drawText('◆ Collect ALL Coins to Win!', 320, 260, rgba8(0, 255, 100, 255));
+
+  drawAllButtons();
+}
+
+function drawGameOver() {
+  rect(0,0,640,360, rgba8(0,0,0,200), true);
+  setFont('huge'); setTextAlign('center');
+  drawTextShadow('GAME OVER', 320, 150, rgba8(255, 50, 50, 255), rgba8(0,0,0,255), 4);
+  drawAllButtons();
+}
+
+function drawWinScreen() {
+  rect(0,0,640,360, rgba8(255,255,255,150), true);
+  setFont('huge'); setTextAlign('center');
+  drawGlowTextCentered('COURSE CLEAR!', 320, 130, rgba8(50, 255, 100, 255), rgba8(0,100,0,255), 4);
   
-  // Subtitle
-  drawTextOutline(
-    'A Mario-Style 3D Platformer',
-    180, 120,
-    rgba8(255, 255, 100, 255),
-    rgba8(100, 50, 0, 255),
-    2
-  );
+  setFont('large');
+  drawTextShadow(`FINAL SCORE: ${g.score}`, 320, 180, rgba8(255, 200, 0, 255), rgba8(0,0,0,255), 3);
+  drawAllButtons();
+}
+
+function startGame() {
+  gameState = 'playing';
+  inputLock = 0.3;
+  g.score = 0; g.health = 3; g.coins = 0;
   
-  // Pulsing start prompt
-  const pulse = Math.sin(time * 3) * 0.5 + 0.5;
-  const alpha = Math.floor(pulse * 200 + 55);
-  drawTextOutline(
-    'PRESS SPACE TO START',
-    190, 180,
-    rgba8(255, 255, 255, alpha),
-    rgba8(0, 0, 0, 255),
-    2
-  );
+  g.p.x = 0; g.p.y = 10; g.p.z = 0;
+  g.p.vx = 0; g.p.vy = 0; g.p.vz = 0;
+  g.p.invuln = 0;
   
-  // Controls
-  print('Controls:', 280, 230, rgba8(200, 200, 200, 255), 1);
-  print('ARROWS / WASD = Move', 240, 250, rgba8(180, 180, 180, 255), 1);
-  print('SPACE / Z = Jump', 250, 270, rgba8(180, 180, 180, 255), 1);
-  print('Q / E = Camera', 265, 290, rgba8(180, 180, 180, 255), 1);
-  print('DOWN + JUMP = Ground Pound', 210, 310, rgba8(180, 180, 180, 255), 1);
-  
-  // Features
-  print('* Triple Jump System', 30, 230, rgba8(255, 200, 100, 255), 1);
-  print('* Ground Pound Attack', 30, 250, rgba8(255, 200, 100, 255), 1);
-  print('* Collect Coins & Stars', 30, 270, rgba8(255, 200, 100, 255), 1);
-  print('* 3D Platforming Action', 30, 290, rgba8(255, 200, 100, 255), 1);
+  clearButtons();
+}
+
+function initStartScreen() {
+  clearButtons();
+  createButton(centerX(200), 300, 200, 50, '▶ PLAY', startGame, {
+    normalColor: rgba8(50, 200, 50, 255)
+  });
+}
+
+function initGameOverScreen() {
+  clearButtons();
+  createButton(centerX(200), 220, 200, 50, 'TRY AGAIN', () => {
+    location.reload(); // Quick dirty reload to reset full level gen
+  }, { normalColor: rgba8(200, 50, 50, 255) });
+}
+
+function initWinScreen() {
+  clearButtons();
+  createButton(centerX(200), 240, 200, 50, 'PLAY AGAIN', () => {
+    location.reload();
+  }, { normalColor: rgba8(50, 200, 50, 255) });
 }

@@ -152,6 +152,11 @@ export async function init() {
   setLightColor(0xffffff);
   setLightDirection(0.5, -0.5, 0.5);
   
+  // Post-processing: cinematic space look
+  enableBloom(1.0, 0.4, 0.2);
+  enableFXAA();
+  enableVignette(1.3, 0.9);
+
   // Setup camera
   updateCamera(0);
 }

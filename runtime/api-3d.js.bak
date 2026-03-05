@@ -1,7 +1,6 @@
 // runtime/api-3d.js
 // 3D API for Nova64 using Three.js backend
 import * as THREE from 'three';
-globalThis.THREE = THREE;
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export function threeDApi(gpu) {

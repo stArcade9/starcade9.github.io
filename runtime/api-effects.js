@@ -7,6 +7,63 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 
+// Chromatic Aberration shader
+const ChromaticAberrationShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    amount: { value: 0.002 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float amount;
+    varying vec2 vUv;
+    void main() {
+      vec2 dir = vUv - 0.5;
+      float dist = length(dir);
+      vec2 offset = normalize(dir) * dist * amount;
+      float r = texture2D(tDiffuse, vUv + offset).r;
+      float g = texture2D(tDiffuse, vUv).g;
+      float b = texture2D(tDiffuse, vUv - offset).b;
+      gl_FragColor = vec4(r, g, b, 1.0);
+    }
+  `
+};
+
+// Vignette shader
+const VignetteShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    darkness: { value: 1.5 },
+    offset: { value: 0.95 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float darkness;
+    uniform float offset;
+    varying vec2 vUv;
+    void main() {
+      vec4 texel = texture2D(tDiffuse, vUv);
+      vec2 uv = (vUv - vec2(0.5)) * vec2(offset);
+      float vignette = 1.0 - dot(uv, uv) * darkness;
+      gl_FragColor = vec4(texel.rgb * clamp(vignette, 0.0, 1.0), texel.a);
+    }
+  `
+};
+
 export function effectsApi(gpu) {
   if (!gpu.getScene || !gpu.getCamera || !gpu.getRenderer) {
     return { exposeTo: () => {} };
@@ -21,6 +78,8 @@ export function effectsApi(gpu) {
   let renderPass = null;
   let bloomPass = null;
   let fxaaPass = null;
+  let chromaticAberrationPass = null;
+  let vignettePass = null;
 
   // Effect states
   let effectsEnabled = false;
@@ -104,6 +163,46 @@ export function effectsApi(gpu) {
     if (fxaaPass && composer) {
       composer.removePass(fxaaPass);
       fxaaPass = null;
+    }
+  }
+
+  // === CHROMATIC ABERRATION ===
+  function enableChromaticAberration(amount = 0.002) {
+    initPostProcessing();
+    if (chromaticAberrationPass) {
+      chromaticAberrationPass.uniforms['amount'].value = amount;
+      return;
+    }
+    chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
+    chromaticAberrationPass.uniforms['amount'].value = amount;
+    composer.addPass(chromaticAberrationPass);
+  }
+
+  function disableChromaticAberration() {
+    if (chromaticAberrationPass && composer) {
+      composer.removePass(chromaticAberrationPass);
+      chromaticAberrationPass = null;
+    }
+  }
+
+  // === VIGNETTE ===
+  function enableVignette(darkness = 1.5, offset = 0.95) {
+    initPostProcessing();
+    if (vignettePass) {
+      vignettePass.uniforms['darkness'].value = darkness;
+      vignettePass.uniforms['offset'].value = offset;
+      return;
+    }
+    vignettePass = new ShaderPass(VignetteShader);
+    vignettePass.uniforms['darkness'].value = darkness;
+    vignettePass.uniforms['offset'].value = offset;
+    composer.addPass(vignettePass);
+  }
+
+  function disableVignette() {
+    if (vignettePass && composer) {
+      composer.removePass(vignettePass);
+      vignettePass = null;
     }
   }
 
@@ -520,6 +619,75 @@ export function effectsApi(gpu) {
     particleSystem.geometry.attributes.position.needsUpdate = true;
   }
 
+  // === CONVENIENCE: enable a full retro N64/PS1 post-processing stack in one call ===
+  /**
+   * enableRetroEffects(opts)
+   * One-call setup for bloom + FXAA + vignette + optional chromatic aberration.
+   * opts: {
+   *   bloom:     { strength, radius, threshold }   | false to skip  (default: {1.5, 0.4, 0.1})
+   *   fxaa:      true | false                                        (default: true)
+   *   vignette:  { darkness, offset }               | false to skip  (default: {1.3, 0.9})
+   *   chromatic: number (amount) | false to skip                     (default: false)
+   *   pixelation: number (factor) | false to skip                    (default: 1)
+   *   dithering: boolean                                              (default: true)
+   * }
+   * Call with no args for sensible defaults that match Star Fox / Crystal Cathedral look.
+   */
+  function enableRetroEffects(opts = {}) {
+    // Pixelation — delegated to gpu (api-3d)
+    const pixelFactor = opts.pixelation !== undefined ? opts.pixelation : 1;
+    if (pixelFactor !== false && typeof globalThis.enablePixelation === 'function') {
+      globalThis.enablePixelation(pixelFactor);
+    }
+
+    // Dithering — delegated to gpu (api-3d)
+    const dither = opts.dithering !== undefined ? opts.dithering : true;
+    if (dither !== false && typeof globalThis.enableDithering === 'function') {
+      globalThis.enableDithering(dither);
+    }
+
+    // Bloom
+    const bloom = opts.bloom !== undefined ? opts.bloom : {};
+    if (bloom !== false) {
+      const b = typeof bloom === 'object' ? bloom : {};
+      enableBloom(b.strength ?? 1.5, b.radius ?? 0.4, b.threshold ?? 0.1);
+    }
+
+    // FXAA
+    const fxaa = opts.fxaa !== undefined ? opts.fxaa : true;
+    if (fxaa !== false) {
+      enableFXAA();
+    }
+
+    // Vignette
+    const vig = opts.vignette !== undefined ? opts.vignette : {};
+    if (vig !== false) {
+      const v = typeof vig === 'object' ? vig : {};
+      enableVignette(v.darkness ?? 1.3, v.offset ?? 0.9);
+    }
+
+    // Chromatic aberration (off by default — slight colour fringing)
+    const chrom = opts.chromatic !== undefined ? opts.chromatic : false;
+    if (chrom !== false) {
+      enableChromaticAberration(typeof chrom === 'number' ? chrom : 0.002);
+    }
+
+    return true;
+  }
+
+  /**
+   * disableRetroEffects()
+   * Tear down everything enableRetroEffects() set up.
+   */
+  function disableRetroEffects() {
+    disableBloom();
+    disableFXAA();
+    disableVignette();
+    disableChromaticAberration();
+    if (typeof globalThis.enablePixelation === 'function') globalThis.enablePixelation(0);
+    if (typeof globalThis.enableDithering === 'function') globalThis.enableDithering(false);
+  }
+
   // === RENDERING ===
   function renderEffects() {
     if (effectsEnabled && composer) {
@@ -546,6 +714,14 @@ export function effectsApi(gpu) {
         setBloomThreshold: setBloomThreshold,
         enableFXAA: enableFXAA,
         disableFXAA: disableFXAA,
+        enableChromaticAberration: enableChromaticAberration,
+        disableChromaticAberration: disableChromaticAberration,
+        enableVignette: enableVignette,
+        disableVignette: disableVignette,
+
+        // Convenience
+        enableRetroEffects: enableRetroEffects,
+        disableRetroEffects: disableRetroEffects,
 
         // Custom shaders
         createShaderMaterial: createShaderMaterial,

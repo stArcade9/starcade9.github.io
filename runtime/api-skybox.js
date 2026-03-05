@@ -158,8 +158,7 @@ export function skyboxApi(gpu) {
     exposeTo(target) {
       Object.assign(target, {
         createSpaceSkybox,
-        setFog,
-        clearFog,
+        // NOTE: setFog/clearFog are exposed by api-3d.js — not duplicated here
         animateSkybox,
         clearSkybox
       });

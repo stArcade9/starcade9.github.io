@@ -43,9 +43,12 @@ export async function init() {
   setLightDirection(-0.5, -1, -0.8);
   setFog(0x000511, 20, 80);
   
-  // Enable retro effects
+  // Enable retro effects + post-processing
   enablePixelation(1);
   enableDithering(true);
+  enableBloom(1.5, 0.4, 0.1); // Weapon fire & engine trail
+  enableFXAA();
+  enableVignette(1.4, 0.88);
   
   // Initialize start screen
   initStartScreen();

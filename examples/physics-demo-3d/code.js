@@ -46,6 +46,9 @@ export async function init() {
   // Enable retro effects
   enablePixelation(1);
   enableDithering(true);
+  enableBloom(1.0, 0.4, 0.3);
+  enableFXAA();
+  enableVignette(1.2, 0.9);
   
   // Create world environment
   await createWorld();

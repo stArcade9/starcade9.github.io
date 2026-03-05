@@ -181,7 +181,7 @@ export const BitmapFont = {
       if (ch === '\n') { cy += FONT_H+FONT_SPACING; cx = x|0; continue; }
       const rows = GLYPHS.get(ch) || GLYPHS.get('?');
       for (let yy=0; yy<FONT_H; yy++) {
-        const row = rows[FONT_H-1-yy]; // Flip Y to account for display coordinate system
+        const row = rows[yy]; // top-down: row 0 = top of glyph = smallest y on screen
         for (let xx=0; xx<FONT_W; xx++) {
           if (row[xx] !== ' ') fb.pset(cx+xx, cy+yy, r,g,b,a);
         }

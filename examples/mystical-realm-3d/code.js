@@ -50,7 +50,9 @@ export async function init() {
   // Enable all retro effects for maximum N64/PSX nostalgia
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(true);
+  enableBloom(0.9, 0.6, 0.1); // Soft magical glow
+  enableFXAA();               // Smooth edges
+  enableVignette(1.2, 0.9);   // Cinematic border
   
   // Generate the mystical world
   await generateTerrain();
