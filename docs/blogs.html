@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova64 Blog Posts - Starcade9</title>
+  <style>
+    /* Minimal styling - content designed for easy Ghost copy/paste */
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    .blog-post { border: 1px solid #ddd; padding: 20px; margin: 20px 0; background: #fafafa; }
+    .blog-post h2 { margin-top: 0; }
+    .copy-btn { background: #333; color: #fff; border: none; padding: 8px 16px; cursor: pointer; margin-bottom: 10px; }
+    .copy-btn:hover { background: #555; }
+    hr { margin: 40px 0; }
+    code { background: #f0f0f0; padding: 2px 6px; }
+  </style>
+</head>
+<body>
+
+<h1>Nova64 Blog Posts</h1>
+<p>Clean, copy-paste ready content for Ghost blog at <a href="https://www.starcade9.io/">starcade9.io</a></p>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- BLOG POST 1: INTRODUCTION -->
+<!-- ============================================================ -->
+
+<div class="blog-post">
+  <button class="copy-btn" onclick="copyContent('post1')">📋 Copy HTML</button>
+  <div id="post1">
+
+<h2>Introducing Nova64: The Metaverse Arcade's Ultimate Virtual Console</h2>
+
+<p><strong>A Starcade9 Creation</strong></p>
+
+<p>We're building the future of retro gaming—and it lives inside the metaverse.</p>
+
+<p>Meet <strong>Nova64</strong>, a fully-functional virtual console that brings the raw, unfiltered energy of Nintendo 64 and PlayStation 1 graphics into immersive 3D worlds. This isn't emulation. This is reinvention.</p>
+
+<h3>What is Nova64?</h3>
+
+<p>Nova64 is a JavaScript-powered 3D fantasy console built from the ground up for the metaverse. It features:</p>
+
+<ul>
+  <li><strong>Authentic N64/PS1 Aesthetics</strong> – Low-poly models, vertex jitter, texture warping, and that nostalgic fog we all remember</li>
+  <li><strong>Three.js Rendering Engine</strong> – Hardware-accelerated 3D graphics with modern WebGL2</li>
+  <li><strong>Built for Metaverse Integration</strong> – Run games directly inside virtual worlds, arcades, and social spaces</li>
+  <li><strong>Developer-Friendly API</strong> – Create games with simple JavaScript—no complex toolchains required</li>
+</ul>
+
+<h3>Why We Built This</h3>
+
+<p>At <a href="https://www.starcade9.io/">Starcade9</a>, we believe gaming should be social, accessible, and dripping with style. The metaverse needs more than static art galleries and virtual land speculation—it needs <em>actual games</em> that people want to play.</p>
+
+<p>Nova64 is our answer. A virtual console that runs anywhere JavaScript runs, looks like the games we grew up playing, and plugs directly into metaverse environments.</p>
+
+<h3>The Starcade9 Ecosystem</h3>
+
+<p>Nova64 is part of a larger vision:</p>
+
+<ul>
+  <li><strong><a href="https://www.starcade9.io/">Starcade9</a></strong> – The Metaverse Arcade. Our flagship destination for virtual gaming experiences.</li>
+  <li><strong><a href="https://retrogameprices.com/">RetroGamePrices.com</a></strong> – Our affiliated site tracking retro game valuations. Know what your collection is worth.</li>
+  <li><strong>Nova64</strong> – The engine that powers it all. Open, extensible, and built for the future.</li>
+</ul>
+
+<h3>What's Next</h3>
+
+<p>We're actively developing Nova64 with new features dropping regularly:</p>
+
+<ul>
+  <li>Voxel engine for Minecraft-style worlds</li>
+  <li>Physics system for realistic gameplay</li>
+  <li>UI framework for menus and HUDs</li>
+  <li>Skybox and effects systems for atmosphere</li>
+  <li>Full gamepad support</li>
+</ul>
+
+<p>Stay tuned. The arcade is just getting started.</p>
+
+<p><strong>— The Starcade9 Team</strong></p>
+
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- BLOG POST 2: DEVELOPER ANNOUNCEMENT -->
+<!-- ============================================================ -->
+
+<div class="blog-post">
+  <button class="copy-btn" onclick="copyContent('post2')">📋 Copy HTML</button>
+  <div id="post2">
+
+<h2>Nova64 Developer Preview: Build Games for the Metaverse</h2>
+
+<p><strong>A Starcade9 Creation</strong></p>
+
+<p>Calling all game developers, pixel artists, and retro enthusiasts. Nova64 is open for development.</p>
+
+<h3>Create Games in Minutes</h3>
+
+<p>Nova64's API is designed for speed. No massive game engines. No steep learning curves. Just JavaScript and creativity.</p>
+
+<pre><code>// Create a spinning cube in 3 lines
+const cube = createCube(2, 0xff0000, [0, 0, 0]);
+
+export function update(dt) {
+  rotateMesh(cube, 0, dt, 0);
+}
+
+export function draw() {
+  // Rendering handled automatically
+}</code></pre>
+
+<h3>Features for Developers</h3>
+
+<ul>
+  <li><strong>35+ API Functions</strong> – Primitives, cameras, lighting, fog, materials, and more</li>
+  <li><strong>Advanced Materials</strong> – Holographic, metallic, and emissive surfaces</li>
+  <li><strong>Screen Management</strong> – Built-in state machine for menus, gameplay, and game over screens</li>
+  <li><strong>Input System</strong> – Keyboard, mouse, and gamepad support out of the box</li>
+  <li><strong>2D Overlay System</strong> – Draw HUDs and UI elements over your 3D scenes</li>
+  <li><strong>Hot Reloading</strong> – See changes instantly during development</li>
+</ul>
+
+<h3>Example Games Included</h3>
+
+<p>Nova64 ships with playable demos:</p>
+
+<ul>
+  <li><strong>Star Fox Nova</strong> – Space combat shooter</li>
+  <li><strong>F-Zero Nova</strong> – High-speed racing</li>
+  <li><strong>Super Plumber 64</strong> – 3D platformer</li>
+  <li><strong>Minecraft Demo</strong> – Voxel world sandbox</li>
+  <li><strong>Cyberpunk City</strong> – Open world exploration</li>
+</ul>
+
+<h3>Get Started</h3>
+
+<p>Clone the repo, run <code>pnpm dev</code>, and start building. Full documentation available at our docs site.</p>
+
+<p>Your game could be the next title in <a href="https://www.starcade9.io/">The Metaverse Arcade</a>.</p>
+
+<p><strong>— The Starcade9 Team</strong></p>
+
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- BLOG POST 3: TECH DEEP DIVE -->
+<!-- ============================================================ -->
+
+<div class="blog-post">
+  <button class="copy-btn" onclick="copyContent('post3')">📋 Copy HTML</button>
+  <div id="post3">
+
+<h2>Inside Nova64: The Tech Behind The Metaverse Arcade</h2>
+
+<p><strong>A Starcade9 Creation</strong></p>
+
+<p>Nova64 isn't just another game engine. It's a purpose-built virtual console designed for a specific aesthetic and a specific future: the metaverse.</p>
+
+<h3>The Stack</h3>
+
+<ul>
+  <li><strong>Three.js 0.182.0</strong> – Latest version of the industry-standard WebGL library</li>
+  <li><strong>Vite</strong> – Lightning-fast development server with hot module replacement</li>
+  <li><strong>ES6 Modules</strong> – Modern JavaScript throughout</li>
+  <li><strong>Zero Dependencies</strong> – Just Three.js and you're running</li>
+</ul>
+
+<h3>N64/PS1 Aesthetic</h3>
+
+<p>We deliberately recreate the visual quirks of 5th generation consoles:</p>
+
+<ul>
+  <li><strong>Low-Poly Models</strong> – Clean geometric shapes with minimal polygons</li>
+  <li><strong>Vertex Snapping</strong> – That signature "wobble" on moving geometry</li>
+  <li><strong>Limited Color Palette</strong> – Vibrant but constrained like the classics</li>
+  <li><strong>Draw Distance Fog</strong> – Hide the horizon, create atmosphere</li>
+  <li><strong>Nearest-Neighbor Filtering</strong> – Crisp pixel textures, no blur</li>
+</ul>
+
+<h3>Metaverse-Ready Architecture</h3>
+
+<p>Nova64 runs anywhere JavaScript runs:</p>
+
+<ul>
+  <li>Embed in web-based metaverse platforms</li>
+  <li>Run in VR/AR headset browsers</li>
+  <li>Deploy to any static hosting</li>
+  <li>Integrate with Web3 and NFT systems</li>
+</ul>
+
+<h3>Performance First</h3>
+
+<p>We've optimized for smooth gameplay on modest hardware:</p>
+
+<ul>
+  <li>Efficient scene management</li>
+  <li>Smart asset loading</li>
+  <li>Batched rendering calls</li>
+  <li>Minimal garbage collection pressure</li>
+</ul>
+
+<h3>Join the Revolution</h3>
+
+<p>The metaverse doesn't need another social platform. It needs games. Real games. Games that feel like the ones we grew up loving.</p>
+
+<p><a href="https://www.starcade9.io/">Starcade9</a> is building that future. Nova64 is the engine.</p>
+
+<p><strong>— The Starcade9 Team</strong></p>
+
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- BLOG POST 4: RETROGAMEPRICES INTEGRATION -->
+<!-- ============================================================ -->
+
+<div class="blog-post">
+  <button class="copy-btn" onclick="copyContent('post4')">📋 Copy HTML</button>
+  <div id="post4">
+
+<h2>Retro Gaming Meets the Metaverse: Our Vision</h2>
+
+<p><strong>A Starcade9 Creation</strong></p>
+
+<p>Two worlds. One passion.</p>
+
+<h3>The Physical: RetroGamePrices.com</h3>
+
+<p>At <a href="https://retrogameprices.com/">RetroGamePrices.com</a>, we track the real-world value of retro video games. Collectors use our platform to understand market trends, verify authenticity, and make informed decisions about their physical collections.</p>
+
+<p>It's the definitive resource for knowing what your games are worth.</p>
+
+<h3>The Virtual: Starcade9 + Nova64</h3>
+
+<p>But physical games have limits. Cartridges degrade. Consoles fail. Prices soar beyond reach.</p>
+
+<p>That's where <a href="https://www.starcade9.io/">Starcade9</a> comes in. We're preserving the <em>experience</em> of retro gaming—not just the ROMs, but the feeling. The aesthetic. The joy of discovering a new game in an arcade.</p>
+
+<p>Nova64 is our virtual console. It doesn't emulate old games—it enables new ones built in the same spirit.</p>
+
+<h3>The Bridge</h3>
+
+<p>Imagine this future:</p>
+
+<ul>
+  <li>Own a rare physical game? Verify it on RetroGamePrices</li>
+  <li>Play its spiritual successor in the Starcade9 metaverse arcade</li>
+  <li>Connect with collectors and players who share your passion</li>
+  <li>Support developers creating new retro-styled experiences</li>
+</ul>
+
+<p>Physical and virtual. Collectible and playable. Past and future.</p>
+
+<h3>This Is Starcade9</h3>
+
+<p>The Metaverse Arcade isn't just a destination. It's a movement. Join us.</p>
+
+<p><strong>— The Starcade9 Team</strong></p>
+
+  </div>
+</div>
+
+<hr>
+
+<script>
+function copyContent(id) {
+  const content = document.getElementById(id).innerHTML;
+  navigator.clipboard.writeText(content).then(() => {
+    alert('HTML copied to clipboard! Paste directly into Ghost.');
+  });
+}
+</script>
+
+</body>
+</html>

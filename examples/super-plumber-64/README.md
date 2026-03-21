@@ -5,16 +5,19 @@ A Super Mario 64 inspired 3D platformer for Nova64!
 ## 🎮 Features
 
 ### Mario-Like Mechanics
+
 - **Triple Jump System** - Jump three times in quick succession for higher jumps
 - **Ground Pound** - Press Down + Jump in mid-air for a powerful slam
 - **Smooth Movement** - Analog stick support with camera-relative controls
 - **3D Platforming** - Navigate colorful floating platforms
 
 ### Collectibles
+
 - **Coins** (Yellow) - Spinning gold coins worth 10 points each (15 total)
 - **Stars** (Orange) - Bobbing power stars worth 100 points each (3 total)
 
 ### Level Design
+
 - 11 interconnected platforms at various heights
 - Multiple paths to explore
 - High platform requires skilled jumping
@@ -23,12 +26,14 @@ A Super Mario 64 inspired 3D platformer for Nova64!
 ## 🕹️ Controls
 
 ### Keyboard
+
 - **Arrow Keys** or **WASD** - Move
 - **Space** or **Z** - Jump
 - **Down + Jump** (in air) - Ground Pound
 - **Q** / **E** - Rotate Camera
 
 ### Gamepad
+
 - **Left Stick** - Move (analog)
 - **A Button** - Jump
 - **Right Stick** - Rotate Camera
@@ -43,19 +48,21 @@ A Super Mario 64 inspired 3D platformer for Nova64!
 ## 🌟 Special Moves
 
 ### Triple Jump
+
 1. **First Jump** - Normal height
 2. **Second Jump** - Higher (press jump again quickly)
 3. **Third Jump** - HIGHEST! (press jump one more time)
 
-*Tip: You have 0.5 seconds between jumps to maintain the combo!*
+_Tip: You have 0.5 seconds between jumps to maintain the combo!_
 
 ### Ground Pound
+
 1. Jump into the air
 2. Press **Down + Jump** together
 3. Slam down at high speed
 4. Bounce on landing
 
-*Tip: Great for reaching lower platforms quickly!*
+_Tip: Great for reaching lower platforms quickly!_
 
 ## 🏆 Scoring
 
@@ -111,6 +118,7 @@ A Super Mario 64 inspired 3D platformer for Nova64!
 ## 📝 Credits
 
 Built with **Nova64 Fantasy Console**
+
 - 3D Graphics: Three.js backend
 - Post-Processing: Bloom effects
 - Input: Keyboard + Gamepad support

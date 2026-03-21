@@ -13,7 +13,7 @@ export function draw() {
   console.log('🎨 Attempting to draw red rectangle...');
   rect(50, 50, 200, 100, rgba8(255, 0, 0, 255), true);
   console.log('✅ rect() called successfully');
-  
+
   // Draw text
   console.log('🎨 Attempting to draw text...');
   print('TEST TEXT', 100, 100, rgba8(255, 255, 0, 255), 1);

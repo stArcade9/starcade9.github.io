@@ -59,11 +59,16 @@ export class GpuWebGL2 {
   constructor(canvas, w, h) {
     this.canvas = canvas;
     /** @type {WebGL2RenderingContext} */
-    const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+    const gl = canvas.getContext('webgl2', {
+      antialias: false,
+      alpha: false,
+      premultipliedAlpha: false,
+    });
     if (!gl) throw new Error('WebGL2 not supported');
     this.gl = gl;
     this.fb = new Framebuffer64(w, h);
-    this.w = w; this.h = h;
+    this.w = w;
+    this.h = h;
 
     // Programs
     this.progFSQ = this._makeProgram(VERT_FSQ, FRAG_TONEMAP);
@@ -72,15 +77,16 @@ export class GpuWebGL2 {
     // Fullscreen triangle VBO
     this.vboFSQ = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vboFSQ);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
 
     // Quad for sprites (two-triangle unit quad encoded as [0,0]-[1,1])
     this.vboQuad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vboQuad);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-      0,0, 1,0, 0,1,
-      1,0, 1,1, 0,1
-    ]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1]),
+      gl.STATIC_DRAW
+    );
 
     // Instance buffers
     this.instPos = gl.createBuffer();
@@ -97,7 +103,7 @@ export class GpuWebGL2 {
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, null);
 
-    this.tmpF32 = new Float32Array(w*h*4); // normalized 0..1
+    this.tmpF32 = new Float32Array(w * h * 4); // normalized 0..1
 
     // Sprite batch state
     this.spriteBatches = new Map(); // texture -> array of instances
@@ -110,12 +116,18 @@ export class GpuWebGL2 {
 
   _makeProgram(vsSrc, fsSrc) {
     const gl = this.gl;
-    const vs = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(vs, vsSrc); gl.compileShader(vs);
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, vsSrc);
+    gl.compileShader(vs);
     if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(vs));
-    const fs = gl.createShader(gl.FRAGMENT_SHADER); gl.shaderSource(fs, fsSrc); gl.compileShader(fs);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, fsSrc);
+    gl.compileShader(fs);
     if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(fs));
     const p = gl.createProgram();
-    gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+    gl.attachShader(p, vs);
+    gl.attachShader(p, fs);
+    gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
     return p;
   }
@@ -123,16 +135,30 @@ export class GpuWebGL2 {
   beginFrame() {
     const gl = this.gl;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clearColor(0,0,0,1);
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
   // Queue a sprite instance; img is HTMLImageElement, uv rect in pixels of the image
-  queueSprite(img, sx, sy, sw, sh, dx, dy, scale=1) {
+  queueSprite(img, sx, sy, sw, sh, dx, dy, scale = 1) {
     const gltex = this._getTexture(img);
     let arr = this.spriteBatches.get(gltex);
-    if (!arr) { arr = []; this.spriteBatches.set(gltex, arr); }
-    arr.push({ sx, sy, sw, sh, dx, dy, scale, tex: gltex, iw: img.naturalWidth, ih: img.naturalHeight });
+    if (!arr) {
+      arr = [];
+      this.spriteBatches.set(gltex, arr);
+    }
+    arr.push({
+      sx,
+      sy,
+      sw,
+      sh,
+      dx,
+      dy,
+      scale,
+      tex: gltex,
+      iw: img.naturalWidth,
+      ih: img.naturalHeight,
+    });
   }
 
   _getTexture(img) {
@@ -146,7 +172,17 @@ export class GpuWebGL2 {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.naturalWidth, img.naturalHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      img.naturalWidth,
+      img.naturalHeight,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      img
+    );
     this.texCache.set(img, tex);
     return tex;
   }
@@ -158,11 +194,11 @@ export class GpuWebGL2 {
     const p = this.fb.pixels;
     const f = this.tmpF32;
     let k = 0;
-    for (let i=0;i<p.length;i+=4) {
-      f[k++] = p[i]   / 65535.0;
-      f[k++] = p[i+1] / 65535.0;
-      f[k++] = p[i+2] / 65535.0;
-      f[k++] = p[i+3] / 65535.0;
+    for (let i = 0; i < p.length; i += 4) {
+      f[k++] = p[i] / 65535.0;
+      f[k++] = p[i + 1] / 65535.0;
+      f[k++] = p[i + 2] / 65535.0;
+      f[k++] = p[i + 3] / 65535.0;
     }
     gl.bindTexture(gl.TEXTURE_2D, this.texFB);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.w, this.h, gl.RGBA, gl.FLOAT, f);
@@ -204,22 +240,30 @@ export class GpuWebGL2 {
 
       for (const [tex, arr] of this.spriteBatches.entries()) {
         const n = arr.length;
-        const pos = new Float32Array(n*2);
-        const size = new Float32Array(n*2);
-        const uvs = new Float32Array(n*4);
-        for (let i=0;i<n;i++) {
+        const pos = new Float32Array(n * 2);
+        const size = new Float32Array(n * 2);
+        const uvs = new Float32Array(n * 4);
+        for (let i = 0; i < n; i++) {
           const s = arr[i];
-          pos[i*2+0] = s.dx;
-          pos[i*2+1] = s.dy;
-          size[i*2+0] = s.sw * s.scale;
-          size[i*2+1] = s.sh * s.scale;
-          const u0 = s.sx / s.iw, v0 = s.sy / s.ih;
-          const u1 = (s.sx + s.sw) / s.iw, v1 = (s.sy + s.sh) / s.ih;
-          uvs[i*4+0] = u0; uvs[i*4+1] = v0; uvs[i*4+2] = u1; uvs[i*4+3] = v1;
+          pos[i * 2 + 0] = s.dx;
+          pos[i * 2 + 1] = s.dy;
+          size[i * 2 + 0] = s.sw * s.scale;
+          size[i * 2 + 1] = s.sh * s.scale;
+          const u0 = s.sx / s.iw,
+            v0 = s.sy / s.ih;
+          const u1 = (s.sx + s.sw) / s.iw,
+            v1 = (s.sy + s.sh) / s.ih;
+          uvs[i * 4 + 0] = u0;
+          uvs[i * 4 + 1] = v0;
+          uvs[i * 4 + 2] = u1;
+          uvs[i * 4 + 3] = v1;
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instPos); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instSize); gl.bufferData(gl.ARRAY_BUFFER, size, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instUV); gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.instPos);
+        gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.instSize);
+        gl.bufferData(gl.ARRAY_BUFFER, size, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.instUV);
+        gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.DYNAMIC_DRAW);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -231,8 +275,12 @@ export class GpuWebGL2 {
   }
 
   // API surface hooks needed by higher-level APIs
-  getFramebuffer() { return this.fb; }
-  supportsSpriteBatch() { return true; }
+  getFramebuffer() {
+    return this.fb;
+  }
+  supportsSpriteBatch() {
+    return true;
+  }
 
   updateTextureForImage(img) {
     const gl = this.gl;
@@ -247,7 +295,16 @@ export class GpuWebGL2 {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.naturalWidth, img.naturalHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      img.naturalWidth,
+      img.naturalHeight,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      img
+    );
   }
-
 }

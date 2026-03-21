@@ -1,6 +1,7 @@
 // runtime/api-effects.js
 // Advanced effects, shading, and post-processing API for Nova64
 import * as THREE from 'three';
+import { logger } from './logger.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -11,7 +12,7 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 const ChromaticAberrationShader = {
   uniforms: {
     tDiffuse: { value: null },
-    amount: { value: 0.002 }
+    amount: { value: 0.002 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -33,7 +34,7 @@ const ChromaticAberrationShader = {
       float b = texture2D(tDiffuse, vUv - offset).b;
       gl_FragColor = vec4(r, g, b, 1.0);
     }
-  `
+  `,
 };
 
 // Vignette shader
@@ -41,7 +42,7 @@ const VignetteShader = {
   uniforms: {
     tDiffuse: { value: null },
     darkness: { value: 1.5 },
-    offset: { value: 0.95 }
+    offset: { value: 0.95 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -61,7 +62,7 @@ const VignetteShader = {
       float vignette = 1.0 - dot(uv, uv) * darkness;
       gl_FragColor = vec4(texel.rgb * clamp(vignette, 0.0, 1.0), texel.a);
     }
-  `
+  `,
 };
 
 export function effectsApi(gpu) {
@@ -92,7 +93,7 @@ export function effectsApi(gpu) {
     if (composer) return; // Already initialized
 
     composer = new EffectComposer(renderer);
-    
+
     // Base render pass
     renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
@@ -207,7 +208,7 @@ export function effectsApi(gpu) {
   }
 
   // === CUSTOM SHADERS ===
-  
+
   // Holographic shader
   const holographicShader = {
     uniforms: {
@@ -215,7 +216,7 @@ export function effectsApi(gpu) {
       color: { value: new THREE.Color(0x00ffff) },
       scanlineSpeed: { value: 2.0 },
       glitchAmount: { value: 0.1 },
-      opacity: { value: 0.8 }
+      opacity: { value: 0.8 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -254,7 +255,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, opacity);
       }
-    `
+    `,
   };
 
   // Energy shield shader
@@ -264,7 +265,7 @@ export function effectsApi(gpu) {
       hitPosition: { value: new THREE.Vector3(0, 0, 0) },
       hitStrength: { value: 0 },
       color: { value: new THREE.Color(0x00ffff) },
-      opacity: { value: 0.6 }
+      opacity: { value: 0.6 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -313,7 +314,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, finalOpacity);
       }
-    `
+    `,
   };
 
   // Water/liquid shader
@@ -323,7 +324,7 @@ export function effectsApi(gpu) {
       color: { value: new THREE.Color(0x0088ff) },
       waveSpeed: { value: 1.0 },
       waveHeight: { value: 0.5 },
-      transparency: { value: 0.7 }
+      transparency: { value: 0.7 },
     },
     vertexShader: `
       uniform float time;
@@ -377,7 +378,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, transparency);
       }
-    `
+    `,
   };
 
   // Fire/plasma shader
@@ -387,7 +388,7 @@ export function effectsApi(gpu) {
       color1: { value: new THREE.Color(0xff4400) },
       color2: { value: new THREE.Color(0xffff00) },
       intensity: { value: 1.0 },
-      speed: { value: 2.0 }
+      speed: { value: 2.0 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -452,14 +453,14 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(fireColor, alpha);
       }
-    `
+    `,
   };
 
   // Create material with custom shader
   function createShaderMaterial(shaderName, customUniforms = {}) {
     let shader;
-    
-    switch(shaderName) {
+
+    switch (shaderName) {
       case 'holographic':
         shader = holographicShader;
         break;
@@ -473,7 +474,7 @@ export function effectsApi(gpu) {
         shader = fireShader;
         break;
       default:
-        console.warn(`Unknown shader: ${shaderName}`);
+        logger.warn(`Unknown shader: ${shaderName}`);
         return null;
     }
 
@@ -490,7 +491,7 @@ export function effectsApi(gpu) {
       vertexShader: shader.vertexShader,
       fragmentShader: shader.fragmentShader,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
 
     const id = `shader_${Date.now()}_${Math.random()}`;
@@ -526,7 +527,7 @@ export function effectsApi(gpu) {
       speed = 1.0,
       lifetime = 2.0,
       spread = 1.0,
-      gravity = -1.0
+      gravity = -1.0,
     } = options;
 
     const geometry = new THREE.BufferGeometry();
@@ -536,7 +537,7 @@ export function effectsApi(gpu) {
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      
+
       // Random positions in spread area
       positions[i3] = (Math.random() - 0.5) * spread;
       positions[i3 + 1] = (Math.random() - 0.5) * spread;
@@ -560,7 +561,7 @@ export function effectsApi(gpu) {
       size: size,
       transparent: true,
       opacity: 0.8,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
     });
 
     const particles = new THREE.Points(geometry, material);
@@ -590,7 +591,7 @@ export function effectsApi(gpu) {
 
     for (let i = 0; i < positions.length; i += 3) {
       const idx = i / 3;
-      
+
       // Update lifetime
       lifetimes[idx] -= deltaTime;
 
@@ -731,12 +732,11 @@ export function effectsApi(gpu) {
         createParticleSystem: createParticleSystem,
         updateParticles: updateParticles,
 
-        // Rendering
-        renderEffects: renderEffects,
-        updateEffects: updateEffects,
-
         // Utility
-        isEffectsEnabled: () => effectsEnabled
+        isEffectsEnabled: () => effectsEnabled,
+
+        // Called by gpu-threejs.js endFrame() to apply the effect composer
+        renderEffects: renderEffects,
       });
     },
 
@@ -748,6 +748,6 @@ export function effectsApi(gpu) {
     // Internal render called by main loop
     render() {
       renderEffects();
-    }
+    },
   };
 }

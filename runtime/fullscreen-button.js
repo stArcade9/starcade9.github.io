@@ -16,7 +16,7 @@ export class FullscreenButton {
     this.button.id = 'nova64-fullscreen-btn';
     this.button.innerHTML = this.getExpandIcon();
     this.button.title = 'Toggle Fullscreen (ESC to exit)';
-    
+
     // Style the button
     Object.assign(this.button.style, {
       position: 'fixed',
@@ -37,19 +37,21 @@ export class FullscreenButton {
       zIndex: '9999',
       boxShadow: '0 0 20px rgba(0, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5)',
       transition: 'all 0.3s ease',
-      backdropFilter: 'blur(10px)'
+      backdropFilter: 'blur(10px)',
     });
 
     // Hover effect
     this.button.addEventListener('mouseenter', () => {
       this.button.style.background = 'rgba(0, 255, 255, 0.2)';
-      this.button.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.6), 0 4px 16px rgba(0, 0, 0, 0.6)';
+      this.button.style.boxShadow =
+        '0 0 30px rgba(0, 255, 255, 0.6), 0 4px 16px rgba(0, 0, 0, 0.6)';
       this.button.style.transform = 'scale(1.1)';
     });
 
     this.button.addEventListener('mouseleave', () => {
       this.button.style.background = 'rgba(21, 24, 34, 0.9)';
-      this.button.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5)';
+      this.button.style.boxShadow =
+        '0 0 20px rgba(0, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5)';
       this.button.style.transform = 'scale(1)';
     });
 
@@ -80,7 +82,7 @@ export class FullscreenButton {
     });
 
     // ESC key to exit fullscreen
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && this.isFullscreen) {
         this.exitFullscreen();
       }
@@ -111,17 +113,20 @@ export class FullscreenButton {
 
   enterFullscreen() {
     const elem = this.canvas;
-    
+
     if (elem.requestFullscreen) {
       elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { // Safari
+    } else if (elem.webkitRequestFullscreen) {
+      // Safari
       elem.webkitRequestFullscreen();
-    } else if (elem.mozRequestFullScreen) { // Firefox
+    } else if (elem.mozRequestFullScreen) {
+      // Firefox
       elem.mozRequestFullScreen();
-    } else if (elem.msRequestFullscreen) { // IE11
+    } else if (elem.msRequestFullscreen) {
+      // IE11
       elem.msRequestFullscreen();
     }
-    
+
     this.isFullscreen = true;
     this.updateButton();
   }
@@ -129,14 +134,17 @@ export class FullscreenButton {
   exitFullscreen() {
     if (document.exitFullscreen) {
       document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) { // Safari
+    } else if (document.webkitExitFullscreen) {
+      // Safari
       document.webkitExitFullscreen();
-    } else if (document.mozCancelFullScreen) { // Firefox
+    } else if (document.mozCancelFullScreen) {
+      // Firefox
       document.mozCancelFullScreen();
-    } else if (document.msExitFullscreen) { // IE11
+    } else if (document.msExitFullscreen) {
+      // IE11
       document.msExitFullscreen();
     }
-    
+
     this.isFullscreen = false;
     this.updateButton();
   }
@@ -149,7 +157,7 @@ export class FullscreenButton {
       document.mozFullScreenElement ||
       document.msFullscreenElement
     );
-    
+
     this.isFullscreen = isInFullscreen;
     this.updateButton();
   }

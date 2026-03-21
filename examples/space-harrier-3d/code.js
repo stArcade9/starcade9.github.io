@@ -4,7 +4,6 @@ let gameState = 'start';
 let gameTime = 0;
 let inputLockout = 0.6; // seconds to wait before accepting 'start' input
 
-
 // Colors
 const PALETTE = {
   sky: 0xaa22ff,
@@ -17,32 +16,34 @@ const PALETTE = {
   enemy: 0xaa22ff,
   enemyEye: 0x00ff00,
   enemyShot: 0xff00ff,
-  treeTrunk: 0x8B4513,
+  treeTrunk: 0x8b4513,
   treeLeaves: 0x11aa55,
   pillar: 0xffaa00,
-  explosion: 0xff5500
+  explosion: 0xff5500,
 };
 
 let game = {
   player: {
-    x: 0, y: 0, z: -5,
+    x: 0,
+    y: 0,
+    z: -5,
     health: 100,
     weaponTimer: 0,
-    meshes: {}, 
+    meshes: {},
     animPhase: 0,
-    bobPhase: 0
+    bobPhase: 0,
   },
   speed: 45,
   distance: 0,
   score: 0,
-  
+
   gridPlanes: [],
   scenery: [],
   enemies: [],
   bullets: [],
   enemyBullets: [],
   particles: [],
-  enemySpawnTimer: 0
+  enemySpawnTimer: 0,
 };
 
 export async function init() {
@@ -68,7 +69,7 @@ export async function init() {
   createCheckeredFloor();
   createPlayer();
 
-  for(let i=0; i<40; i++) {
+  for (let i = 0; i < 40; i++) {
     spawnScenery(true);
   }
 
@@ -86,15 +87,19 @@ function createCheckeredFloor() {
     for (let c = 0; c < cols; c++) {
       const isAlt = (r + c) % 2 === 0;
       const color = isAlt ? PALETTE.ground1 : PALETTE.ground2;
-      const x = startX + c * size + (size/2);
-      const z = startZ - r * size - (size/2);
+      const x = startX + c * size + size / 2;
+      const z = startZ - r * size - size / 2;
       const y = -2;
 
       const plane = createPlane(size, size, color, [x, y, z]);
-      rotateMesh(plane, -Math.PI/2, 0, 0);
+      rotateMesh(plane, -Math.PI / 2, 0, 0);
 
       game.gridPlanes.push({
-        mesh: plane, x: x, y: y, z: z, size: size
+        mesh: plane,
+        x: x,
+        y: y,
+        z: z,
+        size: size,
       });
     }
   }
@@ -102,16 +107,18 @@ function createCheckeredFloor() {
 
 function createPlayer() {
   const p = game.player;
-  const bx = p.x, by = p.y, bz = p.z;
+  const bx = p.x,
+    by = p.y,
+    bz = p.z;
 
   p.meshes.body = createCube(1.2, PALETTE.playerBody, [bx, by, bz]);
   setScale(p.meshes.body, 1.0, 1.3, 0.8);
 
   p.meshes.head = createSphere(0.6, PALETTE.playerHead, [bx, by + 1.2, bz], 8);
-  
+
   p.meshes.hair = createCube(0.7, 0x5a2d0c, [bx, by + 1.5, bz + 0.1]);
   setScale(p.meshes.hair, 1.1, 0.4, 1.1);
-  
+
   p.meshes.jetpack = createCube(0.8, 0x888888, [bx, by + 0.2, bz + 0.6]);
   setScale(p.meshes.jetpack, 1.2, 1.5, 0.5);
 
@@ -129,7 +136,7 @@ function createPlayer() {
 
   p.meshes.legR = createCube(0.4, PALETTE.playerBody, [bx + 0.4, by - 1.0, bz]);
   setScale(p.meshes.legR, 0.8, 2.0, 0.8);
-  
+
   p.meshes.flameL = createCube(0.3, 0xffaa00, [bx - 0.3, by - 0.6, bz + 0.6]);
   p.meshes.flameR = createCube(0.3, 0xffaa00, [bx + 0.3, by - 0.6, bz + 0.6]);
 }
@@ -137,43 +144,43 @@ function createPlayer() {
 function spawnScenery(randomZ = false) {
   const isLeft = Math.random() > 0.5;
   const x = (isLeft ? -1 : 1) * (15 + Math.random() * 25);
-  const z = randomZ ? (10 - Math.random() * 120) : -120;
+  const z = randomZ ? 10 - Math.random() * 120 : -120;
   const y = -2;
-  
+
   const type = Math.random() > 0.5 ? 'tree' : 'pillar';
   let parts = [];
 
   if (type === 'tree') {
     const height = 3 + Math.random() * 6;
-    const trunk = createCube(1, PALETTE.treeTrunk, [x, y + height/2, z]);
+    const trunk = createCube(1, PALETTE.treeTrunk, [x, y + height / 2, z]);
     setScale(trunk, 1, height, 1);
-    
+
     // Exceptional foliage look
     const top = createSphere(2.5 + Math.random(), PALETTE.treeLeaves, [x, y + height + 1, z], 6);
-    parts.push({mesh: trunk, oy: y + height/2});
-    parts.push({mesh: top, oy: y + height + 1});
+    parts.push({ mesh: trunk, oy: y + height / 2 });
+    parts.push({ mesh: top, oy: y + height + 1 });
   } else {
     // Exceptional floating glowing rings/pillars
     const pHeight = 6 + Math.random() * 8;
     // We try to pass a nice high-end color and maybe emissive
     const pillarOptions = {
-        material: 'holographic',
-        color: PALETTE.pillar,
-        emissive: 0xaa2200,
-        opacity: 0.8,
-        transparent: true
+      material: 'holographic',
+      color: PALETTE.pillar,
+      emissive: 0xaa2200,
+      opacity: 0.8,
+      transparent: true,
     };
     // Use createAdvancedCube for holographic/emissive material support
-    const pillar = createAdvancedCube(1, pillarOptions, [x, y + pHeight/2, z]);
+    const pillar = createAdvancedCube(1, pillarOptions, [x, y + pHeight / 2, z]);
 
     setScale(pillar, 2, pHeight, 2);
-    parts.push({mesh: pillar, oy: y + pHeight/2});
+    parts.push({ mesh: pillar, oy: y + pHeight / 2 });
   }
 
   game.scenery.push({
     parts: parts,
     x: x,
-    z: z
+    z: z,
   });
 }
 
@@ -184,7 +191,7 @@ function spawnEnemy() {
 
   const core = createSphere(2.5, PALETTE.enemy, [x, y, z], 8);
   const eye = createSphere(1.2, PALETTE.enemyEye, [x, y, z + 2.0], 8);
-  
+
   const wingL = createCube(1.5, 0x5500aa, [x - 3, y, z]);
   setScale(wingL, 3, 0.2, 1);
   const wingR = createCube(1.5, 0x5500aa, [x + 3, y, z]);
@@ -192,23 +199,25 @@ function spawnEnemy() {
 
   game.enemies.push({
     parts: [
-      {mesh: core, ox: 0, oy: 0, oz: 0},
-      {mesh: eye, ox: 0, oy: 0, oz: 2.0},
-      {mesh: wingL, ox: -3, oy: 0, oz: 0},
-      {mesh: wingR, ox: 3, oy: 0, oz: 0}
+      { mesh: core, ox: 0, oy: 0, oz: 0 },
+      { mesh: eye, ox: 0, oy: 0, oz: 2.0 },
+      { mesh: wingL, ox: -3, oy: 0, oz: 0 },
+      { mesh: wingR, ox: 3, oy: 0, oz: 0 },
     ],
-    x: x, y: y, z: z,
+    x: x,
+    y: y,
+    z: z,
     health: 30,
     vx: (Math.random() - 0.5) * 20,
     vy: (Math.random() - 0.5) * 10,
     vz: 30 + Math.random() * 30, // Faster approach
-    timer: 0
+    timer: 0,
   });
 }
 
 function firePlayerBullet() {
   const p = game.player;
-  const x = p.x + 0.8; 
+  const x = p.x + 0.8;
   const y = p.y;
   const z = p.z - 2;
 
@@ -216,40 +225,54 @@ function firePlayerBullet() {
   setScale(bullet, 0.5, 0.5, 6.0);
 
   game.bullets.push({
-    mesh: bullet, x: x, y: y, z: z,
-    vz: -180, life: 2.0
+    mesh: bullet,
+    x: x,
+    y: y,
+    z: z,
+    vz: -180,
+    life: 2.0,
   });
 }
 
 function fireEnemyBullet(ex, ey, ez) {
   const bullet = createSphere(1.2, PALETTE.enemyShot, [ex, ey, ez], 6);
-  
+
   const p = game.player;
-  const dx = p.x - ex, dy = p.y - ey, dz = p.z - ez;
-  const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1;
-  const speed = 70 + game.score * 0.001; 
-  
+  const dx = p.x - ex,
+    dy = p.y - ey,
+    dz = p.z - ez;
+  const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+  const speed = 70 + game.score * 0.001;
+
   game.enemyBullets.push({
-    mesh: bullet, x: ex, y: ey, z: ez,
-    vx: (dx/dist) * speed, vy: (dy/dist) * speed, vz: (dz/dist) * speed,
-    life: 3.0
+    mesh: bullet,
+    x: ex,
+    y: ey,
+    z: ez,
+    vx: (dx / dist) * speed,
+    vy: (dy / dist) * speed,
+    vz: (dz / dist) * speed,
+    life: 3.0,
   });
 }
 
 function createExplosion(x, y, z, color) {
-  for(let i=0; i<15; i++) {
+  for (let i = 0; i < 15; i++) {
     const p = createCube(0.8, color, [x, y, z]);
     const speed = 15 + Math.random() * 25;
     const angle1 = Math.random() * Math.PI * 2;
     const angle2 = Math.random() * Math.PI * 2;
-    
+
     game.particles.push({
-      mesh: p, x: x, y: y, z: z,
+      mesh: p,
+      x: x,
+      y: y,
+      z: z,
       vx: Math.cos(angle1) * Math.sin(angle2) * speed,
       vy: Math.sin(angle1) * speed,
       vz: Math.cos(angle1) * Math.cos(angle2) * speed,
       life: 0.5 + Math.random() * 0.5,
-      maxLife: 1.0
+      maxLife: 1.0,
     });
   }
 }
@@ -289,11 +312,11 @@ function startGame() {
   game.score = 0;
   game.player.health = 100;
   game.speed = 45;
-  
+
   game.enemies.forEach(e => e.parts.forEach(p => destroyMesh(p.mesh)));
   game.enemyBullets.forEach(b => destroyMesh(b.mesh));
   game.bullets.forEach(b => destroyMesh(b.mesh));
-  
+
   game.enemies = [];
   game.enemyBullets = [];
   game.bullets = [];
@@ -302,14 +325,15 @@ function startGame() {
 
 function updatePlayer(dt, isIdle) {
   const p = game.player;
-  if(!isIdle && p.health <= 0) {
+  if (!isIdle && p.health <= 0) {
     createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
     gameState = 'gameover';
     initGameOverScreen();
     return;
   }
 
-  let dx = 0; let dy = 0;
+  let dx = 0;
+  let dy = 0;
   if (!isIdle) {
     if (key('ArrowLeft') || key('a')) dx = -1;
     if (key('ArrowRight') || key('d')) dx = 1;
@@ -327,15 +351,15 @@ function updatePlayer(dt, isIdle) {
   if (p.y > 18) p.y = 18;
 
   const isGrounded = p.y < 0.5;
-  p.animPhase += dt * (isGrounded ? 18 : 6); 
+  p.animPhase += dt * (isGrounded ? 18 : 6);
   p.bobPhase += dt * moveSpeed * 0.25;
-  
+
   const bY = p.y + (isGrounded && dx !== 0 ? Math.abs(Math.sin(p.bobPhase)) * 0.8 : 0);
 
   setPosition(p.meshes.body, p.x, bY, p.z);
   setPosition(p.meshes.head, p.x, bY + 1.2, p.z);
   setPosition(p.meshes.gun, p.x + 0.8, bY - 0.2, p.z - 1.5);
-  
+
   if (isGrounded && (dx !== 0 || isIdle)) {
     // idle running in place effectively
     const legSwing = Math.sin(p.animPhase) * 1.5;
@@ -349,12 +373,12 @@ function updatePlayer(dt, isIdle) {
   p.weaponTimer -= dt;
   if (!isIdle && key('Space') && p.weaponTimer <= 0) {
     firePlayerBullet();
-    p.weaponTimer = 0.12; 
+    p.weaponTimer = 0.12;
   }
 }
 
 function updateGrid(dt) {
-  const totalLength = 35 * 5; 
+  const totalLength = 35 * 5;
   game.gridPlanes.forEach(g => {
     g.z += game.speed * dt;
     if (g.z > 20) {
@@ -387,13 +411,13 @@ function updateEnemies(dt) {
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
     e.timer += dt;
-    
+
     e.x += e.vx * dt;
     e.y += e.vy * dt;
     e.z += e.vz * dt;
-    
-    if(e.x < -30 || e.x > 30) e.vx *= -1;
-    if(e.y < 2 || e.y > 20) e.vy *= -1;
+
+    if (e.x < -30 || e.x > 30) e.vx *= -1;
+    if (e.y < 2 || e.y > 20) e.vy *= -1;
 
     const bob = Math.sin(e.timer * 4) * 2;
 
@@ -431,7 +455,7 @@ function updateBullets(dt) {
       if (Math.abs(b.x - e.x) < 3.0 && Math.abs(b.y - e.y) < 3.0 && Math.abs(b.z - e.z) < 4.0) {
         e.health -= 15;
         hit = true;
-        if(e.health <= 0) {
+        if (e.health <= 0) {
           createExplosion(e.x, e.y, e.z, PALETTE.explosion);
           game.score += 500;
           e.parts.forEach(p => destroyMesh(p.mesh));
@@ -441,7 +465,7 @@ function updateBullets(dt) {
       }
     }
 
-    if(hit) {
+    if (hit) {
       destroyMesh(b.mesh);
       game.bullets.splice(i, 1);
     }
@@ -456,7 +480,7 @@ function updateEnemyBullets(dt) {
     b.y += b.vy * dt;
     b.z += b.vz * dt;
     b.life -= dt;
-    
+
     setPosition(b.mesh, b.x, b.y, b.z);
 
     if (Math.abs(b.x - p.x) < 1.5 && Math.abs(b.y - p.y) < 2.0 && Math.abs(b.z - p.z) < 2.0) {
@@ -481,12 +505,12 @@ function updateParticles(dt) {
     p.y += p.vy * dt;
     p.z += p.vz * dt;
     p.life -= dt;
-    
+
     setPosition(p.mesh, p.x, p.y, p.z);
-    
+
     const alpha = p.life / p.maxLife;
     setScale(p.mesh, alpha, alpha, alpha);
-    
+
     if (p.life <= 0) {
       destroyMesh(p.mesh);
       game.particles.splice(i, 1);
@@ -496,9 +520,17 @@ function updateParticles(dt) {
 
 function initStartScreen() {
   clearButtons();
-  createButton(centerX(240), 252, 240, 52, "▶ START MISSION", () => {
-    startGame();
-  }, { normalColor: uiColors.success, hoverColor: rgba8(60, 220, 120, 255) });
+  createButton(
+    centerX(240),
+    252,
+    240,
+    52,
+    '▶ START MISSION',
+    () => {
+      startGame();
+    },
+    { normalColor: uiColors.success, hoverColor: rgba8(60, 220, 120, 255) }
+  );
 }
 
 function drawStartScreen() {
@@ -535,10 +567,22 @@ function drawStartScreen() {
 
   // Main title — SPACE HARRIER with orange/flame glow
   const titleBob = Math.sin(gameTime * 1.8) * 7;
-  drawGlowTextCentered('SPACE', 320, 44 + titleBob,
-    rgba8(255, 160, 0, 255), rgba8(160, 50, 0, 170), 2);
-  drawGlowTextCentered('HARRIER', 320, 98 + titleBob,
-    rgba8(255, 80, 20, 255), rgba8(120, 20, 0, 160), 2);
+  drawGlowTextCentered(
+    'SPACE',
+    320,
+    44 + titleBob,
+    rgba8(255, 160, 0, 255),
+    rgba8(160, 50, 0, 170),
+    2
+  );
+  drawGlowTextCentered(
+    'HARRIER',
+    320,
+    98 + titleBob,
+    rgba8(255, 80, 20, 255),
+    rgba8(120, 20, 0, 160),
+    2
+  );
 
   // Subtitle
   const subPulse = Math.sin(gameTime * 3) * 0.25 + 0.75;
@@ -555,7 +599,7 @@ function drawStartScreen() {
     bgColor: rgba8(15, 5, 35, 215),
     borderColor: rgba8(180, 60, 255, 255),
     borderWidth: 2,
-    shadow: true
+    shadow: true,
   });
   drawPanel(panel);
 
@@ -582,13 +626,20 @@ function drawStartScreen() {
 
 function initGameOverScreen() {
   clearButtons();
-  createButton(centerX(220), 260, 220, 50, "↻ RETRY", () => {
-    gameState = 'start';
-    inputLockout = 0.6;
-    initStartScreen();
-  }, { normalColor: uiColors.danger, hoverColor: rgba8(250, 60, 60, 255) });
+  createButton(
+    centerX(220),
+    260,
+    220,
+    50,
+    '↻ RETRY',
+    () => {
+      gameState = 'start';
+      inputLockout = 0.6;
+      initStartScreen();
+    },
+    { normalColor: uiColors.danger, hoverColor: rgba8(250, 60, 60, 255) }
+  );
 }
-
 
 export function draw() {
   if (gameState === 'start') {
@@ -600,8 +651,8 @@ export function draw() {
     rect(0, 0, 640, 360, rgba8(100, 0, 0, 150), true);
     setFont('huge');
     setTextAlign('center');
-    drawTextShadow('GAME OVER', 320, 120, uiColors.danger, rgba8(0,0,0,255), 4, 1);
-    
+    drawTextShadow('GAME OVER', 320, 120, uiColors.danger, rgba8(0, 0, 0, 255), 4, 1);
+
     setFont('normal');
     drawText('SCORE: ' + Math.floor(game.score), 320, 180, uiColors.warning, 1);
     drawAllButtons();
@@ -612,10 +663,9 @@ export function draw() {
   setTextAlign('left');
   drawText('SCORE: ' + Math.floor(game.score), 20, 20, uiColors.warning, 1);
   drawText('SPEED: ' + Math.floor(game.speed), 20, 40, uiColors.light, 1);
-  
+
   rect(420, 20, 200, 20, rgba8(50, 0, 0, 200), true);
   const hpWidth = Math.max(0, game.player.health * 2);
   rect(420, 20, hpWidth, 20, hpWidth > 40 ? uiColors.success : uiColors.danger, true);
   rect(420, 20, 200, 20, uiColors.light, false);
 }
-

@@ -1,7 +1,7 @@
 // runtime/assets.js
 export class SpriteSheet {
-  constructor(image, width, tileSize=8) {
-    this.image = image;             // HTMLImageElement
+  constructor(image, width, tileSize = 8) {
+    this.image = image; // HTMLImageElement
     this.sheetWidth = width;
     this.tileSize = tileSize;
     this.cols = Math.floor(width / tileSize);
@@ -15,7 +15,7 @@ export async function loadImageElement(url) {
   return img;
 }
 
-export async function loadSpriteSheet(url, tileSize=8) {
+export async function loadSpriteSheet(url, tileSize = 8) {
   const img = await loadImageElement(url);
   return new SpriteSheet(img, img.naturalWidth, tileSize);
 }

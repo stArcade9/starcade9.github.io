@@ -1,5 +1,7 @@
 import { Nova64 } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
+import { logger } from '../runtime/logger.js';
+globalThis.novaLogger = logger;
 import { stdApi } from '../runtime/api.js';
 import { spriteApi } from '../runtime/api-sprites.js';
 import { threeDApi } from '../runtime/api-3d.js';
@@ -18,6 +20,7 @@ import { voxelApi } from '../runtime/api-voxel.js';
 import { createFullscreenButton } from '../runtime/fullscreen-button.js';
 import { storeApi } from '../runtime/store.js';
 import { api2d } from '../runtime/api-2d.js';
+import { presetsApi } from '../runtime/api-presets.js';
 
 const canvas = document.getElementById('screen');
 
@@ -26,11 +29,10 @@ globalThis.fullscreenButton = createFullscreenButton(canvas);
 
 // ONLY use Three.js renderer - Nintendo 64/PlayStation style 3D console
 let gpu;
-try { 
-  gpu = new GpuThreeJS(canvas, 640, 360); 
+try {
+  gpu = new GpuThreeJS(canvas, 640, 360);
   console.log('✅ Using Three.js renderer - Nintendo 64/PlayStation GPU mode');
-}
-catch (e) { 
+} catch (e) {
   console.error('❌ Three.js renderer failed to initialize:', e);
   throw new Error('Fantasy console requires 3D GPU support (Three.js)');
 }
@@ -50,6 +52,7 @@ const fxApi = effectsApi(gpu);
 const vxApi = voxelApi(gpu);
 const storeApiInst = storeApi();
 const api2dInst = api2d(gpu);
+const presetsInst = presetsApi(gpu);
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -72,6 +75,7 @@ fxApi.exposeTo(g);
 vxApi.exposeTo(g);
 storeApiInst.exposeTo(g);
 api2dInst.exposeTo(g);
+presetsInst.exposeTo(g);
 
 // Now create UI API after g has rgba8 and other functions
 uiApiInstance = uiApi(gpu, g);
@@ -101,10 +105,11 @@ function attachUI() {
   const shotBtn = document.getElementById('shot');
 
   sel.addEventListener('change', async () => {
-    paused = false; pauseBtn.textContent = 'Pause';
+    paused = false;
+    pauseBtn.textContent = 'Pause';
     await loadCart(sel.value);
   });
-  
+
   // Renderer is now fixed to Three.js only - no UI controls needed
   // Editor button now handled by inline onclick in HTML to open OS9 shell
 
@@ -112,16 +117,22 @@ function attachUI() {
     paused = !paused;
     pauseBtn.textContent = paused ? 'Resume' : 'Pause';
   });
-  stepBtn.addEventListener('click', () => { stepOnce = true; });
+  stepBtn.addEventListener('click', () => {
+    stepOnce = true;
+  });
   shotBtn.addEventListener('click', () => {
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
-    a.href = url; a.download = 'nova64.png'; a.click();
+    a.href = url;
+    a.download = 'nova64.png';
+    a.click();
   });
 }
 
 let last = performance.now();
-let uMs=0, dMs=0, fps=0;
+let uMs = 0,
+  dMs = 0,
+  fps = 0;
 let currentDt = 0;
 
 // Expose timing functions globally
@@ -130,22 +141,25 @@ globalThis.getFPS = () => fps;
 
 function loop() {
   const now = performance.now();
-  const dt = Math.min(0.1, (now - last)/1000);
+  const dt = Math.min(0.1, (now - last) / 1000);
   currentDt = dt;
   last = now;
 
   if (!paused || stepOnce) {
-    iApi.step();
     const u0 = performance.now();
-    
+
     // Tick the global novaStore time counter
     storeApiInst.tick(dt);
+    // Auto-animate skybox if enabled
+    skyApi._tick(dt);
+    // Update post-processing shader uniforms (time, etc.)
+    fxApi.update(dt);
 
     // Update cart first (for manual screen management)
     // Check if cart exists to prevent errors during scene transitions
     if (nova.cart && nova.cart.update) {
       try {
-        if (typeof globalThis.updateAnimations === "function") {
+        if (typeof globalThis.updateAnimations === 'function') {
           globalThis.updateAnimations(dt);
         }
         nova.cart.update(dt);
@@ -153,16 +167,16 @@ function loop() {
         console.error('❌ Cart update() error:', e.message);
       }
     }
-    
+
     // Then update screen manager (for automatic screen management)
     scrApi.manager.update(dt);
-    
+
     const u1 = performance.now();
     uMs = u1 - u0;
 
     gpu.beginFrame();
     const d0 = performance.now();
-    
+
     // Draw cart first (for manual rendering)
     // Check if cart exists to prevent errors during scene transitions
     if (nova.cart && nova.cart.draw) {
@@ -172,10 +186,10 @@ function loop() {
         console.error('❌ Cart draw() error:', e.message, e.stack);
       }
     }
-    
+
     // Then draw screen manager (for automatic screen rendering)
     scrApi.manager.draw();
-    
+
     const d1 = performance.now();
     dMs = d1 - d0;
     try {
@@ -183,14 +197,20 @@ function loop() {
     } catch (e) {
       console.error('❌ gpu.endFrame() error:', e.message, e.stack);
     }
+
+    // Snapshot input state at END of frame so keyp/isKeyPressed correctly
+    // detect transitions on the next frame (key pressed between frames).
+    iApi.step();
   }
-  if (stepOnce) { stepOnce = false; }
+  if (stepOnce) {
+    stepOnce = false;
+  }
 
   fps = Math.round(1000 / (performance.now() - now));
-  
+
   // 3D GPU stats
   let statsText = `3D GPU (Three.js) • fps: ${fps}, update: ${uMs.toFixed(2)}ms, draw: ${dMs.toFixed(2)}ms`;
-  
+
   // Add 3D stats if available
   if (typeof get3DStats === 'function') {
     const stats3D = get3DStats();
@@ -198,7 +218,7 @@ function loop() {
       statsText += ` • triangles: ${stats3D.render.triangles}, calls: ${stats3D.render.calls}`;
     }
   }
-  
+
   statsEl.textContent = statsText;
   requestAnimationFrame(loop);
 }
@@ -214,17 +234,18 @@ const demoParam = urlParams.get('demo'); // Also handle ?demo= from console.html
 // Map game IDs to their paths
 const gameMap = {
   'space-harrier': '/examples/space-harrier-3d/code.js',
-  'fzero': '/examples/f-zero-nova-3d/code.js',
-  'knight': '/examples/strider-demo-3d/code.js',
-  'cyberpunk': '/examples/cyberpunk-city-3d/code.js',
-  'strider': '/examples/strider-demo-3d/code.js',
-  'demoscene': '/examples/demoscene/code.js',
+  fzero: '/examples/f-zero-nova-3d/code.js',
+  knight: '/examples/strider-demo-3d/code.js',
+  cyberpunk: '/examples/cyberpunk-city-3d/code.js',
+  strider: '/examples/strider-demo-3d/code.js',
+  demoscene: '/examples/demoscene/code.js',
   'space-combat': '/examples/star-fox-nova-3d/code.js',
-  'minecraft': '/examples/minecraft-demo/code.js',
+  minecraft: '/examples/minecraft-demo/code.js',
 };
 
 // Map demo names (from ?demo= URL param) to paths
 const demoMap = {
+  'hello-world': '/examples/hello-world/code.js',
   'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
   'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
   'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
@@ -232,19 +253,33 @@ const demoMap = {
   'super-plumber-64': '/examples/super-plumber-64/code.js',
   'cyberpunk-city-3d': '/examples/cyberpunk-city-3d/code.js',
   'strider-demo-3d': '/examples/strider-demo-3d/code.js',
-  'demoscene': '/examples/demoscene/code.js',
+  demoscene: '/examples/demoscene/code.js',
   'space-harrier-3d': '/examples/space-harrier-3d/code.js',
   'hello-3d': '/examples/hello-3d/code.js',
   'mystical-realm-3d': '/examples/mystical-realm-3d/code.js',
   'physics-demo-3d': '/examples/physics-demo-3d/code.js',
   'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
   'hello-skybox': '/examples/hello-skybox/code.js',
+  'fps-demo-3d': '/examples/fps-demo-3d/code.js',
+  'adventure-comic-3d': '/examples/adventure-comic-3d/code.js',
+  'input-showcase': '/examples/input-showcase/code.js',
+  'audio-lab': '/examples/audio-lab/code.js',
+  'storage-quest': '/examples/storage-quest/code.js',
+  'instancing-demo': '/examples/instancing-demo/code.js',
+  'particles-demo': '/examples/particles-demo/code.js',
+  'screen-demo': '/examples/screen-demo/code.js',
+  'ui-demo': '/examples/ui-demo/code.js',
+  'wing-commander-space': '/examples/wing-commander-space/code.js',
+  'space-combat-3d': '/examples/space-combat-3d/code.js',
+  'model-viewer-3d': '/examples/model-viewer-3d/code.js',
+  '3d-advanced': '/examples/3d-advanced/code.js',
+  'pbr-showcase': '/examples/pbr-showcase/code.js',
 };
 
 // default cart - load from URL param or default to space-harrier-3d
 (async () => {
-  let gamePath = '/examples/space-harrier-3d/code.js';
-  
+  let gamePath = document.getElementById('cart')?.value || '/examples/space-harrier-3d/code.js';
+
   if (gamePathParam) {
     gamePath = gamePathParam;
   } else if (demoParam && demoMap[demoParam]) {
@@ -256,14 +291,14 @@ const demoMap = {
   } else if (gameParam && gameMap[gameParam]) {
     gamePath = gameMap[gameParam];
   }
-  
+
   console.log(`🎮 Loading game: ${gamePath}`);
   await loadCart(gamePath);
   requestAnimationFrame(loop);
 })();
 
 // Listen for messages from Game Studio to execute code
-window.addEventListener('message', (event) => {
+window.addEventListener('message', event => {
   if (event.data && event.data.type === 'EXECUTE_CODE') {
     console.log('🎮 Game Studio: Executing code...');
     console.log('📝 Code to execute:', event.data.code.substring(0, 200) + '...');
@@ -272,12 +307,12 @@ window.addEventListener('message', (event) => {
       iApi: typeof iApi,
       threeDApi_instance: typeof threeDApi_instance,
     });
-    
+
     try {
       // Stop current game loop if running
       console.log('⏸️ Pausing game...');
       paused = true;
-      
+
       // Reset the 3D scene
       console.log('🧹 Clearing 3D scene...');
       if (threeDApi_instance && typeof threeDApi_instance.clearScene === 'function') {
@@ -286,41 +321,122 @@ window.addEventListener('message', (event) => {
       } else {
         console.warn('⚠️ clearScene not available');
       }
-      
+
       // Execute the new code
       const userCode = event.data.code;
-      
+
       console.log('🔨 Creating game function...');
       // Create a function from the code and execute it
       const gameFunction = new Function(
-        'cls', 'pset', 'pget', 'rectfill', 'rect', 'circfill', 'circ', 'line', 'print',
-        'btn', 'btnp', 'rgba8', 'spr', 'map', 'mset', 'mget',
-        'rect3d', 'cube3d', 'sphere3d', 'cylinder3d', 'cone3d', 'model3d', 'light3d',
-        'setCamera', 'lookAt', 'fog3d', 'clearScene', 'updateModel',
-        'createSkybox', 'updateSkybox', 'removeSkybox',
-        'bloom', 'chromaticAberration', 'vignette', 'scanlines', 'crt', 'glitch',
-        'createVoxelEngine', 'voxelSet', 'voxelGet', 'voxelClear', 'voxelRender',
-        'console', 'Math', 'Date', 'Array', 'Object', 'String', 'Number',
-        userCode + '\n; return { update: typeof update !== "undefined" ? update : null, draw: typeof draw !== "undefined" ? draw : null, render: typeof render !== "undefined" ? render : null };'
+        'cls',
+        'pset',
+        'pget',
+        'rectfill',
+        'rect',
+        'circfill',
+        'circ',
+        'line',
+        'print',
+        'btn',
+        'btnp',
+        'rgba8',
+        'spr',
+        'map',
+        'mset',
+        'mget',
+        'rect3d',
+        'cube3d',
+        'sphere3d',
+        'cylinder3d',
+        'cone3d',
+        'model3d',
+        'light3d',
+        'setCamera',
+        'lookAt',
+        'fog3d',
+        'clearScene',
+        'updateModel',
+        'createSpaceSkybox',
+        'animateSkybox',
+        'clearSkybox',
+        'bloom',
+        'chromaticAberration',
+        'vignette',
+        'scanlines',
+        'crt',
+        'glitch',
+        'createVoxelEngine',
+        'voxelSet',
+        'voxelGet',
+        'voxelClear',
+        'voxelRender',
+        'console',
+        'Math',
+        'Date',
+        'Array',
+        'Object',
+        'String',
+        'Number',
+        userCode +
+          '\n; return { update: typeof update !== "undefined" ? update : null, draw: typeof draw !== "undefined" ? draw : null, render: typeof render !== "undefined" ? render : null };'
       );
-      
+
       console.log('🚀 Executing game function...');
       // Call with the API functions and capture the returned functions
       const gameFunctions = gameFunction(
-        api.cls, api.pset, api.pget, api.rectfill, api.rect, api.circfill, api.circ, api.line, api.print,
-        iApi.btn, iApi.btnp, api.rgba8, sApi.spr, sApi.map, sApi.mset, sApi.mget,
-        threeDApi_instance.rect3d, threeDApi_instance.cube3d, threeDApi_instance.sphere3d, 
-        threeDApi_instance.cylinder3d, threeDApi_instance.cone3d, threeDApi_instance.model3d, threeDApi_instance.light3d,
-        threeDApi_instance.setCamera, threeDApi_instance.lookAt, threeDApi_instance.fog3d, 
-        threeDApi_instance.clearScene, threeDApi_instance.updateModel,
-        skyApi.createSkybox, skyApi.updateSkybox, skyApi.removeSkybox,
-        fxApi.bloom, fxApi.chromaticAberration, fxApi.vignette, fxApi.scanlines, fxApi.crt, fxApi.glitch,
-        vxApi.createVoxelEngine, vxApi.voxelSet, vxApi.voxelGet, vxApi.voxelClear, vxApi.voxelRender,
-        console, Math, Date, Array, Object, String, Number
+        api.cls,
+        api.pset,
+        api.pget,
+        api.rectfill,
+        api.rect,
+        api.circfill,
+        api.circ,
+        api.line,
+        api.print,
+        iApi.btn,
+        iApi.btnp,
+        api.rgba8,
+        sApi.spr,
+        sApi.map,
+        sApi.mset,
+        sApi.mget,
+        threeDApi_instance.rect3d,
+        threeDApi_instance.cube3d,
+        threeDApi_instance.sphere3d,
+        threeDApi_instance.cylinder3d,
+        threeDApi_instance.cone3d,
+        threeDApi_instance.model3d,
+        threeDApi_instance.light3d,
+        threeDApi_instance.setCamera,
+        threeDApi_instance.lookAt,
+        threeDApi_instance.fog3d,
+        threeDApi_instance.clearScene,
+        threeDApi_instance.updateModel,
+        g.createSpaceSkybox,
+        g.animateSkybox,
+        g.clearSkybox,
+        fxApi.bloom,
+        fxApi.chromaticAberration,
+        fxApi.vignette,
+        fxApi.scanlines,
+        fxApi.crt,
+        fxApi.glitch,
+        vxApi.createVoxelEngine,
+        vxApi.voxelSet,
+        vxApi.voxelGet,
+        vxApi.voxelClear,
+        vxApi.voxelRender,
+        console,
+        Math,
+        Date,
+        Array,
+        Object,
+        String,
+        Number
       );
-      
+
       console.log('📋 Game functions:', gameFunctions);
-      
+
       // Replace the cart's update/draw functions with the new ones
       if (gameFunctions.update || gameFunctions.draw || gameFunctions.render) {
         console.log('🔄 Replacing cart functions...');
@@ -342,13 +458,13 @@ window.addEventListener('message', (event) => {
       } else {
         console.log('ℹ️ No update/draw functions found in code');
       }
-      
+
       // Resume the game loop
       console.log('▶️ Resuming game loop...');
       paused = false;
-      
+
       console.log('✅ Game Studio: Code executed successfully!');
-      
+
       // Send success message back
       if (event.source) {
         event.source.postMessage({ type: 'EXECUTE_SUCCESS' }, event.origin);
@@ -357,10 +473,13 @@ window.addEventListener('message', (event) => {
       console.error('❌ Game Studio: Error executing code:', error);
       console.error('Stack trace:', error.stack);
       if (event.source) {
-        event.source.postMessage({ 
-          type: 'EXECUTE_ERROR', 
-          error: error.message 
-        }, event.origin);
+        event.source.postMessage(
+          {
+            type: 'EXECUTE_ERROR',
+            error: error.message,
+          },
+          event.origin
+        );
       }
     }
   }

@@ -4,25 +4,26 @@
 // ── Configuration ──────────────────────────────────────────
 const C = {
   // Materials and Colors
-  shipBody:    0x0044ff,
+  shipBody: 0x0044ff,
   shipCockpit: 0x22aaff,
-  shipEngine:  0x00ffff,
-  shipTrim:    0xffffff,
-  rivalBody:   0xee0033,
+  shipEngine: 0x00ffff,
+  shipTrim: 0xffffff,
+  rivalBody: 0xee0033,
   rivalEngine: 0xff4422,
-  
-  bgFog:       0x040210, // Deep purple synthwave space
-  trackR1:     0x05051a,
-  trackR2:     0x0a0a22,
-  neonWall:    0xff00aa, // Magenta glowing rails
+
+  bgFog: 0x040210, // Deep purple synthwave space
+  trackR1: 0x05051a,
+  trackR2: 0x0a0a22,
+  neonWall: 0xff00aa, // Magenta glowing rails
   neonWallAlt: 0xaa00ff,
-  boostPad:    0x00ffaa,
-  spark:       0xffdd00,
+  boostPad: 0x00ffaa,
+  spark: 0xffdd00,
 };
 
 let gameState = 'start'; // 'start', 'playing', 'crashed', 'finished'
 let t = 0; // global time
 let inputLock = 0;
+let speedLineInstanceId = null; // GPU instanced speed lines
 
 // ── Game State ─────────────────────────────────────────────
 let g = {
@@ -36,9 +37,12 @@ let g = {
   passCount: 0,
 
   p: {
-    x: 0, y: 1.5, z: 0,
+    x: 0,
+    y: 1.5,
+    z: 0,
     vx: 0,
-    roll: 0, pitch: 0,
+    roll: 0,
+    pitch: 0,
     meshes: {},
     isBoosting: false,
     invuln: 0,
@@ -51,9 +55,9 @@ let g = {
   rivals: [],
   particles: [],
   speedLines: [],
-  
+
   propTimer: 0,
-  rivalTimer: 0
+  rivalTimer: 0,
 };
 
 // ── Initialization ─────────────────────────────────────────
@@ -78,17 +82,27 @@ export async function init() {
   }
 
   // Neon over-glow
-  enableBloom(1.5, 0.4, 0.2); 
+  enableBloom(1.5, 0.4, 0.2);
   if (typeof enableFXAA === 'function') enableFXAA();
 
   buildPlayerShip();
   initTrack();
-  
+
   // Pre-fill track props & speed lines
-  for (let i = 0; i < 40; i++) spawnSpeedLine();
+  // Speed lines use GPU instancing (40 cubes → 1 instanced mesh)
+  speedLineInstanceId = createInstancedMesh('cube', 40, 0xaabbff, {
+    size: 1,
+    material: 'emissive',
+    emissive: 0xaabbff,
+    emissiveIntensity: 1.0,
+  });
+  for (let i = 0; i < 40; i++) spawnSpeedLine(i);
+  finalizeInstances(speedLineInstanceId);
   for (let i = 0; i < 5; i++) {
-    g.propTimer += 0.5; updateTrackSpawns(1);
-    g.rivalTimer += 0.5; updateRivals(1);
+    g.propTimer += 0.5;
+    updateTrackSpawns(1);
+    g.rivalTimer += 0.5;
+    updateRivals(1);
   }
 
   initStartScreen();
@@ -98,21 +112,39 @@ export async function init() {
 function buildPlayerShip() {
   const p = g.p;
   // Sleek wedge shape (Metallic)
-  p.meshes.body = createCube(2.0, C.shipBody, [p.x, p.y, p.z], { material: 'metallic', metalness: 0.9, roughness: 0.2 });
+  p.meshes.body = createCube(2.0, C.shipBody, [p.x, p.y, p.z], {
+    material: 'metallic',
+    metalness: 0.9,
+    roughness: 0.2,
+  });
   setScale(p.meshes.body, 1.2, 0.4, 2.5);
 
-  p.meshes.wingL = createCube(1.0, C.shipTrim, [p.x - 1.8, p.y, p.z + 0.5], { material: 'metallic' });
+  p.meshes.wingL = createCube(1.0, C.shipTrim, [p.x - 1.8, p.y, p.z + 0.5], {
+    material: 'metallic',
+  });
   setScale(p.meshes.wingL, 2.0, 0.1, 1.5);
 
-  p.meshes.wingR = createCube(1.0, C.shipTrim, [p.x + 1.8, p.y, p.z + 0.5], { material: 'metallic' });
+  p.meshes.wingR = createCube(1.0, C.shipTrim, [p.x + 1.8, p.y, p.z + 0.5], {
+    material: 'metallic',
+  });
   setScale(p.meshes.wingR, 2.0, 0.1, 1.5);
 
-  p.meshes.cockpit = createCube(1.0, C.shipCockpit, [p.x, p.y + 0.5, p.z - 0.5], { material: 'holographic', transparent: true, opacity: 0.8 });
+  p.meshes.cockpit = createCube(1.0, C.shipCockpit, [p.x, p.y + 0.5, p.z - 0.5], {
+    material: 'holographic',
+    transparent: true,
+    opacity: 0.8,
+  });
   setScale(p.meshes.cockpit, 0.6, 0.5, 1.2);
 
   // Twin Engines
-  p.meshes.engL = createCube(0.8, C.shipEngine, [p.x - 0.6, p.y, p.z + 2.5], { material: 'emissive', emissive: C.shipEngine });
-  p.meshes.engR = createCube(0.8, C.shipEngine, [p.x + 0.6, p.y, p.z + 2.5], { material: 'emissive', emissive: C.shipEngine });
+  p.meshes.engL = createCube(0.8, C.shipEngine, [p.x - 0.6, p.y, p.z + 2.5], {
+    material: 'emissive',
+    emissive: C.shipEngine,
+  });
+  p.meshes.engR = createCube(0.8, C.shipEngine, [p.x + 0.6, p.y, p.z + 2.5], {
+    material: 'emissive',
+    emissive: C.shipEngine,
+  });
 }
 
 function initTrack() {
@@ -121,14 +153,23 @@ function initTrack() {
   for (let i = 0; i < 15; i++) {
     const z = -i * segLen + 20;
     const color = i % 2 === 0 ? C.trackR1 : C.trackR2;
-    const mesh = createPlane(g.trackWidth * 1.5, segLen, color, [0, -1, z], { material: 'standard', roughness: 0.8 });
+    const mesh = createPlane(g.trackWidth * 1.5, segLen, color, [0, -1, z], {
+      material: 'standard',
+      roughness: 0.8,
+    });
     rotateMesh(mesh, -Math.PI / 2, 0, 0);
     g.roadSegments.push({ mesh, z, len: segLen, activeColor: color });
-    
+
     // Left & Right neon border rails
-    const wl = createCube(1.0, C.neonWall, [-g.trackWidth/2 - 1, 0, z], { material: 'emissive', emissive: C.neonWall });
+    const wl = createCube(1.0, C.neonWall, [-g.trackWidth / 2 - 1, 0, z], {
+      material: 'emissive',
+      emissive: C.neonWall,
+    });
     setScale(wl, 1.0, 2.0, segLen);
-    const wr = createCube(1.0, C.neonWall, [g.trackWidth/2 + 1, 0, z], { material: 'emissive', emissive: C.neonWallAlt });
+    const wr = createCube(1.0, C.neonWall, [g.trackWidth / 2 + 1, 0, z], {
+      material: 'emissive',
+      emissive: C.neonWallAlt,
+    });
     setScale(wr, 1.0, 2.0, segLen);
     g.borders.push({ wl, wr, z, len: segLen });
   }
@@ -136,54 +177,86 @@ function initTrack() {
 
 function spawnRival(isFar = false) {
   const x = (Math.random() - 0.5) * (g.trackWidth - 8);
-  const z = isFar ? -400 : (-200 - Math.random() * 100);
-  
+  const z = isFar ? -400 : -200 - Math.random() * 100;
+
   // Basic rival shape
   const body = createCube(2.0, C.rivalBody, [x, 1.5, z], { material: 'metallic', metalness: 0.8 });
   setScale(body, 1.0, 0.5, 2.0);
-  const eng = createCube(0.8, C.rivalEngine, [x, 1.5, z + 2.0], { material: 'emissive', emissive: C.rivalEngine });
+  const eng = createCube(0.8, C.rivalEngine, [x, 1.5, z + 2.0], {
+    material: 'emissive',
+    emissive: C.rivalEngine,
+  });
   setScale(eng, 1.8, 0.6, 0.5);
 
   const speedMultiplier = 0.5 + Math.random() * 0.4; // They travel at 50-90% of max speed
 
   g.rivals.push({
     meshes: [body, eng],
-    x, y: 1.5, z,
+    x,
+    y: 1.5,
+    z,
     vx: (Math.random() - 0.5) * 10,
     speed: g.maxSpeed * speedMultiplier,
-    passed: false
+    passed: false,
   });
 }
 
-function spawnSpeedLine() {
+function spawnSpeedLine(instanceIdx = -1) {
   const x = (Math.random() - 0.5) * g.trackWidth * 1.4;
   const y = 1 + Math.random() * 8;
   const z = -400 + Math.random() * 450;
-  
-  const mesh = createCube(0.5, 0xffffff, [x, y, z], { material: 'emissive', emissive: 0xaabbff });
-  setScale(mesh, 0.1, 0.1, 8.0 + Math.random() * 12);
-  g.speedLines.push({ mesh, x, y, z });
+  const len = 8.0 + Math.random() * 12;
+
+  const idx = instanceIdx >= 0 ? instanceIdx : g.speedLines.length;
+  if (speedLineInstanceId !== null) {
+    setInstanceTransform(speedLineInstanceId, idx, x, y, z, 0, 0, 0, 0.1, 0.1, len);
+  }
+  g.speedLines.push({ idx, x, y, z, len });
+}
+
+function spawnMine() {
+  const x = (Math.random() - 0.5) * 45;
+  const z = -400 - Math.random() * 200;
+
+  const mesh = createAdvancedCube(3, { material: 'emissive', emissive: 0xff0000, intensity: 2 }, [
+    x,
+    0,
+    z,
+  ]);
+  g.props.push({ type: 'mine', mesh, x: x, z: z, active: true, throb: 0 });
 }
 
 function spawnBoostPad() {
   const x = (Math.random() - 0.5) * (g.trackWidth - 10);
   const z = -350;
-  
-  const mesh = createPlane(6, 12, C.boostPad, [x, -0.9, z], { material: 'emissive', emissive: C.boostPad });
+
+  const mesh = createPlane(6, 12, C.boostPad, [x, -0.9, z], {
+    material: 'emissive',
+    emissive: C.boostPad,
+  });
   rotateMesh(mesh, -Math.PI / 2, 0, 0);
-  
+
   g.props.push({ type: 'boost', mesh, x, z, active: true });
 }
 
 function createSparks(cx, cy, cz, count) {
   for (let i = 0; i < count; i++) {
-    const mesh = createCube(0.4, C.spark, [cx, cy, cz], { material: 'emissive', emissive: C.spark });
+    const mesh = createCube(0.4, C.spark, [cx, cy, cz], {
+      material: 'emissive',
+      emissive: C.spark,
+    });
     const spd = 20 + Math.random() * 30;
     const a = Math.random() * Math.PI * 2;
     g.particles.push({
-      mesh, x: cx, y: cy, z: cz,
-      vx: Math.cos(a) * spd, vy: Math.abs(Math.sin(a)) * spd + 10, vz: Math.random() * 20 - 10,
-      life: 0.3 + Math.random() * 0.5, maxLife: 0.8
+      mesh,
+      x: cx,
+      y: cy,
+      z: cz,
+      vx: Math.cos(a) * spd,
+      vy: Math.abs(Math.sin(a)) * spd + 10,
+      vz: Math.random() * 20 - 10,
+      life: 0.3 + Math.random() * 0.5,
+      maxLife: 0.8,
     });
   }
 }
@@ -214,28 +287,28 @@ export function update(dt) {
 
   // Controls
   let ix = 0;
-  if (key('ArrowLeft')  || key('KeyA') || btn(14)) ix = -1;
-  if (key('ArrowRight') || key('KeyD') || btn(15)) ix =  1;
-  
+  if (key('ArrowLeft') || key('KeyA') || btn(14)) ix = -1;
+  if (key('ArrowRight') || key('KeyD') || btn(15)) ix = 1;
+
   // Shifting/Drifting (L/R Bumpers or Q/E)
   if (key('KeyQ') || btn(4)) ix -= 1.5;
   if (key('KeyE') || btn(5)) ix += 1.5;
 
   const latAccel = 120;
   p.vx += ix * latAccel * dt;
-  p.vx *= (1 - 4.5 * dt); // handling friction
+  p.vx *= 1 - 4.5 * dt; // handling friction
 
   // Update speed automatically
   let targetSpeed = g.maxSpeed;
   if (p.isBoosting) targetSpeed = g.boostSpeed;
-  
+
   // Acceleration / declaration matching
   if (g.speed < targetSpeed) g.speed += 150 * dt;
   else g.speed -= 80 * dt;
-  
+
   // Engine energy passively recharges
   g.energy = Math.min(100, g.energy + dt * 5);
-  
+
   // Manual boost (Space or A button)
   if ((key('Space') || btn(0)) && g.energy > 30 && !p.isBoosting) {
     p.isBoosting = true;
@@ -251,38 +324,47 @@ export function update(dt) {
 
   // Wall collisions
   const bw = g.trackWidth / 2 - 1.5;
-  if (p.x < -bw) { p.x = -bw; p.vx = 40; hitWall(-bw); }
-  if (p.x >  bw) { p.x =  bw; p.vx = -40; hitWall(bw); }
+  if (p.x < -bw) {
+    p.x = -bw;
+    p.vx = 40;
+    hitWall(-bw);
+  }
+  if (p.x > bw) {
+    p.x = bw;
+    p.vx = -40;
+    hitWall(bw);
+  }
 
   p.roll += (-p.vx * 0.015 - p.roll) * 10 * dt; // Lean into turns
 
   updatePlayerTransforms();
-  
+
   g.dist += g.speed * dt;
-  
-  // Progress World 
+
+  // Progress World
   const relSpeed = g.speed * dt;
   updateRoad(relSpeed);
   updateTrackSpawns(dt);
   updateRivals(dt);
   updateProps(dt);
   updateParticles(dt, relSpeed);
-  
+
   // Dynamic Camera (Lags slightly behind ship x-movement)
   const camX = p.x * 0.4 + p.vx * 0.05;
-  const fovWarp = p.isBoosting ? 100 : 85; 
+  const fovWarp = p.isBoosting ? 100 : 85;
   // Tween FOV for sense of speed
-  setCameraFOV(85 + (p.isBoosting ? 15 : 0) * Math.min(1, g.speed/g.boostSpeed));
-  
+  setCameraFOV(85 + (p.isBoosting ? 15 : 0) * Math.min(1, g.speed / g.boostSpeed));
+
   const camY = 8 - p.pitch * 5;
   setCameraPosition(camX, camY, 12);
   setCameraTarget(camX * 1.5, 0, -40);
-  
+
   // Track win
-  if (g.dist > 30000 && g.rank <= 1) { // reached end in 1st
-      gameState = 'finished';
-      inputLock = 1.0;
-      initWinScreen();
+  if (g.dist > 30000 && g.rank <= 1) {
+    // reached end in 1st
+    gameState = 'finished';
+    inputLock = 1.0;
+    initWinScreen();
   }
 }
 
@@ -295,17 +377,18 @@ function hitWall(xPos) {
 
 function updatePlayerTransforms() {
   const p = g.p;
-  if(!p.meshes.body) return;
+  if (!p.meshes.body) return;
 
   const r = p.roll;
-  const cr = Math.cos(r), sr = Math.sin(r);
+  const cr = Math.cos(r),
+    sr = Math.sin(r);
 
   // Hover bob
   p.y = 1.5 + Math.sin(t * 10) * 0.15;
 
-  const applyR = (ox, oy, oz) => [ p.x + ox*cr - oy*sr, p.y + ox*sr + oy*cr, p.z + oz ];
+  const applyR = (ox, oy, oz) => [p.x + ox * cr - oy * sr, p.y + ox * sr + oy * cr, p.z + oz];
 
-  setPosition(p.meshes.body, ...applyR(0,0,0));
+  setPosition(p.meshes.body, ...applyR(0, 0, 0));
   setRotation(p.meshes.body, p.pitch, 0, r);
 
   setPosition(p.meshes.wingL, ...applyR(-1.8, 0, 0.5));
@@ -319,7 +402,7 @@ function updatePlayerTransforms() {
 
   // Glow flicker based on boosting
   const engineScl = p.isBoosting ? 1.5 + Math.random() * 0.5 : 1.0 + Math.random() * 0.2;
-  
+
   setPosition(p.meshes.engL, ...applyR(-0.6, 0, 2.5));
   setRotation(p.meshes.engL, p.pitch, 0, r);
   setScale(p.meshes.engL, 0.8, 0.8, engineScl);
@@ -332,23 +415,25 @@ function updatePlayerTransforms() {
 function updateRoad(distMovement) {
   g.roadSegments.forEach(r => {
     r.z += distMovement;
-    if (r.z > 30) r.z -= (g.roadSegments.length * r.len);
+    if (r.z > 30) r.z -= g.roadSegments.length * r.len;
     // Emphasize speed by flattening road pitch based on Z
     setPosition(r.mesh, 0, -1, r.z);
   });
 
   g.borders.forEach(b => {
     b.z += distMovement;
-    if (b.z > 30) b.z -= (g.borders.length * b.len);
-    setPosition(b.wl, -g.trackWidth/2 - 1, 0, b.z);
-    setPosition(b.wr, g.trackWidth/2 + 1, 0, b.z);
+    if (b.z > 30) b.z -= g.borders.length * b.len;
+    setPosition(b.wl, -g.trackWidth / 2 - 1, 0, b.z);
+    setPosition(b.wr, g.trackWidth / 2 + 1, 0, b.z);
   });
 }
 
 function updateTrackSpawns(dt) {
   g.propTimer -= dt;
-  if(g.propTimer <= 0) {
-    if(Math.random() < 0.6) spawnBoostPad();
+  if (g.propTimer <= 0) {
+    if (Math.random() < 0.6) spawnBoostPad();
+    else if (Math.random() < 0.8) spawnMine();
+
     g.propTimer = 1.0 + Math.random() * 2.0;
   }
 }
@@ -363,13 +448,13 @@ function updateRivals(dt) {
   const p = g.p;
   for (let i = g.rivals.length - 1; i >= 0; i--) {
     let r = g.rivals[i];
-    
+
     // Relative movement
-    const relSpeed = g.speed - r.speed; 
+    const relSpeed = g.speed - r.speed;
     r.z += relSpeed * dt;
 
     r.x += r.vx * dt;
-    if(r.x < -18 || r.x > 18) r.vx *= -1;
+    if (r.x < -18 || r.x > 18) r.vx *= -1;
 
     r.y = 1.5 + Math.sin(t * 8 + i) * 0.3;
 
@@ -391,8 +476,8 @@ function updateRivals(dt) {
       g.health -= 15;
       g.speed *= 0.7; // lose heavy momentum
       p.invuln = 0.5;
-      r.vx = (r.x > p.x) ? 15 : -15; // knock away
-      createSparks((r.x+p.x)/2, 1.5, p.z, 15);
+      r.vx = r.x > p.x ? 15 : -15; // knock away
+      createSparks((r.x + p.x) / 2, 1.5, p.z, 15);
     }
 
     // Clean up
@@ -410,7 +495,12 @@ function updateProps(dt) {
     setPosition(p.mesh, p.x, -0.9, p.z);
 
     // Boost Pad hit detection
-    if (p.active && p.type === 'boost' && Math.abs(p.z - g.p.z) < 4.0 && Math.abs(p.x - g.p.x) < 4.0) {
+    if (
+      p.active &&
+      p.type === 'boost' &&
+      Math.abs(p.z - g.p.z) < 4.0 &&
+      Math.abs(p.x - g.p.x) < 4.0
+    ) {
       p.active = false;
       g.p.isBoosting = true;
       g.energy = Math.min(100, g.energy + 50); // Restore energy
@@ -427,19 +517,38 @@ function updateProps(dt) {
 
 function updateParticles(dt, ds) {
   // Environmental speed stars/lines
+  let linesUpdated = false;
   g.speedLines.forEach(sl => {
     sl.z += ds * 1.5; // lines fly past faster
-    setPosition(sl.mesh, sl.x, sl.y, sl.z);
     if (sl.z > 40) sl.z -= 500;
+    if (speedLineInstanceId !== null) {
+      setInstanceTransform(
+        speedLineInstanceId,
+        sl.idx,
+        sl.x,
+        sl.y,
+        sl.z,
+        0,
+        0,
+        0,
+        0.1,
+        0.1,
+        sl.len
+      );
+      linesUpdated = true;
+    }
   });
+  if (linesUpdated && speedLineInstanceId !== null) finalizeInstances(speedLineInstanceId);
 
   // Active sparks
   for (let i = g.particles.length - 1; i >= 0; i--) {
     let p = g.particles[i];
-    p.x += p.vx * dt; p.y += p.vy * dt; p.z += (p.vz + g.speed) * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.z += (p.vz + g.speed) * dt;
     p.vy -= 40 * dt; // gravity
     p.life -= dt;
-    
+
     let a = Math.max(0.01, p.life / p.maxLife);
     setScale(p.mesh, a, a, a);
     setPosition(p.mesh, p.x, p.y, p.z);
@@ -453,76 +562,96 @@ function updateParticles(dt, ds) {
 
 function updateMenuAnim(dt) {
   // Make ship hover idly on menu
-  updateRoad(200 * dt); 
+  updateRoad(200 * dt);
   const p = g.p;
   p.y = 1.8 + Math.sin(t * 3) * 0.3;
   p.roll = Math.sin(t * 2) * 0.1;
   p.pitch = Math.sin(t * 1.5) * 0.05;
-  
+
   if (gameState !== 'crashed') updatePlayerTransforms();
 }
 
 // ── Screen Rendering ───────────────────────────────────────
 export function draw() {
-  if (gameState === 'start') { drawStartScreen(); return; }
-  if (gameState === 'crashed') { drawCrashedScreen(); return; }
-  if (gameState === 'finished') { drawFinishScreen(); return; }
+  if (gameState === 'start') {
+    drawStartScreen();
+    return;
+  }
+  if (gameState === 'crashed') {
+    drawCrashedScreen();
+    return;
+  }
+  if (gameState === 'finished') {
+    drawFinishScreen();
+    return;
+  }
 
   // Playing HUD
   drawHUD();
 }
 
 function drawHUD() {
-  setFont('normal'); setTextAlign('left');
-  
+  setFont('normal');
+  setTextAlign('left');
+
   // Top HUD Bar
   rect(0, 0, 640, 40, rgba8(0, 5, 20, 180), true);
   line(0, 40, 640, 40, rgba8(255, 0, 150, 150));
-  
-  drawTextShadow(`RANK ${g.rank}/10`, 20, 12, rgba8(0, 255, 200, 255), rgba8(0,0,0,255), 2);
-  
-  setFont('large'); setTextAlign('right');
+
+  drawTextShadow(`RANK ${g.rank}/10`, 20, 12, rgba8(0, 255, 200, 255), rgba8(0, 0, 0, 255), 2);
+
+  setFont('large');
+  setTextAlign('right');
   const spdTxt = Math.floor(g.speed).toString().padStart(3, '0');
-  drawTextShadow(`${spdTxt} km/h`, 620, 10, rgba8(255, 255, 0, 255), rgba8(0,0,0,255), 2);
+  drawTextShadow(`${spdTxt} km/h`, 620, 10, rgba8(255, 255, 0, 255), rgba8(0, 0, 0, 255), 2);
 
   // Progress Bar
   const progPct = Math.min(1, g.dist / 30000);
   rect(200, 16, 240, 8, rgba8(255, 255, 255, 50), true);
   rect(200, 16, 240 * progPct, 8, rgba8(0, 255, 255, 255), true);
-  
-  setFont('small'); setTextAlign('center');
+
+  setFont('small');
+  setTextAlign('center');
   drawText('COURSE PROGRESS', 320, 4, rgba8(200, 200, 255, 180));
 
   // Bottom HUD elements
   const bY = 320;
-  
+
   // Health
   rect(20, bY, 150, 12, rgba8(50, 0, 0, 180), true);
   const hpC = g.health > 40 ? rgba8(0, 255, 0, 255) : rgba8(255, 50, 50, 255);
-  rect(20, bY, 150 * (g.health/100), 12, hpC, true);
-  rect(20, bY, 150, 12, rgba8(0,0,0,0), false);
-  drawTextShadow('HULL', 20, bY - 14, rgba8(200, 200, 200, 255), rgba8(0,0,0,255), 1);
+  rect(20, bY, 150 * (g.health / 100), 12, hpC, true);
+  rect(20, bY, 150, 12, rgba8(0, 0, 0, 0), false);
+  drawTextShadow('HULL', 20, bY - 14, rgba8(200, 200, 200, 255), rgba8(0, 0, 0, 255), 1);
 
   // Boost Energy
   rect(470, bY, 150, 12, rgba8(0, 10, 50, 180), true);
   const engPct = Math.max(0, g.energy / 100);
   rect(470, bY, 150 * engPct, 12, rgba8(0, 200, 255, 255), true);
   if (g.p.isBoosting) {
-    rect(470, bY, 150 * engPct, 12, rgba8(255, 255, 255, Math.floor(Math.sin(t*30)*100+100)), true);
+    rect(
+      470,
+      bY,
+      150 * engPct,
+      12,
+      rgba8(255, 255, 255, Math.floor(Math.sin(t * 30) * 100 + 100)),
+      true
+    );
   }
-  rect(470, bY, 150, 12, rgba8(0,0,0,0), false);
-  drawTextShadow('BOOST POWER', 470, bY - 14, rgba8(200, 200, 200, 255), rgba8(0,0,0,255), 1);
+  rect(470, bY, 150, 12, rgba8(0, 0, 0, 0), false);
+  drawTextShadow('BOOST POWER', 470, bY - 14, rgba8(200, 200, 200, 255), rgba8(0, 0, 0, 255), 1);
 
-  if (g.energy > 30 && !g.p.isBoosting && Math.sin(t*4) > 0) {
+  if (g.energy > 30 && !g.p.isBoosting && Math.sin(t * 4) > 0) {
     drawText('PRESS SPACE', 545, bY + 16, rgba8(0, 255, 255, 180));
   }
 
   // Invuln and Damage Effects
   if (g.p.invuln > 0) {
-    rect(0, 0, 640, 360, rgba8(255, 0, 0, Math.floor(Math.sin(t*40)*50 + 50)), true);
+    rect(0, 0, 640, 360, rgba8(255, 0, 0, Math.floor(Math.sin(t * 40) * 50 + 50)), true);
   }
-  if (g.speed > 350) { // Hyperspeed blur effect via borders
-    const al = Math.min(60, (g.speed - 350));
+  if (g.speed > 350) {
+    // Hyperspeed blur effect via borders
+    const al = Math.min(60, g.speed - 350);
     rect(0, 0, 640, 360, rgba8(0, 255, 255, al), true);
     drawScanlines(10, 1);
   }
@@ -533,13 +662,30 @@ function drawStartScreen() {
   drawRadialGradient(320, 180, 400, rgba8(10, 0, 60, 50), rgba8(5, 0, 15, 240));
 
   const bob = Math.sin(t * 3) * 6;
-  
-  setFont('huge'); setTextAlign('center');
-  drawGlowTextCentered('F-ZERO', 320, 60 + bob, rgba8(0, 255, 200, 255), rgba8(0, 150, 255, 200), 4);
-  drawGlowTextCentered('NOVA 3D', 320, 130 + bob, rgba8(255, 0, 150, 255), rgba8(150, 0, 200, 200), 2);
+
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(
+    'F-ZERO',
+    320,
+    60 + bob,
+    rgba8(0, 255, 200, 255),
+    rgba8(0, 150, 255, 200),
+    4
+  );
+  drawGlowTextCentered(
+    'NOVA 3D',
+    320,
+    130 + bob,
+    rgba8(255, 0, 150, 255),
+    rgba8(150, 0, 200, 200),
+    2
+  );
 
   const panel = createPanel(centerX(300), 190, 300, 100, {
-    bgColor: rgba8(10, 0, 30, 220), borderColor: rgba8(0, 255, 255, 180), borderWidth: 2
+    bgColor: rgba8(10, 0, 30, 220),
+    borderColor: rgba8(0, 255, 255, 180),
+    borderWidth: 2,
   });
   drawPanel(panel);
 
@@ -552,7 +698,7 @@ function drawStartScreen() {
   drawAllButtons();
 
   const fa = Math.floor(Math.sin(t * 6) * 100 + 155);
-  drawTextShadow('PRESS SPACE TO RACE', 320, 330, rgba8(255, 255, 0, fa), rgba8(0,0,0,255), 2);
+  drawTextShadow('PRESS SPACE TO RACE', 320, 330, rgba8(255, 255, 0, fa), rgba8(0, 0, 0, 255), 2);
   drawScanlines(30, 2);
 }
 
@@ -560,9 +706,10 @@ function drawCrashedScreen() {
   rect(0, 0, 640, 360, rgba8(80, 0, 0, 120), true);
   drawNoise(0, 0, 640, 360, 30, Math.floor(t * 10)); // Static
 
-  setFont('huge'); setTextAlign('center');
-  drawTextShadow('MACHINE DESTROYED', 320, 150, rgba8(255, 50, 50, 255), rgba8(0,0,0,255), 4);
-  
+  setFont('huge');
+  setTextAlign('center');
+  drawTextShadow('MACHINE DESTROYED', 320, 150, rgba8(255, 50, 50, 255), rgba8(0, 0, 0, 255), 4);
+
   drawAllButtons();
   drawScanlines(50, 3);
 }
@@ -570,12 +717,27 @@ function drawCrashedScreen() {
 function drawFinishScreen() {
   rect(0, 0, 640, 360, rgba8(0, 50, 20, 180), true);
 
-  setFont('huge'); setTextAlign('center');
-  drawGlowTextCentered('COURSE CLEARED', 320, 120, rgba8(0, 255, 100, 255), rgba8(0, 150, 50, 200), 3);
-  
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(
+    'COURSE CLEARED',
+    320,
+    120,
+    rgba8(0, 255, 100, 255),
+    rgba8(0, 150, 50, 200),
+    3
+  );
+
   setFont('large');
-  drawTextShadow(`FINAL RANK: ${g.rank}`, 320, 180, rgba8(255, 255, 0, 255), rgba8(0,0,0,255), 2);
-  
+  drawTextShadow(
+    `FINAL RANK: ${g.rank}`,
+    320,
+    180,
+    rgba8(255, 255, 0, 255),
+    rgba8(0, 0, 0, 255),
+    2
+  );
+
   drawAllButtons();
 }
 
@@ -588,34 +750,52 @@ function startGame() {
   g.speed = 100;
   g.rank = 10;
   g.passCount = 0;
-  
-  g.p.x = 0; g.p.vx = 0;
+
+  g.p.x = 0;
+  g.p.vx = 0;
   clearButtons();
 }
 
 function initStartScreen() {
   clearButtons();
   createButton(centerX(220), 310, 220, 40, '▶ START ENGINE', startGame, {
-    normalColor: rgba8(200, 0, 150, 255), hoverColor: rgba8(255, 50, 200, 255)
+    normalColor: rgba8(200, 0, 150, 255),
+    hoverColor: rgba8(255, 50, 200, 255),
   });
 }
 
 function initGameOver() {
   clearButtons();
-  createButton(centerX(240), 220, 240, 50, '↻ RETRY COURSE', () => {
-    // Soft reset state then go to start menu
-    g.p.meshes.body && setPosition(g.p.meshes.body, 0, 1.5, 0); // Put ship back visually
-    gameState = 'start';
-    inputLock = 0.5;
-    initStartScreen();
-  }, { normalColor: rgba8(200, 50, 0, 255) });
+  createButton(
+    centerX(240),
+    220,
+    240,
+    50,
+    '↻ RETRY COURSE',
+    () => {
+      // Soft reset state then go to start menu
+      g.p.meshes.body && setPosition(g.p.meshes.body, 0, 1.5, 0); // Put ship back visually
+      gameState = 'start';
+      inputLock = 0.5;
+      initStartScreen();
+    },
+    { normalColor: rgba8(200, 50, 0, 255) }
+  );
 }
 
 function initWinScreen() {
   clearButtons();
-  createButton(centerX(240), 240, 240, 50, '↻ PLAY AGAIN', () => {
-    gameState = 'start';
-    inputLock = 0.5;
-    initStartScreen();
-  }, { normalColor: rgba8(0, 150, 100, 255) });
+  createButton(
+    centerX(240),
+    240,
+    240,
+    50,
+    '↻ PLAY AGAIN',
+    () => {
+      gameState = 'start';
+      inputLock = 0.5;
+      initStartScreen();
+    },
+    { normalColor: rgba8(0, 150, 100, 255) }
+  );
 }

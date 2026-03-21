@@ -1,9 +1,10 @@
 // runtime/store.js
 // Zustand-powered reactive game state for Nova64 carts
+import { logger } from './logger.js';
 // Usage from any cart:
 //   const store = createGameStore({ hp: 100, score: 0 });
 //   store.setState({ score: store.getState().score + 10 });
-//   store.subscribe(state => console.log('score changed:', state.score));
+//   store.subscribe(state => logger.debug('score changed:', state.score));
 //
 // The built-in novaStore is a global singleton all carts can read/write:
 //   novaStore.setState({ level: 2 });
@@ -17,7 +18,7 @@ async function _loadZustand() {
   try {
     const mod = await import('zustand/vanilla');
     _createStore = mod.createStore;
-    console.log('✅ Nova64 Store: using Zustand/vanilla');
+    logger.info('✅ Nova64 Store: using Zustand/vanilla');
   } catch {
     // Hand-rolled Zustand-compatible store (same API surface)
     _createStore = function createStorePolyfill(initializer) {
@@ -36,7 +37,7 @@ async function _loadZustand() {
 
       const getState = () => state;
 
-      const subscribe = (listener) => {
+      const subscribe = listener => {
         listeners.add(listener);
         return () => listeners.delete(listener);
       };
@@ -44,10 +45,13 @@ async function _loadZustand() {
       const destroy = () => listeners.clear();
 
       const api = { setState, getState, subscribe, destroy };
-      state = typeof initializer === 'function' ? initializer(setState, getState, api) : initializer;
+      state =
+        typeof initializer === 'function' ? initializer(setState, getState, api) : initializer;
       return api;
     };
-    console.log('ℹ️ Nova64 Store: using built-in store polyfill (run npm install to enable Zustand)');
+    logger.info(
+      'ℹ️ Nova64 Store: using built-in store polyfill (run pnpm install to enable Zustand)'
+    );
   }
 }
 
@@ -68,14 +72,15 @@ _createStore = function createStorePolyfill(initializer) {
   };
 
   const getState = () => state;
-  const subscribe = (listener) => {
+  const subscribe = listener => {
     listeners.add(listener);
     return () => listeners.delete(listener);
   };
   const destroy = () => listeners.clear();
 
   const api = { setState, getState, subscribe, destroy };
-  state = typeof initializer === 'function' ? initializer(setState, getState, api) : (initializer || {});
+  state =
+    typeof initializer === 'function' ? initializer(setState, getState, api) : initializer || {};
   return api;
 };
 
@@ -102,7 +107,7 @@ export function createGameStore(initialState) {
  *   { gameState, score, lives, level, time, paused, playerX, playerY }
  */
 export const novaStore = _createStore({
-  gameState: 'start',   // 'start' | 'playing' | 'paused' | 'gameover' | 'win'
+  gameState: 'start', // 'start' | 'playing' | 'paused' | 'gameover' | 'win'
   score: 0,
   lives: 3,
   level: 1,
@@ -128,16 +133,19 @@ export function storeApi() {
     },
 
     reset() {
-      novaStore.setState({
-        gameState: 'start',
-        score: 0,
-        lives: 3,
-        level: 1,
-        time: 0,
-        paused: false,
-        playerX: 0,
-        playerY: 0,
-      }, /*replace=*/true);
-    }
+      novaStore.setState(
+        {
+          gameState: 'start',
+          score: 0,
+          lives: 3,
+          level: 1,
+          time: 0,
+          paused: false,
+          playerX: 0,
+          playerY: 0,
+        },
+        /*replace=*/ true
+      );
+    },
   };
 }

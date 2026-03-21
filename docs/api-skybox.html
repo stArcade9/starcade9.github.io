@@ -222,94 +222,185 @@
         
         <header>
             <h1>🌌 Skybox API</h1>
-            <p class="subtitle">Beautiful space backgrounds with stars, nebulae, and procedural effects</p>
+            <p class="subtitle">Space, gradient, solid-colour, and image-based skyboxes with animation control</p>
         </header>
 
-        
-      <section>
-        <h2>📋 Overview</h2>
-        <p>The Skybox API creates stunning space backgrounds with procedural star fields, colorful nebulae, galaxy spirals, and atmospheric fog perfect for space games.</p>
-        
-        <div class="note">
-          <div class="note-title">💡 Key Features</div>
-          <ul><li><strong>Procedural Stars</strong> - Thousands of stars with depth and twinkling</li><li><strong>Nebula Effects</strong> - Colorful cloud gradients</li><li><strong>Galaxy Spirals</strong> - Rotating galaxy arms</li><li><strong>Fog System</strong> - Distance-based atmospheric effects</li><li><strong>Performance</strong> - Optimized rendering for smooth 60 FPS</li></ul>
-        </div>
-      
-        
-      </section>
-    
-      <section>
-        <h2>🌟 Skybox Functions</h2>
-        
-        
-        
-        <div class="function">
-          <div class="function-sig">createSpaceSkybox(options)</div>
-          <p>Creates a complete space environment.</p>
-          
-          <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">options.starCount</span> 
-                <span class="param-type">number</span> - Number of stars (default: 5000)
-              </div>
-            
-              <div class="param">
-                <span class="param-name">options.nebulaColor</span> 
-                <span class="param-type">hex</span> - Nebula color tint
-              </div>
-            
-              <div class="param">
-                <span class="param-name">options.galaxySpiral</span> 
-                <span class="param-type">boolean</span> - Include galaxy spiral (default: false)
-              </div>
-            
+        <section>
+          <h2>📋 Overview</h2>
+          <p>The Skybox API lets you set any kind of background for your 3D scene — procedural star fields, gradient skies, flat colours, or full cube-map images. Only one skybox is active at a time; calling a new <code>create*Skybox</code> function automatically replaces the previous one.</p>
+          <div class="note">
+            <div class="note-title">💡 Key Features</div>
+            <ul>
+              <li><strong>Space skybox</strong> – procedural stars, nebulae, optional galaxy spiral</li>
+              <li><strong>Gradient skybox</strong> – any two-colour horizon gradient (daytime, sunset, underwater…)</li>
+              <li><strong>Solid-colour skybox</strong> – single flat colour (caves, indoor scenes)</li>
+              <li><strong>Image skybox</strong> – six cube-face textures for photorealistic environments; also sets IBL for PBR materials</li>
+              <li><strong>Animation control</strong> – auto-animate, speed multiplier, pause, or reverse</li>
+            </ul>
           </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">object</span> - Skybox object
+        </section>
+
+        <section>
+          <h2>🌟 Skybox Creation</h2>
+
+          <div class="function">
+            <div class="function-sig">createSpaceSkybox(options?)</div>
+            <p>Creates a procedural space background with stars and optional nebulae.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">options.starCount</span> <span class="param-type">number</span> – Number of stars (default: 5000)</div>
+              <div class="param"><span class="param-name">options.starSize</span> <span class="param-type">number</span> – Star point size (default: 1)</div>
+              <div class="param"><span class="param-name">options.nebulae</span> <span class="param-type">boolean</span> – Include nebula clouds (default: true)</div>
+              <div class="param"><span class="param-name">options.nebulaColor</span> <span class="param-type">hex</span> – Nebula colour tint (default: 0x8800ff)</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>// Space combat scene
+createSpaceSkybox({ starCount: 10000, nebulaColor: 0x4400ff });</code></pre>
+            </div>
           </div>
-        
-          
-          <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>createSpaceSkybox({ starCount: 10000, nebulaColor: 0x8800ff });</code></pre>
+
+          <div class="function">
+            <div class="function-sig">createGradientSkybox(topColor, bottomColor)</div>
+            <p>Creates a smooth two-colour gradient sky — ideal for outdoor scenes.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">topColor</span> <span class="param-type">hex</span> – Colour at the top of the sky</div>
+              <div class="param"><span class="param-name">bottomColor</span> <span class="param-type">hex</span> – Colour at the horizon</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>createGradientSkybox(0x1a6aa8, 0xf4a460); // warm sunset
+createGradientSkybox(0x87ceeb, 0x228b22); // daytime with green ground tint</code></pre>
+            </div>
           </div>
-        
-        </div>
-      
-        <div class="function">
-          <div class="function-sig">setSkyboxRotation(x, y, z)</div>
-          <p>Rotates the skybox (animated background).</p>
-          
-          <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">x, y, z</span> 
-                <span class="param-type">number</span> - Rotation in radians
-              </div>
-            
+
+          <div class="function">
+            <div class="function-sig">createSolidSkybox(color)</div>
+            <p>Sets the background to a single flat colour — useful for caves, indoor rooms, or stylised scenes.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">color</span> <span class="param-type">hex</span> – Background colour</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>createSolidSkybox(0x000000); // pitch-black cave
+createSolidSkybox(0x1a1a2e); // deep navy interior</code></pre>
+            </div>
           </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">void</span> - No return value
+
+          <div class="function">
+            <div class="function-sig">createImageSkybox([px, nx, py, ny, pz, nz])</div>
+            <p>Loads six cube-face images as the skybox. Also sets them as the scene's <strong>environment map</strong>, enabling image-based lighting (IBL) for PBR materials — reflections and light come from the sky.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">urls</span> <span class="param-type">string[6]</span> – Paths to the +X, -X, +Y, -Y, +Z, -Z cube faces (in that order)</div>
+            </div>
+            <div class="return-info"><strong>Returns:</strong> <span class="param-type">Promise&lt;void&gt;</span> – resolves once all textures are loaded</div>
+            <div class="note">
+              <div class="note-title">⚠️ Use <code>await</code> in your <code>init()</code></div>
+              <p>Loading is async — await the call so objects are fully lit before the first frame.</p>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>export async function init() {
+  await createImageSkybox([
+    '/assets/sky/studio/px.png',
+    '/assets/sky/studio/nx.png',
+    '/assets/sky/studio/py.png',
+    '/assets/sky/studio/ny.png',
+    '/assets/sky/studio/pz.png',
+    '/assets/sky/studio/nz.png',
+  ]);
+  // PBR spheres now receive correct reflections
+  createSphere(1, 0xffffff, [0, 1, 0], { material: 'metallic', roughness: 0.1 });
+}</code></pre>
+            </div>
           </div>
-        
-          
-          <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>setSkyboxRotation(0, time * 0.001, 0);</code></pre>
+
+          <div class="function">
+            <div class="function-sig">clearSkybox()</div>
+            <p>Removes the active skybox, leaving a transparent/black background.</p>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>clearSkybox();</code></pre>
+            </div>
           </div>
-        
-        </div>
-      
-      </section>
-    
+        </section>
+
+        <section>
+          <h2>🎬 Animation &amp; Speed</h2>
+
+          <div class="function">
+            <div class="function-sig">animateSkybox(dt)</div>
+            <p>Advances the skybox rotation by <code>dt</code> seconds. Call this manually inside your <code>update(dt)</code> loop, or use <code>enableSkyboxAutoAnimate()</code> to let the engine do it automatically.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">dt</span> <span class="param-type">number</span> – Delta time in seconds</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>export function update(dt) {
+  animateSkybox(dt); // manual control
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="function">
+            <div class="function-sig">enableSkyboxAutoAnimate(speed?)</div>
+            <p>Tells the engine to automatically call <code>animateSkybox(dt)</code> every frame, so you don't need to do it manually in <code>update()</code>.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">speed</span> <span class="param-type">number</span> – Speed multiplier (default: 1.0). Use 0 to pause, negative to reverse.</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>enableSkyboxAutoAnimate();       // default speed
+enableSkyboxAutoAnimate(0.25);  // slow drift
+enableSkyboxAutoAnimate(-1);    // reverse</code></pre>
+            </div>
+          </div>
+
+          <div class="function">
+            <div class="function-sig">disableSkyboxAutoAnimate()</div>
+            <p>Stops the engine from automatically rotating the skybox each frame.</p>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>disableSkyboxAutoAnimate();</code></pre>
+            </div>
+          </div>
+
+          <div class="function">
+            <div class="function-sig">setSkyboxSpeed(multiplier)</div>
+            <p>Changes the rotation speed of the active skybox animation without disabling/re-enabling it.</p>
+            <div class="param-list">
+              <div class="param"><span class="param-name">multiplier</span> <span class="param-type">number</span> – Speed multiplier: <code>0</code> = frozen, <code>1</code> = normal, <code>2</code> = double, <code>-1</code> = reverse</div>
+            </div>
+            <div class="example">
+              <div class="example-title">Example</div>
+              <pre><code>setSkyboxSpeed(0);   // freeze during a cutscene
+setSkyboxSpeed(2);   // warp-speed effect
+setSkyboxSpeed(1);   // restore normal speed</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>📚 Quick Reference</h2>
+          <table>
+            <thead>
+              <tr><th>Function</th><th>Use case</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>createSpaceSkybox(opts?)</code></td><td>Space games, sci-fi</td></tr>
+              <tr><td><code>createGradientSkybox(top, bottom)</code></td><td>Outdoor, sunset, underwater</td></tr>
+              <tr><td><code>createSolidSkybox(color)</code></td><td>Caves, indoor, stylised</td></tr>
+              <tr><td><code>createImageSkybox([6 urls])</code></td><td>Photorealistic + IBL for PBR</td></tr>
+              <tr><td><code>clearSkybox()</code></td><td>Remove background</td></tr>
+              <tr><td><code>animateSkybox(dt)</code></td><td>Manual frame-by-frame rotation</td></tr>
+              <tr><td><code>enableSkyboxAutoAnimate(speed?)</code></td><td>Set-and-forget rotation</td></tr>
+              <tr><td><code>disableSkyboxAutoAnimate()</code></td><td>Stop auto rotation</td></tr>
+              <tr><td><code>setSkyboxSpeed(mult)</code></td><td>Adjust speed at runtime</td></tr>
+            </tbody>
+          </table>
+        </section>
 
         <footer>
-            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <p>Nova64 Fantasy Console © 2026 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
         </footer>
     </div>
 </body>
