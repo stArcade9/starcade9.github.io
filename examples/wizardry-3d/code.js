@@ -148,6 +148,58 @@ const SPELLS = {
   },
 };
 
+// Shop items available for purchase
+const SHOP_ITEMS = [
+  {
+    name: 'Healing Potion',
+    type: 'potion',
+    effect: 'hp',
+    amount: 25,
+    cost: 15,
+    desc: 'Restore 25 HP to one ally',
+  },
+  {
+    name: 'Mana Potion',
+    type: 'potion',
+    effect: 'mp',
+    amount: 10,
+    cost: 20,
+    desc: 'Restore 10 MP to one ally',
+  },
+  {
+    name: 'Revival Herb',
+    type: 'potion',
+    effect: 'revive',
+    amount: 15,
+    cost: 50,
+    desc: 'Revive a fallen ally',
+  },
+  {
+    name: 'Party Heal',
+    type: 'potion',
+    effect: 'party_hp',
+    amount: 15,
+    cost: 40,
+    desc: 'Restore 15 HP to all',
+  },
+  {
+    name: 'Whetstone',
+    type: 'buff',
+    effect: 'atk',
+    amount: 2,
+    cost: 30,
+    desc: '+2 ATK to one ally for next floor',
+  },
+  {
+    name: 'Iron Shield',
+    type: 'buff',
+    effect: 'def',
+    amount: 2,
+    cost: 30,
+    desc: '+2 DEF to one ally for next floor',
+  },
+];
+
 // Floor atmosphere themes
 const FLOOR_THEMES = [
   {
@@ -240,6 +292,17 @@ let animatedMeshes; // meshes that bob/rotate
 let particleSystems; // track active particle system IDs
 let explored; // Set of "x,y" strings for fog-of-war minimap
 let bossDefeated; // Set of floor numbers where boss was killed
+let minimap; // createMinimap() object for dungeon map
+let stateMachine; // createStateMachine for game flow
+
+// Shop state
+let shopItems; // current shop inventory
+let shopCursor; // selected shop item index
+let shopTarget; // which party member to apply item to
+
+// Hit/invulnerability state for party
+let hitStates; // array of createHitState per party member
+let chromaTimer; // timer for chromatic aberration effect on boss hits
 
 // 3D mesh tracking
 let currentLevelMeshes = [];
@@ -714,6 +777,7 @@ function startCombat(isBoss) {
   if (enemies[0].isBoss) {
     triggerShake(shake, 0.8);
     triggerScreenFlash(255, 0, 50, 200);
+    enableChromaticAberration(0.006);
   }
 }
 
@@ -1078,10 +1142,11 @@ function advanceCombatTurn() {
     sfx('powerup');
     triggerScreenFlash(255, 220, 100, 100);
 
-    // Track boss defeat
+    // Disable boss effects when combat ends
     if (enemies.some(e => e.isBoss)) {
       bossDefeated.add(floor);
       combatLog.push('The boss has been slain!');
+      disableChromaticAberration();
     }
 
     // Distribute XP and check level ups
@@ -1105,6 +1170,7 @@ function advanceCombatTurn() {
       }
     }
 
+    saveGame();
     combatAction = 'result';
     return;
   }
@@ -1142,6 +1208,19 @@ function doEnemyTurn() {
     triggerShake(shake, 0.3);
     triggerScreenFlash(255, 50, 50, 100);
     sfx('hit');
+    const ti = party.indexOf(target);
+    // Trigger hit state (invulnerability flash)
+    if (hitStates && hitStates[ti]) triggerHit(hitStates[ti]);
+    // Boss hits trigger chromatic aberration
+    if (e.isBoss) {
+      enableChromaticAberration(0.008);
+      chromaTimer = 0.4;
+    }
+    floatingTexts.spawn(`-${dmg}`, W - 180 + ti * 10, H - 80 + ti * 18, {
+      color: rgba8(255, 50, 50, 255),
+      scale: 2,
+      vy: -30,
+    });
 
     if (target.hp <= 0) {
       target.alive = false;
@@ -1196,7 +1275,12 @@ function tryMove(dx, dz) {
     showFloorMessage('Door opened!');
     sfx('select');
   } else if (tile === T.STAIRS_DOWN) {
-    enterFloor(floor + 1);
+    // Open merchant shop before descending (floor 2+)
+    if (floor >= 1) {
+      openShop(floor + 1);
+    } else {
+      enterFloor(floor + 1);
+    }
     sfx('powerup');
     return true;
   } else if (tile === T.STAIRS_UP) {
@@ -1322,8 +1406,55 @@ function enterFloor(newFloor) {
   currentYaw = targetYaw;
   updateCamera3D();
   revealAround(px, py); // reveal starting area
+  rebuildMinimap();
   const theme = FLOOR_THEMES[Math.min(floor - 1, FLOOR_THEMES.length - 1)];
   showFloorMessage(`Floor ${floor} — ${theme.name}`);
+  saveGame();
+}
+
+function rebuildMinimap() {
+  minimap = createMinimap({
+    x: W - 90,
+    y: 4,
+    width: 82,
+    height: 82,
+    tileW: dungeonW,
+    tileH: dungeonH,
+    tileScale: Math.max(1, Math.floor(80 / Math.max(dungeonW, dungeonH))),
+    bgColor: rgba8(0, 0, 0, 200),
+    borderLight: rgba8(50, 40, 30, 200),
+    borderDark: rgba8(20, 15, 10, 200),
+    fogOfWar: 4,
+    follow: {
+      get x() {
+        return px;
+      },
+      get y() {
+        return py;
+      },
+    },
+    player: {
+      get x() {
+        return px;
+      },
+      get y() {
+        return py;
+      },
+      color: rgba8(255, 60, 60, 255),
+      blink: true,
+    },
+    tiles(tx, ty) {
+      if (!explored.has(`${tx},${ty}`)) return null;
+      const tile = dungeon[ty][tx];
+      if (tile === T.WALL) return rgba8(60, 50, 40, 220);
+      if (tile === T.STAIRS_DOWN) return rgba8(50, 100, 200, 255);
+      if (tile === T.STAIRS_UP) return rgba8(200, 150, 50, 255);
+      if (tile === T.CHEST) return rgba8(200, 180, 50, 255);
+      if (tile === T.FOUNTAIN) return rgba8(50, 120, 255, 255);
+      if (tile === T.BOSS) return rgba8(200, 0, 50, 255);
+      return rgba8(30, 28, 22, 180);
+    },
+  });
 }
 
 function revealAround(cx, cy) {
@@ -1341,6 +1472,82 @@ function revealAround(cx, cy) {
 function showFloorMessage(msg) {
   floorMessage = msg;
   floorMessageTimer = 3.0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════════════════════════════
+
+function hasSave() {
+  return loadData('wizardry-save') !== null;
+}
+
+function saveGame() {
+  const data = {
+    party: party.map(m => ({
+      name: m.name,
+      class: m.class,
+      hp: m.hp,
+      maxHp: m.maxHp,
+      mp: m.mp,
+      maxMp: m.maxMp,
+      atk: m.atk,
+      def: m.def,
+      spd: m.spd,
+      level: m.level,
+      xp: m.xp,
+      xpNext: m.xpNext,
+      alive: m.alive,
+      buffAtk: m.buffAtk,
+      buffDef: m.buffDef,
+      buffTimer: m.buffTimer,
+      weapon: m.weapon ? { ...m.weapon } : null,
+      armor: m.armor ? { ...m.armor } : null,
+    })),
+    floor,
+    px,
+    py,
+    facing,
+    totalGold,
+    bossDefeated: [...bossDefeated],
+    dungeon,
+    dungeonW,
+    dungeonH,
+    explored: [...explored],
+    encounterChance,
+  };
+  saveData('wizardry-save', data);
+}
+
+function loadGameSave() {
+  const data = loadData('wizardry-save');
+  if (!data) return false;
+  party = data.party;
+  floor = data.floor;
+  px = data.px;
+  py = data.py;
+  facing = data.facing;
+  totalGold = data.totalGold;
+  bossDefeated = new Set(data.bossDefeated || []);
+  dungeon = data.dungeon;
+  dungeonW = data.dungeonW;
+  dungeonH = data.dungeonH;
+  explored = new Set(data.explored || []);
+  encounterChance = data.encounterChance || 0;
+
+  targetYaw = (facing * Math.PI) / 2;
+  currentYaw = targetYaw;
+  buildLevel();
+  updateCamera3D();
+  rebuildMinimap();
+  gameState = 'explore';
+  showFloorMessage(`Floor ${floor} — Game Loaded`);
+  sfx('confirm');
+  return true;
+}
+
+function deleteSave() {
+  deleteData('wizardry-save');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1400,6 +1607,8 @@ export function init() {
   particleSystems = [];
   explored = new Set();
   bossDefeated = new Set();
+  hitStates = party.map(() => createHitState({ invulnDuration: 0.6, flashRate: 8 }));
+  chromaTimer = 0;
   currentLevelMeshes = [];
   monsterMeshes = [];
 }
@@ -1418,6 +1627,18 @@ export function update(dt) {
   if (screenFlash) {
     screenFlash.alpha -= screenFlash.decay * dt * 60;
     if (screenFlash.alpha <= 0) screenFlash = null;
+  }
+
+  // Chromatic aberration timer (boss hit effect)
+  if (chromaTimer > 0) {
+    chromaTimer -= dt;
+    if (chromaTimer <= 0) {
+      chromaTimer = 0;
+      // Only disable if not in active boss combat
+      if (gameState !== 'combat' || !enemies || !enemies.some(e => e.isBoss && e.hp > 0)) {
+        disableChromaticAberration();
+      }
+    }
   }
 
   // Animate special meshes (bob, pulse, spin)
@@ -1461,6 +1682,8 @@ export function update(dt) {
     updateCombat(dt);
   } else if (gameState === 'inventory') {
     updateInventory(dt);
+  } else if (gameState === 'shop') {
+    updateShop(dt);
   } else if (gameState === 'gameover') {
     if (keyp('Space') && cooldownReady(inputCD)) {
       useCooldown(inputCD);
@@ -1482,7 +1705,10 @@ function updateTitle(dt) {
   setCameraPosition(Math.sin(a) * 8, 3, Math.cos(a) * 8);
   setCameraTarget(0, 1, 0);
 
-  if (keyp('Space') || keyp('Enter')) {
+  if (keyp('KeyC') && hasSave()) {
+    loadGameSave();
+  } else if (keyp('Space') || keyp('Enter')) {
+    deleteSave();
     enterFloor(1);
     gameState = 'explore';
     sfx('confirm');
@@ -1571,6 +1797,11 @@ function updateCombat(dt) {
         const dmg = doAttack(member, t);
         combatLog.push(`${member.name} hits ${t.name} for ${dmg}!`);
         triggerShake(shake, 0.2);
+        floatingTexts.spawn(`-${dmg}`, 100 + t.id * 160, 40, {
+          color: rgba8(255, 80, 80, 255),
+          scale: 2,
+          vy: -40,
+        });
         if (t.hp <= 0) {
           combatLog.push(`${t.name} defeated!`);
           if (t.allMeshes) {
@@ -1630,6 +1861,11 @@ function updateCombat(dt) {
       combatLog.push(`${member.name} hits ${target.name} for ${dmg}!`);
       triggerShake(shake, 0.2);
       sfx('hit');
+      floatingTexts.spawn(`-${dmg}`, 100 + selectedTarget * 160, 40, {
+        color: rgba8(255, 80, 80, 255),
+        scale: 2,
+        vy: -40,
+      });
 
       if (target.hp <= 0) {
         combatLog.push(`${target.name} defeated!`);
@@ -1683,6 +1919,199 @@ function updateInventory(dt) {
   if (keyp('KeyI') || keyp('Tab') || keyp('Escape')) {
     gameState = 'explore';
   }
+  if (keyp('KeyS')) {
+    saveGame();
+    showFloorMessage('Game saved!');
+    sfx('confirm');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SHOP SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+
+function openShop(nextFloor) {
+  shopItems = SHOP_ITEMS.map(item => ({
+    ...item,
+    // Scale costs with floor
+    cost: item.cost + Math.floor(item.cost * (nextFloor - 2) * 0.2),
+  }));
+  shopCursor = 0;
+  shopTarget = -1; // -1 = browsing, 0+ = selecting party member
+  gameState = 'shop';
+  sfx('coin');
+}
+
+function applyShopItem(item, target) {
+  if (item.effect === 'hp') {
+    target.hp = Math.min(target.hp + item.amount, target.maxHp);
+    showFloorMessage(`${target.name} restored ${item.amount} HP!`);
+  } else if (item.effect === 'mp') {
+    target.mp = Math.min(target.mp + item.amount, target.maxMp);
+    showFloorMessage(`${target.name} restored ${item.amount} MP!`);
+  } else if (item.effect === 'revive') {
+    if (!target.alive) {
+      target.alive = true;
+      target.hp = item.amount;
+      showFloorMessage(`${target.name} has been revived!`);
+    } else {
+      showFloorMessage(`${target.name} is already alive!`);
+      return false; // refund
+    }
+  } else if (item.effect === 'party_hp') {
+    for (const m of party) {
+      if (m.alive) m.hp = Math.min(m.hp + item.amount, m.maxHp);
+    }
+    showFloorMessage(`Party restored ${item.amount} HP each!`);
+  } else if (item.effect === 'atk') {
+    target.buffAtk += item.amount;
+    target.buffTimer = 99; // lasts until cleared
+    showFloorMessage(`${target.name} gained +${item.amount} ATK!`);
+  } else if (item.effect === 'def') {
+    target.buffDef += item.amount;
+    target.buffTimer = 99;
+    showFloorMessage(`${target.name} gained +${item.amount} DEF!`);
+  }
+  return true;
+}
+
+function updateShop(dt) {
+  if (!cooldownReady(inputCD)) return;
+
+  if (shopTarget >= 0) {
+    // Selecting party member target
+    if (keyp('ArrowUp') || keyp('KeyW')) {
+      useCooldown(inputCD);
+      shopTarget = (shopTarget + party.length - 1) % party.length;
+    } else if (keyp('ArrowDown') || keyp('KeyS')) {
+      useCooldown(inputCD);
+      shopTarget = (shopTarget + 1) % party.length;
+    } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
+      useCooldown(inputCD);
+      const item = shopItems[shopCursor];
+      const target = party[shopTarget];
+      // Validate: revive only on dead, hp/mp/buff only on alive
+      if (item.effect === 'revive' && target.alive) {
+        showFloorMessage(`${target.name} is already alive!`);
+        sfx('error');
+      } else if (item.effect !== 'revive' && item.effect !== 'party_hp' && !target.alive) {
+        showFloorMessage(`${target.name} has fallen...`);
+        sfx('error');
+      } else {
+        if (applyShopItem(item, target)) {
+          totalGold -= item.cost;
+          sfx('coin');
+          triggerScreenFlash(50, 200, 100, 80);
+        }
+      }
+      shopTarget = -1;
+    } else if (keyp('Escape') || keyp('Backspace')) {
+      useCooldown(inputCD);
+      shopTarget = -1;
+    }
+    return;
+  }
+
+  // Browsing items
+  if (keyp('ArrowUp') || keyp('KeyW')) {
+    useCooldown(inputCD);
+    shopCursor = (shopCursor + shopItems.length - 1) % shopItems.length;
+  } else if (keyp('ArrowDown') || keyp('KeyS')) {
+    useCooldown(inputCD);
+    shopCursor = (shopCursor + 1) % shopItems.length;
+  } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
+    useCooldown(inputCD);
+    const item = shopItems[shopCursor];
+    if (totalGold < item.cost) {
+      showFloorMessage('Not enough gold!');
+      sfx('error');
+    } else if (item.effect === 'party_hp') {
+      // Party-wide items apply immediately, no target needed
+      if (applyShopItem(item, null)) {
+        totalGold -= item.cost;
+        sfx('coin');
+        triggerScreenFlash(50, 200, 100, 80);
+      }
+    } else {
+      // Need to pick a target
+      shopTarget = 0;
+    }
+  } else if (keyp('Escape') || keyp('Backspace') || keyp('KeyX')) {
+    useCooldown(inputCD);
+    // Leave shop → continue to next floor
+    const nextFloor = floor + 1;
+    enterFloor(nextFloor);
+    gameState = 'explore';
+    sfx('confirm');
+  }
+}
+
+function drawShopUI() {
+  drawGradient(0, 0, W, H, rgba8(8, 5, 20, 200), rgba8(20, 15, 5, 200));
+
+  drawPanel(60, 20, W - 120, H - 40, {
+    bgColor: rgba8(15, 12, 25, 240),
+    borderLight: rgba8(120, 100, 50, 255),
+    borderDark: rgba8(40, 30, 15, 255),
+  });
+
+  drawGlowText('MERCHANT', 320, 32, rgba8(220, 180, 50, 255), rgba8(140, 100, 0, 100), 3);
+  print(`Gold: ${totalGold}`, 480, 36, rgba8(255, 220, 50, 255));
+  printCentered(`Floor ${floor} → ${floor + 1}`, 320, 68, rgba8(150, 140, 120, 200));
+
+  // Item list
+  for (let i = 0; i < shopItems.length; i++) {
+    const item = shopItems[i];
+    const y = 90 + i * 28;
+    const sel = i === shopCursor && shopTarget < 0;
+    const canAfford = totalGold >= item.cost;
+    const nameColor = sel
+      ? rgba8(255, 255, 200, 255)
+      : canAfford
+        ? rgba8(200, 200, 220, 220)
+        : rgba8(100, 100, 110, 150);
+    const costColor = canAfford ? rgba8(220, 180, 50, 220) : rgba8(120, 80, 40, 150);
+
+    print(`${sel ? '►' : ' '} ${item.name}`, 80, y, nameColor);
+    print(`${item.cost}g`, 320, y, costColor);
+    print(item.desc, 370, y, rgba8(140, 140, 160, 180));
+  }
+
+  // Target selection overlay
+  if (shopTarget >= 0) {
+    drawPanel(180, 120, 280, 140, {
+      bgColor: rgba8(10, 8, 20, 250),
+      borderLight: rgba8(100, 80, 50, 255),
+      borderDark: rgba8(30, 25, 15, 255),
+    });
+    printCentered('Select target:', 320, 128, rgba8(200, 180, 120, 255));
+    for (let i = 0; i < party.length; i++) {
+      const m = party[i];
+      const y = 148 + i * 24;
+      const sel = i === shopTarget;
+      const c = CLASS_COLORS[m.class];
+      const cr = (c >> 16) & 0xff,
+        cg = (c >> 8) & 0xff,
+        cb = c & 0xff;
+      const nameColor = sel ? rgba8(255, 255, 200, 255) : rgba8(cr, cg, cb, 200);
+      print(`${sel ? '►' : ' '} ${m.name}`, 200, y, nameColor);
+      print(
+        m.alive ? `HP:${m.hp}/${m.maxHp}` : '☠ FALLEN',
+        340,
+        y,
+        m.alive ? rgba8(150, 180, 150, 200) : rgba8(180, 50, 50, 200)
+      );
+    }
+    print('Z/Space=Confirm  Esc=Back', 200, 248, rgba8(100, 100, 120, 150));
+  }
+
+  // Controls
+  printCentered(
+    'W/S=Browse  Z/Space=Buy  ESC=Continue to next floor',
+    320,
+    H - 55,
+    rgba8(120, 120, 150, 200)
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1698,6 +2127,8 @@ export function draw() {
     drawCombatUI();
   } else if (gameState === 'inventory') {
     drawInventoryUI();
+  } else if (gameState === 'shop') {
+    drawShopUI();
   } else if (gameState === 'gameover') {
     drawGameOver();
   } else if (gameState === 'victory') {
@@ -1717,18 +2148,39 @@ export function draw() {
 
   // Floating texts
   drawFloatingTexts(floatingTexts);
+
+  // Subtle noise grain + CRT scanlines for retro feel
+  drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
+  drawScanlines(25, 3);
 }
 
 function drawTitle() {
-  rectfill(0, 0, W, H, rgba8(0, 0, 0, 180));
+  drawGradient(0, 0, W, H, rgba8(5, 2, 15, 220), rgba8(20, 10, 5, 220));
 
   drawGlowText('WIZARDRY', 320, 80, rgba8(255, 200, 50, 255), rgba8(180, 100, 0, 150), 4);
   printCentered('N O V A  6 4', 320, 130, rgba8(200, 160, 80, 255), 2);
 
   printCentered('Proving Grounds of the Dark Tower', 320, 170, rgba8(150, 130, 110, 255));
 
-  const pulse = Math.floor(Math.sin(animTimer * 3) * 60 + 195);
-  printCentered('Press SPACE to begin your quest', 320, 240, rgba8(pulse, pulse, pulse, 255));
+  if (hasSave()) {
+    drawPulsingText('Press C to Continue', 320, 228, rgba8(100, 200, 255, 255), animTimer, {
+      frequency: 2,
+      minAlpha: 140,
+    });
+    drawPulsingText('Press SPACE for New Game', 320, 250, rgba8(200, 200, 200, 255), animTimer, {
+      frequency: 3,
+      minAlpha: 120,
+    });
+  } else {
+    drawPulsingText(
+      'Press SPACE to begin your quest',
+      320,
+      240,
+      rgba8(255, 255, 255, 255),
+      animTimer,
+      { frequency: 3, minAlpha: 135 }
+    );
+  }
 
   // Party preview
   printCentered('Your Party:', 320, 280, rgba8(180, 180, 200, 255));
@@ -1746,24 +2198,29 @@ function drawTitle() {
 }
 
 function drawExploreHUD() {
-  // Compass
-  const compassBg = rgba8(0, 0, 0, 160);
-  rectfill(280, 4, 80, 18, compassBg);
+  // Compass panel
+  drawPanel(270, 2, 100, 38, {
+    bgColor: rgba8(0, 0, 0, 160),
+    borderLight: rgba8(60, 50, 40, 180),
+    borderDark: rgba8(20, 15, 10, 180),
+  });
   printCentered(`Facing ${DIR_NAMES[facing]}`, 320, 8, rgba8(200, 200, 220, 255));
-
-  // Floor indicator
   printCentered(`Floor ${floor}`, 320, 24, rgba8(150, 130, 100, 200));
 
   // Mini party status (bottom)
   drawPartyBar();
 
-  // Minimap (top-right)
-  drawDungeonMinimap();
+  // Minimap (top-right) using createMinimap API
+  if (minimap) drawMinimap(minimap, animTimer);
 
   // Floor message
   if (floorMessageTimer > 0) {
     const alpha = Math.min(255, Math.floor(floorMessageTimer * 200));
-    rectfill(120, 160, 400, 28, rgba8(0, 0, 0, Math.floor(alpha * 0.7)));
+    drawPanel(120, 158, 400, 28, {
+      bgColor: rgba8(0, 0, 0, Math.floor(alpha * 0.7)),
+      borderLight: rgba8(100, 80, 40, Math.floor(alpha * 0.4)),
+      borderDark: rgba8(30, 20, 10, Math.floor(alpha * 0.4)),
+    });
     printCentered(floorMessage, 320, 166, rgba8(255, 220, 100, alpha));
   }
 
@@ -1776,8 +2233,11 @@ function drawExploreHUD() {
 
 function drawPartyBar() {
   const barY = H - 52;
-  rectfill(0, barY, W, 52, rgba8(10, 8, 15, 220));
-  line(0, barY, W, barY, rgba8(60, 50, 40, 200));
+  drawPanel(0, barY, W, 52, {
+    bgColor: rgba8(10, 8, 15, 220),
+    borderLight: rgba8(60, 50, 40, 200),
+    borderDark: rgba8(20, 15, 10, 200),
+  });
 
   for (let i = 0; i < party.length; i++) {
     const m = party[i];
@@ -1797,14 +2257,12 @@ function drawPartyBar() {
 
     // HP bar
     if (m.alive) {
-      const hpPct = m.hp / m.maxHp;
-      const barColor =
-        hpPct > 0.5
-          ? rgba8(50, 180, 50, 255)
-          : hpPct > 0.25
-            ? rgba8(200, 180, 30, 255)
-            : rgba8(200, 40, 40, 255);
-      drawProgressBar(bx, barY + 16, 100, 6, hpPct, barColor, rgba8(30, 20, 20, 255));
+      const hpRatio = m.hp / m.maxHp;
+      const hpColor = colorLerp(rgba8(200, 40, 40, 255), rgba8(50, 180, 50, 255), hpRatio);
+      drawHealthBar(bx, barY + 16, 100, 6, m.hp, m.maxHp, {
+        barColor: hpColor,
+        backgroundColor: rgba8(30, 20, 20, 255),
+      });
       print(`${m.hp}/${m.maxHp}`, bx + 104, barY + 14, rgba8(180, 180, 180, 200));
     } else {
       print('DEAD', bx, barY + 16, rgba8(150, 40, 40, 200));
@@ -1829,84 +2287,31 @@ function drawPartyBar() {
   }
 }
 
-function drawDungeonMinimap() {
-  if (!dungeon) return;
-  const mmSize = 80;
-  const mmX = W - mmSize - 8;
-  const mmY = 4;
-  const cellSize = Math.max(1, Math.floor(mmSize / Math.max(dungeonW, dungeonH)));
-
-  rectfill(mmX - 2, mmY - 2, mmSize + 4, mmSize + 4, rgba8(0, 0, 0, 200));
-  drawPixelBorder(
-    mmX - 2,
-    mmY - 2,
-    mmSize + 4,
-    mmSize + 4,
-    rgba8(50, 40, 30, 200),
-    rgba8(20, 15, 10, 200)
-  );
-
-  const offsetX = mmX + Math.floor((mmSize - dungeonW * cellSize) / 2);
-  const offsetY = mmY + Math.floor((mmSize - dungeonH * cellSize) / 2);
-
-  for (let y = 0; y < dungeonH; y++) {
-    for (let x = 0; x < dungeonW; x++) {
-      // Fog of war — only show explored tiles
-      if (!explored.has(`${x},${y}`)) continue;
-
-      const tile = dungeon[y][x];
-      const sx = offsetX + x * cellSize;
-      const sy = offsetY + y * cellSize;
-
-      // Dim tiles far from player
-      const dist = Math.abs(x - px) + Math.abs(y - py);
-      const nearAlpha = dist <= 6 ? 220 : 120;
-
-      if (tile === T.WALL) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(60, 50, 40, nearAlpha));
-      } else if (tile === T.FLOOR || tile === T.DOOR) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(30, 28, 22, nearAlpha));
-      } else if (tile === T.STAIRS_DOWN) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(50, 100, 200, 255));
-      } else if (tile === T.STAIRS_UP) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(200, 150, 50, 255));
-      } else if (tile === T.CHEST) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(200, 180, 50, 255));
-      } else if (tile === T.FOUNTAIN) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(50, 120, 255, 255));
-      } else if (tile === T.TRAP && dist <= 3) {
-        // Only show nearby traps (thief awareness)
-        rectfill(sx, sy, cellSize, cellSize, rgba8(150, 40, 40, 200));
-      } else if (tile === T.BOSS) {
-        const pulse = Math.floor(Math.sin(animTimer * 4) * 50 + 200);
-        rectfill(sx, sy, cellSize, cellSize, rgba8(pulse, 0, 50, 255));
-      } else if (tile === T.TRAP) {
-        rectfill(sx, sy, cellSize, cellSize, rgba8(30, 28, 22, nearAlpha)); // hidden trap
-      }
-    }
-  }
-
-  // Player dot with facing indicator
-  const ppx = offsetX + px * cellSize;
-  const ppy = offsetY + py * cellSize;
-  rectfill(ppx, ppy, cellSize, cellSize, rgba8(255, 60, 60, 255));
-
-  // Facing arrow
-  const [fdx, fdy] = DIRS[facing];
-  const fx = ppx + fdx * cellSize + Math.floor(cellSize / 2);
-  const fy = ppy + fdy * cellSize + Math.floor(cellSize / 2);
-  rectfill(fx, fy, Math.max(1, cellSize - 1), Math.max(1, cellSize - 1), rgba8(255, 200, 50, 255));
-}
-
 function drawCombatUI() {
-  // Dark overlay
-  rectfill(0, 0, W, 40, rgba8(10, 5, 15, 200));
-  rectfill(0, H - 160, W, 160, rgba8(10, 5, 15, 220));
+  // Dark overlay panels
+  drawPanel(0, 0, W, 40, {
+    bgColor: rgba8(10, 5, 15, 200),
+    borderLight: rgba8(50, 30, 50, 150),
+    borderDark: rgba8(10, 5, 15, 150),
+  });
+  drawPanel(0, H - 160, W, 160, {
+    bgColor: rgba8(10, 5, 15, 220),
+    borderLight: rgba8(50, 30, 50, 150),
+    borderDark: rgba8(10, 5, 15, 150),
+  });
 
-  // Boss indicator
+  // Boss indicator with scrolling title
   if (enemies.length > 0 && enemies[0].isBoss) {
     const pulse = Math.floor(Math.sin(animTimer * 4) * 40 + 215);
-    printCentered('☠ BOSS BATTLE ☠', 320, 42, rgba8(pulse, 40, 60, 255), 2);
+    scrollingText(
+      `☠ BOSS BATTLE — ${enemies[0].name} ☠    `,
+      42,
+      80,
+      animTimer,
+      rgba8(pulse, 40, 60, 255),
+      2,
+      W
+    );
   }
 
   // Monster info (top)
@@ -1919,15 +2324,11 @@ function drawCombatUI() {
 
     print(`${sel ? '► ' : '  '}${e.name}`, x, 6, nameColor);
     if (alive) {
-      drawProgressBar(
-        x,
-        20,
-        120,
-        6,
-        e.hp / e.maxHp,
-        rgba8(200, 40, 40, 255),
-        rgba8(40, 20, 20, 255)
-      );
+      drawHealthBar(x, 20, 120, 6, e.hp, e.maxHp, {
+        barColor: rgba8(200, 40, 40, 255),
+        dangerColor: rgba8(255, 100, 60, 255),
+        backgroundColor: rgba8(40, 20, 20, 255),
+      });
       print(`${e.hp}/${e.maxHp}`, x + 124, 18, rgba8(180, 140, 140, 200));
     } else {
       print('DEAD', x + 10, 20, rgba8(100, 40, 40, 150));
@@ -2019,31 +2420,35 @@ function drawCombatUI() {
       cg = (c >> 8) & 0xff,
       cb = c & 0xff;
 
+    // Flash when recently hit (invulnerability frames)
+    const hitVisible = !hitStates || !hitStates[i] || isVisible(hitStates[i]);
+    const labelAlpha = hitVisible ? 255 : 80;
+
     const labelColor = m.alive
       ? isCurrent
-        ? rgba8(255, 255, 200, 255)
-        : rgba8(cr, cg, cb, 200)
+        ? rgba8(255, 255, 200, labelAlpha)
+        : rgba8(cr, cg, cb, Math.min(200, labelAlpha))
       : rgba8(80, 80, 80, 150);
     print(`${isCurrent ? '►' : ' '} ${m.name}`, W - 200, y, labelColor);
     if (m.alive) {
-      drawProgressBar(
-        W - 95,
-        y + 2,
-        60,
-        5,
-        m.hp / m.maxHp,
-        m.hp / m.maxHp > 0.25 ? rgba8(50, 180, 50, 255) : rgba8(200, 40, 40, 255),
-        rgba8(30, 20, 20, 255)
-      );
+      // Use colorLerp for smooth HP bar color: green → yellow → red
+      const hpRatio = m.hp / m.maxHp;
+      const hpColor = colorLerp(rgba8(200, 40, 40, 255), rgba8(50, 180, 50, 255), hpRatio);
+      drawHealthBar(W - 95, y + 2, 60, 5, m.hp, m.maxHp, {
+        barColor: hpColor,
+        backgroundColor: rgba8(30, 20, 20, 255),
+      });
       print(`${m.hp}`, W - 30, y, rgba8(180, 180, 180, 200));
     }
   }
 }
 
 function drawInventoryUI() {
-  rectfill(40, 30, W - 80, H - 60, rgba8(10, 8, 20, 240));
-  drawPixelBorder(40, 30, W - 80, H - 60, rgba8(80, 70, 50, 255), rgba8(30, 25, 20, 255));
-
+  drawPanel(40, 30, W - 80, H - 60, {
+    bgColor: rgba8(10, 8, 20, 240),
+    borderLight: rgba8(80, 70, 50, 255),
+    borderDark: rgba8(30, 25, 20, 255),
+  });
   printCentered('═══ PARTY STATUS ═══', 320, 40, rgba8(200, 180, 120, 255), 2);
 
   for (let i = 0; i < party.length; i++) {
@@ -2113,21 +2518,24 @@ function drawInventoryUI() {
     print(`Bosses slain: ${bossDefeated.size}`, 300, H - 90, rgba8(200, 100, 100, 200));
   }
 
+  print('[S] Save Game', 60, H - 72, rgba8(100, 200, 100, 200));
   printCentered('Press I / TAB / ESC to close', 320, H - 55, rgba8(120, 120, 150, 180));
 }
 
 function drawGameOver() {
-  rectfill(0, 0, W, H, rgba8(0, 0, 0, 200));
+  drawGradient(0, 0, W, H, rgba8(15, 0, 0, 220), rgba8(0, 0, 0, 220));
   drawGlowText('GAME OVER', 320, 120, rgba8(200, 40, 40, 255), rgba8(100, 0, 0, 150), 3);
   printCentered(`Your party fell on Floor ${floor}`, 320, 180, rgba8(180, 150, 130, 200));
   printCentered(`Gold collected: ${totalGold}`, 320, 200, rgba8(200, 180, 50, 200));
 
-  const pulse = Math.floor(Math.sin(animTimer * 3) * 60 + 195);
-  printCentered('Press SPACE to try again', 320, 260, rgba8(pulse, pulse, pulse, 255));
+  drawPulsingText('Press SPACE to try again', 320, 260, rgba8(255, 255, 255, 255), animTimer, {
+    frequency: 3,
+    minAlpha: 135,
+  });
 }
 
 function drawVictory() {
-  rectfill(0, 0, W, H, rgba8(0, 0, 0, 180));
+  drawGradient(0, 0, W, H, rgba8(10, 8, 2, 200), rgba8(2, 2, 10, 200));
   drawGlowText('VICTORY!', 320, 80, rgba8(255, 220, 50, 255), rgba8(180, 120, 0, 150), 3);
   printCentered('You conquered the Dark Tower!', 320, 140, rgba8(200, 200, 220, 255));
   printCentered(`Gold: ${totalGold}`, 320, 170, rgba8(220, 180, 50, 230));
@@ -2147,6 +2555,8 @@ function drawVictory() {
     );
   }
 
-  const pulse = Math.floor(Math.sin(animTimer * 3) * 60 + 195);
-  printCentered('Press SPACE to play again', 320, 300, rgba8(pulse, pulse, pulse, 255));
+  drawPulsingText('Press SPACE to play again', 320, 300, rgba8(255, 255, 255, 255), animTimer, {
+    frequency: 3,
+    minAlpha: 135,
+  });
 }
