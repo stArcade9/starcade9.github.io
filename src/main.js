@@ -21,6 +21,8 @@ import { createFullscreenButton } from '../runtime/fullscreen-button.js';
 import { storeApi } from '../runtime/store.js';
 import { api2d } from '../runtime/api-2d.js';
 import { presetsApi } from '../runtime/api-presets.js';
+import { generativeApi } from '../runtime/api-generative.js';
+import { gameUtilsApi } from '../runtime/api-gameutils.js';
 
 const canvas = document.getElementById('screen');
 
@@ -53,6 +55,8 @@ const vxApi = voxelApi(gpu);
 const storeApiInst = storeApi();
 const api2dInst = api2d(gpu);
 const presetsInst = presetsApi(gpu);
+const genArtInst = generativeApi(gpu);
+const gameUtilsInst = gameUtilsApi();
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -76,6 +80,8 @@ vxApi.exposeTo(g);
 storeApiInst.exposeTo(g);
 api2dInst.exposeTo(g);
 presetsInst.exposeTo(g);
+genArtInst.exposeTo(g);
+gameUtilsInst.exposeTo(g);
 
 // Now create UI API after g has rgba8 and other functions
 uiApiInstance = uiApi(gpu, g);
@@ -152,6 +158,8 @@ function loop() {
     storeApiInst.tick(dt);
     // Auto-animate skybox if enabled
     skyApi._tick(dt);
+    // Advance generative art frame counter
+    genArtInst._advanceFrame();
     // Update post-processing shader uniforms (time, etc.)
     fxApi.update(dt);
 
@@ -241,6 +249,11 @@ const gameMap = {
   demoscene: '/examples/demoscene/code.js',
   'space-combat': '/examples/star-fox-nova-3d/code.js',
   minecraft: '/examples/minecraft-demo/code.js',
+  boids: '/examples/boids-flocking/code.js',
+  'game-of-life': '/examples/game-of-life-3d/code.js',
+  nature: '/examples/nature-explorer-3d/code.js',
+  dungeon: '/examples/dungeon-crawler-3d/code.js',
+  wizardry: '/examples/wizardry-3d/code.js',
 };
 
 // Map demo names (from ?demo= URL param) to paths
@@ -274,6 +287,12 @@ const demoMap = {
   'model-viewer-3d': '/examples/model-viewer-3d/code.js',
   '3d-advanced': '/examples/3d-advanced/code.js',
   'pbr-showcase': '/examples/pbr-showcase/code.js',
+  'generative-art': '/examples/generative-art/code.js',
+  'boids-flocking': '/examples/boids-flocking/code.js',
+  'game-of-life-3d': '/examples/game-of-life-3d/code.js',
+  'nature-explorer-3d': '/examples/nature-explorer-3d/code.js',
+  'dungeon-crawler-3d': '/examples/dungeon-crawler-3d/code.js',
+  'wizardry-3d': '/examples/wizardry-3d/code.js',
 };
 
 // default cart - load from URL param or default to space-harrier-3d

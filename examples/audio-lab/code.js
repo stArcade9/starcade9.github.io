@@ -25,9 +25,9 @@ let player = { x: 0, y: 1, z: 0 };
 let playerMesh;
 let ground;
 let emitters = []; // { mesh, x, z, color, pulse }
-let cooldowns = {}; // key -> seconds remaining
+let sfxCDs; // cooldown set for sound triggers
 let volume = 0.5;
-let spawnCooldown = 0;
+let spawnCD;
 
 export function init() {
   setCameraPosition(0, 6, 10);
@@ -40,6 +40,14 @@ export function init() {
 
   playerMesh = createCube(0.6, 0xffffff, [0, 1, 0], { material: 'emissive', emissive: 0xffffff });
   if (typeof setVolume === 'function') setVolume(volume);
+
+  // Initialize cooldowns for sound triggers
+  const cdDefs = {};
+  PRESETS.forEach(p => {
+    cdDefs[p.key] = 0.15;
+  });
+  sfxCDs = createCooldownSet(cdDefs);
+  spawnCD = createCooldown(0.5);
 }
 
 export function update(dt) {
@@ -70,18 +78,16 @@ export function update(dt) {
   }
 
   // Sound trigger keys 1-5
+  updateCooldowns(sfxCDs, dt);
   PRESETS.forEach(({ key: k, opts }) => {
-    if (!cooldowns[k]) cooldowns[k] = 0;
-    cooldowns[k] = Math.max(0, cooldowns[k] - dt);
-    if (keyp(k) && cooldowns[k] === 0) {
+    if (keyp(k) && useCooldown(sfxCDs[k])) {
       if (typeof sfx === 'function') sfx(opts);
-      cooldowns[k] = 0.15;
     }
   });
 
   // B key: spawn emitter at player position
-  spawnCooldown = Math.max(0, spawnCooldown - dt);
-  if (keyp('KeyB') && spawnCooldown === 0 && emitters.length < 5) {
+  updateCooldown(spawnCD, dt);
+  if (keyp('KeyB') && emitters.length < 5 && useCooldown(spawnCD)) {
     const color = EMITTER_COLORS[emitters.length % EMITTER_COLORS.length];
     const mesh = createSphere(0.5, color, [player.x, 1.5, player.z], 12, {
       material: 'holographic',
@@ -90,7 +96,6 @@ export function update(dt) {
     });
     emitters.push({ mesh, x: player.x, z: player.z, color, pulse: Math.random() * Math.PI * 2 });
     if (typeof sfx === 'function') sfx({ wave: 'sine', freq: 660, dur: 0.2, sweep: 220 });
-    spawnCooldown = 0.4;
   }
 
   // Animate emitter pulse and trigger proximity sfx

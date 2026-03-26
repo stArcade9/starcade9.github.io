@@ -89,7 +89,7 @@ export function update(dt) {
   }
 
   // Press Space or Next/Z to cycle models
-  if (btnp('Space') || btnp('KeyZ')) {
+  if (keyp('Space') || keyp('KeyZ')) {
     currentModelIndex = (currentModelIndex + 1) % models.length;
     switchModel(currentModelIndex);
   }

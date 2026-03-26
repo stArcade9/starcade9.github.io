@@ -29,7 +29,7 @@ export class GpuThreeJS {
 
     // Dramatically enhanced visual rendering setup
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.6;
+    this.renderer.toneMappingExposure = 1.25;
     this.renderer.shadowMap.enabled = true;
     // Note: PCFSoftShadowMap is deprecated in r182, PCFShadowMap now provides soft shadows
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -551,9 +551,9 @@ export class GpuThreeJS {
   enableBloom(enabled = true) {
     // For now, just increase exposure for bloom-like effect
     if (enabled) {
-      this.renderer.toneMappingExposure = 1.8;
+      this.renderer.toneMappingExposure = 1.2;
     } else {
-      this.renderer.toneMappingExposure = 1.4;
+      this.renderer.toneMappingExposure = 1.0;
     }
   }
 

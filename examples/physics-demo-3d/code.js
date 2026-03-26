@@ -6,6 +6,13 @@ let gameTime = 0;
 let selectedDemo = 0;
 let showDebugInfo = true;
 
+// Scoring & sandbox
+let destructionScore = 0;
+let objectsCreated = 0;
+let biggestImpact = 0;
+let collisionCount = 0;
+let highScore = 0;
+
 // Screen management
 let gameState = 'start'; // 'start', 'simulating'
 let startScreenTime = 0;
@@ -282,6 +289,13 @@ function resetDemo() {
   forceFields = [];
   constraints = [];
 
+  // Save high score before reset
+  if (destructionScore > highScore) highScore = destructionScore;
+  destructionScore = 0;
+  objectsCreated = 0;
+  biggestImpact = 0;
+  collisionCount = 0;
+
   // Setup new demo
   demos[selectedDemo].setup();
 }
@@ -454,7 +468,30 @@ function setupCollisionCascade() {
 }
 
 function setupSandbox() {
-  // Empty playfield — player spawns objects with SPACE / X
+  // Sandbox mode with objectives!
+  // Start with a tower of blocks to knock down
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 3; col++) {
+      const cube = createPhysicsObject({
+        mesh: createCube(1.2, [0xff4444, 0x44ff44, 0x4488ff, 0xffff44, 0xff88ff][row], [
+          (col - 1) * 1.5,
+          row * 1.5 + 1,
+          0,
+        ]),
+        x: (col - 1) * 1.5,
+        y: row * 1.5 + 1,
+        z: 0,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        radius: 0.8,
+        bounce: 0.3,
+        mass: 1,
+        type: 'target',
+      });
+      physicsObjects.push(cube);
+    }
+  }
 }
 
 const SANDBOX_SHAPES = ['sphere', 'cube', 'cone', 'cylinder'];
@@ -463,7 +500,8 @@ const SANDBOX_COLORS = [
 ];
 
 function sandboxSpawnObject() {
-  if (physicsObjects.length >= 40) return; // cap to avoid slowdown
+  if (physicsObjects.length >= 60) return; // raised cap for more chaos
+  objectsCreated++;
   const shape = SANDBOX_SHAPES[Math.floor(Math.random() * SANDBOX_SHAPES.length)];
   const color = SANDBOX_COLORS[Math.floor(Math.random() * SANDBOX_COLORS.length)];
   const size = 0.5 + Math.random() * 1.5;
@@ -667,6 +705,12 @@ function checkCollision(objA, objB) {
     const restitution = Math.min(objA.bounce, objB.bounce);
     const impulse = (-(1 + restitution) * velocityAlongNormal) / (1 / objA.mass + 1 / objB.mass);
 
+    // Track destruction score from impact force
+    const impactForce = Math.abs(impulse);
+    destructionScore += Math.floor(impactForce * 10);
+    collisionCount++;
+    if (impactForce > biggestImpact) biggestImpact = impactForce;
+
     if (!objA.anchored) {
       objA.vx -= (impulse * normalX) / objA.mass;
       objA.vy -= (impulse * normalY) / objA.mass;
@@ -847,8 +891,8 @@ function createCollisionParticles(x, y, z) {
 
 function drawUI() {
   // HUD Background
-  rect(16, 16, 450, 90, rgba8(0, 0, 0, 150), true);
-  rect(16, 16, 450, 90, rgba8(100, 100, 200, 100), false);
+  rect(16, 16, 450, 105, rgba8(0, 0, 0, 150), true);
+  rect(16, 16, 450, 105, rgba8(100, 100, 200, 100), false);
 
   // Title and Demo Info
   print('PHYSICS LAB 3D', 24, 24, rgba8(100, 200, 255, 255));
@@ -857,22 +901,41 @@ function drawUI() {
   // Stats
   print(`OBJECTS: ${physicsObjects.length}`, 24, 56, rgba8(255, 215, 0, 255));
   print(`PARTICLES: ${particles.length}`, 24, 72, rgba8(255, 100, 100, 255));
-  print(`CONSTRAINTS: ${constraints.length}`, 24, 88, rgba8(100, 255, 100, 255));
+
+  // Destruction score — the fun metric!
+  const scoreColor =
+    destructionScore > 500
+      ? rgba8(255, 50, 50)
+      : destructionScore > 100
+        ? rgba8(255, 200, 50)
+        : rgba8(100, 255, 100);
+  print(`DESTRUCTION: ${destructionScore}`, 24, 88, scoreColor);
+  print(`COLLISIONS: ${collisionCount}`, 24, 104, rgba8(200, 150, 255));
+
+  // Right side stats
+  print(`BIGGEST HIT: ${biggestImpact.toFixed(1)}`, 250, 56, rgba8(255, 150, 50));
+  if (highScore > 0) {
+    print(`HIGH SCORE: ${highScore}`, 250, 72, rgba8(255, 215, 0));
+  }
+  print(`SPAWNED: ${objectsCreated}`, 250, 88, rgba8(150, 200, 255));
 
   // 3D Stats
   const stats = get3DStats();
   if (stats) {
-    print(`3D MESHES: ${stats.meshes || 0}`, 250, 56, rgba8(150, 150, 255, 255));
-    print(`GPU: ${stats.renderer || 'ThreeJS'}`, 250, 72, rgba8(150, 150, 255, 255));
+    print(`3D MESHES: ${stats.meshes || 0}`, 250, 104, rgba8(150, 150, 255, 255));
   }
 
   // Debug info
   if (showDebugInfo) {
     print('DEBUG: ON', 250, 40, rgba8(100, 255, 100, 255));
-    print(`GRAVITY: ${GRAVITY}`, 350, 56, rgba8(200, 200, 200, 255));
-    print(`DAMPING: ${BOUNCE_DAMPING}`, 350, 72, rgba8(200, 200, 200, 255));
   } else {
     print('DEBUG: OFF', 250, 40, rgba8(255, 100, 100, 255));
+  }
+
+  // Sandbox objectives hint
+  if (selectedDemo === 5) {
+    const hint = 'KNOCK DOWN THE TOWER! SPAM SPACE FOR CHAOS!';
+    printCentered(hint, 320, 135, rgba8(255, 200, 100, 200));
   }
 
   // Controls

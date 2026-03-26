@@ -5,8 +5,9 @@ export async function init() {
   console.log('🔤 Font Test - Complete Character Set');
 }
 
-export function update() {
-  // Draw background
+export function update() {}
+
+export function draw() {
   cls(rgba8(20, 20, 40, 255));
 
   // Title

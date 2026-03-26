@@ -38,7 +38,7 @@ export async function init() {
   // Enable all advanced effects — use real post-processing API
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(1.2, 0.4, 0.1); // UnrealBloomPass: strength, radius, threshold
+  enableBloom(0.8, 0.4, 0.5); // UnrealBloomPass: strength, radius, threshold
   enableFXAA(); // Smooth jagged edges
   enableVignette(1.4, 0.9); // Cinematic dark border
 

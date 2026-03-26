@@ -21,6 +21,26 @@ let uiButtons = [];
 let dataPackets = [];
 let playerScore = 0;
 
+// Mission system
+let currentMission = null;
+let missionIndex = 0;
+let missionTimer = 0;
+let missionMsg = '';
+let missionMsgTimer = 0;
+
+// Security drones
+let drones = [];
+let droneProjectiles = [];
+
+// Player combat
+let playerHealth = 100;
+let playerMaxHealth = 100;
+let playerDmgCD = 0;
+let dronesDestroyed = 0;
+let shake = null;
+let checkpointMesh = null;
+let checkpointGlow = null;
+
 function spawnPackets() {
   for (let i = 0; i < 20; i++) {
     const x = (Math.random() - 0.5) * CITY_SIZE * 1.5;
@@ -32,6 +52,301 @@ function spawnPackets() {
       z,
     ]);
     dataPackets.push({ mesh, x, y, z, active: true, offset: Math.random() * 10 });
+  }
+}
+
+function spawnDrones() {
+  for (let i = 0; i < 8; i++) {
+    const x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+    const y = 8 + Math.random() * 15;
+    const z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+    const body = createCube(1.5, 0.6, 1.5, 0xff2222, [x, y, z]);
+    const glow = createCube(1.8, 0.3, 1.8, 0xff0000, [x, y - 0.4, z]);
+    drones.push({
+      body,
+      glow,
+      x,
+      y,
+      z,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      hp: 60,
+      alive: true,
+      shootCD: 2 + Math.random() * 2,
+      target: { x: (Math.random() - 0.5) * CITY_SIZE, y, z: (Math.random() - 0.5) * CITY_SIZE },
+      waypointTimer: 3 + Math.random() * 4,
+      respawnTimer: 0,
+    });
+  }
+}
+
+function updateDrones(dt) {
+  for (let i = 0; i < drones.length; i++) {
+    const d = drones[i];
+    if (!d.alive) {
+      d.respawnTimer -= dt;
+      if (d.respawnTimer <= 0) {
+        d.x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+        d.y = 8 + Math.random() * 15;
+        d.z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+        d.body = createCube(1.5, 0.6, 1.5, 0xff2222, [d.x, d.y, d.z]);
+        d.glow = createCube(1.8, 0.3, 1.8, 0xff0000, [d.x, d.y - 0.4, d.z]);
+        d.hp = 60;
+        d.alive = true;
+        d.shootCD = 2 + Math.random() * 2;
+      }
+      continue;
+    }
+
+    const dx = player.x - d.x;
+    const dy = player.y - d.y;
+    const dz = player.z - d.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    if (dist < 30) {
+      d.vx += (dx / dist) * 12 * dt;
+      d.vy += (dy / dist) * 12 * dt;
+      d.vz += (dz / dist) * 12 * dt;
+
+      d.shootCD -= dt;
+      if (d.shootCD <= 0 && dist < 25) {
+        d.shootCD = 1.5 + Math.random();
+        const pspd = 30;
+        droneProjectiles.push({
+          mesh: createSphere(0.3, 0xff4444, [d.x, d.y, d.z]),
+          x: d.x,
+          y: d.y,
+          z: d.z,
+          vx: (dx / dist) * pspd,
+          vy: (dy / dist) * pspd,
+          vz: (dz / dist) * pspd,
+          life: 3,
+        });
+        sfx('laser');
+      }
+    } else {
+      d.waypointTimer -= dt;
+      if (d.waypointTimer <= 0) {
+        d.target.x = (Math.random() - 0.5) * CITY_SIZE;
+        d.target.z = (Math.random() - 0.5) * CITY_SIZE;
+        d.target.y = 8 + Math.random() * 15;
+        d.waypointTimer = 4 + Math.random() * 4;
+      }
+      const tx = d.target.x - d.x;
+      const ty = d.target.y - d.y;
+      const tz = d.target.z - d.z;
+      const td = Math.sqrt(tx * tx + ty * ty + tz * tz) || 1;
+      d.vx += (tx / td) * 6 * dt;
+      d.vy += (ty / td) * 6 * dt;
+      d.vz += (tz / td) * 6 * dt;
+    }
+
+    d.vx *= 0.95;
+    d.vy *= 0.95;
+    d.vz *= 0.95;
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    d.z += d.vz * dt;
+    setPosition(d.body, d.x, d.y, d.z);
+    setPosition(d.glow, d.x, d.y - 0.4, d.z);
+    setRotation(d.body, 0, gameTime * 3, 0);
+
+    // Player ram damage when boosting
+    if (dist < 3 && player.boost > 1.5) {
+      d.hp -= 40;
+      sfx('hit');
+      triggerShake(shake, 0.5);
+      if (d.hp <= 0) {
+        d.alive = false;
+        d.respawnTimer = 8;
+        destroyMesh(d.body);
+        destroyMesh(d.glow);
+        dronesDestroyed++;
+        playerScore += 200;
+        sfx('explosion');
+        for (let j = 0; j < 10; j++) {
+          const p = createSphere(0.2, 0xff4400, [d.x, d.y, d.z]);
+          particles.push({
+            mesh: p,
+            x: d.x,
+            y: d.y,
+            z: d.z,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15,
+            vz: (Math.random() - 0.5) * 15,
+            life: 1.5,
+            maxLife: 1.5,
+            type: 'explosion',
+          });
+        }
+        if (currentMission && currentMission.type === 'DRONE_SWEEP') {
+          currentMission.progress++;
+        }
+        playerHealth = Math.min(playerMaxHealth, playerHealth + 10);
+      }
+    }
+  }
+}
+
+function updateProjectiles(dt) {
+  for (let i = droneProjectiles.length - 1; i >= 0; i--) {
+    const p = droneProjectiles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.z += p.vz * dt;
+    p.life -= dt;
+    setPosition(p.mesh, p.x, p.y, p.z);
+
+    const dx = p.x - player.x;
+    const dy = p.y - player.y;
+    const dz = p.z - player.z;
+    if (Math.sqrt(dx * dx + dy * dy + dz * dz) < 3 && playerDmgCD <= 0) {
+      playerHealth = Math.max(0, playerHealth - 10);
+      playerDmgCD = 0.8;
+      triggerShake(shake, 0.4);
+      sfx('hit');
+      destroyMesh(p.mesh);
+      droneProjectiles.splice(i, 1);
+      if (playerHealth <= 0) {
+        playerHealth = playerMaxHealth;
+        playerScore = Math.max(0, playerScore - 500);
+        missionMsg = 'SYSTEM CRASH - REBOOTING...';
+        missionMsgTimer = 3;
+        sfx('death');
+      }
+      continue;
+    }
+
+    if (p.life <= 0) {
+      destroyMesh(p.mesh);
+      droneProjectiles.splice(i, 1);
+    }
+  }
+}
+
+const MISSION_TYPES = ['DATA_HEIST', 'DRONE_SWEEP', 'SPEED_RUN'];
+
+function startNextMission() {
+  removeCheckpoint();
+  missionIndex++;
+  const type = MISSION_TYPES[(missionIndex - 1) % MISSION_TYPES.length];
+  const tier = Math.floor((missionIndex - 1) / 3) + 1;
+
+  if (type === 'DATA_HEIST') {
+    currentMission = {
+      type,
+      name: `DATA HEIST #${missionIndex}`,
+      desc: `Collect ${2 + tier} data packets`,
+      target: 2 + tier,
+      progress: 0,
+      timeLimit: 45 + tier * 10,
+      reward: 500 * tier,
+    };
+    respawnPackets(currentMission.target + 3);
+  } else if (type === 'DRONE_SWEEP') {
+    currentMission = {
+      type,
+      name: `DRONE SWEEP #${missionIndex}`,
+      desc: `Destroy ${1 + tier} drones`,
+      target: 1 + tier,
+      progress: 0,
+      timeLimit: 60 + tier * 15,
+      reward: 800 * tier,
+    };
+  } else {
+    const cx = (Math.random() - 0.5) * CITY_SIZE * 0.8;
+    const cz = (Math.random() - 0.5) * CITY_SIZE * 0.8;
+    currentMission = {
+      type,
+      name: `SPEED RUN #${missionIndex}`,
+      desc: 'Reach the checkpoint!',
+      target: 1,
+      progress: 0,
+      timeLimit: 25 + tier * 5,
+      reward: 400 * tier,
+      cx,
+      cz,
+    };
+    createCheckpointMarker(cx, 10, cz);
+  }
+  missionTimer = currentMission.timeLimit;
+  missionMsg = `NEW: ${currentMission.name}`;
+  missionMsgTimer = 3;
+  sfx('powerup');
+}
+
+function respawnPackets(count) {
+  const active = dataPackets.filter(p => p.active).length;
+  const needed = Math.max(0, count - active);
+  for (let i = 0; i < needed; i++) {
+    const x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+    const y = 3 + Math.random() * 20;
+    const z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
+    const mesh = createAdvancedCube(2, { material: 'emissive', emissive: 0x00ff00, intensity: 3 }, [
+      x,
+      y,
+      z,
+    ]);
+    dataPackets.push({ mesh, x, y, z, active: true, offset: Math.random() * 10 });
+  }
+}
+
+function createCheckpointMarker(x, y, z) {
+  checkpointMesh = createCylinder(1, 30, 0x00ffff, [x, y, z], { segments: 6 });
+  checkpointGlow = createCylinder(2, 32, 0x004488, [x, y - 1, z], { segments: 6 });
+}
+
+function removeCheckpoint() {
+  if (checkpointMesh) {
+    destroyMesh(checkpointMesh);
+    checkpointMesh = null;
+  }
+  if (checkpointGlow) {
+    destroyMesh(checkpointGlow);
+    checkpointGlow = null;
+  }
+}
+
+function updateMission(dt) {
+  if (!currentMission) return;
+  missionTimer -= dt;
+  if (missionMsgTimer > 0) missionMsgTimer -= dt;
+
+  if (currentMission.progress >= currentMission.target) {
+    playerScore += currentMission.reward;
+    missionMsg = `COMPLETE! +${currentMission.reward} CREDITS`;
+    missionMsgTimer = 3;
+    sfx('coin');
+    triggerShake(shake, 0.3);
+    playerHealth = Math.min(playerMaxHealth, playerHealth + 20);
+    const m = currentMission;
+    currentMission = null;
+    setTimeout(() => startNextMission(), 2500);
+    return;
+  }
+
+  if (currentMission.type === 'SPEED_RUN') {
+    const dx = player.x - currentMission.cx;
+    const dz = player.z - currentMission.cz;
+    if (Math.sqrt(dx * dx + dz * dz) < 8) {
+      currentMission.progress = 1;
+    }
+    if (checkpointMesh) setRotation(checkpointMesh, 0, gameTime * 2, 0);
+  }
+
+  if (missionTimer <= 0) {
+    missionMsg = 'MISSION FAILED - RETRYING';
+    missionMsgTimer = 2;
+    sfx('error');
+    currentMission.progress = 0;
+    missionTimer = currentMission.timeLimit;
+    if (currentMission.type === 'SPEED_RUN') {
+      removeCheckpoint();
+      currentMission.cx = (Math.random() - 0.5) * CITY_SIZE * 0.8;
+      currentMission.cz = (Math.random() - 0.5) * CITY_SIZE * 0.8;
+      createCheckpointMarker(currentMission.cx, 10, currentMission.cz);
+    }
   }
 }
 
@@ -72,7 +387,7 @@ export async function init() {
   // 🎨 Enable ALL visual effects for maximum impact
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(2.0, 0.3, 0.0); // Strong neon glow
+  enableBloom(1.5, 0.3, 0.25); // Strong neon glow
   enableFXAA(); // Anti-aliasing
   enableChromaticAberration(0.003); // Cyberpunk lens distortion
   enableVignette(1.6, 0.85); // Dark vignette for immersion
@@ -81,6 +396,9 @@ export async function init() {
   createPlayer();
   spawnVehicles();
   initParticleSystem();
+  spawnPackets();
+  spawnDrones();
+  shake = createShake(0.3);
 
   // Initialize start screen
   initStartScreen();
@@ -100,9 +418,8 @@ function initStartScreen() {
       60,
       '▶ ENTER THE CITY ▶',
       () => {
-        console.log('🎯 ENTER THE CITY CLICKED! Changing gameState to exploring...');
         gameState = 'exploring';
-        console.log('✅ gameState is now:', gameState);
+        startNextMission();
       },
       {
         normalColor: rgba8(255, 0, 100, 255),
@@ -158,9 +475,15 @@ export function update(dt) {
   updatePlayer(dt);
   updateVehicles(dt);
   updateParticles(dt);
+  updatePackets(dt);
   updateCityLights(dt);
   updateCamera(dt);
   updateNeonSigns(dt);
+  updateDrones(dt);
+  updateProjectiles(dt);
+  updateMission(dt);
+  if (shake) updateShake(shake, dt);
+  if (playerDmgCD > 0) playerDmgCD -= dt;
 }
 
 export function draw() {
@@ -760,8 +1083,11 @@ function updatePackets(dt) {
     if (dist < 4.0) {
       p.active = false;
       playerScore += 100;
-      setScale(p.mesh, 0, 0, 0); // Hide
-      setFog(0x00ff00, 0, 50); // green flash
+      setScale(p.mesh, 0, 0, 0);
+      sfx('coin');
+      if (currentMission && currentMission.type === 'DATA_HEIST') {
+        currentMission.progress++;
+      }
     }
   }
 }
@@ -930,59 +1256,69 @@ function createVehicleThrusterParticles(x, y, z) {
 }
 
 function drawHUD() {
-  // Main HUD background
-  rect(16, 16, 500, 120, rgba8(0, 0, 20, 180), true);
-  rect(16, 16, 500, 120, rgba8(0, 100, 200, 100), false);
+  // Health bar
+  const hbx = 16,
+    hby = 16,
+    hbw = 150,
+    hbh = 12;
+  rect(hbx, hby, hbw, hbh, rgba8(40, 0, 0, 200), true);
+  const hFrac = playerHealth / playerMaxHealth;
+  if (hFrac > 0) rect(hbx, hby, Math.floor(hbw * hFrac), hbh, rgba8(255, 50, 50, 255), true);
+  rect(hbx, hby, hbw, hbh, rgba8(255, 100, 100, 150), false);
+  print(`HP ${playerHealth}/${playerMaxHealth}`, hbx + 4, hby + 2, rgba8(255, 255, 255, 255));
 
-  // Title
-  print('🌃 CYBERPUNK CITY 3D', 24, 24, rgba8(0, 255, 255, 255));
-  print('ULTIMATE N64/PSX FANTASY CONSOLE', 24, 40, rgba8(255, 100, 255, 255));
+  // Score and stats
+  print(`CREDITS: ${playerScore}`, 480, 18, rgba8(255, 255, 100, 255));
+  print(`DRONES: ${dronesDestroyed}`, 480, 34, rgba8(255, 150, 150, 255));
 
-  // Player stats
+  // Mode & speed
   const speedMag = Math.sqrt(player.vx * player.vx + player.vz * player.vz);
-  print(`SPEED: ${speedMag.toFixed(1)}`, 24, 60, rgba8(255, 255, 100, 255));
-  print(`ALTITUDE: ${player.y.toFixed(1)}m`, 24, 76, rgba8(100, 255, 100, 255));
-  print(`MODE: ${flying ? 'FLIGHT' : 'HOVER'}`, 24, 92, rgba8(255, 150, 50, 255));
-  print(`BOOST: ${player.boost.toFixed(1)}x`, 24, 108, rgba8(255, 50, 50, 255));
+  print(
+    `${flying ? 'FLIGHT' : 'HOVER'} ${speedMag.toFixed(0)}m/s`,
+    16,
+    34,
+    rgba8(0, 255, 255, 255)
+  );
+  print(`ALT: ${player.y.toFixed(0)}m`, 16, 50, rgba8(100, 255, 100, 255));
 
-  // Position
-  print(`X: ${player.x.toFixed(1)}`, 200, 60, rgba8(200, 200, 255, 255));
-  print(`Y: ${player.y.toFixed(1)}`, 200, 76, rgba8(200, 200, 255, 255));
-  print(`Z: ${player.z.toFixed(1)}`, 200, 92, rgba8(200, 200, 255, 255));
+  // Mission panel
+  if (currentMission) {
+    const mpx = 200,
+      mpy = 16,
+      mpw = 240,
+      mph = 50;
+    rect(mpx, mpy, mpw, mph, rgba8(0, 0, 30, 200), true);
+    rect(mpx, mpy, mpw, mph, rgba8(0, 200, 255, 150), false);
+    print(currentMission.name, mpx + 6, mpy + 4, rgba8(0, 255, 255, 255));
+    print(currentMission.desc, mpx + 6, mpy + 18, rgba8(200, 200, 255, 255));
+    const tColor = missionTimer < 10 ? rgba8(255, 80, 80, 255) : rgba8(255, 255, 200, 255);
+    print(
+      `${currentMission.progress}/${currentMission.target}  TIME: ${Math.ceil(missionTimer)}s`,
+      mpx + 6,
+      mpy + 34,
+      tColor
+    );
+  }
 
-  // Scene stats
-  print(`BUILDINGS: ${buildings.length}`, 320, 60, rgba8(150, 255, 150, 255));
-  print(`VEHICLES: ${vehicles.length}`, 320, 76, rgba8(255, 255, 150, 255));
-  print(`PARTICLES: ${particles.length}`, 320, 92, rgba8(255, 150, 255, 255));
-  print(`LIGHTS: ${cityLights.length}`, 320, 108, rgba8(150, 150, 255, 255));
+  // Mission message (center, fading)
+  if (missionMsgTimer > 0) {
+    const alpha = Math.min(1, missionMsgTimer) * 255;
+    rect(160, 160, 320, 24, rgba8(0, 0, 0, Math.floor(alpha * 0.6)), true);
+    print(missionMsg, 180, 166, rgba8(255, 255, 0, Math.floor(alpha)));
+  }
 
-  // Performance
-  const stats = get3DStats();
-  if (stats) {
-    print(`3D MESHES: ${stats.meshes || 0}`, 420, 60, rgba8(100, 255, 255, 255));
-    print(`RENDERER: ${stats.renderer || 'ThreeJS'}`, 420, 76, rgba8(100, 255, 255, 255));
+  // Damage flash
+  if (playerDmgCD > 0.4) {
+    rect(0, 0, 640, 360, rgba8(255, 0, 0, 60), true);
   }
 
   // Controls
-  rect(16, 350, 580, 60, rgba8(0, 0, 0, 150), true);
-  print(
-    'WASD: Move | SHIFT: Flight Mode | SPACE: Boost | ZX: Up/Down',
-    24,
-    360,
-    rgba8(255, 255, 255, 200)
-  );
-  print(
-    'Experience true Nintendo 64 / PlayStation style 3D with GPU acceleration!',
-    24,
-    380,
-    rgba8(100, 255, 100, 180)
-  );
+  print('WASD:Move SHIFT:Fly SPACE:Boost(ram drones!)', 16, 344, rgba8(200, 200, 255, 180));
 
-  // Mini-map (simple radar)
+  // Mini-map (radar)
   const radarSize = 80;
-  const radarX = 540;
-  const radarY = 200;
-
+  const radarX = 560;
+  const radarY = 260;
   rect(
     radarX - radarSize / 2,
     radarY - radarSize / 2,
@@ -999,18 +1335,49 @@ function drawHUD() {
     rgba8(0, 255, 0, 100),
     false
   );
-
-  // 📍 Player dot (bright white)
   rect(radarX - 1, radarY - 1, 2, 2, rgba8(255, 255, 255, 255), true);
 
-  // 📍 Vehicle dots (magenta)
-  vehicles.forEach(vehicle => {
-    const relX = ((vehicle.x - player.x) / CITY_SIZE) * radarSize * 0.4;
-    const relZ = ((vehicle.z - player.z) / CITY_SIZE) * radarSize * 0.4;
-    if (Math.abs(relX) < radarSize / 2 && Math.abs(relZ) < radarSize / 2) {
-      rect(radarX + relX - 1, radarY + relZ - 1, 2, 2, rgba8(255, 0, 255, 200), true);
+  // Vehicle dots (magenta)
+  vehicles.forEach(v => {
+    const rx = ((v.x - player.x) / CITY_SIZE) * radarSize * 0.4;
+    const rz = ((v.z - player.z) / CITY_SIZE) * radarSize * 0.4;
+    if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
+      rect(radarX + rx - 1, radarY + rz - 1, 2, 2, rgba8(255, 0, 255, 200), true);
     }
   });
 
-  print('RADAR', radarX - 15, radarY + radarSize / 2 + 8, rgba8(0, 255, 0, 255));
+  // Drone dots (red)
+  drones.forEach(d => {
+    if (!d.alive) return;
+    const rx = ((d.x - player.x) / CITY_SIZE) * radarSize * 0.4;
+    const rz = ((d.z - player.z) / CITY_SIZE) * radarSize * 0.4;
+    if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
+      rect(radarX + rx - 1, radarY + rz - 1, 3, 3, rgba8(255, 50, 50, 255), true);
+    }
+  });
+
+  // Checkpoint dot (cyan, blinking)
+  if (currentMission && currentMission.type === 'SPEED_RUN') {
+    const rx = ((currentMission.cx - player.x) / CITY_SIZE) * radarSize * 0.4;
+    const rz = ((currentMission.cz - player.z) / CITY_SIZE) * radarSize * 0.4;
+    if (
+      Math.abs(rx) < radarSize / 2 &&
+      Math.abs(rz) < radarSize / 2 &&
+      Math.sin(gameTime * 8) > 0
+    ) {
+      rect(radarX + rx - 2, radarY + rz - 2, 4, 4, rgba8(0, 255, 255, 255), true);
+    }
+  }
+
+  // Data packet dots (green)
+  dataPackets.forEach(p => {
+    if (!p.active) return;
+    const rx = ((p.x - player.x) / CITY_SIZE) * radarSize * 0.4;
+    const rz = ((p.z - player.z) / CITY_SIZE) * radarSize * 0.4;
+    if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
+      rect(radarX + rx, radarY + rz, 2, 2, rgba8(0, 255, 0, 200), true);
+    }
+  });
+
+  print('RADAR', radarX - 15, radarY + radarSize / 2 + 4, rgba8(0, 255, 0, 255));
 }

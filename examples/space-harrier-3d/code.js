@@ -2,7 +2,8 @@
 
 let gameState = 'start';
 let gameTime = 0;
-let inputLockout = 0.6; // seconds to wait before accepting 'start' input
+let inputLockoutCD;
+let weaponCD;
 
 // Colors
 const PALETTE = {
@@ -28,7 +29,6 @@ let game = {
     y: 0,
     z: -5,
     health: 100,
-    weaponTimer: 0,
     meshes: {},
     animPhase: 0,
     bobPhase: 0,
@@ -36,6 +36,18 @@ let game = {
   speed: 45,
   distance: 0,
   score: 0,
+  lives: 3,
+  wave: 0,
+  waveTimer: 0,
+  waveEnemiesLeft: 0,
+  waveClear: false,
+  waveClearTimer: 0,
+  powerup: null, // active power-up type
+  powerupTimer: 0,
+  powerupPickups: [], // on-screen power-up meshes
+  shake: null,
+  killStreak: 0,
+  streakTimer: 0,
 
   gridPlanes: [],
   scenery: [],
@@ -62,9 +74,9 @@ export async function init() {
   // Retro presentation with modern shader touch
   if (typeof enablePixelation === 'function') enablePixelation(1);
   if (typeof enableDithering === 'function') enableDithering(true);
-  enableBloom(1.2, 0.5, 0.1); // Alien sky & bullet glow
+  enableBloom(1.0, 0.5, 0.3); // Alien sky & bullet glow
   enableFXAA();
-  enableVignette(1.3, 0.9);
+  enableVignette(1.0, 0.95);
 
   createCheckeredFloor();
   createPlayer();
@@ -72,6 +84,11 @@ export async function init() {
   for (let i = 0; i < 40; i++) {
     spawnScenery(true);
   }
+
+  inputLockoutCD = createCooldown(0.6);
+  inputLockoutCD.timer = 0.6; // start locked out
+  weaponCD = createCooldown(0.12);
+  game.shake = createShake({ decay: 5 });
 
   initStartScreen();
 }
@@ -184,40 +201,65 @@ function spawnScenery(randomZ = false) {
   });
 }
 
-function spawnEnemy() {
+function spawnEnemy(type) {
   const x = (Math.random() - 0.5) * 40;
   const z = -120;
   const y = 3 + Math.random() * 15;
+  type = type || 'normal';
 
-  const core = createSphere(2.5, PALETTE.enemy, [x, y, z], 8);
-  const eye = createSphere(1.2, PALETTE.enemyEye, [x, y, z + 2.0], 8);
+  let color = PALETTE.enemy;
+  let hp = 30;
+  let spd = 30 + Math.random() * 30;
+  let size = 2.5;
 
-  const wingL = createCube(1.5, 0x5500aa, [x - 3, y, z]);
+  if (type === 'fast') {
+    color = 0x00ccff;
+    hp = 15;
+    spd = 60 + Math.random() * 30;
+    size = 1.8;
+  } else if (type === 'tank') {
+    color = 0xff4400;
+    hp = 80;
+    spd = 20 + Math.random() * 15;
+    size = 3.5;
+  } else if (type === 'boss') {
+    color = 0xff0000;
+    hp = 200 + game.wave * 50;
+    spd = 15;
+    size = 5;
+  }
+
+  const core = createSphere(size, color, [x, y, z], 8);
+  const eye = createSphere(size * 0.5, PALETTE.enemyEye, [x, y, z + size * 0.8], 8);
+
+  const wingL = createCube(size * 0.6, 0x5500aa, [x - size * 1.2, y, z]);
   setScale(wingL, 3, 0.2, 1);
-  const wingR = createCube(1.5, 0x5500aa, [x + 3, y, z]);
+  const wingR = createCube(size * 0.6, 0x5500aa, [x + size * 1.2, y, z]);
   setScale(wingR, 3, 0.2, 1);
 
   game.enemies.push({
     parts: [
       { mesh: core, ox: 0, oy: 0, oz: 0 },
-      { mesh: eye, ox: 0, oy: 0, oz: 2.0 },
-      { mesh: wingL, ox: -3, oy: 0, oz: 0 },
-      { mesh: wingR, ox: 3, oy: 0, oz: 0 },
+      { mesh: eye, ox: 0, oy: 0, oz: size * 0.8 },
+      { mesh: wingL, ox: -size * 1.2, oy: 0, oz: 0 },
+      { mesh: wingR, ox: size * 1.2, oy: 0, oz: 0 },
     ],
     x: x,
     y: y,
     z: z,
-    health: 30,
+    health: hp,
+    maxHealth: hp,
+    type: type,
     vx: (Math.random() - 0.5) * 20,
     vy: (Math.random() - 0.5) * 10,
-    vz: 30 + Math.random() * 30, // Faster approach
+    vz: spd,
     timer: 0,
   });
 }
 
-function firePlayerBullet() {
+function firePlayerBullet(xOffset) {
   const p = game.player;
-  const x = p.x + 0.8;
+  const x = p.x + 0.8 + (xOffset || 0);
   const y = p.y;
   const z = p.z - 2;
 
@@ -281,20 +323,48 @@ export function update(dt) {
   gameTime += dt;
 
   if (gameState === 'start' || gameState === 'gameover') {
-    if (inputLockout > 0) inputLockout -= dt;
+    updateCooldown(inputLockoutCD, dt);
     updateAllButtons();
     updateGrid(dt * 0.4);
 
     // Animate player idly
     updatePlayer(dt, true);
 
-    if (inputLockout <= 0 && isKeyPressed('Space')) startGame();
+    if (cooldownReady(inputLockoutCD) && isKeyPressed('Space')) startGame();
     return;
   }
 
   game.distance += game.speed * dt;
   game.score += dt * 25;
-  game.speed = Math.min(100, 45 + game.score * 0.002);
+  game.speed = Math.min(100, 45 + game.wave * 3);
+  updateShake(game.shake, dt);
+
+  // Kill streak timer
+  if (game.streakTimer > 0) {
+    game.streakTimer -= dt;
+    if (game.streakTimer <= 0) game.killStreak = 0;
+  }
+
+  // Power-up timer
+  if (game.powerupTimer > 0) {
+    game.powerupTimer -= dt;
+    if (game.powerupTimer <= 0) game.powerup = null;
+  }
+
+  // Wave management
+  if (game.waveClear) {
+    game.waveClearTimer -= dt;
+    if (game.waveClearTimer <= 0) {
+      game.waveClear = false;
+      startWave(game.wave + 1);
+    }
+  } else if (game.waveEnemiesLeft <= 0 && game.enemies.length === 0 && game.wave > 0) {
+    game.waveClear = true;
+    game.waveClearTimer = 2.0;
+    const waveBonus = game.wave * 200;
+    game.score += waveBonus;
+    sfx('powerup');
+  }
 
   updatePlayer(dt, false);
   updateGrid(dt);
@@ -303,32 +373,100 @@ export function update(dt) {
   updateBullets(dt);
   updateEnemyBullets(dt);
   updateParticles(dt);
+  updatePowerupPickups(dt);
 }
 
 function startGame() {
   if (gameState === 'playing') return;
-  inputLockout = 0.3; // brief lockout after start too
+  inputLockoutCD.timer = 0.3;
   gameState = 'playing';
   game.score = 0;
   game.player.health = 100;
   game.speed = 45;
+  game.lives = 3;
+  game.wave = 0;
+  game.powerup = null;
+  game.powerupTimer = 0;
+  game.killStreak = 0;
+  game.streakTimer = 0;
+  game.waveClear = false;
 
   game.enemies.forEach(e => e.parts.forEach(p => destroyMesh(p.mesh)));
   game.enemyBullets.forEach(b => destroyMesh(b.mesh));
   game.bullets.forEach(b => destroyMesh(b.mesh));
+  game.powerupPickups.forEach(p => destroyMesh(p.mesh));
 
   game.enemies = [];
   game.enemyBullets = [];
   game.bullets = [];
+  game.powerupPickups = [];
   clearButtons();
+
+  startWave(1);
+}
+
+function startWave(num) {
+  game.wave = num;
+  const baseCount = 4 + num * 2;
+  game.waveEnemiesLeft = baseCount;
+  game.enemySpawnTimer = 0.5;
+}
+
+function spawnPowerup(x, y, z) {
+  const types = ['health', 'rapid', 'spread', 'shield'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const colors = { health: 0x00ff00, rapid: 0xffff00, spread: 0xff8800, shield: 0x00ccff };
+  const mesh = createSphere(1.5, colors[type], [x, y, z], 6);
+  game.powerupPickups.push({ mesh, x, y, z, type, timer: 0 });
+}
+
+function updatePowerupPickups(dt) {
+  const p = game.player;
+  for (let i = game.powerupPickups.length - 1; i >= 0; i--) {
+    const pu = game.powerupPickups[i];
+    pu.z += game.speed * dt * 0.5;
+    pu.timer += dt;
+    setPosition(pu.mesh, pu.x, pu.y + Math.sin(pu.timer * 4) * 1.5, pu.z);
+    setRotation(pu.mesh, 0, pu.timer * 3, 0);
+
+    // Collect
+    if (Math.abs(pu.x - p.x) < 3 && Math.abs(pu.y - p.y) < 3 && Math.abs(pu.z - p.z) < 4) {
+      if (pu.type === 'health') {
+        p.health = Math.min(100, p.health + 40);
+      } else {
+        game.powerup = pu.type;
+        game.powerupTimer = 8;
+      }
+      sfx('coin');
+      destroyMesh(pu.mesh);
+      game.powerupPickups.splice(i, 1);
+      continue;
+    }
+
+    if (pu.z > 25) {
+      destroyMesh(pu.mesh);
+      game.powerupPickups.splice(i, 1);
+    }
+  }
 }
 
 function updatePlayer(dt, isIdle) {
   const p = game.player;
   if (!isIdle && p.health <= 0) {
     createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
-    gameState = 'gameover';
-    initGameOverScreen();
+    sfx('explosion');
+    game.lives--;
+    if (game.lives <= 0) {
+      gameState = 'gameover';
+      initGameOverScreen();
+    } else {
+      // Respawn with brief invulnerability
+      p.health = 100;
+      p.x = 0;
+      p.y = 0;
+      game.powerup = 'shield';
+      game.powerupTimer = 3;
+    }
     return;
   }
 
@@ -370,10 +508,15 @@ function updatePlayer(dt, isIdle) {
     setPosition(p.meshes.legR, p.x + 0.4, bY - 1.0, p.z + 0.5);
   }
 
-  p.weaponTimer -= dt;
-  if (!isIdle && key('Space') && p.weaponTimer <= 0) {
+  updateCooldown(weaponCD, dt);
+  const fireRate = game.powerup === 'rapid' ? 0.04 : 0.12;
+  weaponCD.duration = fireRate;
+  if (!isIdle && key('Space') && useCooldown(weaponCD)) {
     firePlayerBullet();
-    p.weaponTimer = 0.12;
+    if (game.powerup === 'spread') {
+      firePlayerBullet(-8);
+      firePlayerBullet(8);
+    }
   }
 }
 
@@ -403,9 +546,20 @@ function updateScenery(dt) {
 
 function updateEnemies(dt) {
   game.enemySpawnTimer -= dt;
-  if (game.enemySpawnTimer <= 0) {
-    if (Math.random() > 0.3) spawnEnemy();
-    game.enemySpawnTimer = 1.0 + Math.random() * 1.5;
+  if (game.enemySpawnTimer <= 0 && game.waveEnemiesLeft > 0) {
+    game.waveEnemiesLeft--;
+    // Enemy type distribution based on wave
+    const roll = Math.random();
+    if (game.wave >= 3 && game.waveEnemiesLeft === 0 && game.wave % 3 === 0) {
+      spawnEnemy('boss');
+    } else if (roll < 0.15 && game.wave >= 2) {
+      spawnEnemy('fast');
+    } else if (roll < 0.25 && game.wave >= 4) {
+      spawnEnemy('tank');
+    } else {
+      spawnEnemy('normal');
+    }
+    game.enemySpawnTimer = Math.max(0.4, 1.5 - game.wave * 0.08);
   }
 
   for (let i = game.enemies.length - 1; i >= 0; i--) {
@@ -425,8 +579,15 @@ function updateEnemies(dt) {
       setPosition(p.mesh, e.x + p.ox, e.y + p.oy + bob, e.z + p.oz);
     });
 
-    if (e.timer > 1.5 && Math.random() < 0.02) {
+    if (e.timer > 1.5 && Math.random() < (e.type === 'boss' ? 0.06 : 0.02)) {
       fireEnemyBullet(e.x, e.y + bob, e.z);
+    }
+
+    // Boss fires spread
+    if (e.type === 'boss' && e.timer > 2 && Math.random() < 0.01) {
+      for (let a = -2; a <= 2; a++) {
+        fireEnemyBullet(e.x + a * 3, e.y + bob, e.z);
+      }
     }
 
     if (e.z > 20) {
@@ -455,9 +616,22 @@ function updateBullets(dt) {
       if (Math.abs(b.x - e.x) < 3.0 && Math.abs(b.y - e.y) < 3.0 && Math.abs(b.z - e.z) < 4.0) {
         e.health -= 15;
         hit = true;
+        sfx('hit');
         if (e.health <= 0) {
           createExplosion(e.x, e.y, e.z, PALETTE.explosion);
-          game.score += 500;
+          const killPoints =
+            e.type === 'boss' ? 3000 : e.type === 'tank' ? 1000 : e.type === 'fast' ? 700 : 500;
+          game.score += killPoints;
+          game.killStreak++;
+          game.streakTimer = 2;
+          if (game.killStreak >= 5) {
+            game.score += game.killStreak * 100;
+          }
+          sfx('explosion');
+          // 25% chance to drop power-up
+          if (Math.random() < 0.25) {
+            spawnPowerup(e.x, e.y, e.z);
+          }
           e.parts.forEach(p => destroyMesh(p.mesh));
           game.enemies.splice(j, 1);
         }
@@ -484,7 +658,13 @@ function updateEnemyBullets(dt) {
     setPosition(b.mesh, b.x, b.y, b.z);
 
     if (Math.abs(b.x - p.x) < 1.5 && Math.abs(b.y - p.y) < 2.0 && Math.abs(b.z - p.z) < 2.0) {
-      p.health -= 25;
+      if (game.powerup === 'shield') {
+        // Shield absorbs hit
+      } else {
+        p.health -= 25;
+        triggerShake(game.shake, 0.4);
+        sfx('hit');
+      }
       createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
       destroyMesh(b.mesh);
       game.enemyBullets.splice(i, 1);
@@ -634,7 +814,7 @@ function initGameOverScreen() {
     '↻ RETRY',
     () => {
       gameState = 'start';
-      inputLockout = 0.6;
+      inputLockoutCD.timer = 0.6;
       initStartScreen();
     },
     { normalColor: uiColors.danger, hoverColor: rgba8(250, 60, 60, 255) }
@@ -662,10 +842,49 @@ export function draw() {
   setFont('normal');
   setTextAlign('left');
   drawText('SCORE: ' + Math.floor(game.score), 20, 20, uiColors.warning, 1);
-  drawText('SPEED: ' + Math.floor(game.speed), 20, 40, uiColors.light, 1);
+  drawText(`WAVE ${game.wave}`, 20, 40, rgba8(0, 255, 255, 255), 1);
 
+  // Lives
+  for (let i = 0; i < game.lives; i++) {
+    rect(170 + i * 18, 22, 12, 12, rgba8(255, 50, 50, 255), true);
+  }
+
+  // Health bar
   rect(420, 20, 200, 20, rgba8(50, 0, 0, 200), true);
   const hpWidth = Math.max(0, game.player.health * 2);
   rect(420, 20, hpWidth, 20, hpWidth > 40 ? uiColors.success : uiColors.danger, true);
   rect(420, 20, 200, 20, uiColors.light, false);
+
+  // Power-up indicator
+  if (game.powerup) {
+    const puColors = {
+      rapid: rgba8(255, 255, 0, 255),
+      spread: rgba8(255, 136, 0, 255),
+      shield: rgba8(0, 200, 255, 255),
+    };
+    drawText(
+      `${game.powerup.toUpperCase()} ${Math.ceil(game.powerupTimer)}s`,
+      420,
+      46,
+      puColors[game.powerup] || uiColors.light,
+      1
+    );
+  }
+
+  // Kill streak
+  if (game.killStreak >= 3) {
+    setTextAlign('center');
+    drawText(`${game.killStreak}x STREAK!`, 320, 60, rgba8(255, 200, 50, 255), 1);
+    setTextAlign('left');
+  }
+
+  // Wave clear message
+  if (game.waveClear) {
+    setTextAlign('center');
+    setFont('large');
+    drawText(`WAVE ${game.wave} CLEAR!`, 320, 160, rgba8(0, 255, 100, 255), 1);
+    setFont('normal');
+    drawText(`+${game.wave * 200} BONUS`, 320, 185, rgba8(255, 255, 100, 255), 1);
+    setTextAlign('left');
+  }
 }

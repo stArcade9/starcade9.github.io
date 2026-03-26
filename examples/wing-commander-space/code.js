@@ -36,10 +36,16 @@ const CONFIG = {
 };
 
 // Game state
-let gameState = 'start'; // 'start', 'playing', 'paused', 'gameover'
+let gameState = 'start'; // 'start', 'playing', 'waveclear', 'gameover'
 let gameTime = 0;
 let score = 0;
 let kills = 0;
+
+// Wave system
+let wave = 0;
+let waveEnemiesRemaining = 0;
+let waveClearTimer = 0;
+let bossActive = false;
 
 // Player state
 let player = {
@@ -64,6 +70,7 @@ let missiles = [];
 let explosions = [];
 let particles = [];
 let stars = [];
+let pickups = [];
 
 // Cockpit meshes
 let cockpit = {
@@ -73,7 +80,8 @@ let cockpit = {
 };
 
 // Camera shake
-let cameraShake = { x: 0, y: 0, z: 0, intensity: 0 };
+let shake;
+let cooldowns;
 
 // UI
 let uiButtons = [];
@@ -104,6 +112,15 @@ export async function init() {
     missileCount: 20,
   };
 
+  shake = createShake({ decay: 3 });
+  cooldowns = createCooldownSet({ laser: CONFIG.LASER_COOLDOWN, missile: CONFIG.MISSILE_COOLDOWN });
+
+  // Reset wave state
+  wave = 0;
+  waveEnemiesRemaining = 0;
+  waveClearTimer = 0;
+  bossActive = false;
+
   // Clear arrays
   asteroids = [];
   enemies = [];
@@ -113,6 +130,7 @@ export async function init() {
   explosions = [];
   particles = [];
   stars = [];
+  pickups = [];
 
   // Setup 3D environment
   setupCamera();
@@ -147,7 +165,7 @@ function setupLighting() {
   setLightColor(0xffffee);
   setLightDirection(0.3, -0.5, -0.8);
   // Post-processing for cinematic cockpit feel
-  enableBloom(1.0, 0.4, 0.2); // Engine glow & weapon flash
+  enableBloom(0.8, 0.4, 0.45); // Engine glow & weapon flash
   enableFXAA(); // Smooth starfield
   enableVignette(1.8, 0.85); // Cockpit-style dark border
   enableChromaticAberration(0.0015); // Subtle lens dispersion
@@ -210,9 +228,30 @@ function startGame() {
     spawnAsteroid();
   }
 
-  // Spawn initial enemies
-  for (let i = 0; i < 3; i++) {
-    spawnEnemy();
+  // Start wave 1
+  spawnWave();
+}
+
+function spawnWave() {
+  wave++;
+  bossActive = false;
+
+  if (wave % 5 === 0) {
+    // Boss wave
+    spawnEnemy('boss');
+    bossActive = true;
+    // Add escort fighters
+    for (let i = 0; i < 2; i++) spawnEnemy('fighter');
+    waveEnemiesRemaining = 3;
+  } else {
+    const count = 3 + Math.floor(wave * 0.8);
+    waveEnemiesRemaining = count;
+    for (let i = 0; i < count; i++) {
+      let type = 'fighter';
+      if (wave >= 3 && Math.random() < 0.25) type = 'bomber';
+      if (wave >= 5 && Math.random() < 0.2) type = 'ace';
+      spawnEnemy(type);
+    }
   }
 }
 
@@ -251,42 +290,93 @@ function spawnAsteroid() {
   asteroids.push(asteroid);
 }
 
-function spawnEnemy() {
-  // Spawn enemy fighter ahead
+const ENEMY_TYPES = {
+  fighter: {
+    color: 0xff3333,
+    wingColor: 0xcc2222,
+    hp: 30,
+    speed: 7,
+    fireRate: 1.5,
+    score: 100,
+    size: 2,
+    damage: 5,
+  },
+  bomber: {
+    color: 0xff8800,
+    wingColor: 0xcc6600,
+    hp: 60,
+    speed: 4,
+    fireRate: 2.5,
+    score: 250,
+    size: 3,
+    damage: 10,
+  },
+  ace: {
+    color: 0x00ffff,
+    wingColor: 0x00bbbb,
+    hp: 40,
+    speed: 12,
+    fireRate: 0.8,
+    score: 400,
+    size: 1.8,
+    damage: 8,
+  },
+  boss: {
+    color: 0xffdd00,
+    wingColor: 0xcc9900,
+    hp: 200,
+    speed: 3,
+    fireRate: 0.6,
+    score: 2000,
+    size: 5,
+    damage: 12,
+  },
+};
+
+function spawnEnemy(type) {
+  type = type || 'fighter';
+  const cfg = ENEMY_TYPES[type];
   const angle1 = (Math.random() - 0.5) * Math.PI * 0.3;
   const angle2 = (Math.random() - 0.5) * Math.PI * 0.3;
-  const distance = 60 + Math.random() * 40;
+  const dist = 60 + Math.random() * 40;
 
-  const x = Math.sin(angle1) * distance;
-  const y = Math.sin(angle2) * distance;
-  const z = -distance;
+  const x = Math.sin(angle1) * dist;
+  const y = Math.sin(angle2) * dist;
+  const z = -dist;
 
-  // Red enemy fighter
-  const body = createCube(2, 0xff3333, [x, y, z]);
-  setScale(body, 2, 1, 3);
+  const s = cfg.size;
+  const body = createCube(s, cfg.color, [x, y, z]);
+  setScale(body, s, s * 0.5, s * 1.5);
 
-  const wing1 = createCube(4, 0xcc2222, [x - 2, y, z]);
-  setScale(wing1, 4, 0.2, 1.5);
+  const wing1 = createCube(s * 2, cfg.wingColor, [x - s, y, z]);
+  setScale(wing1, s * 2, 0.2, s * 0.75);
 
-  const wing2 = createCube(4, 0xcc2222, [x + 2, y, z]);
-  setScale(wing2, 4, 0.2, 1.5);
+  const wing2 = createCube(s * 2, cfg.wingColor, [x + s, y, z]);
+  setScale(wing2, s * 2, 0.2, s * 0.75);
+
+  // Scale HP with wave
+  const hpScale = type === 'boss' ? cfg.hp + wave * 20 : cfg.hp + Math.floor(wave / 2) * 5;
 
   const enemy = {
+    type: type,
     body: body,
     wings: [wing1, wing2],
     pos: vec3(x, y, z),
-    vel: vec3(0, 0, 5 + Math.random() * 5),
+    vel: vec3(0, 0, cfg.speed + Math.random() * 3),
     rot: vec3(0, Math.PI, 0),
-    health: 30,
-    fireCooldown: 0,
+    health: hpScale,
+    maxHealth: hpScale,
+    fireCooldown: Math.random() * cfg.fireRate,
+    fireRate: cfg.fireRate,
     attackPattern: Math.floor(Math.random() * 3),
+    phaseTime: 0,
   };
 
   enemies.push(enemy);
 }
 
 function firePlayerLaser() {
-  if (player.laserCooldown > 0) return;
+  if (!useCooldown(cooldowns.laser)) return;
 
   // Fire two lasers from wing positions
   for (let i = -1; i <= 1; i += 2) {
@@ -301,12 +391,12 @@ function firePlayerLaser() {
     playerLasers.push(laser);
   }
 
-  player.laserCooldown = CONFIG.LASER_COOLDOWN;
   player.energy -= 2;
+  sfx('laser');
 }
 
 function fireMissile() {
-  if (player.missileCooldown > 0 || player.missileCount <= 0) return;
+  if (player.missileCount <= 0 || !useCooldown(cooldowns.missile)) return;
 
   const missile = {
     mesh: createCube(0.3, 0xffaa00, [0, 0, -2]),
@@ -321,8 +411,8 @@ function fireMissile() {
   setScale(missile.mesh, 0.3, 0.3, 1);
   missiles.push(missile);
 
-  player.missileCooldown = CONFIG.MISSILE_COOLDOWN;
   player.missileCount--;
+  sfx('explosion');
 }
 
 // ============================================
@@ -345,6 +435,7 @@ export function update() {
     updateEnemies(dt);
     updateLasers(dt);
     updateMissiles(dt);
+    updatePickups(dt);
     updateExplosions(dt);
     updateParticles(dt);
     updateCamera(dt);
@@ -355,9 +446,26 @@ export function update() {
       spawnAsteroid();
     }
 
-    // Spawn more enemies
-    if (enemies.length < 5 && Math.random() < 0.01) {
-      spawnEnemy();
+    // Wave clear check
+    if (waveEnemiesRemaining <= 0 && enemies.length === 0) {
+      gameState = 'waveclear';
+      waveClearTimer = 3.0;
+      score += wave * 500;
+      player.missileCount = Math.min(20, player.missileCount + 3);
+      sfx('powerup');
+    }
+  }
+
+  if (gameState === 'waveclear') {
+    gameTime += dt;
+    waveClearTimer -= dt;
+    updateExplosions(dt);
+    updateParticles(dt);
+    updatePickups(dt);
+    updateCamera(dt);
+    if (waveClearTimer <= 0) {
+      gameState = 'playing';
+      spawnWave();
     }
   }
 }
@@ -426,8 +534,7 @@ function updateInput(dt) {
   }
 
   // Cooldowns
-  if (player.laserCooldown > 0) player.laserCooldown -= dt;
-  if (player.missileCooldown > 0) player.missileCooldown -= dt;
+  updateCooldowns(cooldowns, dt);
 
   // Energy regeneration
   if (player.energy < 100 && !player.boosting) {
@@ -498,20 +605,41 @@ function updateEnemies(dt) {
     enemy.pos.y -= player.vel.y * dt;
     enemy.pos.z -= player.vel.z * dt;
 
-    // AI movement patterns
-    switch (enemy.attackPattern) {
-      case 0: // Straight attack
-        enemy.vel.z = 10;
-        break;
-      case 1: // Weaving
-        enemy.vel.x = Math.sin(gameTime * 2) * 5;
-        enemy.vel.z = 8;
-        break;
-      case 2: // Circle strafe
-        enemy.vel.x = Math.cos(gameTime * 1.5) * 8;
-        enemy.vel.y = Math.sin(gameTime * 1.5) * 8;
-        enemy.vel.z = 5;
-        break;
+    enemy.phaseTime += dt;
+    const cfg = ENEMY_TYPES[enemy.type] || ENEMY_TYPES.fighter;
+
+    // Type-specific AI
+    if (enemy.type === 'boss') {
+      // Boss circles slowly and holds range
+      enemy.vel.x = Math.cos(gameTime * 0.5) * 6;
+      enemy.vel.y = Math.sin(gameTime * 0.7) * 4;
+      const dz = -20 - enemy.pos.z;
+      enemy.vel.z = dz * 0.5;
+    } else if (enemy.type === 'ace') {
+      // Ace: fast evasive with direction changes
+      enemy.vel.x = Math.sin(gameTime * 3 + enemy.phaseTime) * 12;
+      enemy.vel.y = Math.cos(gameTime * 2.5 + i) * 6;
+      enemy.vel.z = cfg.speed + Math.sin(enemy.phaseTime * 2) * 4;
+    } else if (enemy.type === 'bomber') {
+      // Bomber: slow steady approach
+      enemy.vel.x = Math.sin(gameTime * 0.8 + i) * 2;
+      enemy.vel.z = cfg.speed;
+    } else {
+      // Fighter: original patterns
+      switch (enemy.attackPattern) {
+        case 0:
+          enemy.vel.z = cfg.speed + 3;
+          break;
+        case 1:
+          enemy.vel.x = Math.sin(gameTime * 2) * 5;
+          enemy.vel.z = cfg.speed;
+          break;
+        case 2:
+          enemy.vel.x = Math.cos(gameTime * 1.5) * 8;
+          enemy.vel.y = Math.sin(gameTime * 1.5) * 8;
+          enemy.vel.z = cfg.speed - 2;
+          break;
+      }
     }
 
     enemy.pos.x += enemy.vel.x * dt;
@@ -530,36 +658,126 @@ function updateEnemies(dt) {
 
     // Fire at player
     enemy.fireCooldown -= dt;
-    if (enemy.fireCooldown <= 0 && enemy.pos.z < 20 && enemy.pos.z > -30) {
-      fireEnemyLaser(enemy);
-      enemy.fireCooldown = 1 + Math.random();
+    if (enemy.fireCooldown <= 0 && enemy.pos.z < 20 && enemy.pos.z > -50) {
+      if (enemy.type === 'boss') {
+        // Boss fires spread of 3
+        for (let s = -1; s <= 1; s++) {
+          fireEnemyLaser(enemy, s * 3, cfg.damage);
+        }
+      } else {
+        fireEnemyLaser(enemy, 0, cfg.damage);
+      }
+      enemy.fireCooldown = enemy.fireRate + Math.random() * 0.5;
     }
 
     // Remove if too far or dead
-    if (enemy.pos.z > 50 || enemy.health <= 0) {
+    if (enemy.pos.z > 60 || enemy.health <= 0) {
       destroyMesh(enemy.body);
       enemy.wings.forEach(w => destroyMesh(w));
-      enemies.splice(i, 1);
 
       if (enemy.health <= 0) {
-        createExplosion(enemy.pos, 3);
-        score += 100;
+        const size = enemy.type === 'boss' ? 6 : 3;
+        createExplosion(enemy.pos, size);
+        if (enemy.type === 'boss') {
+          createExplosion({ x: enemy.pos.x - 3, y: enemy.pos.y, z: enemy.pos.z }, 3);
+          createExplosion({ x: enemy.pos.x + 3, y: enemy.pos.y, z: enemy.pos.z }, 3);
+          bossActive = false;
+        }
+        score += (ENEMY_TYPES[enemy.type] || ENEMY_TYPES.fighter).score;
         kills++;
+        waveEnemiesRemaining--;
+        sfx('explosion');
+        // Drop pickup
+        const dropChance =
+          enemy.type === 'boss'
+            ? 1.0
+            : enemy.type === 'ace'
+              ? 0.4
+              : enemy.type === 'bomber'
+                ? 0.5
+                : 0.2;
+        if (Math.random() < dropChance) {
+          spawnPickup(enemy.pos);
+        }
+      } else {
+        waveEnemiesRemaining--;
       }
+      enemies.splice(i, 1);
     }
   }
 }
 
-function fireEnemyLaser(enemy) {
+function fireEnemyLaser(enemy, xOffset, damage) {
   const laser = {
-    mesh: createCube(0.15, 0xff0000, [enemy.pos.x, enemy.pos.y, enemy.pos.z]),
-    pos: vec3(enemy.pos.x, enemy.pos.y, enemy.pos.z),
-    vel: vec3(0, 0, 30),
+    mesh: createCube(0.15, enemy.type === 'boss' ? 0xffaa00 : 0xff0000, [
+      enemy.pos.x + (xOffset || 0),
+      enemy.pos.y,
+      enemy.pos.z,
+    ]),
+    pos: vec3(enemy.pos.x + (xOffset || 0), enemy.pos.y, enemy.pos.z),
+    vel: vec3(xOffset ? xOffset * 0.5 : 0, 0, 30),
     life: 2,
-    damage: 5,
+    damage: damage || 5,
   };
   setScale(laser.mesh, 0.15, 0.15, 1.5);
   enemyLasers.push(laser);
+}
+
+// Pickup system
+function spawnPickup(pos) {
+  const types = ['missile', 'health', 'shield', 'energy'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const colors = { missile: 0xffaa00, health: 0x00ff00, shield: 0x0088ff, energy: 0xff00ff };
+  const pickup = {
+    mesh: createCube(1, colors[type], [pos.x, pos.y, pos.z]),
+    pos: vec3(pos.x, pos.y, pos.z),
+    type: type,
+    life: 12,
+    rotY: 0,
+  };
+  pickups.push(pickup);
+}
+
+function updatePickups(dt) {
+  for (let i = pickups.length - 1; i >= 0; i--) {
+    const p = pickups[i];
+    p.life -= dt;
+    p.rotY += dt * 3;
+    // Move relative to player
+    p.pos.x -= player.vel.x * dt;
+    p.pos.y -= player.vel.y * dt;
+    p.pos.z -= player.vel.z * dt;
+    setPosition(p.mesh, p.pos.x, p.pos.y, p.pos.z);
+    setRotation(p.mesh, 0, p.rotY, 0);
+
+    // Collect
+    const dist = Math.sqrt(p.pos.x * p.pos.x + p.pos.y * p.pos.y + p.pos.z * p.pos.z);
+    if (dist < 5) {
+      switch (p.type) {
+        case 'missile':
+          player.missileCount = Math.min(20, player.missileCount + 3);
+          break;
+        case 'health':
+          player.health = Math.min(100, player.health + 25);
+          break;
+        case 'shield':
+          player.shield = Math.min(100, player.shield + 30);
+          break;
+        case 'energy':
+          player.energy = Math.min(100, player.energy + 40);
+          break;
+      }
+      sfx(p.type === 'missile' ? 'coin' : 'powerup');
+      destroyMesh(p.mesh);
+      pickups.splice(i, 1);
+      continue;
+    }
+
+    if (p.life <= 0 || p.pos.z > 50) {
+      destroyMesh(p.mesh);
+      pickups.splice(i, 1);
+    }
+  }
 }
 
 function updateLasers(dt) {
@@ -709,12 +927,8 @@ function updateParticles(dt) {
 
 function updateCamera(dt) {
   // First person camera - apply rotation but stay at origin
-  const shake = cameraShake.intensity;
-  const shakeX = (Math.random() - 0.5) * shake;
-  const shakeY = (Math.random() - 0.5) * shake;
-
-  // Reduce shake over time
-  cameraShake.intensity *= 0.9;
+  updateShake(shake, dt);
+  const [shakeX, shakeY] = getShakeOffset(shake);
 
   // Set camera position with shake
   setCameraPosition(shakeX, shakeY, 0);
@@ -744,9 +958,10 @@ function checkCollisions(dt) {
         asteroid.health -= laser.damage;
         destroyMesh(laser.mesh);
         playerLasers.splice(i, 1);
+        sfx('hit');
 
         createParticle(laser.pos, 0xffaa00, 0.3);
-        cameraShake.intensity = 0.2;
+        triggerShake(shake, 0.2);
         break;
       }
     }
@@ -764,9 +979,10 @@ function checkCollisions(dt) {
         enemy.health -= laser.damage;
         destroyMesh(laser.mesh);
         playerLasers.splice(i, 1);
+        sfx('hit');
 
         createParticle(laser.pos, 0xff0000, 0.3);
-        cameraShake.intensity = 0.3;
+        triggerShake(shake, 0.3);
         break;
       }
     }
@@ -786,7 +1002,7 @@ function checkCollisions(dt) {
         destroyMesh(missile.mesh);
         missiles.splice(i, 1);
 
-        cameraShake.intensity = 0.8;
+        triggerShake(shake, 0.8);
         break;
       }
     }
@@ -805,10 +1021,11 @@ function checkCollisions(dt) {
       } else {
         player.health -= laser.damage;
       }
+      sfx('hit');
 
       destroyMesh(laser.mesh);
       enemyLasers.splice(i, 1);
-      cameraShake.intensity = 0.5;
+      triggerShake(shake, 0.5);
     }
   }
 
@@ -827,17 +1044,19 @@ function checkCollisions(dt) {
       } else {
         player.health -= 20;
       }
+      sfx('hit');
 
       createExplosion(asteroid.pos, asteroid.size);
       destroyMesh(asteroid.mesh);
       asteroids.splice(i, 1);
-      cameraShake.intensity = 1.0;
+      triggerShake(shake, 1.0);
     }
   }
 
   // Check game over
   if (player.health <= 0) {
     gameState = 'gameover';
+    sfx('death');
   }
 }
 
@@ -886,9 +1105,16 @@ export function draw() {
     return;
   }
 
-  if (gameState === 'playing') {
+  if (gameState === 'playing' || gameState === 'waveclear') {
     drawHUD();
     drawCrosshair();
+  }
+
+  if (gameState === 'waveclear') {
+    const alpha = Math.floor(Math.min(1, waveClearTimer) * 255);
+    printCentered(`WAVE ${wave} CLEAR!`, 320, 140, rgba8(0, 255, 100, alpha), 2);
+    printCentered(`+${wave * 500} BONUS`, 320, 170, rgba8(255, 255, 0, alpha));
+    printCentered('+3 MISSILES', 320, 195, rgba8(255, 180, 0, alpha));
   }
 
   if (gameState === 'gameover') {
@@ -931,7 +1157,7 @@ function drawHUD() {
 
   // Stats
   print(`SCORE: ${score}`, 20, 25, rgba8(255, 255, 0, 255));
-  print(`KILLS: ${kills}`, 20, 45, rgba8(255, 100, 100, 255));
+  print(`WAVE: ${wave}  KILLS: ${kills}`, 20, 45, rgba8(255, 100, 100, 255));
 
   // Health bar
   print('HULL:', 20, 65, rgba8(255, 255, 255, 255));
@@ -955,11 +1181,14 @@ function drawHUD() {
   rect(330, 10, 180, 50, rgba8(0, 0, 0, 180), true);
   print('WEAPONS', 370, 20, rgba8(255, 255, 255, 255));
 
-  const laserColor = player.laserCooldown > 0 ? rgba8(100, 100, 100, 255) : rgba8(0, 255, 0, 255);
+  const laserColor = !cooldownReady(cooldowns.laser)
+    ? rgba8(100, 100, 100, 255)
+    : rgba8(0, 255, 0, 255);
   print(`LASER: READY`, 340, 35, laserColor);
 
-  const missileColor =
-    player.missileCooldown > 0 ? rgba8(100, 100, 100, 255) : rgba8(255, 150, 0, 255);
+  const missileColor = !cooldownReady(cooldowns.missile)
+    ? rgba8(100, 100, 100, 255)
+    : rgba8(255, 150, 0, 255);
   print(`MISSILE: ${player.missileCount}`, 340, 50, missileColor);
 
   // Speed indicator
@@ -975,7 +1204,37 @@ function drawHUD() {
 
     rect(220, 320, 200, 30, rgba8(0, 0, 0, 180), true);
     rect(220, 320, 200, 30, rgba8(255, 0, 0, 100), false);
-    print(`TARGET: ${Math.floor(targetDist)}m`, 250, 330, rgba8(255, 0, 0, 255));
+    const typeLabel = (target.type || 'fighter').toUpperCase();
+    print(`${typeLabel}: ${Math.floor(targetDist)}m`, 240, 330, rgba8(255, 0, 0, 255));
+  }
+
+  // Boss health bar
+  if (bossActive) {
+    const boss = enemies.find(e => e.type === 'boss');
+    if (boss) {
+      const bw = 300;
+      const bx = (640 - bw) / 2;
+      print('BOSS', bx, 118, rgba8(255, 50, 50, 255));
+      rect(bx + 40, 116, bw - 40, 12, rgba8(80, 0, 0, 255), true);
+      const hp = Math.max(0, boss.health / boss.maxHealth);
+      rect(bx + 40, 116, Math.floor(hp * (bw - 40)), 12, rgba8(255, 0, 0, 255), true);
+      rect(bx + 40, 116, bw - 40, 12, rgba8(200, 100, 100), false);
+    }
+  }
+
+  // Wave warning at start of new wave
+  if (
+    wave > 0 &&
+    gameState === 'playing' &&
+    waveEnemiesRemaining === enemies.length &&
+    enemies.length > 0
+  ) {
+    const wt = gameTime % 100;
+    if (wt < 2) {
+      const alpha = Math.floor(Math.min(1, 2 - wt) * 255);
+      const warnText = bossActive ? 'WARNING: BOSS INCOMING!' : `WAVE ${wave}`;
+      printCentered(warnText, 320, 180, rgba8(255, 100, 0, alpha), 2);
+    }
   }
 }
 
@@ -1015,6 +1274,7 @@ function drawGameOver() {
   print('MISSION FAILED', 220, 120, rgba8(255, 50, 50, 255));
   print(`FINAL SCORE: ${score}`, 230, 160, rgba8(255, 255, 255, 255));
   print(`ENEMIES DESTROYED: ${kills}`, 210, 190, rgba8(255, 255, 255, 255));
+  print(`WAVES SURVIVED: ${wave}`, 220, 210, rgba8(200, 200, 255, 255));
 
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
   print('PRESS ENTER TO RESTART', 210, 240, rgba8(255, 255, 100, Math.floor(pulse * 255)));

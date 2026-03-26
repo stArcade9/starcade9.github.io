@@ -27,7 +27,7 @@ export async function init() {
   // Space atmosphere
   enablePixelation(1.1);
   enableDithering(true);
-  enableBloom(1.5, 0.4, 0.1); // Capital ship engine glow
+  enableBloom(1.0, 0.4, 0.5); // Capital ship engine glow
   enableFXAA(); // Smooth ship silhouettes
   enableVignette(1.3, 0.9); // Cinematic space feel
   setFog(0x0a0a30, 50, 150); // Lighter space fog with blue tint

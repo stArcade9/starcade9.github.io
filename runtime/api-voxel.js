@@ -37,27 +37,28 @@ export function voxelApi(gpu) {
     BEDROCK: 14,
   };
 
-  // Block colors (for texture-less rendering)
+  // Block colors (for texture-less rendering) — tuned for visual biome distinction
   const BLOCK_COLORS = {
-    [BLOCK_TYPES.GRASS]: 0x44aa22,
-    [BLOCK_TYPES.DIRT]: 0x885533,
-    [BLOCK_TYPES.STONE]: 0x999999,
+    [BLOCK_TYPES.GRASS]: 0x55cc33,
+    [BLOCK_TYPES.DIRT]: 0x996644,
+    [BLOCK_TYPES.STONE]: 0xaaaaaa,
     [BLOCK_TYPES.SAND]: 0xffdd88,
-    [BLOCK_TYPES.WATER]: 0x33aaff,
+    [BLOCK_TYPES.WATER]: 0x2288dd,
     [BLOCK_TYPES.WOOD]: 0x774422,
-    [BLOCK_TYPES.LEAVES]: 0x228822,
-    [BLOCK_TYPES.COBBLESTONE]: 0x888888,
+    [BLOCK_TYPES.LEAVES]: 0x116622,
+    [BLOCK_TYPES.COBBLESTONE]: 0x667788,
     [BLOCK_TYPES.PLANKS]: 0xddaa55,
     [BLOCK_TYPES.GLASS]: 0xccffff,
     [BLOCK_TYPES.BRICK]: 0xcc4433,
-    [BLOCK_TYPES.SNOW]: 0xffffff,
-    [BLOCK_TYPES.ICE]: 0xbbffff,
+    [BLOCK_TYPES.SNOW]: 0xeeeeff,
+    [BLOCK_TYPES.ICE]: 0x99ddff,
     [BLOCK_TYPES.BEDROCK]: 0x333333,
   };
 
   // World data
   const chunks = new Map(); // key: "x,z" -> Chunk
   const chunkMeshes = new Map(); // key: "x,z" -> THREE.Mesh
+  let worldSeed = Math.floor(Math.random() * 50000); // random start for biome variety
 
   // Noise function for terrain generation (simple Perlin-like)
   function noise2D(x, z) {
@@ -160,39 +161,101 @@ export function voxelApi(gpu) {
     const baseX = chunk.chunkX * CHUNK_SIZE;
     const baseZ = chunk.chunkZ * CHUNK_SIZE;
 
+    // Pending trees to place after terrain fill (avoid overwriting terrain)
+    const pendingTrees = [];
+
     for (let x = 0; x < CHUNK_SIZE; x++) {
       for (let z = 0; z < CHUNK_SIZE; z++) {
         const worldX = baseX + x;
         const worldZ = baseZ + z;
 
-        // Generate height using Perlin noise
-        const height = Math.floor(perlinNoise(worldX, worldZ, 4, 0.5) * 20 + 32);
+        // Biome selection via temperature + moisture noise
+        const temperature = perlinNoise(worldX * 0.5 + worldSeed, worldZ * 0.5 + worldSeed, 2, 0.5);
+        const moisture = perlinNoise(
+          worldX * 0.3 + 1000 + worldSeed,
+          worldZ * 0.3 + 1000 + worldSeed,
+          2,
+          0.5
+        );
 
-        // Biome selection
-        const temperature = perlinNoise(worldX * 0.5, worldZ * 0.5, 2, 0.5);
-        const moisture = perlinNoise(worldX * 0.3 + 1000, worldZ * 0.3 + 1000, 2, 0.5);
+        // Per-biome height profile — each biome has unique surface, terrain shape, and density
+        let heightScale = 20;
+        let heightBase = 32;
+        let surfaceBlock = BLOCK_TYPES.GRASS;
+        let subBlock = BLOCK_TYPES.DIRT;
+        let treeChance = 0;
+        let waterLevel = 30;
+
+        if (temperature < 0.2) {
+          // ── Frozen Tundra ── flat icy plains
+          surfaceBlock = BLOCK_TYPES.SNOW;
+          subBlock = BLOCK_TYPES.ICE;
+          heightScale = 6;
+          heightBase = 33;
+          treeChance = 0;
+        } else if (temperature < 0.35 && moisture > 0.5) {
+          // ── Taiga ── gray rocky forest
+          surfaceBlock = BLOCK_TYPES.COBBLESTONE;
+          subBlock = BLOCK_TYPES.STONE;
+          heightScale = 18;
+          heightBase = 34;
+          treeChance = 0.06;
+        } else if (temperature > 0.7 && moisture < 0.25) {
+          // ── Desert ── flat sand dunes
+          surfaceBlock = BLOCK_TYPES.SAND;
+          subBlock = BLOCK_TYPES.SAND;
+          heightScale = 4;
+          heightBase = 31;
+          treeChance = 0;
+        } else if (temperature > 0.6 && moisture > 0.6) {
+          // ── Jungle ── dense dark-green valleys
+          surfaceBlock = BLOCK_TYPES.LEAVES;
+          subBlock = BLOCK_TYPES.DIRT;
+          heightScale = 22;
+          heightBase = 28;
+          treeChance = 0.15;
+        } else if (moisture < 0.3) {
+          // ── Savanna ── dry brown earth
+          surfaceBlock = BLOCK_TYPES.DIRT;
+          subBlock = BLOCK_TYPES.SAND;
+          heightScale = 5;
+          heightBase = 33;
+          treeChance = 0.005;
+        } else if (temperature > 0.4 && moisture > 0.4) {
+          // ── Forest ── classic green hills
+          surfaceBlock = BLOCK_TYPES.GRASS;
+          subBlock = BLOCK_TYPES.DIRT;
+          heightScale = 14;
+          heightBase = 32;
+          treeChance = 0.08;
+        } else if (temperature < 0.35) {
+          // ── Snowy Hills ── tall snowy mountains
+          surfaceBlock = BLOCK_TYPES.SNOW;
+          subBlock = BLOCK_TYPES.STONE;
+          heightScale = 35;
+          heightBase = 30;
+          treeChance = 0.02;
+        } else {
+          // ── Plains ── gentle rolling grassland
+          surfaceBlock = BLOCK_TYPES.GRASS;
+          subBlock = BLOCK_TYPES.DIRT;
+          heightScale = 6;
+          heightBase = 32;
+          treeChance = 0.015;
+        }
+
+        const height = Math.floor(perlinNoise(worldX, worldZ, 4, 0.5) * heightScale + heightBase);
 
         for (let y = 0; y < CHUNK_HEIGHT; y++) {
           if (y === 0) {
-            // Bedrock layer
             chunk.setBlock(x, y, z, BLOCK_TYPES.BEDROCK);
           } else if (y < height - 3) {
-            // Stone layer
             chunk.setBlock(x, y, z, BLOCK_TYPES.STONE);
           } else if (y < height - 1) {
-            // Dirt layer
-            chunk.setBlock(x, y, z, BLOCK_TYPES.DIRT);
+            chunk.setBlock(x, y, z, subBlock);
           } else if (y === height - 1) {
-            // Top layer based on biome
-            if (temperature < 0.3) {
-              chunk.setBlock(x, y, z, BLOCK_TYPES.SNOW);
-            } else if (moisture < 0.3) {
-              chunk.setBlock(x, y, z, BLOCK_TYPES.SAND);
-            } else {
-              chunk.setBlock(x, y, z, BLOCK_TYPES.GRASS);
-            }
-          } else if (y < 30 && y >= height) {
-            // Water level
+            chunk.setBlock(x, y, z, surfaceBlock);
+          } else if (y < waterLevel && y >= height) {
             chunk.setBlock(x, y, z, BLOCK_TYPES.WATER);
           }
 
@@ -201,6 +264,38 @@ export function voxelApi(gpu) {
             const cave = perlinNoise(worldX * 0.5, y * 0.5, worldZ * 0.5, 3, 0.5);
             if (cave > 0.6) {
               chunk.setBlock(x, y, z, BLOCK_TYPES.AIR);
+            }
+          }
+        }
+
+        // Random tree placement (seeded by world position)
+        if (height > waterLevel && treeChance > 0) {
+          const treeSeed = Math.sin(worldX * 12.9898 + worldZ * 78.233) * 43758.5453;
+          const treeRoll = treeSeed - Math.floor(treeSeed);
+          if (treeRoll < treeChance && x > 2 && x < CHUNK_SIZE - 3 && z > 2 && z < CHUNK_SIZE - 3) {
+            pendingTrees.push({ x, y: height, z });
+          }
+        }
+      }
+    }
+
+    // Place trees after terrain is fully generated
+    for (const t of pendingTrees) {
+      const trunkHeight = 4 + Math.floor(Math.abs(Math.sin(t.x * 7 + t.z * 13)) * 3);
+      for (let i = 0; i < trunkHeight; i++) {
+        chunk.setBlock(t.x, t.y + i, t.z, BLOCK_TYPES.WOOD);
+      }
+      const leafY = t.y + trunkHeight;
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dz = -2; dz <= 2; dz++) {
+            if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) < 4) {
+              const lx = t.x + dx,
+                ly = leafY + dy,
+                lz = t.z + dz;
+              if (lx >= 0 && lx < CHUNK_SIZE && lz >= 0 && lz < CHUNK_SIZE && ly < CHUNK_HEIGHT) {
+                chunk.setBlock(lx, ly, lz, BLOCK_TYPES.LEAVES);
+              }
             }
           }
         }
@@ -494,6 +589,18 @@ export function voxelApi(gpu) {
     keysToRemove.forEach(key => chunkMeshes.delete(key));
   }
 
+  // Reset entire world (clear all chunks and meshes)
+  function resetWorld() {
+    for (const mesh of chunkMeshes.values()) {
+      gpu.scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+    chunkMeshes.clear();
+    chunks.clear();
+    worldSeed += 5000 + Math.floor(Math.random() * 10000);
+  }
+
   // Raycast to find block player is looking at
   function raycastBlock(origin, direction, maxDistance = 10) {
     const step = 0.1;
@@ -587,6 +694,9 @@ export function voxelApi(gpu) {
     // Structures
     placeTree,
 
+    // World reset
+    resetWorld,
+
     // Expose to global game context
     exposeTo: function (g) {
       g.BLOCK_TYPES = BLOCK_TYPES;
@@ -596,6 +706,7 @@ export function voxelApi(gpu) {
       g.raycastVoxelBlock = raycastBlock;
       g.checkVoxelCollision = checkCollision;
       g.placeVoxelTree = placeTree;
+      g.resetVoxelWorld = resetWorld;
     },
   };
 }

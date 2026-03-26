@@ -651,7 +651,7 @@ export function effectsApi(gpu) {
     const bloom = opts.bloom !== undefined ? opts.bloom : {};
     if (bloom !== false) {
       const b = typeof bloom === 'object' ? bloom : {};
-      enableBloom(b.strength ?? 1.5, b.radius ?? 0.4, b.threshold ?? 0.1);
+      enableBloom(b.strength ?? 1.0, b.radius ?? 0.4, b.threshold ?? 0.6);
     }
 
     // FXAA

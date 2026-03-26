@@ -40,7 +40,7 @@ function buildScene(idx) {
 function buildFire() {
   setAmbientLight(0x110400, 0.25);
   setFog(0x050100, 12, 50);
-  enableBloom(3.5, 0.85, 0.05);
+  enableBloom(2.5, 0.7, 0.2);
 
   const floor = createPlane(40, 40, 0x221100, [0, 0, 0], { material: 'standard', roughness: 1 });
   setRotation(floor, -Math.PI / 2, 0, 0);
@@ -147,7 +147,7 @@ function buildFire() {
 function buildBlizzard() {
   setAmbientLight(0x0a1525, 0.5);
   setFog(0x060c18, 14, 50);
-  enableBloom(1.8, 0.5, 0.1);
+  enableBloom(1.2, 0.5, 0.3);
 
   const floor = createPlane(60, 60, 0x8899bb, [0, 0, 0], {
     material: 'standard',
@@ -261,7 +261,7 @@ function buildBlizzard() {
 function buildForge() {
   setAmbientLight(0x050510, 0.2);
   setFog(0x020208, 12, 40);
-  enableBloom(4.0, 0.9, 0.05);
+  enableBloom(2.5, 0.7, 0.15);
 
   const floor = createPlane(30, 30, 0x1a1a2a, [0, 0, 0], {
     material: 'standard',

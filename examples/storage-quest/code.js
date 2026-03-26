@@ -88,6 +88,7 @@ export function update(dt) {
       state.score += 10 * state.level;
       state.totalGems++;
       if (state.score > state.highScore) state.highScore = state.score;
+      sfx('coin');
       // Spawn particle burst
       for (let p = 0; p < 6; p++) {
         particles.push({
@@ -112,6 +113,7 @@ export function update(dt) {
     state.level++;
     saveData(SAVE_KEY, state);
     saveFlash = 1.5;
+    sfx('powerup');
     spawnGems(5 + state.level * 2);
   }
 
@@ -139,6 +141,7 @@ export function update(dt) {
       saveData(SAVE_KEY, state);
       saveFlash = 1.5;
       upgradeFlash = 2;
+      sfx('powerup');
     }
   }
 
@@ -146,6 +149,7 @@ export function update(dt) {
   if (keyp('Enter')) {
     saveData(SAVE_KEY, state);
     saveFlash = 1.5;
+    sfx('confirm');
   }
 
   // Reset save (press R + Shift together)
@@ -153,6 +157,7 @@ export function update(dt) {
     deleteData(SAVE_KEY);
     state = defaultState();
     saveFlash = 1.5;
+    sfx('error');
   }
 
   upgradeFlash = Math.max(0, upgradeFlash - dt);

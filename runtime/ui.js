@@ -83,8 +83,8 @@ export function uiApi(gpu, g) {
         removeButton: ctx.removeButton,
         clearButtons: ctx.clearButtons,
 
-        // Progress bars
-        drawProgressBar: ctx.drawProgressBar,
+        // Progress bars (as uiProgressBar to avoid overwriting the api-2d drawProgressBar)
+        uiProgressBar: ctx.drawProgressBar,
 
         // Advanced shapes
         drawRoundedRect: ctx.drawRoundedRect,

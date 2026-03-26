@@ -20,10 +20,13 @@ const C = {
   spark: 0xffdd00,
 };
 
-let gameState = 'start'; // 'start', 'playing', 'crashed', 'finished'
+let gameState = 'start'; // 'start', 'countdown', 'playing', 'crashed', 'finished'
 let t = 0; // global time
 let inputLock = 0;
+let playerHit;
 let speedLineInstanceId = null; // GPU instanced speed lines
+let countdownTimer = 0;
+let shake;
 
 // ── Game State ─────────────────────────────────────────────
 let g = {
@@ -82,10 +85,12 @@ export async function init() {
   }
 
   // Neon over-glow
-  enableBloom(1.5, 0.4, 0.2);
+  enableBloom(1.0, 0.4, 0.4);
   if (typeof enableFXAA === 'function') enableFXAA();
 
   buildPlayerShip();
+  playerHit = createHitState({ invulnDuration: 0.5, blinkRate: 40 });
+  shake = createShake({ decay: 4 });
   initTrack();
 
   // Pre-fill track props & speed lines
@@ -265,7 +270,7 @@ function createSparks(cx, cy, cz, count) {
 export function update(dt) {
   t += dt;
 
-  if (gameState !== 'playing') {
+  if (gameState !== 'playing' && gameState !== 'countdown') {
     if (inputLock > 0) inputLock -= dt;
     updateAllButtons();
     updateMenuAnim(dt);
@@ -273,14 +278,29 @@ export function update(dt) {
     return;
   }
 
+  if (gameState === 'countdown') {
+    countdownTimer -= dt;
+    updateMenuAnim(dt);
+    if (countdownTimer <= 0) {
+      gameState = 'playing';
+      sfx('confirm');
+    } else if (countdownTimer < 1 || countdownTimer < 2 || countdownTimer < 3) {
+      // sfx on each count handled in draw
+    }
+    return;
+  }
+
   // Ship logic
   const p = g.p;
-  if (p.invuln > 0) p.invuln -= dt;
+  updateHitState(playerHit, dt);
+  updateShake(shake, dt);
   if (g.health <= 0) {
     createSparks(p.x, p.y, p.z, 40);
-    p.meshes.body && setPosition(p.meshes.body, 1000, 0, 0);
+    // Hide ALL ship parts
+    Object.values(p.meshes).forEach(m => m && setPosition(m, 1000, 0, 0));
     gameState = 'crashed';
     inputLock = 1.0;
+    sfx('death');
     initGameOver();
     return;
   }
@@ -312,6 +332,7 @@ export function update(dt) {
   // Manual boost (Space or A button)
   if ((key('Space') || btn(0)) && g.energy > 30 && !p.isBoosting) {
     p.isBoosting = true;
+    sfx('powerup');
   }
   if (p.isBoosting) {
     g.energy -= 40 * dt;
@@ -350,13 +371,14 @@ export function update(dt) {
   updateParticles(dt, relSpeed);
 
   // Dynamic Camera (Lags slightly behind ship x-movement)
+  const [shakeX, shakeY] = getShakeOffset(shake);
   const camX = p.x * 0.4 + p.vx * 0.05;
   const fovWarp = p.isBoosting ? 100 : 85;
   // Tween FOV for sense of speed
   setCameraFOV(85 + (p.isBoosting ? 15 : 0) * Math.min(1, g.speed / g.boostSpeed));
 
   const camY = 8 - p.pitch * 5;
-  setCameraPosition(camX, camY, 12);
+  setCameraPosition(camX + shakeX, camY + shakeY, 12);
   setCameraTarget(camX * 1.5, 0, -40);
 
   // Track win
@@ -364,6 +386,7 @@ export function update(dt) {
     // reached end in 1st
     gameState = 'finished';
     inputLock = 1.0;
+    sfx('powerup');
     initWinScreen();
   }
 }
@@ -371,8 +394,10 @@ export function update(dt) {
 function hitWall(xPos) {
   g.health -= 5;
   g.speed *= 0.6; // heavy slow down
-  g.p.invuln = 0.2;
+  playerHit.invulnTimer = 0.2;
   createSparks(g.p.x + (xPos < 0 ? -1.5 : 1.5), g.p.y, g.p.z, 8);
+  triggerShake(shake, 0.5);
+  sfx('hit');
 }
 
 function updatePlayerTransforms() {
@@ -469,13 +494,16 @@ function updateRivals(dt) {
       r.passed = true;
       g.passCount++;
       g.rank = Math.max(1, 10 - g.passCount);
+      sfx('coin');
     }
 
     // Collision with player
-    if (p.invuln <= 0 && Math.abs(r.z - p.z) < 3.5 && Math.abs(r.x - p.x) < 2.5) {
+    if (!isInvulnerable(playerHit) && Math.abs(r.z - p.z) < 3.5 && Math.abs(r.x - p.x) < 2.5) {
       g.health -= 15;
       g.speed *= 0.7; // lose heavy momentum
-      p.invuln = 0.5;
+      triggerHit(playerHit);
+      triggerShake(shake, 0.8);
+      sfx('explosion');
       r.vx = r.x > p.x ? 15 : -15; // knock away
       createSparks((r.x + p.x) / 2, 1.5, p.z, 15);
     }
@@ -506,6 +534,24 @@ function updateProps(dt) {
       g.energy = Math.min(100, g.energy + 50); // Restore energy
       g.speed = g.boostSpeed + 50; // Extra burst
       createSparks(g.p.x, -0.5, g.p.z, 20);
+      sfx('powerup');
+    }
+
+    // Mine collision detection
+    if (
+      p.active &&
+      p.type === 'mine' &&
+      !isInvulnerable(playerHit) &&
+      Math.abs(p.z - g.p.z) < 3.0 &&
+      Math.abs(p.x - g.p.x) < 3.0
+    ) {
+      p.active = false;
+      g.health -= 25;
+      g.speed *= 0.4;
+      triggerHit(playerHit);
+      triggerShake(shake, 1.2);
+      createSparks(p.x, 0, p.z, 30);
+      sfx('explosion');
     }
 
     if (p.z > 30) {
@@ -577,6 +623,10 @@ export function draw() {
     drawStartScreen();
     return;
   }
+  if (gameState === 'countdown') {
+    drawCountdown();
+    return;
+  }
   if (gameState === 'crashed') {
     drawCrashedScreen();
     return;
@@ -646,7 +696,7 @@ function drawHUD() {
   }
 
   // Invuln and Damage Effects
-  if (g.p.invuln > 0) {
+  if (isInvulnerable(playerHit)) {
     rect(0, 0, 640, 360, rgba8(255, 0, 0, Math.floor(Math.sin(t * 40) * 50 + 50)), true);
   }
   if (g.speed > 350) {
@@ -655,6 +705,16 @@ function drawHUD() {
     rect(0, 0, 640, 360, rgba8(0, 255, 255, al), true);
     drawScanlines(10, 1);
   }
+}
+
+function drawCountdown() {
+  drawHUD();
+  const c = Math.ceil(countdownTimer);
+  const label = c > 0 ? `${c}` : 'GO!';
+  const col = c > 0 ? rgba8(255, 255, 0, 255) : rgba8(0, 255, 100, 255);
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(label, 320, 140, col, rgba8(0, 0, 0, 200), 6);
 }
 
 function drawStartScreen() {
@@ -742,18 +802,22 @@ function drawFinishScreen() {
 }
 
 function startGame() {
-  gameState = 'playing';
+  gameState = 'countdown';
+  countdownTimer = 3.0;
   inputLock = 0.3;
   g.health = 100;
   g.energy = 50;
   g.dist = 0;
-  g.speed = 100;
+  g.speed = 0;
   g.rank = 10;
   g.passCount = 0;
 
   g.p.x = 0;
   g.p.vx = 0;
+  // Restore ship meshes after crash
+  Object.values(g.p.meshes).forEach(m => m && setPosition(m, 0, 1.5, 0));
   clearButtons();
+  sfx('select');
 }
 
 function initStartScreen() {

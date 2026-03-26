@@ -6,7 +6,7 @@
 //   printCentered, printRight, drawScanlines, drawNoise, drawProgressBar,
 //   drawGlowText, drawPixelBorder, drawCheckerboard, colorLerp, colorMix, hexColor,
 //   drawStarburst, drawDiamond, drawTriangle, drawWave, drawSpiral, scrollingText,
-//   drawPanel, drawHealthBar, drawMinimap, n64Palette
+//   drawPanel, drawHealthBar, createMinimap, drawMinimap, n64Palette
 
 import { rgba8 } from './api.js';
 
@@ -731,29 +731,272 @@ export function api2d(gpu) {
     }
   }
 
+  // ── Minimap System ─────────────────────────────────────────────────────────
+
   /**
-   * drawMinimap(x, y, size, entities, bgColor)
-   * entities: [{ x, y, color, worldW, worldH }]  — dot map for players/enemies/items.
-   * worldW/worldH are the world-space bounds to normalise against.
+   * createMinimap(opts) — create a reusable minimap configuration.
+   *
+   * opts:
+   *   x, y          — screen position (default: bottom-right corner)
+   *   width, height  — pixel dimensions (default: 80×80)
+   *   bgColor       — background fill (default: semi-transparent black)
+   *   borderLight, borderDark — border colours (null to disable border)
+   *   shape         — 'rect' | 'circle' (default: 'rect')
+   *   follow        — entity to center on (object with .x, .y in world coords)
+   *   worldW, worldH — world-space bounds for coordinate mapping
+   *   tileW, tileH  — if set, map is tile-based (grid cells)
+   *   tileScale     — pixels per tile (default: 2)
+   *   tiles         — fn(tx,ty)→color|null or 2D array; null/0 = skip
+   *   fogOfWar      — if set, only reveal tiles within this radius of follow entity
+   *   entities      — array of { x, y, color, size?, label? }
+   *   player        — shorthand for the player entity { x, y, color?, blink? }
+   *   sweep         — { speed, color } for animated radar sweep line
+   *   gridLines     — number of grid divisions (0 = none)
+   *   gridColor     — colour for grid lines
+   *
+   * Returns a minimap object you pass to drawMinimap().
+   * You can mutate its properties between frames (e.g. update entities).
    */
-  function drawMinimap(x, y, size, entities, bgColor) {
-    const bg = bgColor ?? rgba8(0, 0, 0, 180);
-    const bgc = _unpack(bg);
-    // Fill minimap bg
-    for (let py = y; py < y + size; py++)
-      for (let px = x; px < x + size; px++) _blend(px, py, bgc.r, bgc.g, bgc.b, bgc.a);
-    // Border
-    drawPixelBorder(x, y, size, size, rgba8(150, 150, 150), rgba8(50, 50, 50), 1);
-    // Dots
-    for (const e of entities) {
-      const ww = e.worldW ?? 100,
-        wh = e.worldH ?? 100;
-      const dx = (x + (e.x / ww) * size) | 0;
-      const dy = (y + (e.y / wh) * size) | 0;
+  function createMinimap(opts = {}) {
+    return {
+      x: opts.x ?? W - 90,
+      y: opts.y ?? 10,
+      width: opts.width ?? 80,
+      height: opts.height ?? 80,
+      bgColor: opts.bgColor ?? rgba8(0, 0, 0, 180),
+      borderLight: opts.borderLight !== undefined ? opts.borderLight : rgba8(150, 150, 150),
+      borderDark: opts.borderDark !== undefined ? opts.borderDark : rgba8(50, 50, 50),
+      shape: opts.shape ?? 'rect',
+      follow: opts.follow ?? null,
+      worldW: opts.worldW ?? 100,
+      worldH: opts.worldH ?? 100,
+      tileW: opts.tileW ?? 0,
+      tileH: opts.tileH ?? 0,
+      tileScale: opts.tileScale ?? 2,
+      tiles: opts.tiles ?? null,
+      fogOfWar: opts.fogOfWar ?? 0,
+      entities: opts.entities ?? [],
+      player: opts.player ?? null,
+      sweep: opts.sweep ?? null,
+      gridLines: opts.gridLines ?? 0,
+      gridColor: opts.gridColor ?? rgba8(40, 60, 40, 120),
+    };
+  }
+
+  /** Internal: check if pixel is inside a circle */
+  function _inCircle(px, py, cx, cy, r) {
+    const dx = px - cx,
+      dy = py - cy;
+    return dx * dx + dy * dy <= r * r;
+  }
+
+  /**
+   * drawMinimap(minimap, time?)
+   *
+   * Accepts EITHER a createMinimap() object, OR the legacy signature:
+   *   drawMinimap(x, y, size, entities, bgColor)
+   *
+   * time is optional — only needed for sweep animation and player blinking.
+   */
+  function drawMinimap(minimapOrX, timeOrY, sizeArg, entitiesArg, bgColorArg) {
+    // Legacy compat: drawMinimap(x, y, size, entities, bgColor)
+    let mm;
+    let time = 0;
+    if (typeof minimapOrX === 'number') {
+      mm = createMinimap({
+        x: minimapOrX,
+        y: timeOrY,
+        width: sizeArg,
+        height: sizeArg,
+        worldW: 100,
+        worldH: 100,
+        bgColor: bgColorArg,
+      });
+      // Convert legacy entities (they carry worldW/worldH per-entity)
+      if (Array.isArray(entitiesArg)) {
+        mm.entities = entitiesArg.map(e => ({
+          x: e.x,
+          y: e.y,
+          color: e.color ?? rgba8(255, 255, 255),
+          size: 2,
+        }));
+        // Use first entity's world bounds if provided
+        if (entitiesArg.length > 0) {
+          mm.worldW = entitiesArg[0].worldW ?? 100;
+          mm.worldH = entitiesArg[0].worldH ?? 100;
+        }
+      }
+    } else {
+      mm = minimapOrX;
+      time = timeOrY ?? 0;
+    }
+
+    const { x, y, width: mw, height: mh, shape } = mm;
+    const cx = x + mw / 2,
+      cy = y + mh / 2;
+    const isCircle = shape === 'circle';
+    const radius = Math.min(mw, mh) / 2;
+
+    // 1. Background fill
+    const bgc = _unpack(mm.bgColor);
+    for (let py = y; py < y + mh; py++) {
+      for (let px = x; px < x + mw; px++) {
+        if (isCircle && !_inCircle(px, py, cx, cy, radius)) continue;
+        _blend(px, py, bgc.r, bgc.g, bgc.b, bgc.a);
+      }
+    }
+
+    // 2. Tile map rendering
+    if (mm.tiles && mm.tileW > 0 && mm.tileH > 0) {
+      const ts = mm.tileScale;
+      const isFunc = typeof mm.tiles === 'function';
+      const followTX = mm.follow ? Math.floor(mm.follow.x) : 0;
+      const followTY = mm.follow ? Math.floor(mm.follow.y) : 0;
+
+      for (let ty = 0; ty < mm.tileH; ty++) {
+        for (let tx = 0; tx < mm.tileW; tx++) {
+          // Fog of war check
+          if (mm.fogOfWar > 0 && mm.follow) {
+            const dist = Math.abs(tx - followTX) + Math.abs(ty - followTY);
+            if (dist > mm.fogOfWar) continue;
+          }
+
+          const tileColor = isFunc ? mm.tiles(tx, ty) : mm.tiles[ty] ? mm.tiles[ty][tx] : null;
+          if (!tileColor) continue;
+
+          const tc = _unpack(tileColor);
+          const px0 = x + tx * ts;
+          const py0 = y + ty * ts;
+          for (let dy = 0; dy < ts; dy++) {
+            for (let dx = 0; dx < ts; dx++) {
+              const px = px0 + dx,
+                py = py0 + dy;
+              if (isCircle && !_inCircle(px, py, cx, cy, radius)) continue;
+              _blend(px, py, tc.r, tc.g, tc.b, tc.a);
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Grid lines
+    if (mm.gridLines > 0) {
+      const gc = _unpack(mm.gridColor);
+      for (let i = 1; i < mm.gridLines; i++) {
+        // Vertical line
+        const gx = (x + (mw / mm.gridLines) * i) | 0;
+        for (let py2 = y; py2 < y + mh; py2++) {
+          if (isCircle && !_inCircle(gx, py2, cx, cy, radius)) continue;
+          _blend(gx, py2, gc.r, gc.g, gc.b, gc.a);
+        }
+        // Horizontal line
+        const gy = (y + (mh / mm.gridLines) * i) | 0;
+        for (let px2 = x; px2 < x + mw; px2++) {
+          if (isCircle && !_inCircle(px2, gy, cx, cy, radius)) continue;
+          _blend(px2, gy, gc.r, gc.g, gc.b, gc.a);
+        }
+      }
+    }
+
+    // 4. Radar sweep line
+    if (mm.sweep) {
+      const angle = time * (mm.sweep.speed ?? 2);
+      const sc = _unpack(mm.sweep.color ?? rgba8(0, 255, 0, 100));
+      const sx = Math.cos(angle) * radius;
+      const sy = Math.sin(angle) * radius;
+      // Bresenham-ish sweep from center
+      const steps = Math.max(Math.abs(sx), Math.abs(sy)) | 0;
+      if (steps > 0) {
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          const px = (cx + sx * t) | 0;
+          const py = (cy + sy * t) | 0;
+          if (px < x || px >= x + mw || py < y || py >= y + mh) continue;
+          if (isCircle && !_inCircle(px, py, cx, cy, radius)) continue;
+          _blend(px, py, sc.r, sc.g, sc.b, sc.a);
+        }
+      }
+    }
+
+    // Helper: convert world coords to screen pixel
+    function worldToScreen(wx, wy) {
+      if (mm.tiles && mm.tileW > 0) {
+        // Tile-based — wx/wy are tile coords
+        return [(x + wx * mm.tileScale) | 0, (y + wy * mm.tileScale) | 0];
+      }
+      // World-space normalised
+      let nx, ny;
+      if (mm.follow) {
+        // Center on follow entity
+        nx = 0.5 + (wx - mm.follow.x) / mm.worldW;
+        ny = 0.5 + (wy - mm.follow.y) / mm.worldH;
+      } else {
+        nx = wx / mm.worldW;
+        ny = wy / mm.worldH;
+      }
+      return [(x + nx * mw) | 0, (y + ny * mh) | 0];
+    }
+
+    // 5. Entity dots
+    for (const e of mm.entities) {
+      const [ex, ey] = worldToScreen(e.x, e.y);
+      const dotSize = e.size ?? 2;
+      if (ex < x - dotSize || ex >= x + mw + dotSize || ey < y - dotSize || ey >= y + mh + dotSize)
+        continue;
       const ec = _unpack(e.color ?? rgba8(255, 255, 255));
-      // 2x2 dot
-      for (let oy = 0; oy < 2; oy++)
-        for (let ox = 0; ox < 2; ox++) _blend(dx + ox, dy + oy, ec.r, ec.g, ec.b, ec.a);
+      const half = (dotSize / 2) | 0;
+      for (let dy = -half; dy < dotSize - half; dy++) {
+        for (let dx = -half; dx < dotSize - half; dx++) {
+          const px = ex + dx,
+            py = ey + dy;
+          if (px < x || px >= x + mw || py < y || py >= y + mh) continue;
+          if (isCircle && !_inCircle(px, py, cx, cy, radius)) continue;
+          _blend(px, py, ec.r, ec.g, ec.b, ec.a);
+        }
+      }
+    }
+
+    // 6. Player marker (with optional blink)
+    if (mm.player) {
+      const blink = mm.player.blink !== false;
+      const visible = !blink || Math.sin(time * 8) > 0;
+      if (visible) {
+        const [px, py] = worldToScreen(mm.player.x, mm.player.y);
+        const pc = _unpack(mm.player.color ?? rgba8(50, 150, 255));
+        const ps = mm.player.size ?? 3;
+        const half = (ps / 2) | 0;
+        for (let dy = -half; dy < ps - half; dy++) {
+          for (let dx = -half; dx < ps - half; dx++) {
+            const ppx = px + dx,
+              ppy = py + dy;
+            if (ppx < x || ppx >= x + mw || ppy < y || ppy >= y + mh) continue;
+            if (isCircle && !_inCircle(ppx, ppy, cx, cy, radius)) continue;
+            _blend(ppx, ppy, pc.r, pc.g, pc.b, pc.a);
+          }
+        }
+      }
+    }
+
+    // 7. Border
+    if (mm.borderLight !== null) {
+      if (isCircle) {
+        // Circle border — draw a ring
+        const bc = _unpack(mm.borderLight);
+        const r2inner = (radius - 1) * (radius - 1);
+        const r2outer = radius * radius;
+        for (let py = y; py < y + mh; py++) {
+          for (let px = x; px < x + mw; px++) {
+            const dx = px - cx,
+              dy = py - cy;
+            const d2 = dx * dx + dy * dy;
+            if (d2 >= r2inner && d2 <= r2outer) {
+              _blend(px, py, bc.r, bc.g, bc.b, bc.a);
+            }
+          }
+        }
+      } else {
+        drawPixelBorder(x, y, mw, mh, mm.borderLight, mm.borderDark, 1);
+      }
     }
   }
 
@@ -766,6 +1009,40 @@ export function api2d(gpu) {
     const tw = measureText(text, scale).width;
     const x = (width - ((time * speed) % (width + tw))) | 0;
     _print(text, x, y, color, scale);
+  }
+
+  /**
+   * drawFloatingTexts(system, offsetX?, offsetY?)
+   * Render all active texts from a createFloatingTextSystem().
+   * offsetX/offsetY allow camera offset (for screen shake, etc.)
+   */
+  function drawFloatingTexts(system, offsetX = 0, offsetY = 0) {
+    const texts = system.getTexts();
+    for (const t of texts) {
+      const alpha = Math.min(255, Math.floor((t.timer / t.maxTimer) * 255));
+      const r = (t.color >> 16) & 0xff;
+      const g = (t.color >> 8) & 0xff;
+      const b = t.color & 0xff;
+      _print(t.text, (t.x + offsetX) | 0, (t.y + offsetY) | 0, rgba8(r, g, b, alpha), t.scale);
+    }
+  }
+
+  /**
+   * drawFloatingTexts3D(system, projectFn)
+   * Render 3D floating texts using a user-supplied projection function.
+   * projectFn(x, y, z) should return [screenX, screenY].
+   * Use with spawn(..., { z: worldZ }) for 3D world-space floating texts.
+   */
+  function drawFloatingTexts3D(system, projectFn) {
+    const texts = system.getTexts();
+    for (const t of texts) {
+      const [sx, sy] = projectFn(t.x, t.y, t.z ?? 0);
+      const alpha = Math.min(255, Math.floor((t.timer / t.maxTimer) * 255));
+      const r = (t.color >> 16) & 0xff;
+      const g = (t.color >> 8) & 0xff;
+      const b = t.color & 0xff;
+      _print(t.text, sx | 0, sy | 0, rgba8(r, g, b, alpha), t.scale);
+    }
   }
 
   // ── Full-screen helpers ───────────────────────────────────────────────────────
@@ -870,7 +1147,10 @@ export function api2d(gpu) {
         drawPixelBorder,
         drawPanel,
         drawCrosshair,
+        createMinimap,
         drawMinimap,
+        drawFloatingTexts,
+        drawFloatingTexts3D,
         scrollingText,
       });
     },

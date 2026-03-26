@@ -169,7 +169,7 @@ export function draw() {
 
   // Health bar
   drawText('HEALTH', 40, 50, uiColors.danger, 1);
-  drawProgressBar(40, 70, 240, 20, demo.health, 100, {
+  uiProgressBar(40, 70, 240, 20, demo.health, 100, {
     fillColor:
       demo.health > 50 ? uiColors.success : demo.health > 25 ? uiColors.warning : uiColors.danger,
     showText: true,
@@ -177,14 +177,14 @@ export function draw() {
 
   // Mana bar
   drawText('MANA', 40, 100, uiColors.primary, 1);
-  drawProgressBar(40, 120, 240, 20, demo.mana, 100, {
+  uiProgressBar(40, 120, 240, 20, demo.mana, 100, {
     fillColor: uiColors.primary,
     showText: true,
   });
 
   // Experience bar
   drawText('EXPERIENCE', 40, 150, uiColors.warning, 1);
-  drawProgressBar(40, 170, 240, 20, demo.exp, demo.maxExp, {
+  uiProgressBar(40, 170, 240, 20, demo.exp, demo.maxExp, {
     fillColor: uiColors.warning,
     showText: true,
   });

@@ -51,7 +51,7 @@ export async function init() {
   setLightColor(0xffffff);
 
   // Cinematic post-processing
-  enableBloom(0.55, 0.35, 0.05);
+  enableBloom(0.5, 0.35, 0.35);
   enableVignette(1.0, 0.75);
   enableFXAA();
 
