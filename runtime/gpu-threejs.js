@@ -541,7 +541,11 @@ export class GpuThreeJS {
 
   // N64-style post-processing
   enablePixelation(factor = 2) {
-    this.renderer.setPixelRatio(1 / factor);
+    if (factor <= 0) {
+      this.renderer.setPixelRatio(window.devicePixelRatio || 1);
+    } else {
+      this.renderer.setPixelRatio(1 / factor);
+    }
   }
 
   enableDithering(enabled = true) {

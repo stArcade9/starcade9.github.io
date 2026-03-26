@@ -304,9 +304,36 @@ let shopTarget; // which party member to apply item to
 let hitStates; // array of createHitState per party member
 let chromaTimer; // timer for chromatic aberration effect on boss hits
 
+// Spell VFX overlay
+let spellVFX; // { type, x, y, timer, color } for drawStarburst/drawRadialGradient
+
+// Floor message timer (createTimer API)
+let msgTimer; // createTimer object for floor messages
+
+// Encounter spawner (createSpawner API) — scales encounter count per floor
+let encounterSpawner;
+
+// Combat spark pool (createPool API)
+let sparkPool; // pool of {x, y, vx, vy, life, color} for hit sparks
+
 // 3D mesh tracking
 let currentLevelMeshes = [];
 let monsterMeshes = [];
+
+// ═══════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+
+// Transition game state via state machine for elapsed tracking
+function switchState(newState) {
+  gameState = newState;
+  if (stateMachine) stateMachine.switchTo(newState);
+}
+
+// State elapsed time (seconds in current state)
+function stateElapsed() {
+  return stateMachine ? stateMachine.getElapsed() : animTimer;
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // DUNGEON GENERATION
@@ -732,7 +759,14 @@ function startCombat(isBoss) {
   } else {
     const tier = Math.min(Math.floor((floor - 1) / 2), MONSTERS.length - 1);
     pool = MONSTERS[tier];
-    count = 1 + Math.floor(Math.random() * Math.min(3, floor));
+    // Use spawner wave count to scale encounters as player explores
+    if (encounterSpawner) {
+      encounterSpawner.wave++;
+      encounterSpawner.totalSpawned++;
+    }
+    const waveBonus = encounterSpawner ? Math.min(encounterSpawner.wave, 3) : 0;
+    count = 1 + Math.floor(Math.random() * Math.min(3, floor)) + Math.floor(waveBonus / 2);
+    count = Math.min(count, 4); // cap at 4 enemies
     enemies = [];
     for (let i = 0; i < count; i++) {
       const template = pool[Math.floor(Math.random() * pool.length)];
@@ -764,15 +798,17 @@ function startCombat(isBoss) {
     e.allMeshes = meshIds;
   }
 
+  const waveLabel =
+    encounterSpawner && encounterSpawner.wave > 1 ? ` [Wave ${encounterSpawner.wave}]` : '';
   combatLog = [
     enemies[0].isBoss
       ? `BOSS: ${enemies[0].name} blocks your path!`
-      : `${enemies.length} ${enemies.length > 1 ? 'monsters appear' : enemies[0].name + ' appears'}!`,
+      : `${enemies.length} ${enemies.length > 1 ? 'monsters appear' : enemies[0].name + ' appears'}!${waveLabel}`,
   ];
   combatTurn = 0;
   combatAction = 'choose';
   selectedTarget = 0;
-  gameState = 'combat';
+  switchState('combat');
 
   if (enemies[0].isBoss) {
     triggerShake(shake, 0.8);
@@ -1035,6 +1071,23 @@ function doAttack(attacker, defender) {
   return dmg;
 }
 
+// Spawn hit sparks at a screen position using createPool
+function spawnSparks(x, y, color, count) {
+  if (!sparkPool) return;
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 30 + Math.random() * 60;
+    sparkPool.spawn(s => {
+      s.x = x + (Math.random() - 0.5) * 10;
+      s.y = y + (Math.random() - 0.5) * 10;
+      s.vx = Math.cos(ang) * spd;
+      s.vy = Math.sin(ang) * spd;
+      s.life = 0.4 + Math.random() * 0.3;
+      s.color = color;
+    });
+  }
+}
+
 function doSpell(caster, spell, target) {
   if (caster.mp < spell.cost) return null;
   caster.mp -= spell.cost;
@@ -1103,15 +1156,18 @@ function castSpellInCombat(member, spell) {
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name} on ${target.name}! +${spell.amount} HP`);
       triggerScreenFlash(50, 255, 100, 80);
+      spellVFX = { type: 'radial', x: 320, y: 180, timer: 0.5, color: rgba8(50, 255, 100, 160) };
     }
   } else if (spell.type === 'buff') {
     const result = doSpell(member, spell, null);
     if (result) combatLog.push(`${member.name} casts ${spell.name}! Party ATK +${spell.amount}`);
     triggerScreenFlash(255, 220, 80, 80);
+    spellVFX = { type: 'radial', x: 320, y: 100, timer: 0.6, color: rgba8(255, 220, 80, 180) };
   } else if (spell.type === 'buff_def') {
     const result = doSpell(member, spell, null);
     if (result) combatLog.push(`${member.name} casts ${spell.name}! Party DEF +${spell.amount}`);
     triggerScreenFlash(80, 150, 255, 80);
+    spellVFX = { type: 'radial', x: 320, y: 100, timer: 0.6, color: rgba8(80, 150, 255, 180) };
   } else if (spell.type === 'revive') {
     const result = doSpell(member, spell, null);
     if (result) {
@@ -1124,7 +1180,17 @@ function castSpellInCombat(member, spell) {
   } else {
     const target = enemies.find(e => e.hp > 0);
     const result = doSpell(member, spell, target);
-    if (result) combatLog.push(`${member.name} casts ${spell.name}! ${result.dmg} damage!`);
+    if (result) {
+      combatLog.push(`${member.name} casts ${spell.name}! ${result.dmg} damage!`);
+      // Starburst VFX for attack spells
+      if (spell.name === 'Fireball') {
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.8, color: rgba8(255, 120, 30, 220) };
+      } else if (spell.name === 'Ice Bolt') {
+        spellVFX = { type: 'star', x: 200, y: 80, timer: 0.6, color: rgba8(80, 180, 255, 220) };
+      } else if (spell.name === 'Turn Undead') {
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.7, color: rgba8(255, 255, 180, 220) };
+      }
+    }
   }
 }
 
@@ -1394,7 +1460,7 @@ function enterFloor(newFloor) {
 
   if (floor > 5) {
     // Victory!
-    gameState = 'victory';
+    switchState('victory');
     showFloorMessage('You conquered the dungeon!');
     sfx('powerup');
     return;
@@ -1402,6 +1468,11 @@ function enterFloor(newFloor) {
 
   dungeon = generateDungeon(18 + floor * 2, 18 + floor * 2);
   buildLevel();
+
+  // Deeper floors get retro pixelation for a more ominous, degraded look
+  if (floor >= 4) enablePixelation(2);
+  else if (floor >= 3) enablePixelation(1);
+  else enablePixelation(0); // disabled on early floors
   targetYaw = (facing * Math.PI) / 2;
   currentYaw = targetYaw;
   updateCamera3D();
@@ -1409,6 +1480,17 @@ function enterFloor(newFloor) {
   rebuildMinimap();
   const theme = FLOOR_THEMES[Math.min(floor - 1, FLOOR_THEMES.length - 1)];
   showFloorMessage(`Floor ${floor} — ${theme.name}`);
+
+  // Create encounter spawner for this floor (scales enemy count per wave)
+  encounterSpawner = createSpawner({
+    waveInterval: 999, // we trigger manually via steps, not time
+    baseCount: 1 + Math.floor(floor / 2),
+    countGrowth: 1,
+    maxCount: 3 + floor,
+    spawnFn: null, // we read .wave to scale encounters
+  });
+  encounterSpawner.active = false; // triggered manually on combat start
+
   saveGame();
 }
 
@@ -1540,7 +1622,7 @@ function loadGameSave() {
   buildLevel();
   updateCamera3D();
   rebuildMinimap();
-  gameState = 'explore';
+  switchState('explore');
   showFloorMessage(`Floor ${floor} — Game Loaded`);
   sfx('confirm');
   return true;
@@ -1573,6 +1655,7 @@ function updateCamera3D() {
 
 export function init() {
   gameState = 'title';
+  stateMachine = createStateMachine('title');
   animTimer = 0;
   enemyDelay = 0;
   autoPlay = false;
@@ -1583,9 +1666,14 @@ export function init() {
   setFog(0x000000, 2, 18);
   setCameraFOV(75);
 
-  enableBloom(1.0, 0.4, 0.25);
-  enableVignette(1.4, 0.8);
+  enableRetroEffects({
+    bloom: { strength: 1.0, radius: 0.4, threshold: 0.25 },
+    vignette: { darkness: 1.4, offset: 0.8 },
+    fxaa: true,
+    dithering: true,
+  });
   createGradientSkybox(0x110808, 0x050303);
+  enableSkyboxAutoAnimate(0.3); // slow atmospheric skybox rotation
 
   shake = createShake({ decay: 5 });
   inputCD = createCooldown(0.15);
@@ -1609,17 +1697,33 @@ export function init() {
   bossDefeated = new Set();
   hitStates = party.map(() => createHitState({ invulnDuration: 0.6, flashRate: 8 }));
   chromaTimer = 0;
+  spellVFX = null;
+  msgTimer = createTimer(3.0);
+  msgTimer.done = true; // start inactive
+  sparkPool = createPool(30, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: 0 }));
   currentLevelMeshes = [];
   monsterMeshes = [];
 }
 
 export function update(dt) {
   animTimer += dt;
+  if (stateMachine) stateMachine.update(dt);
   updateCooldown(inputCD, dt);
   updateCooldown(moveCD, dt);
   floatingTexts.update(dt);
   updateShake(shake, dt);
   updateParticles(dt);
+
+  // Update spark pool (combat hit sparks)
+  if (sparkPool) {
+    sparkPool.forEach(s => {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.vy += 80 * dt; // gravity
+      s.life -= dt;
+      if (s.life <= 0) sparkPool.kill(s);
+    });
+  }
 
   if (stepAnim > 0) stepAnim = Math.max(0, stepAnim - dt * 3);
 
@@ -1697,6 +1801,15 @@ export function update(dt) {
   }
 
   if (floorMessageTimer > 0) floorMessageTimer -= dt;
+
+  // Update spell VFX timer
+  if (spellVFX) {
+    spellVFX.timer -= dt;
+    if (spellVFX.timer <= 0) spellVFX = null;
+  }
+
+  // Update message timer
+  if (msgTimer && !msgTimer.done) msgTimer.update(dt);
 }
 
 function updateTitle(dt) {
@@ -1710,7 +1823,7 @@ function updateTitle(dt) {
   } else if (keyp('Space') || keyp('Enter')) {
     deleteSave();
     enterFloor(1);
-    gameState = 'explore';
+    switchState('explore');
     sfx('confirm');
   }
 }
@@ -1718,7 +1831,7 @@ function updateTitle(dt) {
 function updateExplore(dt) {
   if (!cooldownReady(moveCD)) {
     // still in cooldown, but check non-move inputs
-    if (keyp('KeyI') || keyp('Tab')) gameState = 'inventory';
+    if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
     updateCamera3D();
     return;
   }
@@ -1750,7 +1863,7 @@ function updateExplore(dt) {
     moveCD.remaining = moveCD.duration;
   }
 
-  if (keyp('KeyI') || keyp('Tab')) gameState = 'inventory';
+  if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
 
   if (moved) moveCD.remaining = moveCD.duration; // reset move cooldown
 
@@ -1770,9 +1883,9 @@ function updateCombat(dt) {
     if (keyp('Space') && useCooldown(inputCD)) {
       clearMonsterMeshes();
       if (party.every(m => !m.alive)) {
-        gameState = 'gameover';
+        switchState('gameover');
       } else {
-        gameState = 'explore';
+        switchState('explore');
         enemies = [];
       }
     }
@@ -1797,7 +1910,9 @@ function updateCombat(dt) {
         const dmg = doAttack(member, t);
         combatLog.push(`${member.name} hits ${t.name} for ${dmg}!`);
         triggerShake(shake, 0.2);
-        floatingTexts.spawn(`-${dmg}`, 100 + t.id * 160, 40, {
+        const sparkX = 100 + t.id * 160;
+        spawnSparks(sparkX, 30, rgba8(255, 200, 80, 255), 5);
+        floatingTexts.spawn(`-${dmg}`, sparkX, 40, {
           color: rgba8(255, 80, 80, 255),
           scale: 2,
           vy: -40,
@@ -1861,7 +1976,9 @@ function updateCombat(dt) {
       combatLog.push(`${member.name} hits ${target.name} for ${dmg}!`);
       triggerShake(shake, 0.2);
       sfx('hit');
-      floatingTexts.spawn(`-${dmg}`, 100 + selectedTarget * 160, 40, {
+      const tgtX = 100 + selectedTarget * 160;
+      spawnSparks(tgtX, 30, rgba8(255, 200, 80, 255), 6);
+      floatingTexts.spawn(`-${dmg}`, tgtX, 40, {
         color: rgba8(255, 80, 80, 255),
         scale: 2,
         vy: -40,
@@ -1917,7 +2034,7 @@ function updateCombat(dt) {
 
 function updateInventory(dt) {
   if (keyp('KeyI') || keyp('Tab') || keyp('Escape')) {
-    gameState = 'explore';
+    switchState('explore');
   }
   if (keyp('KeyS')) {
     saveGame();
@@ -1938,7 +2055,7 @@ function openShop(nextFloor) {
   }));
   shopCursor = 0;
   shopTarget = -1; // -1 = browsing, 0+ = selecting party member
-  gameState = 'shop';
+  switchState('shop');
   sfx('coin');
 }
 
@@ -2041,7 +2158,7 @@ function updateShop(dt) {
     // Leave shop → continue to next floor
     const nextFloor = floor + 1;
     enterFloor(nextFloor);
-    gameState = 'explore';
+    switchState('explore');
     sfx('confirm');
   }
 }
@@ -2056,7 +2173,8 @@ function drawShopUI() {
   });
 
   drawGlowText('MERCHANT', 320, 32, rgba8(220, 180, 50, 255), rgba8(140, 100, 0, 100), 3);
-  print(`Gold: ${totalGold}`, 480, 36, rgba8(255, 220, 50, 255));
+  drawDiamond(472, 40, 4, 5, rgba8(255, 220, 50, 255));
+  printRight(`${totalGold}g`, 560, 36, rgba8(255, 220, 50, 255));
   printCentered(`Floor ${floor} → ${floor + 1}`, 320, 68, rgba8(150, 140, 120, 200));
 
   // Item list
@@ -2135,6 +2253,18 @@ export function draw() {
     drawVictory();
   }
 
+  // Spell VFX overlay (starburst for attacks, radial gradient for buffs/heals)
+  if (spellVFX) {
+    const alpha = Math.min(1, spellVFX.timer * 3);
+    if (spellVFX.type === 'star') {
+      const r = 30 + (1 - alpha) * 40;
+      drawStarburst(spellVFX.x, spellVFX.y, r, r * 0.4, 8, spellVFX.color);
+    } else if (spellVFX.type === 'radial') {
+      const r = 40 + (1 - alpha) * 60;
+      drawRadialGradient(spellVFX.x, spellVFX.y, r, spellVFX.color, rgba8(0, 0, 0, 0));
+    }
+  }
+
   // Screen flash overlay (damage, magic, discoveries)
   if (screenFlash && screenFlash.alpha > 0) {
     rectfill(
@@ -2149,18 +2279,41 @@ export function draw() {
   // Floating texts
   drawFloatingTexts(floatingTexts);
 
+  // Combat hit sparks (createPool)
+  if (sparkPool && sparkPool.count > 0) {
+    sparkPool.forEach(s => {
+      const a = Math.floor((s.life / 0.5) * 255);
+      rectfill(Math.floor(s.x), Math.floor(s.y), 2, 2, colorMix(s.color, s.life * 2));
+    });
+  }
+
   // Subtle noise grain + CRT scanlines for retro feel
-  drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
-  drawScanlines(25, 3);
+  // Only apply full-screen noise on states with 2D backgrounds;
+  // in explore/combat the 3D scene must show through the overlay.
+  if (gameState !== 'explore' && gameState !== 'combat') {
+    drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
+    drawScanlines(25, 3);
+  }
 }
 
 function drawTitle() {
-  drawGradient(0, 0, W, H, rgba8(5, 2, 15, 220), rgba8(20, 10, 5, 220));
+  // Smooth fade-in using state machine elapsed tracking
+  const fadeIn = Math.min(1, stateElapsed() / 1.5);
+  const fade = Math.floor(fadeIn * 220);
+  drawGradient(0, 0, W, H, rgba8(5, 2, 15, fade), rgba8(20, 10, 5, fade));
+
+  // Decorative spinning spirals
+  const spiralColor = hslColor(animTimer * 30, 0.4, 0.3, 60);
+  drawSpiral(100, 180, 3, 12, spiralColor);
+  drawSpiral(540, 180, 3, 12, spiralColor);
 
   drawGlowText('WIZARDRY', 320, 80, rgba8(255, 200, 50, 255), rgba8(180, 100, 0, 150), 4);
   printCentered('N O V A  6 4', 320, 130, rgba8(200, 160, 80, 255), 2);
 
   printCentered('Proving Grounds of the Dark Tower', 320, 170, rgba8(150, 130, 110, 255));
+
+  // Mystical energy wave under subtitle
+  drawWave(120, 186, 400, 3, 0.05, animTimer * 2, rgba8(180, 120, 40, 60), 1);
 
   if (hasSave()) {
     drawPulsingText('Press C to Continue', 320, 228, rgba8(100, 200, 255, 255), animTimer, {
@@ -2199,13 +2352,27 @@ function drawTitle() {
 
 function drawExploreHUD() {
   // Compass panel
+  // Floor-themed compass border using hslColor (hue shifts per floor)
+  const floorHue = floor > 0 ? (floor - 1) * 60 : 30; // warm → cool per floor
   drawPanel(270, 2, 100, 38, {
     bgColor: rgba8(0, 0, 0, 160),
-    borderLight: rgba8(60, 50, 40, 180),
-    borderDark: rgba8(20, 15, 10, 180),
+    borderLight: hslColor(floorHue, 0.3, 0.25, 180),
+    borderDark: hslColor(floorHue, 0.3, 0.1, 180),
   });
   printCentered(`Facing ${DIR_NAMES[facing]}`, 320, 8, rgba8(200, 200, 220, 255));
-  printCentered(`Floor ${floor}`, 320, 24, rgba8(150, 130, 100, 200));
+  printCentered(`Floor ${floor}`, 320, 24, hslColor(floorHue, 0.4, 0.5, 200));
+
+  // Directional arrow indicator using drawTriangle
+  const arrowColor = hslColor(floorHue, 0.5, 0.6, 200);
+  const ax = 362,
+    ay = 20; // right side of compass panel
+  if (facing === 0)
+    drawTriangle(ax, ay - 5, ax - 4, ay + 3, ax + 4, ay + 3, arrowColor, true); // N ▲
+  else if (facing === 1)
+    drawTriangle(ax + 5, ay, ax - 3, ay - 4, ax - 3, ay + 4, arrowColor, true); // E ►
+  else if (facing === 2)
+    drawTriangle(ax, ay + 5, ax - 4, ay - 3, ax + 4, ay - 3, arrowColor, true); // S ▼
+  else drawTriangle(ax - 5, ay, ax + 3, ay - 4, ax + 3, ay + 4, arrowColor, true); // W ◄
 
   // Mini party status (bottom)
   drawPartyBar();
@@ -2224,11 +2391,16 @@ function drawExploreHUD() {
     printCentered(floorMessage, 320, 166, rgba8(255, 220, 100, alpha));
   }
 
+  // Magic energy wave divider above party bar — color shifts per floor
+  const waveHue = floor > 0 ? (floor - 1) * 60 : 30;
+  drawWave(0, H - 56, W, 4, 0.04, animTimer * 3, hslColor(waveHue, 0.5, 0.4, 80), 2);
+
   // Controls hint
   print('WASD/Arrows=Move  Q/E=Turn  I=Inventory', 10, 348, rgba8(80, 80, 100, 150));
 
-  // Gold
-  print(`Gold: ${totalGold}`, 540, 348, rgba8(220, 180, 50, 200));
+  // Gold with diamond icon
+  drawDiamond(534, 352, 4, 5, rgba8(220, 180, 50, 200));
+  print(`${totalGold}g`, 542, 348, rgba8(220, 180, 50, 200));
 }
 
 function drawPartyBar() {
@@ -2330,6 +2502,12 @@ function drawCombatUI() {
         backgroundColor: rgba8(40, 20, 20, 255),
       });
       print(`${e.hp}/${e.maxHp}`, x + 124, 18, rgba8(180, 140, 140, 200));
+      // Pulsing crosshair on selected target
+      if (sel) {
+        const pulse = Math.sin(animTimer * 6) * 0.3 + 0.7;
+        const crossColor = rgba8(255, 60, 60, Math.floor(200 * pulse));
+        drawCrosshair(x + 60, 14, 10, crossColor, 'cross');
+      }
     } else {
       print('DEAD', x + 10, 20, rgba8(100, 40, 40, 150));
     }
@@ -2431,14 +2609,19 @@ function drawCombatUI() {
       : rgba8(80, 80, 80, 150);
     print(`${isCurrent ? '►' : ' '} ${m.name}`, W - 200, y, labelColor);
     if (m.alive) {
+      // Buff indicator: brighten HP text when buffed using colorMix
+      const buffed = (m.buffAtk > 0 || m.buffDef > 0) && m.buffTimer > 0;
+      const hpTextColor = buffed
+        ? colorMix(rgba8(220, 220, 100, 255), 1.5)
+        : rgba8(180, 180, 180, 200);
       // Use colorLerp for smooth HP bar color: green → yellow → red
       const hpRatio = m.hp / m.maxHp;
       const hpColor = colorLerp(rgba8(200, 40, 40, 255), rgba8(50, 180, 50, 255), hpRatio);
       drawHealthBar(W - 95, y + 2, 60, 5, m.hp, m.maxHp, {
-        barColor: hpColor,
+        barColor: buffed ? colorMix(hpColor, 1.3) : hpColor,
         backgroundColor: rgba8(30, 20, 20, 255),
       });
-      print(`${m.hp}`, W - 30, y, rgba8(180, 180, 180, 200));
+      print(`${m.hp}`, W - 30, y, hpTextColor);
     }
   }
 }
@@ -2496,7 +2679,7 @@ function drawInventoryUI() {
     const totalAtk = getEffectiveAtk(m);
     const totalDef = getEffectiveDef(m);
     print(`ATK:${totalAtk}  DEF:${totalDef}  SPD:${m.spd}`, 80, y + 28, rgba8(150, 150, 170, 180));
-    print(`XP: ${m.xp}/${m.xpNext}`, 320, y + 28, rgba8(150, 150, 170, 180));
+    printRight(`XP: ${m.xp}/${m.xpNext}`, 560, y + 28, rgba8(150, 150, 170, 180));
 
     // Equipment
     if (m.weapon) {
@@ -2512,10 +2695,13 @@ function drawInventoryUI() {
   }
 
   // Gold + Floor info
-  print(`Gold: ${totalGold}`, 60, H - 90, rgba8(220, 180, 50, 230));
-  print(`Floor: ${floor}`, 200, H - 90, rgba8(150, 150, 170, 200));
+  drawDiamond(72, H - 86, 4, 5, rgba8(220, 180, 50, 230));
+  const goldStr = `${totalGold}g`;
+  const goldMetrics = measureText(goldStr, 1);
+  print(goldStr, 80, H - 90, rgba8(220, 180, 50, 230));
+  print(`Floor: ${floor}`, 80 + goldMetrics.width + 12, H - 90, rgba8(150, 150, 170, 200));
   if (bossDefeated.size > 0) {
-    print(`Bosses slain: ${bossDefeated.size}`, 300, H - 90, rgba8(200, 100, 100, 200));
+    printRight(`Bosses slain: ${bossDefeated.size}`, 560, H - 90, rgba8(200, 100, 100, 200));
   }
 
   print('[S] Save Game', 60, H - 72, rgba8(100, 200, 100, 200));
@@ -2523,10 +2709,16 @@ function drawInventoryUI() {
 }
 
 function drawGameOver() {
-  drawGradient(0, 0, W, H, rgba8(15, 0, 0, 220), rgba8(0, 0, 0, 220));
-  drawGlowText('GAME OVER', 320, 120, rgba8(200, 40, 40, 255), rgba8(100, 0, 0, 150), 3);
+  // Fade-in using state machine elapsed time
+  const fadeIn = Math.min(1, stateElapsed() / 1.0);
+  const fade = Math.floor(fadeIn * 220);
+  drawGradient(0, 0, W, H, rgba8(15, 0, 0, fade), rgba8(0, 0, 0, fade));
+  // Pulsing red radial glow behind text
+  drawRadialGradient(320, 140, 120, hslColor(0, 0.8, 0.2, 60), rgba8(0, 0, 0, 0));
+  drawGlowText('GAME OVER', 320, 120, hexColor(0xcc2828, 255), rgba8(100, 0, 0, 150), 3);
   printCentered(`Your party fell on Floor ${floor}`, 320, 180, rgba8(180, 150, 130, 200));
-  printCentered(`Gold collected: ${totalGold}`, 320, 200, rgba8(200, 180, 50, 200));
+  drawDiamond(270, 204, 4, 5, hexColor(0xc8b432, 200));
+  printCentered(`${totalGold} Gold collected`, 320, 200, hexColor(0xc8b432, 200));
 
   drawPulsingText('Press SPACE to try again', 320, 260, rgba8(255, 255, 255, 255), animTimer, {
     frequency: 3,
@@ -2536,22 +2728,31 @@ function drawGameOver() {
 
 function drawVictory() {
   drawGradient(0, 0, W, H, rgba8(10, 8, 2, 200), rgba8(2, 2, 10, 200));
+
+  // Celebratory starbursts using hslColor for rainbow cycling
+  for (let i = 0; i < 5; i++) {
+    const sx = 80 + i * 130;
+    const sy = 50 + Math.sin(animTimer * 2 + i) * 15;
+    const starColor = hslColor(animTimer * 60 + i * 72, 0.7, 0.5, 120);
+    drawStarburst(sx, sy, 20, 8, 6, starColor);
+  }
+
   drawGlowText('VICTORY!', 320, 80, rgba8(255, 220, 50, 255), rgba8(180, 120, 0, 150), 3);
   printCentered('You conquered the Dark Tower!', 320, 140, rgba8(200, 200, 220, 255));
-  printCentered(`Gold: ${totalGold}`, 320, 170, rgba8(220, 180, 50, 230));
+
+  // Gold with diamond
+  drawDiamond(290, 174, 4, 5, rgba8(220, 180, 50, 230));
+  printCentered(`${totalGold} Gold`, 320, 170, rgba8(220, 180, 50, 230));
 
   for (let i = 0; i < party.length; i++) {
     const m = party[i];
-    const c = CLASS_COLORS[m.class];
-    const cr = (c >> 16) & 0xff,
-      cg = (c >> 8) & 0xff,
-      cb = c & 0xff;
     const y = 200 + i * 16;
+    // Use hexColor to convert CLASS_COLORS directly to rgba8
     printCentered(
       `${m.name} — Lv${m.level} ${m.class} ${m.alive ? '✓' : '☠'}`,
       320,
       y,
-      rgba8(cr, cg, cb, 220)
+      hexColor(CLASS_COLORS[m.class], 220)
     );
   }
 
