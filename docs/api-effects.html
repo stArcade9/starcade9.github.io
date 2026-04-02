@@ -299,6 +299,54 @@
           </div>
         
         </div>
+
+        <div class="function">
+          <div class="function-sig">enableGlitch(intensity)</div>
+          <p>Enables screen glitch post-processing effect with scanline displacement, RGB channel split, block artifacts, and random color corruption. Great for damage feedback or digital distortion effects.</p>
+          
+          <div class="param-list">
+            
+              <div class="param">
+                <span class="param-name">intensity</span> 
+                <span class="param-type">number</span> - Glitch intensity (0-1, default: 0.5)
+              </div>
+            
+          </div>
+        
+          
+          <div class="return-info">
+            <strong>Returns:</strong> <span class="param-type">void</span> - No return value
+          </div>
+        
+          
+          <div class="example">
+            <div class="example-title">Example:</div>
+            <pre><code>// Trigger glitch on damage, then fade out
+enableGlitch(0.6);
+// Later, adjust intensity
+setGlitchIntensity(0.2);
+// When done
+disableGlitch();</code></pre>
+          </div>
+        
+        </div>
+
+        <div class="function">
+          <div class="function-sig">disableGlitch()</div>
+          <p>Disables the screen glitch effect.</p>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">setGlitchIntensity(intensity)</div>
+          <p>Adjusts glitch intensity without recreating the shader pass. Useful for smooth fade-out effects.</p>
+          
+          <div class="param-list">
+              <div class="param">
+                <span class="param-name">intensity</span> 
+                <span class="param-type">number</span> - Glitch intensity (0-1)
+              </div>
+          </div>
+        </div>
       
         <div class="function">
           <div class="function-sig">enableScanlines(intensity)</div>

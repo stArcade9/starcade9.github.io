@@ -385,7 +385,7 @@ Set the main directional light direction vector.
 
 ```javascript
 setLightDirection(-0.5, -1, -0.3); // From top-left
-setLightDirection(1, 1, 0.5);      // From upper-right
+setLightDirection(1, 1, 0.5); // From upper-right
 ```
 
 #### `setLightColor(hexColor, intensity?)`
@@ -536,9 +536,12 @@ Cube-map skybox from 6 image URLs. Also enables image-based lighting (IBL).
 
 ```javascript
 createImageSkybox([
-  '/assets/sky_px.jpg', '/assets/sky_nx.jpg',
-  '/assets/sky_py.jpg', '/assets/sky_ny.jpg',
-  '/assets/sky_pz.jpg', '/assets/sky_nz.jpg',
+  '/assets/sky_px.jpg',
+  '/assets/sky_nx.jpg',
+  '/assets/sky_py.jpg',
+  '/assets/sky_ny.jpg',
+  '/assets/sky_pz.jpg',
+  '/assets/sky_nz.jpg',
 ]);
 ```
 

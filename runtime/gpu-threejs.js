@@ -84,11 +84,11 @@ export class GpuThreeJS {
 
   setupN64Lighting() {
     // Multi-layered ambient lighting for rich atmosphere
-    const ambientLight = new THREE.AmbientLight(0x404060, 0.3);
+    const ambientLight = new THREE.AmbientLight(0x606080, 0.5);
     this.scene.add(ambientLight);
 
     // Hemisphere light for more natural lighting
-    const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.4);
+    const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.6);
     this.scene.add(hemisphereLight);
 
     // Main directional light with ultra-high quality shadows
@@ -153,8 +153,8 @@ export class GpuThreeJS {
       // Envmap setup is non-critical; silently skip on unsupported renderers
     }
 
-    // Dramatic volumetric fog with color gradients
-    this.scene.fog = new THREE.FogExp2(0x202050, 0.008);
+    // Atmospheric fog with subtle color
+    this.scene.fog = new THREE.FogExp2(0x202050, 0.005);
 
     // Store lights for dynamic control
     this.lights = {
@@ -625,7 +625,7 @@ export class GpuThreeJS {
 
     // Fog animation for atmospheric depth
     if (this.scene.fog && this.scene.fog.density) {
-      this.scene.fog.density = 0.008 + Math.sin(time * 0.5) * 0.002;
+      this.scene.fog.density = 0.005 + Math.sin(time * 0.5) * 0.001;
     }
   }
 

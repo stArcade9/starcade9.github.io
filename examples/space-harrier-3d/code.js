@@ -48,6 +48,7 @@ let game = {
   shake: null,
   killStreak: 0,
   streakTimer: 0,
+  glitchTimer: 0,
 
   gridPlanes: [],
   scenery: [],
@@ -80,6 +81,9 @@ export async function init() {
 
   createCheckeredFloor();
   createPlayer();
+
+  // Hide player meshes on start screen to prevent 3D artifacts/bloom trails
+  setPlayerVisible(false);
 
   for (let i = 0; i < 40; i++) {
     spawnScenery(true);
@@ -156,6 +160,10 @@ function createPlayer() {
 
   p.meshes.flameL = createCube(0.3, 0xffaa00, [bx - 0.3, by - 0.6, bz + 0.6]);
   p.meshes.flameR = createCube(0.3, 0xffaa00, [bx + 0.3, by - 0.6, bz + 0.6]);
+}
+
+function setPlayerVisible(visible) {
+  Object.values(game.player.meshes).forEach(m => setMeshVisible(m, visible));
 }
 
 function spawnScenery(randomZ = false) {
@@ -339,6 +347,17 @@ export function update(dt) {
   game.speed = Math.min(100, 45 + game.wave * 3);
   updateShake(game.shake, dt);
 
+  // Glitch decay
+  if (game.glitchTimer > 0) {
+    game.glitchTimer -= dt;
+    if (game.glitchTimer <= 0) {
+      game.glitchTimer = 0;
+      disableGlitch();
+    } else {
+      setGlitchIntensity(game.glitchTimer * 1.5);
+    }
+  }
+
   // Kill streak timer
   if (game.streakTimer > 0) {
     game.streakTimer -= dt;
@@ -380,6 +399,7 @@ function startGame() {
   if (gameState === 'playing') return;
   inputLockoutCD.timer = 0.3;
   gameState = 'playing';
+  setPlayerVisible(true);
   game.score = 0;
   game.player.health = 100;
   game.speed = 45;
@@ -496,7 +516,15 @@ function updatePlayer(dt, isIdle) {
 
   setPosition(p.meshes.body, p.x, bY, p.z);
   setPosition(p.meshes.head, p.x, bY + 1.2, p.z);
+  setPosition(p.meshes.hair, p.x, bY + 1.5, p.z + 0.1);
+  setPosition(p.meshes.jetpack, p.x, bY + 0.2, p.z + 0.6);
   setPosition(p.meshes.gun, p.x + 0.8, bY - 0.2, p.z - 1.5);
+  setPosition(p.meshes.armL, p.x - 0.8, bY + 0.2, p.z);
+  setPosition(p.meshes.armR, p.x + 0.8, bY + 0.2, p.z);
+
+  // Jetpack flames flicker
+  setPosition(p.meshes.flameL, p.x - 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
+  setPosition(p.meshes.flameR, p.x + 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
 
   if (isGrounded && (dx !== 0 || isIdle)) {
     // idle running in place effectively
@@ -663,6 +691,8 @@ function updateEnemyBullets(dt) {
       } else {
         p.health -= 25;
         triggerShake(game.shake, 0.4);
+        enableGlitch(0.5);
+        game.glitchTimer = 0.3;
         sfx('hit');
       }
       createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
@@ -805,6 +835,9 @@ function drawStartScreen() {
 }
 
 function initGameOverScreen() {
+  setPlayerVisible(false);
+  disableGlitch();
+  game.glitchTimer = 0;
   clearButtons();
   createButton(
     centerX(220),

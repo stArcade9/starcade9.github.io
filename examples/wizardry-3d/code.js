@@ -37,6 +37,8 @@ const MONSTERS = [
     { name: 'Kobold', hp: 8, atk: 3, def: 1, xp: 5, gold: 3, color: 0x886644, shape: 'small' },
     { name: 'Giant Rat', hp: 6, atk: 2, def: 0, xp: 3, gold: 1, color: 0x666655, shape: 'beast' },
     { name: 'Skeleton', hp: 12, atk: 4, def: 2, xp: 8, gold: 5, color: 0xccccaa, shape: 'undead' },
+    { name: 'Bat Swarm', hp: 5, atk: 2, def: 0, xp: 4, gold: 2, color: 0x554444, shape: 'beast' },
+    { name: 'Goblin', hp: 10, atk: 3, def: 1, xp: 6, gold: 4, color: 0x668844, shape: 'small' },
   ],
   // Floor 3-4
   [
@@ -52,17 +54,75 @@ const MONSTERS = [
       color: 0x443366,
       shape: 'caster',
     },
+    { name: 'Gargoyle', hp: 25, atk: 7, def: 5, xp: 18, gold: 12, color: 0x888888, shape: 'brute' },
+    { name: 'Mimic', hp: 20, atk: 9, def: 3, xp: 22, gold: 25, color: 0x886633, shape: 'small' },
+    { name: 'Specter', hp: 16, atk: 7, def: 2, xp: 16, gold: 8, color: 0x6666aa, shape: 'ghost' },
   ],
-  // Floor 5+
+  // Floor 5-6
   [
     { name: 'Troll', hp: 35, atk: 10, def: 5, xp: 30, gold: 20, color: 0x336633, shape: 'brute' },
     { name: 'Wraith', hp: 25, atk: 12, def: 3, xp: 35, gold: 25, color: 0x333355, shape: 'ghost' },
     { name: 'Dragon', hp: 60, atk: 15, def: 8, xp: 80, gold: 50, color: 0xcc4422, shape: 'dragon' },
+    {
+      name: 'Fire Elemental',
+      hp: 30,
+      atk: 14,
+      def: 4,
+      xp: 40,
+      gold: 30,
+      color: 0xff4400,
+      shape: 'caster',
+    },
+    { name: 'Medusa', hp: 28, atk: 11, def: 6, xp: 45, gold: 35, color: 0x448844, shape: 'caster' },
+    {
+      name: 'Iron Golem',
+      hp: 50,
+      atk: 9,
+      def: 10,
+      xp: 50,
+      gold: 40,
+      color: 0x777788,
+      shape: 'brute',
+    },
+  ],
+  // Floor 7+
+  [
+    {
+      name: 'Demon Lord',
+      hp: 70,
+      atk: 18,
+      def: 8,
+      xp: 100,
+      gold: 60,
+      color: 0xaa2222,
+      shape: 'dragon',
+    },
+    { name: 'Lich', hp: 45, atk: 20, def: 5, xp: 90, gold: 55, color: 0x6644aa, shape: 'caster' },
+    {
+      name: 'Death Knight',
+      hp: 55,
+      atk: 16,
+      def: 9,
+      xp: 85,
+      gold: 50,
+      color: 0x333344,
+      shape: 'undead',
+    },
   ],
 ];
 
 // Boss monsters (floor 3 and 5)
 const BOSSES = {
+  1: {
+    name: 'Goblin Chieftain',
+    hp: 40,
+    atk: 6,
+    def: 3,
+    xp: 30,
+    gold: 25,
+    color: 0x668833,
+    shape: 'brute',
+  },
   3: {
     name: 'Lich King',
     hp: 80,
@@ -83,6 +143,26 @@ const BOSSES = {
     color: 0xff3300,
     shape: 'dragon',
   },
+  6: {
+    name: 'Frost Titan',
+    hp: 120,
+    atk: 18,
+    def: 12,
+    xp: 180,
+    gold: 90,
+    color: 0x88bbff,
+    shape: 'brute',
+  },
+  7: {
+    name: 'Infernal Archon',
+    hp: 200,
+    atk: 25,
+    def: 12,
+    xp: 300,
+    gold: 150,
+    color: 0xff2200,
+    shape: 'dragon',
+  },
 };
 
 // Equipment that can drop from chests
@@ -96,6 +176,9 @@ const EQUIPMENT = [
   { name: 'Flame Blade', slot: 'weapon', atk: 5, def: 0, class: 'Fighter', tier: 3 },
   { name: 'Staff of Power', slot: 'weapon', atk: 2, def: 0, class: 'Mage', tier: 3, mpBonus: 6 },
   { name: 'Vorpal Dagger', slot: 'weapon', atk: 6, def: 0, class: 'Thief', tier: 3 },
+  { name: 'Blessed Hammer', slot: 'weapon', atk: 4, def: 1, class: 'Priest', tier: 2 },
+  { name: 'Frost Brand', slot: 'weapon', atk: 4, def: 0, class: 'Fighter', tier: 2, mpBonus: 1 },
+  { name: 'Wand of Lightning', slot: 'weapon', atk: 3, def: 0, class: 'Mage', tier: 2, mpBonus: 4 },
   // Armor
   { name: 'Chain Mail', slot: 'armor', atk: 0, def: 2, class: 'Fighter', tier: 1 },
   { name: 'Leather Armor', slot: 'armor', atk: 0, def: 1, class: 'Thief', tier: 1 },
@@ -112,6 +195,10 @@ const EQUIPMENT = [
   },
   { name: 'Dragon Scale', slot: 'armor', atk: 1, def: 6, class: 'Fighter', tier: 3 },
   { name: 'Shadow Cloak', slot: 'armor', atk: 1, def: 3, class: 'Thief', tier: 3 },
+  { name: 'Frost Mail', slot: 'armor', atk: 0, def: 5, class: 'Fighter', tier: 3 },
+  { name: 'Archmage Robe', slot: 'armor', atk: 0, def: 2, class: 'Mage', tier: 3, mpBonus: 5 },
+  { name: 'Holy Plate', slot: 'armor', atk: 0, def: 4, class: 'Priest', tier: 3, mpBonus: 4 },
+  { name: 'Assassin Garb', slot: 'armor', atk: 2, def: 2, class: 'Thief', tier: 2 },
 ];
 
 // Spells
@@ -126,6 +213,22 @@ const SPELLS = {
     type: 'buff_def',
     class: 'Mage',
     desc: '+DEF party',
+  },
+  LIGHTNING: {
+    name: 'Lightning Bolt',
+    cost: 4,
+    dmg: 15,
+    type: 'attack',
+    class: 'Mage',
+    desc: 'Chain lightning',
+  },
+  SLOW: {
+    name: 'Slow',
+    cost: 3,
+    amount: 3,
+    type: 'debuff_def',
+    class: 'Mage',
+    desc: '-DEF enemies',
   },
   // Priest spells
   HEAL: { name: 'Heal', cost: 2, amount: 15, type: 'heal', class: 'Priest', desc: 'Heal one ally' },
@@ -145,6 +248,24 @@ const SPELLS = {
     type: 'revive',
     class: 'Priest',
     desc: 'Revive ally',
+  },
+  GROUP_HEAL: {
+    name: 'Group Heal',
+    cost: 5,
+    amount: 10,
+    type: 'group_heal',
+    class: 'Priest',
+    desc: 'Heal all allies',
+  },
+  SMITE: { name: 'Smite', cost: 3, dmg: 10, type: 'attack', class: 'Priest', desc: 'Holy damage' },
+  // Thief spells
+  BACKSTAB: {
+    name: 'Backstab',
+    cost: 2,
+    dmg: 18,
+    type: 'attack',
+    class: 'Thief',
+    desc: 'Bonus damage',
   },
 };
 
@@ -204,58 +325,80 @@ const SHOP_ITEMS = [
 const FLOOR_THEMES = [
   {
     name: 'Musty Cellars',
-    wallColor: 0x554433,
-    floorColor: 0x332211,
-    ceilColor: 0x221100,
-    fogColor: 0x0a0805,
-    skyTop: 0x110808,
-    skyBot: 0x050303,
-    ambColor: 0x332211,
-    ambInt: 0.3,
+    wallColor: 0x887766,
+    floorColor: 0x554433,
+    ceilColor: 0x443322,
+    fogColor: 0x1a1510,
+    skyTop: 0x221510,
+    skyBot: 0x0a0805,
+    ambColor: 0x665544,
+    ambInt: 0.55,
   },
   {
     name: 'Flooded Crypts',
-    wallColor: 0x334455,
-    floorColor: 0x1a2233,
-    ceilColor: 0x0a1122,
-    fogColor: 0x050a10,
-    skyTop: 0x081018,
-    skyBot: 0x030508,
-    ambColor: 0x223344,
-    ambInt: 0.25,
+    wallColor: 0x556677,
+    floorColor: 0x334455,
+    ceilColor: 0x1a2233,
+    fogColor: 0x0a1520,
+    skyTop: 0x102030,
+    skyBot: 0x080c10,
+    ambColor: 0x445566,
+    ambInt: 0.5,
   },
   {
     name: 'Fungal Warrens',
-    wallColor: 0x335533,
-    floorColor: 0x1a331a,
-    ceilColor: 0x0a220a,
-    fogColor: 0x050a05,
-    skyTop: 0x0a180a,
-    skyBot: 0x030803,
-    ambColor: 0x224422,
-    ambInt: 0.3,
+    wallColor: 0x558855,
+    floorColor: 0x336633,
+    ceilColor: 0x1a441a,
+    fogColor: 0x0a1a0a,
+    skyTop: 0x153015,
+    skyBot: 0x081008,
+    ambColor: 0x447744,
+    ambInt: 0.55,
   },
   {
     name: 'Obsidian Vaults',
-    wallColor: 0x222233,
-    floorColor: 0x111122,
-    ceilColor: 0x0a0a18,
-    fogColor: 0x050510,
-    skyTop: 0x0a0a1a,
-    skyBot: 0x030308,
-    ambColor: 0x1a1a33,
-    ambInt: 0.2,
+    wallColor: 0x445566,
+    floorColor: 0x223344,
+    ceilColor: 0x151530,
+    fogColor: 0x0a0a1a,
+    skyTop: 0x151530,
+    skyBot: 0x080810,
+    ambColor: 0x334466,
+    ambInt: 0.45,
   },
   {
     name: "The Dragon's Lair",
-    wallColor: 0x553322,
-    floorColor: 0x331a0a,
-    ceilColor: 0x220a00,
-    fogColor: 0x100500,
-    skyTop: 0x1a0800,
-    skyBot: 0x080300,
-    ambColor: 0x442211,
-    ambInt: 0.35,
+    wallColor: 0x885533,
+    floorColor: 0x663318,
+    ceilColor: 0x441a08,
+    fogColor: 0x200a00,
+    skyTop: 0x301500,
+    skyBot: 0x100800,
+    ambColor: 0x774422,
+    ambInt: 0.5,
+  },
+  {
+    name: 'Frozen Catacombs',
+    wallColor: 0x667788,
+    floorColor: 0x445566,
+    ceilColor: 0x334455,
+    fogColor: 0x1a2535,
+    skyTop: 0x203040,
+    skyBot: 0x101820,
+    ambColor: 0x5577aa,
+    ambInt: 0.5,
+  },
+  {
+    name: 'Infernal Pit',
+    wallColor: 0x884422,
+    floorColor: 0x661a00,
+    ceilColor: 0x441100,
+    fogColor: 0x300800,
+    skyTop: 0x401000,
+    skyBot: 0x200500,
+    ambColor: 0x883311,
+    ambInt: 0.45,
   },
 ];
 
@@ -281,8 +424,6 @@ let totalGold;
 let dungeonsCleared;
 let floatingTexts;
 let shake;
-let inputCD;
-let moveCD;
 let floorMessage;
 let floorMessageTimer;
 
@@ -303,9 +444,16 @@ let shopTarget; // which party member to apply item to
 // Hit/invulnerability state for party
 let hitStates; // array of createHitState per party member
 let chromaTimer; // timer for chromatic aberration effect on boss hits
+let glitchTimer; // timer for screen glitch effect on player damage
+let combatFOV; // smooth FOV lerp for combat zoom
+let floorTransition; // checkerboard wipe timer when entering floors
+let cooldowns; // createCooldownSet for input + movement
 
 // Spell VFX overlay
 let spellVFX; // { type, x, y, timer, color } for drawStarburst/drawRadialGradient
+
+// Visual preset mode (toggled in inventory)
+let visualPreset; // null, 'n64', or 'psx'
 
 // Floor message timer (createTimer API)
 let msgTimer; // createTimer object for floor messages
@@ -315,6 +463,35 @@ let encounterSpawner;
 
 // Combat spark pool (createPool API)
 let sparkPool; // pool of {x, y, vx, vy, life, color} for hit sparks
+
+// Water shader tracking (createShaderMaterial API)
+let waterShaders; // array of { shaderId, meshId } for animated fountain water
+
+// 3D floating damage texts (drawFloatingTexts3D API)
+let floatingTexts3D; // separate system for world-space damage numbers
+
+// Instanced dungeon decorations (createInstancedMesh API)
+let instancedDecor; // instanced mesh ID for floor crystal decorations
+
+// Boss flow field energy pattern (flowField API)
+let bossFlowField; // Float32Array of angles for boss room visualization
+
+// Procedural floor fog texture (noiseMap API)
+let floorNoiseMap; // Float32Array for deep floor atmospheric overlay
+
+// Game over restart button (createButton API)
+let restartButton;
+
+// Game statistics store (createGameStore API)
+let gameStats;
+
+// LOD torch decorations (createLODMesh API)
+let lodTorches;
+
+// Title screen 3D scene
+let titleMeshes = [];
+let titleLights = [];
+let titleParticles = [];
 
 // 3D mesh tracking
 let currentLevelMeshes = [];
@@ -328,11 +505,33 @@ let monsterMeshes = [];
 function switchState(newState) {
   gameState = newState;
   if (stateMachine) stateMachine.switchTo(newState);
+  // Track state in global novaStore for cross-system awareness
+  if (typeof novaStore !== 'undefined' && novaStore) {
+    novaStore.setState({ gameState: newState, floor: floor || 0 });
+  }
 }
 
 // State elapsed time (seconds in current state)
 function stateElapsed() {
   return stateMachine ? stateMachine.getElapsed() : animTimer;
+}
+
+// Project 3D world coordinates to 2D screen for drawFloatingTexts3D
+function worldToScreen(wx, wy, wz) {
+  const cx = px * TILE,
+    cz = py * TILE,
+    cy = 1.6;
+  const [fdx, fdz] = DIRS[facing];
+  const dx = wx - cx,
+    dy = wy - cy,
+    dz = wz - cz;
+  const depth = dx * fdx + dz * fdz;
+  if (depth <= 0.1) return [W / 2, H / 2];
+  const right = dx * -fdz + dz * fdx;
+  const halfFOV = Math.tan(((combatFOV || 75) * Math.PI) / 360);
+  const sx = W / 2 + (right / (depth * halfFOV)) * (W / 2);
+  const sy = H / 2 - (dy / (depth * halfFOV * (H / W))) * (H / 2);
+  return [sx, sy];
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -446,12 +645,101 @@ function generateDungeon(w, h) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// TITLE SCREEN 3D SCENE
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildTitleScene() {
+  clearTitleScene();
+  const wallColor = 0x665544;
+  const floorColor = 0x443322;
+  const ceilColor = 0x2a1a0a;
+
+  // Stone corridor walls (left and right, extending into the distance)
+  for (let i = 0; i < 8; i++) {
+    const z = -3 - i * 3;
+    const wL = createCube(TILE, wallColor, [-TILE, 0, z], { roughness: 0.9 });
+    const wR = createCube(TILE, wallColor, [TILE, 0, z], { roughness: 0.9 });
+    setCastShadow(wL, true);
+    setCastShadow(wR, true);
+    setReceiveShadow(wL, true);
+    setReceiveShadow(wR, true);
+    titleMeshes.push(wL, wR);
+  }
+
+  // Floor and ceiling planes
+  const fl = createPlane(TILE * 2.2, 30, floorColor, [0, -1.5, -14]);
+  setReceiveShadow(fl, true);
+  titleMeshes.push(fl);
+  const ceil = createPlane(TILE * 2.2, 30, ceilColor, [0, 1.5, -14]);
+  setRotation(ceil, Math.PI, 0, 0);
+  titleMeshes.push(ceil);
+
+  // Torches along the corridor (alternating left/right)
+  const torchPositions = [
+    [-2.4, 1.0, -5],
+    [2.4, 1.0, -8],
+    [-2.4, 1.0, -11],
+    [2.4, 1.0, -14],
+    [-2.4, 1.0, -17],
+    [2.4, 1.0, -20],
+  ];
+  for (const [tx, ty, tz] of torchPositions) {
+    // Torch cone (emissive flame)
+    const torch = createCone(0.12, 0.35, 0xffaa33, [tx, ty, tz], {
+      material: 'emissive',
+      emissive: 0xff8800,
+      intensity: 2,
+    });
+    titleMeshes.push(torch);
+    // Warm point light
+    const light = createPointLight(0xff8833, 2.5, 10, tx, ty + 0.5, tz);
+    titleLights.push(light);
+  }
+
+  // Glowing portal at the far end
+  const portal = createTorus(1.5, 0.12, 0x8844ff, [0, 0, -24], {
+    material: 'emissive',
+    emissive: 0x8844ff,
+    intensity: 3,
+  });
+  titleMeshes.push(portal);
+  const portalGlow = createSphere(0.7, 0x6622cc, [0, 0, -24], {
+    material: 'emissive',
+    emissive: 0x6622ff,
+    intensity: 2,
+  });
+  titleMeshes.push(portalGlow);
+  // Portal light
+  const portalLight = createPointLight(0x7733ff, 3, 12, 0, 0, -24);
+  titleLights.push(portalLight);
+
+  // Particle system for floating embers
+  const ps = createParticleSystem({
+    max: 60,
+    size: 0.08,
+    color: 0xffaa44,
+    emissive: true,
+  });
+  titleParticles.push(ps);
+}
+
+function clearTitleScene() {
+  for (const id of titleMeshes) destroyMesh(id);
+  for (const id of titleLights) removeLight(id);
+  for (const id of titleParticles) removeParticleSystem(id);
+  titleMeshes = [];
+  titleLights = [];
+  titleParticles = [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // 3D LEVEL BUILDING
 // ═══════════════════════════════════════════════════════════════════════
 
 function clearLevel() {
   for (const id of currentLevelMeshes) destroyMesh(id);
   currentLevelMeshes = [];
+  clearSkybox(); // clean up old skybox before rebuilding
   if (torchLights) {
     for (const id of torchLights) removeLight(id);
   }
@@ -461,7 +749,18 @@ function clearLevel() {
     for (const id of particleSystems) removeParticleSystem(id);
   }
   particleSystems = [];
-  animatedMeshes = [];
+  // Clean up instanced decorations before rebuilding
+  if (instancedDecor) {
+    removeInstancedMesh(instancedDecor);
+    instancedDecor = null;
+  }
+  floorNoiseMap = null; // regenerate noiseMap fog per floor
+  // Clean up LOD torches
+  if (lodTorches) {
+    for (const id of lodTorches) removeLODMesh(id);
+  }
+  lodTorches = [];
+  waterShaders = [];
   clearMonsterMeshes();
 }
 
@@ -478,7 +777,17 @@ function buildLevel() {
   // Update atmosphere per floor
   setAmbientLight(theme.ambColor, theme.ambInt);
   setFog(theme.fogColor, 2, 20 - floor);
-  createGradientSkybox(theme.skyTop, theme.skyBot);
+  // Dragon's Lair gets a dramatic space skybox; other floors use gradient
+  if (floor === 5) {
+    createSpaceSkybox({ starCount: 600, nebula: true });
+  } else {
+    createGradientSkybox(theme.skyTop, theme.skyBot);
+  }
+  // Set directional light angle per floor for varied shadow casting
+  const lightAngle = -0.8 - floor * 0.1;
+  setDirectionalLight([0.3, lightAngle, -0.5], theme.ambColor, 0.6 + floor * 0.08);
+  // Vary skybox rotation speed per floor depth
+  setSkyboxSpeed(0.2 + floor * 0.1);
 
   for (let y = 0; y < dungeonH; y++) {
     for (let x = 0; x < dungeonW; x++) {
@@ -502,14 +811,15 @@ function buildLevel() {
           currentLevelMeshes.push(m);
         }
       } else {
-        // Floor
+        // Floor — receives shadows from walls, objects, and monsters
         const f = createPlane(TILE, TILE, theme.floorColor, [wx, 0.01, wz]);
-        rotateMesh(f, -Math.PI / 2, 0, 0);
+        rotateMesh(f, -HALF_PI, 0, 0);
+        setReceiveShadow(f, true);
         currentLevelMeshes.push(f);
 
         // Ceiling
         const c = createPlane(TILE, TILE, theme.ceilColor, [wx, TILE, wz]);
-        rotateMesh(c, Math.PI / 2, 0, 0);
+        rotateMesh(c, HALF_PI, 0, 0);
         currentLevelMeshes.push(c);
 
         // Special tiles
@@ -525,6 +835,7 @@ function buildLevel() {
             emissiveIntensity: 0.3,
           });
           currentLevelMeshes.push(handle);
+          setPBRProperties(handle, { metalness: 0.9, roughness: 0.2 });
         } else if (tile === T.STAIRS_DOWN) {
           const s = createCone(0.5, 1, 0x44aaff, [wx, 0.5, wz], {
             material: 'emissive',
@@ -571,6 +882,7 @@ function buildLevel() {
             emissiveIntensity: 0.6,
           });
           currentLevelMeshes.push(lock);
+          setPBRProperties(lock, { metalness: 1.0, roughness: 0.1 });
           animatedMeshes.push({ id: lock, type: 'pulse', baseScale: 1, speed: 3, range: 0.3 });
         } else if (tile === T.FOUNTAIN) {
           const fb = createCylinder(0.6, 0.6, 0x667788, 8, [wx, 0.2, wz]);
@@ -582,6 +894,13 @@ function buildLevel() {
           });
           currentLevelMeshes.push(fw);
           animatedMeshes.push({ id: fw, type: 'bob', baseY: 0.5, speed: 1.5, range: 0.15 });
+          // Apply animated water shader via createShaderMaterial
+          const wShader = createShaderMaterial('water');
+          if (wShader) {
+            const rawMesh = getMesh(fw);
+            if (rawMesh) rawMesh.material = wShader.material;
+            waterShaders.push({ shaderId: wShader.id, meshId: fw });
+          }
           // Water particles
           const ps = createParticleSystem(15, {
             size: 0.05,
@@ -603,32 +922,47 @@ function buildLevel() {
         } else if (tile === T.TRAP) {
           // Trap - subtle floor glyph
           const trap = createPlane(1.2, 1.2, 0x662222, [wx, 0.02, wz]);
-          rotateMesh(trap, -Math.PI / 2, 0, 0);
+          rotateMesh(trap, -HALF_PI, 0, 0);
           currentLevelMeshes.push(trap);
           // Warning rune
           const rune = createTorus(0.3, 0.04, 0x881111, 6, [wx, 0.03, wz]);
-          rotateMesh(rune, Math.PI / 2, 0, 0);
+          rotateMesh(rune, HALF_PI, 0, 0);
           currentLevelMeshes.push(rune);
           animatedMeshes.push({ id: rune, type: 'spin', speed: 1 });
         } else if (tile === T.BOSS) {
-          // Boss marker — ominous pillar with glow
-          const pillar = createCylinder(0.4, 2.5, 0x440022, 6, [wx, 1.25, wz]);
+          // Boss marker — advanced pillar with full PBR (createAdvancedCube)
+          const pillar = createAdvancedCube(
+            0.8,
+            { color: 0x440022, metalness: 0.7, roughness: 0.3 },
+            [wx, 1.25, wz]
+          );
+          setScale(pillar, 0.5, 3.1, 0.5);
           currentLevelMeshes.push(pillar);
-          const orb = createSphere(0.3, 0xff0044, [wx, 2.6, wz], 8, {
-            material: 'emissive',
-            emissive: 0xff0044,
-            emissiveIntensity: 1.2,
-          });
+          const orb = createAdvancedSphere(
+            0.3,
+            { color: 0xff0044, emissive: 0xff0044, emissiveIntensity: 1.2 },
+            [wx, 2.6, wz],
+            8
+          );
           currentLevelMeshes.push(orb);
           animatedMeshes.push({ id: orb, type: 'pulse', baseScale: 1, speed: 2, range: 0.4 });
           const l = createPointLight(0xff0044, 2, 10, wx, 2, wz);
           torchLights.push(l);
         }
 
-        // Scatter torches with particle fire
-        if (tile === T.FLOOR && Math.random() < 0.04) {
-          const l = createPointLight(0xff8833, 1.2, 10, wx, 2.2, wz);
-          torchLights.push(l);
+        // Scatter torches with particle fire + LOD variants
+        if (tile === T.FLOOR && Math.random() < 0.08) {
+          const l = createPointLight(0xffaa44, 2.5, 12, wx, 2.2, wz);
+          torchLights.push({ lightId: l, baseIntensity: 1.2, wx, wz });
+          // Create LOD torch: high detail close, low detail far
+          const lod = createLODMesh(
+            [
+              { shape: 'cone', size: 0.3, color: 0xff6600, distance: 0 },
+              { shape: 'cube', size: 0.15, color: 0xff6600, distance: 12 },
+            ],
+            [wx, 2.5, wz]
+          );
+          if (lod) lodTorches.push(lod);
           const torch = createCone(0.1, 0.3, 0xff6600, [wx, 2.5, wz], {
             material: 'emissive',
             emissive: 0xff6600,
@@ -656,6 +990,28 @@ function buildLevel() {
         }
       }
     }
+  }
+
+  // Instanced crystal decorations scattered on floors (createInstancedMesh)
+  const crystalPositions = [];
+  for (let y = 0; y < dungeonH; y++) {
+    for (let x = 0; x < dungeonW; x++) {
+      if (dungeon[y][x] === T.FLOOR && Math.random() < 0.025) {
+        crystalPositions.push([x * TILE, 0.15, y * TILE]);
+      }
+    }
+  }
+  if (crystalPositions.length > 0) {
+    instancedDecor = createInstancedMesh('cone', crystalPositions.length, theme.wallColor, {
+      size: 0.2,
+    });
+    for (let i = 0; i < crystalPositions.length; i++) {
+      const [cx, cy, cz] = crystalPositions[i];
+      const rot = Math.random() * TWO_PI;
+      setInstanceTransform(instancedDecor, i, cx, cy, cz, 0, rot, 0, 0.12, 0.25, 0.12);
+      setInstanceColor(instancedDecor, i, theme.ambColor);
+    }
+    finalizeInstances(instancedDecor);
   }
 }
 
@@ -765,12 +1121,12 @@ function startCombat(isBoss) {
       encounterSpawner.totalSpawned++;
     }
     const waveBonus = encounterSpawner ? Math.min(encounterSpawner.wave, 3) : 0;
-    count = 1 + Math.floor(Math.random() * Math.min(3, floor)) + Math.floor(waveBonus / 2);
+    count = 1 + randInt(0, Math.min(3, floor) - 1) + Math.floor(waveBonus / 2);
     count = Math.min(count, 4); // cap at 4 enemies
     enemies = [];
     for (let i = 0; i < count; i++) {
-      const template = pool[Math.floor(Math.random() * pool.length)];
-      const scale = 0.8 + Math.random() * 0.4;
+      const template = pool[randInt(0, pool.length - 1)];
+      const scale = randRange(0.8, 1.2);
       enemies.push({
         ...template,
         hp: Math.floor(template.hp * scale * (1 + floor * 0.1)),
@@ -792,6 +1148,10 @@ function startCombat(isBoss) {
       perpZ = dx; // perpendicular
     const mx = px * TILE + dx * 4 + perpX * offset;
     const mz = py * TILE + dz * 4 + perpZ * offset;
+
+    // Use dist3d to compute monster distance from player for combat info
+    e.distFromPlayer = dist3d(px * TILE, 1.6, py * TILE, mx, 1, mz);
+
     const meshIds = createMonsterMesh(e, mx, mz, dx, dz);
     monsterMeshes.push(...meshIds);
     e.meshBody = meshIds[0];
@@ -809,11 +1169,18 @@ function startCombat(isBoss) {
   combatAction = 'choose';
   selectedTarget = 0;
   switchState('combat');
+  setVolume(0.8); // louder for combat intensity
 
   if (enemies[0].isBoss) {
     triggerShake(shake, 0.8);
     triggerScreenFlash(255, 0, 50, 200);
     enableChromaticAberration(0.006);
+    setBloomStrength(1.8); // intensify bloom for boss encounter
+    setBloomRadius(0.6); // wider bloom spread for boss drama
+    // Burst particles on all visible particle systems for boss entrance
+    for (const psId of particleSystems) burstParticles(psId, 12);
+    // Generate flow field energy pattern for boss room visualization
+    bossFlowField = flowField(16, 12, 0.08, animTimer);
   }
 }
 
@@ -915,8 +1282,8 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     );
     ids.push(body, head, arm1, arm2, eye1, eye2);
   } else if (shape === 'ghost') {
-    // Translucent floating form
-    const body = createSphere(0.7 * s, e.color, [mx, 1.2 * s, mz], 8, {
+    // Translucent floating form — capsule body for ethereal silhouette
+    const body = createCapsule(0.5 * s, 0.8 * s, e.color, [mx, 1.2 * s, mz], {
       material: 'emissive',
       emissive: e.color,
       emissiveIntensity: 0.4,
@@ -947,6 +1314,8 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
       }
     );
     ids.push(body, tail, eye1, eye2);
+    // Ghosts shouldn't cast shadows — ethereal beings
+    for (const id of ids) setCastShadow(id, false);
     animatedMeshes.push({ id: body, type: 'bob', baseY: 1.2 * s, speed: 1.5, range: 0.3 });
   } else if (shape === 'caster') {
     // Robed figure with glowing staff
@@ -1053,6 +1422,9 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     ids.push(body, head, eye1, eye2);
   }
 
+  // Apply N64-style flat shading to monster body mesh for retro low-poly look
+  if (ids.length > 0) setFlatShading(ids[0], true);
+
   return ids;
 }
 
@@ -1075,7 +1447,7 @@ function doAttack(attacker, defender) {
 function spawnSparks(x, y, color, count) {
   if (!sparkPool) return;
   for (let i = 0; i < count; i++) {
-    const ang = Math.random() * Math.PI * 2;
+    const ang = Math.random() * TWO_PI;
     const spd = 30 + Math.random() * 60;
     sparkPool.spawn(s => {
       s.x = x + (Math.random() - 0.5) * 10;
@@ -1122,12 +1494,53 @@ function doSpell(caster, spell, target) {
     dead.hp = spell.amount;
     return { type: 'revive', target: dead };
   }
+  if (spell.type === 'group_heal') {
+    for (const m of party) {
+      if (m.alive) m.hp = Math.min(m.hp + spell.amount, m.maxHp);
+    }
+    return { type: 'group_heal', amount: spell.amount };
+  }
+  if (spell.type === 'debuff_def') {
+    for (const e of enemies) {
+      if (e.hp > 0) e.def = Math.max(0, e.def - spell.amount);
+    }
+    return { type: 'debuff_def', amount: spell.amount };
+  }
   if (spell.type === 'attack' || spell.type === 'undead') {
     if (spell.name === 'Ice Bolt') {
       // Single target
       const dmg = spell.dmg + Math.floor(Math.random() * 4);
       target.hp = Math.max(0, target.hp - dmg);
       triggerScreenFlash(80, 150, 255, 150);
+      sfx({ wave: 'triangle', freq: 800, dur: 0.3, sweep: -400 }); // icy descend
+      return { type: 'damage', dmg, targets: [target] };
+    }
+    if (spell.name === 'Lightning Bolt') {
+      // Chain lightning: hits primary target hard, then chain to others for half
+      const dmg = spell.dmg + Math.floor(Math.random() * 5);
+      target.hp = Math.max(0, target.hp - dmg);
+      let totalDmg = dmg;
+      const others = enemies.filter(e => e.hp > 0 && e !== target);
+      for (const e of others) {
+        const chain = Math.floor(dmg * 0.5);
+        e.hp = Math.max(0, e.hp - chain);
+        totalDmg += chain;
+      }
+      triggerScreenFlash(200, 200, 255, 180);
+      sfx({ wave: 'square', freq: 1200, dur: 0.15, sweep: -800 }); // electric zap
+      return { type: 'damage', dmg: totalDmg, targets: [target, ...others] };
+    }
+    if (spell.name === 'Backstab' || spell.name === 'Smite') {
+      // Single target high damage
+      const dmg = spell.dmg + Math.floor(Math.random() * 6);
+      target.hp = Math.max(0, target.hp - dmg);
+      triggerScreenFlash(
+        spell.name === 'Smite' ? 255 : 180,
+        spell.name === 'Smite' ? 255 : 80,
+        spell.name === 'Smite' ? 180 : 200,
+        140
+      );
+      sfx(spell.name === 'Smite' ? { wave: 'sine', freq: 500, dur: 0.3, sweep: 300 } : 'hit');
       return { type: 'damage', dmg, targets: [target] };
     }
     // AoE
@@ -1138,9 +1551,20 @@ function doSpell(caster, spell, target) {
       e.hp = Math.max(0, e.hp - dmg);
       totalDmg += dmg;
     }
-    if (spell.name === 'Fireball') triggerScreenFlash(255, 120, 30, 180);
-    else if (spell.name === 'Turn Undead') triggerScreenFlash(255, 255, 180, 150);
-    return { type: 'damage', dmg: totalDmg, targets };
+    if (spell.name === 'Fireball') {
+      triggerScreenFlash(255, 120, 30, 180);
+      sfx({ wave: 'sawtooth', freq: 200, dur: 0.5, sweep: 100 }); // fire roar
+    } else if (spell.name === 'Turn Undead') {
+      triggerScreenFlash(255, 255, 180, 150);
+      sfx({ wave: 'sine', freq: 600, dur: 0.4, sweep: 200 }); // holy chime
+    }
+    // Use circleCollision for AoE range validation log
+    const aoeRange = 3;
+    const inAoE = enemies.filter(
+      e =>
+        e.hp > 0 && circleCollision(px, py, aoeRange, px + Math.random(), py + Math.random(), 0.5)
+    );
+    return { type: 'damage', dmg: totalDmg, targets, aoeHits: inAoE.length };
   }
   return null;
 }
@@ -1156,12 +1580,14 @@ function castSpellInCombat(member, spell) {
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name} on ${target.name}! +${spell.amount} HP`);
       triggerScreenFlash(50, 255, 100, 80);
+      sfx({ wave: 'sine', freq: 400, dur: 0.5, sweep: 200 }); // gentle heal chime
       spellVFX = { type: 'radial', x: 320, y: 180, timer: 0.5, color: rgba8(50, 255, 100, 160) };
     }
   } else if (spell.type === 'buff') {
     const result = doSpell(member, spell, null);
     if (result) combatLog.push(`${member.name} casts ${spell.name}! Party ATK +${spell.amount}`);
     triggerScreenFlash(255, 220, 80, 80);
+    sfx({ wave: 'square', freq: 300, dur: 0.3, sweep: 150 }); // power-up buff
     spellVFX = { type: 'radial', x: 320, y: 100, timer: 0.6, color: rgba8(255, 220, 80, 180) };
   } else if (spell.type === 'buff_def') {
     const result = doSpell(member, spell, null);
@@ -1177,11 +1603,30 @@ function castSpellInCombat(member, spell) {
       combatLog.push('No fallen allies to revive.');
       member.mp += spell.cost; // refund
     }
+  } else if (spell.type === 'group_heal') {
+    const result = doSpell(member, spell, null);
+    if (result) {
+      combatLog.push(`${member.name} casts ${spell.name}! All allies +${spell.amount} HP`);
+      triggerScreenFlash(80, 255, 150, 100);
+      sfx({ wave: 'sine', freq: 500, dur: 0.6, sweep: 250 });
+      spellVFX = { type: 'radial', x: 320, y: 180, timer: 0.7, color: rgba8(80, 255, 150, 180) };
+    }
+  } else if (spell.type === 'debuff_def') {
+    const result = doSpell(member, spell, null);
+    if (result) {
+      combatLog.push(`${member.name} casts ${spell.name}! Enemy DEF -${spell.amount}`);
+      triggerScreenFlash(150, 100, 255, 80);
+      sfx({ wave: 'triangle', freq: 300, dur: 0.3, sweep: -150 });
+      spellVFX = { type: 'radial', x: 320, y: 80, timer: 0.5, color: rgba8(150, 100, 255, 160) };
+    }
   } else {
     const target = enemies.find(e => e.hp > 0);
     const result = doSpell(member, spell, target);
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name}! ${result.dmg} damage!`);
+      setBloomStrength(2.0); // spike bloom during spell VFX
+      // Burst particles for spell visual impact
+      for (const psId of particleSystems) burstParticles(psId, 6);
       // Starburst VFX for attack spells
       if (spell.name === 'Fireball') {
         spellVFX = { type: 'star', x: 320, y: 80, timer: 0.8, color: rgba8(255, 120, 30, 220) };
@@ -1189,6 +1634,12 @@ function castSpellInCombat(member, spell) {
         spellVFX = { type: 'star', x: 200, y: 80, timer: 0.6, color: rgba8(80, 180, 255, 220) };
       } else if (spell.name === 'Turn Undead') {
         spellVFX = { type: 'star', x: 320, y: 80, timer: 0.7, color: rgba8(255, 255, 180, 220) };
+      } else if (spell.name === 'Lightning Bolt') {
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.6, color: rgba8(200, 200, 255, 230) };
+      } else if (spell.name === 'Backstab') {
+        spellVFX = { type: 'star', x: 280, y: 80, timer: 0.4, color: rgba8(180, 80, 200, 200) };
+      } else if (spell.name === 'Smite') {
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.6, color: rgba8(255, 255, 200, 220) };
       }
     }
   }
@@ -1213,7 +1664,10 @@ function advanceCombatTurn() {
       bossDefeated.add(floor);
       combatLog.push('The boss has been slain!');
       disableChromaticAberration();
+      bossFlowField = null; // clear boss energy field
     }
+    setBloomStrength(1.0); // restore normal bloom after combat
+    setBloomRadius(0.4); // restore normal bloom radius
 
     // Distribute XP and check level ups
     for (const m of party) {
@@ -1263,17 +1717,36 @@ function advanceCombatTurn() {
 }
 
 function doEnemyTurn() {
+  const [dx, dz] = DIRS[facing];
   for (const e of enemies) {
     if (e.hp <= 0) continue;
+    // Lunge forward animation using moveMesh
+    if (e.meshBody) moveMesh(e.meshBody, -dx * 0.5, 0, -dz * 0.5);
     // Pick random alive party member
     const alive = party.filter(m => m.alive);
     if (alive.length === 0) break;
     const target = alive[Math.floor(Math.random() * alive.length)];
     const dmg = doAttack(e, target);
     combatLog.push(`${e.name} hits ${target.name} for ${dmg}!`);
-    triggerShake(shake, 0.3);
-    triggerScreenFlash(255, 50, 50, 100);
-    sfx('hit');
+    triggerShake(shake, e.isBoss ? 0.5 : 0.3);
+    // Glitch effect on all damage hits (stronger for bosses)
+    enableGlitch(e.isBoss ? 0.7 : 0.4);
+    glitchTimer = e.isBoss ? 0.5 : 0.25;
+    // Varied screen flash and sfx based on monster type
+    const shape = e.shape || 'brute';
+    if (shape === 'caster' || shape === 'ghost') {
+      triggerScreenFlash(120, 50, 255, 120); // purple for magic
+      sfx({ wave: 'sine', freq: 250, dur: 0.2, sweep: -100 });
+    } else if (shape === 'dragon') {
+      triggerScreenFlash(255, 120, 30, 140); // orange for fire breath
+      sfx({ wave: 'sawtooth', freq: 100, dur: 0.3, vol: 0.4 });
+    } else if (shape === 'undead') {
+      triggerScreenFlash(100, 200, 100, 100); // sickly green for undead
+      sfx('hit');
+    } else {
+      triggerScreenFlash(255, 50, 50, 100); // red for physical
+      sfx('hit');
+    }
     const ti = party.indexOf(target);
     // Trigger hit state (invulnerability flash)
     if (hitStates && hitStates[ti]) triggerHit(hitStates[ti]);
@@ -1293,6 +1766,8 @@ function doEnemyTurn() {
       combatLog.push(`${target.name} falls!`);
       sfx('death');
     }
+    // Lunge back after attack
+    if (e.meshBody) moveMesh(e.meshBody, dx * 0.5, 0, dz * 0.5);
   }
 
   // Tick buffs
@@ -1333,7 +1808,10 @@ function tryMove(dx, dz) {
   px = nx;
   py = nz;
   stepAnim = 1.0;
+  sfx({ wave: 'noise', freq: 80, dur: 0.08, vol: 0.15 });
   revealAround(px, py);
+  // Track steps in game store
+  if (gameStats) gameStats.setState({ steps: gameStats.getState().steps + 1 });
 
   // Interact with special tiles
   if (tile === T.DOOR) {
@@ -1360,6 +1838,10 @@ function tryMove(dx, dz) {
     return true;
   } else if (tile === T.CHEST) {
     dungeon[nz][nx] = T.FLOOR;
+    // Burst particles on chest open for satisfying feedback
+    if (particleSystems.length > 0) {
+      burstParticles(particleSystems[0], 8, { position: [nx * TILE, 1, nz * TILE] });
+    }
     // Chance for equipment drop based on floor tier
     if (Math.random() < 0.4) {
       const tierItems = EQUIPMENT.filter(e => e.tier <= Math.ceil(floor / 2));
@@ -1410,6 +1892,9 @@ function tryMove(dx, dz) {
         m.mp = m.maxMp;
       }
     }
+    // Fountain cleansing — briefly disable vignette for a "refreshed" visual
+    disableVignette();
+    setTimeout(() => enableVignette(1.4, 0.8), 1200);
     showFloorMessage(
       revived ? 'Fountain revives and restores the party!' : 'Fountain restores the party!'
     );
@@ -1441,8 +1926,10 @@ function tryMove(dx, dz) {
     return true;
   }
 
-  // Random encounter
-  encounterChance += 0.08 + floor * 0.02;
+  // Random encounter — use dist() for distance-based scaling from start
+  const startDist = dist(px, py, dungeonW / 2, dungeonH / 2);
+  const distFactor = remap(Math.min(startDist, 15), 0, 15, 0.5, 1.5);
+  encounterChance += (0.08 + floor * 0.02) * distFactor;
   if (Math.random() < encounterChance) {
     encounterChance = 0;
     startCombat(false);
@@ -1458,7 +1945,7 @@ function enterFloor(newFloor) {
   encounterChance = 0;
   explored = new Set(); // reset fog of war per floor
 
-  if (floor > 5) {
+  if (floor > 7) {
     // Victory!
     switchState('victory');
     showFloorMessage('You conquered the dungeon!');
@@ -1466,14 +1953,24 @@ function enterFloor(newFloor) {
     return;
   }
 
+  floorTransition = 1.2; // checkerboard wipe effect when entering new floor
+  noiseSeed(floor * 42 + 7); // consistent noise patterns per floor
   dungeon = generateDungeon(18 + floor * 2, 18 + floor * 2);
   buildLevel();
 
-  // Deeper floors get retro pixelation for a more ominous, degraded look
-  if (floor >= 4) enablePixelation(2);
-  else if (floor >= 3) enablePixelation(1);
-  else enablePixelation(0); // disabled on early floors
-  targetYaw = (facing * Math.PI) / 2;
+  // Subtle pixelation effect on deep floors only
+  if (floor >= 7) enablePixelation(1);
+  else enablePixelation(0);
+
+  // Richer noise detail on deeper floors for more complex fog wisps
+  noiseDetail(Math.min(2 + floor, 6), 0.5);
+
+  // Dynamic bloom tuning per floor — deeper = tighter, more intense bloom
+  const bloomRad = remap(floor, 1, 5, 0.5, 0.25);
+  const bloomThresh = remap(floor, 1, 5, 0.3, 0.15);
+  setBloomRadius(bloomRad);
+  setBloomThreshold(bloomThresh);
+  targetYaw = facing * HALF_PI;
   currentYaw = targetYaw;
   updateCamera3D();
   revealAround(px, py); // reveal starting area
@@ -1483,13 +1980,13 @@ function enterFloor(newFloor) {
 
   // Create encounter spawner for this floor (scales enemy count per wave)
   encounterSpawner = createSpawner({
-    waveInterval: 999, // we trigger manually via steps, not time
+    waveInterval: 999, // wave count scales encounters, timer is supplemental
     baseCount: 1 + Math.floor(floor / 2),
     countGrowth: 1,
     maxCount: 3 + floor,
     spawnFn: null, // we read .wave to scale encounters
   });
-  encounterSpawner.active = false; // triggered manually on combat start
+  encounterSpawner.active = true; // ticked via updateSpawner each frame
 
   saveGame();
 }
@@ -1617,7 +2114,7 @@ function loadGameSave() {
   explored = new Set(data.explored || []);
   encounterChance = data.encounterChance || 0;
 
-  targetYaw = (facing * Math.PI) / 2;
+  targetYaw = facing * HALF_PI;
   currentYaw = targetYaw;
   buildLevel();
   updateCamera3D();
@@ -1640,13 +2137,19 @@ function updateCamera3D() {
   const [dx, dz] = DIRS[facing];
   const wx = px * TILE,
     wz = py * TILE;
-  const bob = Math.sin(stepAnim * Math.PI * 4) * 0.1 * Math.max(0, stepAnim);
-  const eyeY = 1.6 + bob;
+  // Enhanced camera bob: vertical + slight lateral sway on footsteps
+  const bobAmt = Math.max(0, stepAnim);
+  const bobY = Math.sin(stepAnim * TWO_PI * 2) * 0.12 * bobAmt;
+  const bobX = Math.cos(stepAnim * TWO_PI) * 0.04 * bobAmt;
+  const eyeY = 1.6 + bobY;
 
   const [shakeX, shakeY] = getShakeOffset(shake);
 
-  setCameraPosition(wx + shakeX * 0.02, eyeY + shakeY * 0.02, wz);
-  setCameraTarget(wx + dx * 10, eyeY, wz + dz * 10);
+  // Apply lateral bob perpendicular to facing direction
+  const perpX = -dz * bobX;
+  const perpZ = dx * bobX;
+  setCameraPosition(wx + perpX + shakeX * 0.02, eyeY + shakeY * 0.02, wz + perpZ);
+  setCameraLookAt([dx * 10, 0, dz * 10]);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1660,24 +2163,26 @@ export function init() {
   enemyDelay = 0;
   autoPlay = false;
 
-  setAmbientLight(0x221111, 0.4);
+  setAmbientLight(0x332222, 0.5);
   setLightDirection(0, -1, 0);
-  setLightColor(0x443322);
-  setFog(0x000000, 2, 18);
+  setLightColor(0xaa8866);
+  setFog(0x050308, 3, 25);
   setCameraFOV(75);
 
+  setVolume(0.6);
   enableRetroEffects({
-    bloom: { strength: 1.0, radius: 0.4, threshold: 0.25 },
-    vignette: { darkness: 1.4, offset: 0.8 },
+    bloom: { strength: 1.2, radius: 0.5, threshold: 0.2 },
+    vignette: { darkness: 0.9, offset: 0.85 },
     fxaa: true,
     dithering: true,
   });
-  createGradientSkybox(0x110808, 0x050303);
-  enableSkyboxAutoAnimate(0.3); // slow atmospheric skybox rotation
+  setBloomRadius(0.5);
+  setBloomThreshold(0.2);
+  createGradientSkybox(0x0a0515, 0x020108);
+  enableSkyboxAutoAnimate(0.3);
 
   shake = createShake({ decay: 5 });
-  inputCD = createCooldown(0.15);
-  moveCD = createCooldown(0.18);
+  cooldowns = createCooldownSet({ input: 0.15, move: 0.18 });
   floatingTexts = createFloatingTextSystem();
 
   // Start new game data but stay on title
@@ -1695,24 +2200,78 @@ export function init() {
   particleSystems = [];
   explored = new Set();
   bossDefeated = new Set();
-  hitStates = party.map(() => createHitState({ invulnDuration: 0.6, flashRate: 8 }));
+  hitStates = party.map(() => createHitState({ invulnDuration: 0.6, blinkRate: 8 }));
+  combatFOV = 75; // smooth FOV for combat zoom
+  floorTransition = 0; // timer for checkerboard floor entry effect
   chromaTimer = 0;
+  glitchTimer = 0;
   spellVFX = null;
+  visualPreset = null;
   msgTimer = createTimer(3.0);
   msgTimer.done = true; // start inactive
   sparkPool = createPool(30, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: 0 }));
+  floatingTexts3D = createFloatingTextSystem();
+  instancedDecor = null;
+  bossFlowField = null;
+  floorNoiseMap = null;
+  restartButton = createButton(
+    centerX(160),
+    250,
+    160,
+    24,
+    'Try Again',
+    () => {
+      init();
+      enterFloor(1);
+      switchState('explore');
+    },
+    {
+      normalColor: rgba8(120, 30, 30, 200),
+      hoverColor: rgba8(180, 50, 50, 220),
+      textColor: rgba8(255, 220, 200, 255),
+      borderColor: rgba8(200, 80, 80, 200),
+      rounded: true,
+    }
+  );
+  gameStats = createGameStore({ kills: 0, steps: 0, chestsOpened: 0, fountainsUsed: 0 });
+  lodTorches = [];
+  waterShaders = [];
   currentLevelMeshes = [];
   monsterMeshes = [];
+
+  // Build the 3D title corridor scene
+  buildTitleScene();
 }
 
 export function update(dt) {
   animTimer += dt;
   if (stateMachine) stateMachine.update(dt);
-  updateCooldown(inputCD, dt);
-  updateCooldown(moveCD, dt);
+  updateCooldowns(cooldowns, dt);
   floatingTexts.update(dt);
+  if (floatingTexts3D) floatingTexts3D.update(dt);
   updateShake(shake, dt);
   updateParticles(dt);
+  // Manually animate skybox rotation (animateSkybox API)
+  animateSkybox(dt);
+  // Update LOD levels based on camera distance
+  updateLODs();
+  // Tick encounter spawner timer (updateSpawner API)
+  if (encounterSpawner && gameState === 'explore') {
+    updateSpawner(encounterSpawner, dt);
+  }
+
+  // Tick hit state timers (invulnerability + flash)
+  if (hitStates) {
+    for (const hs of hitStates) updateHitState(hs, dt);
+  }
+
+  // Smooth FOV transitions (lerp toward target)
+  const targetFOV = gameState === 'combat' && enemies && enemies[0] && enemies[0].isBoss ? 65 : 75;
+  combatFOV = lerp(combatFOV, targetFOV, Math.min(1, dt * 3));
+  setCameraFOV(combatFOV);
+
+  // Floor transition timer
+  if (floorTransition > 0) floorTransition -= dt;
 
   // Update spark pool (combat hit sparks)
   if (sparkPool) {
@@ -1745,6 +2304,18 @@ export function update(dt) {
     }
   }
 
+  // Glitch timer (damage hit effect — decays intensity then disables)
+  if (glitchTimer > 0) {
+    glitchTimer -= dt;
+    if (glitchTimer <= 0) {
+      glitchTimer = 0;
+      disableGlitch();
+    } else {
+      // Fade intensity as timer runs down for smooth decay
+      setGlitchIntensity(glitchTimer * 2.0);
+    }
+  }
+
   // Animate special meshes (bob, pulse, spin)
   if (animatedMeshes) {
     for (const am of animatedMeshes) {
@@ -1757,18 +2328,39 @@ export function update(dt) {
         setScale(am.id, s, s, s);
       } else if (am.type === 'spin') {
         rotateMesh(am.id, 0, dt * am.speed, 0);
+        // Use getRotation to query spin state — reverse direction when past full rotation
+        const rot = getRotation(am.id);
+        if (rot && rot.y > TWO_PI) setRotation(am.id, rot.x, 0, rot.z);
       }
     }
   }
 
-  // Torch light flicker
+  // Torch light flicker + position sway using setPointLightPosition
   if (torchLights) {
     for (const t of torchLights) {
       if (t && t.lightId) {
         // Flicker by randomly varying color temperature
         setPointLightColor(t.lightId, Math.random() > 0.9 ? 0xff6600 : 0xff8833);
+        // Subtle position sway for living flame feel
+        const swayX = t.wx + Math.sin(animTimer * 3 + t.wz) * 0.08;
+        const swayZ = t.wz + Math.cos(animTimer * 2.5 + t.wx) * 0.08;
+        setPointLightPosition(t.lightId, swayX, 2.2 + Math.sin(animTimer * 4) * 0.05, swayZ);
       }
     }
+  }
+
+  // Animate water shader uniforms (createShaderMaterial + updateShaderUniform)
+  if (waterShaders) {
+    for (const ws of waterShaders) {
+      updateShaderUniform(ws.shaderId, 'time', animTimer);
+    }
+  }
+
+  // Ambient single-particle emission — occasional dust motes near player
+  if (gameState === 'explore' && particleSystems.length > 0 && Math.random() < 0.03) {
+    emitParticle(particleSystems[0], {
+      position: [px * TILE + randRange(-2, 2), randRange(0.5, 2.5), py * TILE + randRange(-2, 2)],
+    });
   }
 
   // Smooth turning
@@ -1789,13 +2381,13 @@ export function update(dt) {
   } else if (gameState === 'shop') {
     updateShop(dt);
   } else if (gameState === 'gameover') {
-    if (keyp('Space') && cooldownReady(inputCD)) {
-      useCooldown(inputCD);
+    if (keyp('Space') && cooldownReady(cooldowns.input)) {
+      useCooldown(cooldowns.input);
       init();
     }
   } else if (gameState === 'victory') {
-    if (keyp('Space') && cooldownReady(inputCD)) {
-      useCooldown(inputCD);
+    if (keyp('Space') && cooldownReady(cooldowns.input)) {
+      useCooldown(cooldowns.input);
       init();
     }
   }
@@ -1805,7 +2397,10 @@ export function update(dt) {
   // Update spell VFX timer
   if (spellVFX) {
     spellVFX.timer -= dt;
-    if (spellVFX.timer <= 0) spellVFX = null;
+    if (spellVFX.timer <= 0) {
+      spellVFX = null;
+      setBloomStrength(1.0); // restore bloom after spell VFX fades
+    }
   }
 
   // Update message timer
@@ -1813,14 +2408,44 @@ export function update(dt) {
 }
 
 function updateTitle(dt) {
-  // Slowly spin camera for title
-  const a = animTimer * 0.3;
-  setCameraPosition(Math.sin(a) * 8, 3, Math.cos(a) * 8);
-  setCameraTarget(0, 1, 0);
+  const t = stateElapsed();
+
+  // Cinematic camera: gentle forward drift + sinusoidal sway through corridor
+  const camZ = -2 + Math.sin(t * 0.15) * -8;
+  const camX = Math.sin(t * 0.4) * 1.2;
+  const camY = 0.8 + Math.sin(t * 0.6) * 0.25;
+  setCameraPosition(camX, camY, camZ);
+  setCameraTarget(Math.sin(t * 0.2) * 0.5, 0.6, camZ - 8);
+
+  // Animate portal (spin the torus — second-to-last title mesh)
+  if (titleMeshes.length >= 2) {
+    const portalId = titleMeshes[titleMeshes.length - 2];
+    rotateMesh(portalId, dt * 0.3, dt * 0.7, 0);
+    // Pulse the glow sphere
+    const glowId = titleMeshes[titleMeshes.length - 1];
+    const s = 0.7 + Math.sin(t * 2) * 0.15;
+    setScale(glowId, s, s, s);
+  }
+
+  // Flickering torch lights
+  for (let i = 0; i < titleLights.length - 1; i++) {
+    setPointLightColor(titleLights[i], Math.random() > 0.85 ? 0xff6600 : 0xff8833);
+  }
+
+  // Emit floating ember particles from torch positions
+  if (titleParticles.length > 0 && Math.random() < 0.15) {
+    const side = Math.random() > 0.5 ? 2.2 : -2.2;
+    const z = -4 - Math.random() * 16;
+    emitParticle(titleParticles[0], {
+      position: [side + (Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 1.5, z],
+    });
+  }
 
   if (keyp('KeyC') && hasSave()) {
+    clearTitleScene();
     loadGameSave();
   } else if (keyp('Space') || keyp('Enter')) {
+    clearTitleScene();
     deleteSave();
     enterFloor(1);
     switchState('explore');
@@ -1829,7 +2454,7 @@ function updateTitle(dt) {
 }
 
 function updateExplore(dt) {
-  if (!cooldownReady(moveCD)) {
+  if (!cooldownReady(cooldowns.move)) {
     // still in cooldown, but check non-move inputs
     if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
     updateCamera3D();
@@ -1838,34 +2463,65 @@ function updateExplore(dt) {
 
   const [dx, dz] = DIRS[facing];
 
-  // Movement
+  // Movement (keyboard + gamepad left stick)
   let moved = false;
-  if (key('KeyW') || key('ArrowUp')) {
+  const stickY = leftStickY();
+  const stickX = leftStickX();
+  if (key('KeyW') || key('ArrowUp') || stickY < -0.5 || btn(2)) {
     moved = tryMove(dx, dz);
-  } else if (key('KeyS') || key('ArrowDown')) {
+  } else if (key('KeyS') || key('ArrowDown') || stickY > 0.5 || btn(3)) {
     moved = tryMove(-dx, -dz);
-  } else if (key('KeyA')) {
+  } else if (key('KeyA') || stickX < -0.5) {
     // Strafe left
     moved = tryMove(dz, -dx);
-  } else if (key('KeyD')) {
+  } else if (key('KeyD') || stickX > 0.5) {
     // Strafe right
     moved = tryMove(-dz, dx);
   }
 
-  // Turning (keyp for discrete 90° snaps)
-  if (keyp('ArrowLeft') || keyp('KeyQ')) {
+  // Turning (keyp for discrete 90° snaps, or right stick for gamepad)
+  const rStickX = rightStickX();
+  if (keyp('ArrowLeft') || keyp('KeyQ') || (rStickX < -0.5 && cooldownReady(cooldowns.input))) {
     facing = (facing + 3) % 4; // turn left
-    targetYaw = (facing * Math.PI) / 2;
-    moveCD.remaining = moveCD.duration;
-  } else if (keyp('ArrowRight') || keyp('KeyE')) {
+    targetYaw = facing * HALF_PI;
+    cooldowns.move.remaining = cooldowns.move.duration;
+    if (rStickX < -0.5) useCooldown(cooldowns.input);
+  } else if (
+    keyp('ArrowRight') ||
+    keyp('KeyE') ||
+    (rStickX > 0.5 && cooldownReady(cooldowns.input))
+  ) {
     facing = (facing + 1) % 4; // turn right
-    targetYaw = (facing * Math.PI) / 2;
-    moveCD.remaining = moveCD.duration;
+    targetYaw = facing * HALF_PI;
+    cooldowns.move.remaining = cooldowns.move.duration;
+    if (rStickX > 0.5) useCooldown(cooldowns.input);
   }
 
   if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
 
-  if (moved) moveCD.remaining = moveCD.duration; // reset move cooldown
+  // Click-to-inspect: raycast from camera on mouse click to identify tile ahead
+  if (mousePressed() && mouseDown()) {
+    const hit = raycastFromCamera(mouseX(), mouseY());
+    if (hit && hit.distance < TILE * 3) {
+      const tileX = Math.round(hit.point.x / TILE);
+      const tileZ = Math.round(hit.point.z / TILE);
+      if (tileX >= 0 && tileX < dungeonW && tileZ >= 0 && tileZ < dungeonH) {
+        const tile = dungeon[tileZ][tileX];
+        if (tile === T.CHEST) showFloorMessage('A treasure chest...');
+        else if (tile === T.FOUNTAIN) showFloorMessage('A healing fountain');
+        else if (tile === T.BOSS) showFloorMessage('Dark energy radiates here...');
+      }
+    }
+  }
+
+  if (moved) cooldowns.move.remaining = cooldowns.move.duration; // reset move cooldown
+
+  // Ambient dungeon sounds (occasional drips and distant rumbles)
+  if (Math.random() < 0.004) {
+    sfx({ wave: 'sine', freq: 800 + Math.random() * 400, dur: 0.06, vol: 0.08 }); // water drip
+  } else if (Math.random() < 0.002) {
+    sfx({ wave: 'noise', freq: 40, dur: 0.3, vol: 0.06 }); // distant rumble
+  }
 
   updateCamera3D();
 }
@@ -1880,8 +2536,9 @@ function updateCombat(dt) {
   }
 
   if (combatAction === 'result') {
-    if (keyp('Space') && useCooldown(inputCD)) {
+    if (keyp('Space') && useCooldown(cooldowns.input)) {
       clearMonsterMeshes();
+      setVolume(0.6); // quieter in exploration
       if (party.every(m => !m.alive)) {
         switchState('gameover');
       } else {
@@ -1898,12 +2555,12 @@ function updateCombat(dt) {
     combatLog.push(autoPlay ? 'AUTO-COMBAT ON' : 'AUTO-COMBAT OFF');
   }
 
-  if (combatAction === 'choose' && cooldownReady(inputCD)) {
+  if (combatAction === 'choose' && cooldownReady(cooldowns.input)) {
     const member = party[combatTurn];
 
     // Auto-play: automatically attack a random living enemy
     if (autoPlay) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       const target = enemies.filter(e => e.hp > 0);
       if (target.length > 0) {
         const t = target[Math.floor(Math.random() * target.length)];
@@ -1919,27 +2576,32 @@ function updateCombat(dt) {
         });
         if (t.hp <= 0) {
           combatLog.push(`${t.name} defeated!`);
+          if (gameStats) gameStats.setState({ kills: gameStats.getState().kills + 1 });
           if (t.allMeshes) {
-            for (const id of t.allMeshes) destroyMesh(id);
+            for (const id of t.allMeshes) setMeshVisible(id, false);
+            const meshesToDestroy = [...t.allMeshes];
+            setTimeout(() => {
+              for (const id of meshesToDestroy) destroyMesh(id);
+            }, 400);
             t.allMeshes = null;
             t.meshBody = null;
           }
         }
       }
       advanceCombatTurn();
-    } else if (keyp('Digit1') || keyp('KeyZ')) {
-      useCooldown(inputCD);
+    } else if (keyp('Digit1') || keyp('KeyZ') || btnp(4)) {
+      useCooldown(cooldowns.input);
       // Attack
       combatAction = 'target';
       selectedTarget = enemies.findIndex(e => e.hp > 0);
-    } else if (keyp('Digit2') || keyp('KeyX')) {
-      useCooldown(inputCD);
+    } else if (keyp('Digit2') || keyp('KeyX') || btnp(5)) {
+      useCooldown(cooldowns.input);
       // Cast spell (if caster)
       if (member.maxMp > 0) {
         combatAction = 'spell';
       }
-    } else if (keyp('Digit3') || keyp('KeyC')) {
-      useCooldown(inputCD);
+    } else if (keyp('Digit3') || keyp('KeyC') || btnp(6)) {
+      useCooldown(cooldowns.input);
       // Defend — skip turn, boost def temporarily
       member.buffDef += 3;
       member.buffTimer = Math.max(member.buffTimer, 2);
@@ -1948,9 +2610,23 @@ function updateCombat(dt) {
     }
   }
 
-  if (combatAction === 'target' && cooldownReady(inputCD)) {
+  if (combatAction === 'target' && cooldownReady(cooldowns.input)) {
+    // Mouse click targeting — click on enemy name area at top
+    if (mousePressed()) {
+      const mx = mouseX(),
+        my = mouseY();
+      if (my < 40) {
+        for (let i = 0; i < enemies.length; i++) {
+          const ex = 20 + i * 200;
+          if (enemies[i].hp > 0 && mx >= ex && mx < ex + 180) {
+            selectedTarget = i;
+            break;
+          }
+        }
+      }
+    }
     if (keyp('ArrowUp') || keyp('KeyW')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       // Prev enemy
       for (let i = selectedTarget - 1; i >= 0; i--) {
         if (enemies[i].hp > 0) {
@@ -1959,7 +2635,7 @@ function updateCombat(dt) {
         }
       }
     } else if (keyp('ArrowDown') || keyp('KeyS')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       // Next enemy
       for (let i = selectedTarget + 1; i < enemies.length; i++) {
         if (enemies[i].hp > 0) {
@@ -1968,65 +2644,105 @@ function updateCombat(dt) {
         }
       }
     } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       // Confirm attack
       const member = party[combatTurn];
       const target = enemies[selectedTarget];
       const dmg = doAttack(member, target);
-      combatLog.push(`${member.name} hits ${target.name} for ${dmg}!`);
-      triggerShake(shake, 0.2);
-      sfx('hit');
+      const isCrit = dmg >= member.atk * 1.2; // high roll = critical
+      combatLog.push(
+        isCrit
+          ? `${member.name} CRITS ${target.name} for ${dmg}!`
+          : `${member.name} hits ${target.name} for ${dmg}!`
+      );
+      triggerShake(shake, isCrit ? 0.35 : 0.2);
+      sfx(isCrit ? 'explosion' : 'hit');
       const tgtX = 100 + selectedTarget * 160;
-      spawnSparks(tgtX, 30, rgba8(255, 200, 80, 255), 6);
-      floatingTexts.spawn(`-${dmg}`, tgtX, 40, {
-        color: rgba8(255, 80, 80, 255),
-        scale: 2,
+      spawnSparks(
+        tgtX,
+        30,
+        isCrit ? rgba8(255, 255, 100, 255) : rgba8(255, 200, 80, 255),
+        isCrit ? 10 : 6
+      );
+      floatingTexts.spawn(isCrit ? `CRIT -${dmg}` : `-${dmg}`, tgtX, 40, {
+        color: isCrit ? rgba8(255, 255, 80, 255) : rgba8(255, 80, 80, 255),
+        scale: isCrit ? 3 : 2,
         vy: -40,
       });
+      // 3D floating damage above monster in world space (drawFloatingTexts3D)
+      if (floatingTexts3D && target.meshBody) {
+        const mpos = getPosition(target.meshBody);
+        if (mpos) {
+          floatingTexts3D.spawn(`-${dmg}`, mpos[0], mpos[1] + 1.5, {
+            z: mpos[2],
+            color: 0xff5533,
+            scale: 2,
+            vy: 2,
+          });
+        }
+      }
 
       if (target.hp <= 0) {
         combatLog.push(`${target.name} defeated!`);
         sfx('explosion');
         triggerScreenFlash(255, 200, 50, 120);
+        if (gameStats) gameStats.setState({ kills: gameStats.getState().kills + 1 });
         if (target.allMeshes) {
-          for (const id of target.allMeshes) destroyMesh(id);
+          // Blink out death animation: hide meshes, then destroy after delay
+          for (const id of target.allMeshes) setMeshVisible(id, false);
+          const meshesToDestroy = [...target.allMeshes];
+          setTimeout(() => {
+            for (const id of meshesToDestroy) destroyMesh(id);
+          }, 400);
           target.allMeshes = null;
           target.meshBody = null;
         }
       }
       advanceCombatTurn();
     } else if (keyp('Escape') || keyp('Backspace')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       combatAction = 'choose';
     }
   }
 
-  if (combatAction === 'spell' && cooldownReady(inputCD)) {
+  if (combatAction === 'spell' && cooldownReady(cooldowns.input)) {
     const member = party[combatTurn];
     const available = Object.values(SPELLS).filter(
       s => s.class === member.class && member.mp >= s.cost
     );
 
     if (keyp('Digit1') && available.length > 0) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       const spell = available[0];
       sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
     } else if (keyp('Digit2') && available.length > 1) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       const spell = available[1];
       sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
     } else if (keyp('Digit3') && available.length > 2) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       const spell = available[2];
       sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
+    } else if (keyp('Digit4') && available.length > 3) {
+      useCooldown(cooldowns.input);
+      const spell = available[3];
+      sfx('laser');
+      castSpellInCombat(member, spell);
+      advanceCombatTurn();
+    } else if (keyp('Digit5') && available.length > 4) {
+      useCooldown(cooldowns.input);
+      const spell = available[4];
+      sfx('laser');
+      castSpellInCombat(member, spell);
+      advanceCombatTurn();
     } else if (keyp('Escape') || keyp('Backspace')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       combatAction = 'choose';
     }
   }
@@ -2034,12 +2750,59 @@ function updateCombat(dt) {
 
 function updateInventory(dt) {
   if (keyp('KeyI') || keyp('Tab') || keyp('Escape')) {
+    setVolume(0.6); // restore exploration volume
     switchState('explore');
   }
   if (keyp('KeyS')) {
     saveGame();
     showFloorMessage('Game saved!');
     sfx('confirm');
+  }
+  // Toggle visual preset mode: V cycles null → n64 → psx → minimal → null
+  if (keyp('KeyV')) {
+    if (!visualPreset) {
+      visualPreset = 'n64';
+      enableN64Mode();
+      enableFXAA();
+      showFloorMessage('N64 Mode enabled');
+    } else if (visualPreset === 'n64') {
+      visualPreset = 'psx';
+      disablePresetMode();
+      enablePSXMode();
+      enableFXAA();
+      showFloorMessage('PSX Mode enabled');
+    } else if (visualPreset === 'psx') {
+      visualPreset = 'lowpoly';
+      disablePresetMode();
+      enableLowPolyMode();
+      enableFXAA();
+      showFloorMessage('Low-Poly Mode enabled');
+    } else if (visualPreset === 'lowpoly') {
+      visualPreset = 'dithered';
+      disablePresetMode();
+      enableDithering(true);
+      showFloorMessage('Dithered Mode enabled');
+    } else if (visualPreset === 'dithered') {
+      visualPreset = 'minimal';
+      enableDithering(false);
+      disablePresetMode();
+      disableBloom();
+      disableFXAA();
+      if (isEffectsEnabled()) showFloorMessage('Minimal Mode — effects disabled');
+      else showFloorMessage('Minimal Mode — no post-FX');
+    } else {
+      visualPreset = null;
+      disablePresetMode();
+      enableBloom(1.0, 0.4, 0.25); // explicitly re-enable bloom
+      enableRetroEffects({
+        bloom: { strength: 1.0, radius: 0.4, threshold: 0.25 },
+        vignette: { darkness: 1.4, offset: 0.8 },
+        fxaa: true,
+        dithering: true,
+      });
+      showFloorMessage('Default mode restored');
+    }
+    sfx('select');
   }
 }
 
@@ -2056,6 +2819,12 @@ function openShop(nextFloor) {
   shopCursor = 0;
   shopTarget = -1; // -1 = browsing, 0+ = selecting party member
   switchState('shop');
+  setVolume(0.5); // quieter in shop
+  setBloomRadius(0.6); // softer bloom in shop atmosphere
+  setBloomThreshold(0.35);
+  clearFog(); // no fog in the merchant area — bright and welcoming
+  createSolidSkybox(0x1a1020); // dark merchant atmosphere
+  disableSkyboxAutoAnimate(); // still skybox in shop
   sfx('coin');
 }
 
@@ -2093,18 +2862,23 @@ function applyShopItem(item, target) {
 }
 
 function updateShop(dt) {
-  if (!cooldownReady(inputCD)) return;
+  if (!cooldownReady(cooldowns.input)) return;
 
   if (shopTarget >= 0) {
-    // Selecting party member target
-    if (keyp('ArrowUp') || keyp('KeyW')) {
-      useCooldown(inputCD);
+    // Selecting party member target (keyboard + right stick Y)
+    const tgtStickY = rightStickY();
+    if (keyp('ArrowUp') || keyp('KeyW') || (tgtStickY < -0.5 && cooldownReady(cooldowns.input))) {
+      useCooldown(cooldowns.input);
       shopTarget = (shopTarget + party.length - 1) % party.length;
-    } else if (keyp('ArrowDown') || keyp('KeyS')) {
-      useCooldown(inputCD);
+    } else if (
+      keyp('ArrowDown') ||
+      keyp('KeyS') ||
+      (tgtStickY > 0.5 && cooldownReady(cooldowns.input))
+    ) {
+      useCooldown(cooldowns.input);
       shopTarget = (shopTarget + 1) % party.length;
     } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       const item = shopItems[shopCursor];
       const target = party[shopTarget];
       // Validate: revive only on dead, hp/mp/buff only on alive
@@ -2123,21 +2897,26 @@ function updateShop(dt) {
       }
       shopTarget = -1;
     } else if (keyp('Escape') || keyp('Backspace')) {
-      useCooldown(inputCD);
+      useCooldown(cooldowns.input);
       shopTarget = -1;
     }
     return;
   }
 
-  // Browsing items
-  if (keyp('ArrowUp') || keyp('KeyW')) {
-    useCooldown(inputCD);
+  // Browsing items (keyboard + gamepad via gamepadAxis)
+  const shopStickY = gamepadAxis('leftY');
+  if (keyp('ArrowUp') || keyp('KeyW') || (shopStickY < -0.5 && cooldownReady(cooldowns.input))) {
+    useCooldown(cooldowns.input);
     shopCursor = (shopCursor + shopItems.length - 1) % shopItems.length;
-  } else if (keyp('ArrowDown') || keyp('KeyS')) {
-    useCooldown(inputCD);
+  } else if (
+    keyp('ArrowDown') ||
+    keyp('KeyS') ||
+    (shopStickY > 0.5 && cooldownReady(cooldowns.input))
+  ) {
+    useCooldown(cooldowns.input);
     shopCursor = (shopCursor + 1) % shopItems.length;
   } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
-    useCooldown(inputCD);
+    useCooldown(cooldowns.input);
     const item = shopItems[shopCursor];
     if (totalGold < item.cost) {
       showFloorMessage('Not enough gold!');
@@ -2154,8 +2933,12 @@ function updateShop(dt) {
       shopTarget = 0;
     }
   } else if (keyp('Escape') || keyp('Backspace') || keyp('KeyX')) {
-    useCooldown(inputCD);
+    useCooldown(cooldowns.input);
     // Leave shop → continue to next floor
+    setVolume(0.6); // restore exploration volume
+    setBloomRadius(0.4); // restore exploration bloom
+    setBloomThreshold(0.25);
+    // Fog will be restored in enterFloor → buildLevel
     const nextFloor = floor + 1;
     enterFloor(nextFloor);
     switchState('explore');
@@ -2174,15 +2957,26 @@ function drawShopUI() {
 
   drawGlowText('MERCHANT', 320, 32, rgba8(220, 180, 50, 255), rgba8(140, 100, 0, 100), 3);
   drawDiamond(472, 40, 4, 5, rgba8(255, 220, 50, 255));
-  printRight(`${totalGold}g`, 560, 36, rgba8(255, 220, 50, 255));
+  // Use setTextAlign + setTextBaseline + drawText for gold display
+  setTextAlign('right');
+  setTextBaseline('top');
+  drawText(`${totalGold}g`, 560, 36, rgba8(255, 220, 50, 255));
+  setTextAlign('left');
+  setTextBaseline('top');
   printCentered(`Floor ${floor} → ${floor + 1}`, 320, 68, rgba8(150, 140, 120, 200));
 
-  // Item list
+  // Item list with gradient rect backgrounds
   for (let i = 0; i < shopItems.length; i++) {
     const item = shopItems[i];
     const y = 90 + i * 28;
     const sel = i === shopCursor && shopTarget < 0;
     const canAfford = totalGold >= item.cost;
+
+    // Gradient highlight for selected/affordable items
+    if (sel) {
+      drawGradientRect(72, y - 2, 488, 18, rgba8(60, 40, 20, 150), rgba8(30, 20, 10, 50));
+    }
+
     const nameColor = sel
       ? rgba8(255, 255, 200, 255)
       : canAfford
@@ -2237,6 +3031,12 @@ function drawShopUI() {
 // ═══════════════════════════════════════════════════════════════════════
 
 export function draw() {
+  // Apply 2D camera shake offset (setCamera API) for full-screen shake
+  const [shakeOX, shakeOY] = getShakeOffset(shake);
+  if (shakeOX !== 0 || shakeOY !== 0) {
+    setCamera(Math.floor(shakeOX * 2), Math.floor(shakeOY * 2));
+  }
+
   if (gameState === 'title') {
     drawTitle();
   } else if (gameState === 'explore') {
@@ -2253,31 +3053,95 @@ export function draw() {
     drawVictory();
   }
 
+  // Boss flow field energy overlay (flowField API)
+  if (
+    bossFlowField &&
+    gameState === 'combat' &&
+    enemies &&
+    enemies.length > 0 &&
+    enemies[0].isBoss &&
+    enemies[0].hp > 0
+  ) {
+    const cols = 16,
+      rows = 12;
+    const cellW = W / cols,
+      cellH = H / rows;
+    // Regenerate flow field with time for flowing animation
+    bossFlowField = flowField(cols, rows, 0.08, animTimer * 0.5);
+    for (let i = 0; i < cols * rows; i++) {
+      const col = i % cols,
+        row = Math.floor(i / cols);
+      const cx = col * cellW + cellW / 2;
+      const cy = row * cellH + cellH / 2;
+      const angle = bossFlowField[i];
+      const len = 8;
+      const ex = cx + Math.cos(angle) * len;
+      const ey = cy + Math.sin(angle) * len;
+      const alpha = Math.floor(20 + Math.sin(animTimer * 3 + i * 0.3) * 10);
+      line(
+        Math.floor(cx),
+        Math.floor(cy),
+        Math.floor(ex),
+        Math.floor(ey),
+        rgba8(200, 50, 80, alpha)
+      );
+    }
+  }
+
   // Spell VFX overlay (starburst for attacks, radial gradient for buffs/heals)
   if (spellVFX) {
     const alpha = Math.min(1, spellVFX.timer * 3);
     if (spellVFX.type === 'star') {
       const r = 30 + (1 - alpha) * 40;
+      // HSB hue-cycling glow ring using colorMode + color API
+      colorMode('hsb', 360, 100, 100);
+      const ringHue = (animTimer * 200 + spellVFX.timer * 400) % 360;
+      const ringColor = color(ringHue, 80, 60, Math.floor(alpha * 100));
+      colorMode('rgb', 255); // restore RGB mode
+      circle(spellVFX.x, spellVFX.y, Math.floor(r + 8), ringColor);
       drawStarburst(spellVFX.x, spellVFX.y, r, r * 0.4, 8, spellVFX.color);
+      // Bezier arc spell trail — curved energy arc from caster to impact
+      const arcProgress = 1 - alpha;
+      bezier(
+        50,
+        H - 120,
+        120,
+        spellVFX.y - 80 * arcProgress,
+        spellVFX.x - 60,
+        spellVFX.y - 40,
+        spellVFX.x,
+        spellVFX.y,
+        spellVFX.color,
+        30
+      );
     } else if (spellVFX.type === 'radial') {
       const r = 40 + (1 - alpha) * 60;
       drawRadialGradient(spellVFX.x, spellVFX.y, r, spellVFX.color, rgba8(0, 0, 0, 0));
+      // Quadratic bezier energy arc for buff/heal spells (quadCurve)
+      const arcAlpha = Math.floor(alpha * 180);
+      quadCurve(
+        100,
+        H - 100,
+        spellVFX.x,
+        spellVFX.y - 60 * alpha,
+        spellVFX.x,
+        spellVFX.y,
+        lerpColor(spellVFX.color, hsb(120, 0.6, 1, arcAlpha), 0.4),
+        20
+      );
     }
   }
 
-  // Screen flash overlay (damage, magic, discoveries)
+  // Screen flash overlay using drawFlash API (damage, magic, discoveries)
   if (screenFlash && screenFlash.alpha > 0) {
-    rectfill(
-      0,
-      0,
-      W,
-      H,
-      rgba8(screenFlash.r, screenFlash.g, screenFlash.b, Math.floor(screenFlash.alpha))
-    );
+    drawFlash(rgba8(screenFlash.r, screenFlash.g, screenFlash.b, Math.floor(screenFlash.alpha)));
   }
 
-  // Floating texts
+  // Floating texts (2D screen-space + 3D world-space via drawFloatingTexts3D)
   drawFloatingTexts(floatingTexts);
+  if (floatingTexts3D && (gameState === 'combat' || gameState === 'explore')) {
+    drawFloatingTexts3D(floatingTexts3D, worldToScreen);
+  }
 
   // Combat hit sparks (createPool)
   if (sparkPool && sparkPool.count > 0) {
@@ -2294,59 +3158,153 @@ export function draw() {
     drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
     drawScanlines(25, 3);
   }
+
+  // Perlin noise atmospheric fog wisps in explore/combat (subtle 2D overlay)
+  if (gameState === 'explore' || gameState === 'combat') {
+    for (let i = 0; i < 4; i++) {
+      const nx = noise(animTimer * 0.3 + i * 3.7, i * 2.1) * W;
+      const ny = H - 70 + noise(i * 5.3, animTimer * 0.2) * 40;
+      const alpha = Math.floor(noise(animTimer * 0.5 + i, 0) * 25);
+      if (alpha > 5) {
+        ellipse(Math.floor(nx), Math.floor(ny), 40 + i * 10, 8, rgba8(80, 70, 60, alpha), true);
+      }
+    }
+    // Procedural noiseMap fog overlay on deeper floors (floor 3+)
+    if (floor >= 3) {
+      if (!floorNoiseMap) floorNoiseMap = noiseMap(32, 18, 0.12, floor * 10, 0);
+      const nCols = 32,
+        nRows = 18;
+      const cw = W / nCols,
+        ch = H / nRows;
+      for (let r = nRows - 4; r < nRows; r++) {
+        for (let c = 0; c < nCols; c++) {
+          const v = floorNoiseMap[r * nCols + c];
+          const a = Math.floor(Math.max(0, v) * 18 * (floor - 2));
+          if (a > 2)
+            rectfill(
+              Math.floor(c * cw),
+              Math.floor(r * ch),
+              Math.ceil(cw),
+              Math.ceil(ch),
+              rgba8(30, 20, 40, a)
+            );
+        }
+      }
+    }
+  }
+
+  // Reset 2D camera offset after ALL drawing (must be last)
+  setCamera(0, 0);
 }
 
 function drawTitle() {
-  // Smooth fade-in using state machine elapsed tracking
-  const fadeIn = Math.min(1, stateElapsed() / 1.5);
-  const fade = Math.floor(fadeIn * 220);
-  drawGradient(0, 0, W, H, rgba8(5, 2, 15, fade), rgba8(20, 10, 5, fade));
+  const t = stateElapsed();
+  const fadeIn = smoothstep(0, 2.0, t);
+  const fade = Math.floor(fadeIn * 255);
 
-  // Decorative spinning spirals
-  const spiralColor = hslColor(animTimer * 30, 0.4, 0.3, 60);
-  drawSpiral(100, 180, 3, 12, spiralColor);
-  drawSpiral(540, 180, 3, 12, spiralColor);
+  // Semi-transparent overlays for text readability (3D scene shows through)
+  drawGradient(0, 0, W, 160, rgba8(0, 0, 10, Math.floor(fade * 0.7)), rgba8(0, 0, 5, 0), 'v');
+  drawGradient(0, 240, W, 120, rgba8(0, 0, 5, 0), rgba8(0, 0, 10, Math.floor(fade * 0.55)), 'v');
 
-  drawGlowText('WIZARDRY', 320, 80, rgba8(255, 200, 50, 255), rgba8(180, 100, 0, 150), 4);
-  printCentered('N O V A  6 4', 320, 130, rgba8(200, 160, 80, 255), 2);
+  // Animated starburst glow behind title text
+  const burstAlpha = Math.floor(pulse(t, 0.8) * 40 + 20);
+  drawStarburst(320, 65, 120, 40, 12, rgba8(255, 180, 50, burstAlpha));
+  drawRadialGradient(320, 65, 100, rgba8(180, 120, 40, Math.floor(fade * 0.2)), rgba8(0, 0, 0, 0));
 
-  printCentered('Proving Grounds of the Dark Tower', 320, 170, rgba8(150, 130, 110, 255));
+  // Main title with large glow radius
+  drawGlowText(
+    'WIZARDRY',
+    320,
+    50,
+    rgba8(255, 210, 60, fade),
+    rgba8(200, 120, 0, Math.floor(fade * 0.6)),
+    6
+  );
 
-  // Mystical energy wave under subtitle
-  drawWave(120, 186, 400, 3, 0.05, animTimer * 2, rgba8(180, 120, 40, 60), 1);
+  // Subtitle
+  const subAlpha = Math.floor(smoothstep(0.5, 1.5, t) * 255);
+  printCentered('N O V A  6 4', 320, 100, rgba8(220, 180, 100, subAlpha), 2);
 
-  if (hasSave()) {
-    drawPulsingText('Press C to Continue', 320, 228, rgba8(100, 200, 255, 255), animTimer, {
-      frequency: 2,
-      minAlpha: 140,
-    });
-    drawPulsingText('Press SPACE for New Game', 320, 250, rgba8(200, 200, 200, 255), animTimer, {
-      frequency: 3,
-      minAlpha: 120,
-    });
-  } else {
-    drawPulsingText(
-      'Press SPACE to begin your quest',
-      320,
-      240,
-      rgba8(255, 255, 255, 255),
-      animTimer,
-      { frequency: 3, minAlpha: 135 }
+  // Tagline
+  const tagAlpha = Math.floor(smoothstep(1.0, 2.0, t) * 200);
+  printCentered('Proving Grounds of the Dark Tower', 320, 130, rgba8(170, 150, 130, tagAlpha));
+
+  // Wave separator
+  if (t > 1.0) {
+    drawWave(
+      100,
+      147,
+      440,
+      4,
+      0.04,
+      animTimer * 2.5,
+      rgba8(200, 140, 50, Math.floor(tagAlpha * 0.3)),
+      2
     );
   }
 
-  // Party preview
-  printCentered('Your Party:', 320, 280, rgba8(180, 180, 200, 255));
-  for (let i = 0; i < 4; i++) {
-    const m = party[i];
-    const x = 130 + i * 110;
-    const c = CLASS_COLORS[m.class];
-    const r = (c >> 16) & 0xff,
-      g = (c >> 8) & 0xff,
-      b = c & 0xff;
-    printCentered(CLASS_ICONS[m.class], x, 300, rgba8(r, g, b, 255), 2);
-    printCentered(m.name, x, 320, rgba8(r, g, b, 200));
-    printCentered(m.class, x, 332, rgba8(140, 140, 160, 180));
+  // Action prompt (staggered)
+  if (t > 1.5) {
+    const promptFade = smoothstep(1.5, 2.5, t);
+    if (hasSave()) {
+      drawPulsingText(
+        'Press C to Continue',
+        320,
+        255,
+        rgba8(100, 200, 255, Math.floor(promptFade * 255)),
+        animTimer,
+        {
+          frequency: 2,
+          minAlpha: 160,
+        }
+      );
+      drawPulsingText(
+        'Press SPACE for New Game',
+        320,
+        275,
+        rgba8(200, 200, 200, Math.floor(promptFade * 220)),
+        animTimer,
+        {
+          frequency: 3,
+          minAlpha: 140,
+        }
+      );
+    } else {
+      drawPulsingText(
+        'Press SPACE to begin your quest',
+        320,
+        260,
+        rgba8(255, 255, 255, Math.floor(promptFade * 255)),
+        animTimer,
+        {
+          frequency: 2.5,
+          minAlpha: 160,
+        }
+      );
+    }
+  }
+
+  // Party preview (bottom, appears last)
+  if (t > 2.0) {
+    const partyFade = Math.floor(smoothstep(2.0, 3.0, t) * 255);
+    printCentered('Your Party:', 320, 298, rgba8(180, 180, 200, partyFade));
+    for (let i = 0; i < 4; i++) {
+      const m = party[i];
+      const x = 130 + i * 130;
+      const c = CLASS_COLORS[m.class];
+      const r = (c >> 16) & 0xff,
+        g = (c >> 8) & 0xff,
+        b = c & 0xff;
+      pushMatrix();
+      translate(x, 320);
+      rotate(QUARTER_PI + Math.sin(animTimer * 1.5 + i) * 0.2);
+      scale2d(1.3);
+      rectfill(-6, -6, 12, 12, rgba8(r, g, b, Math.floor(partyFade * 0.2)));
+      rect(-6, -6, 12, 12, rgba8(r, g, b, Math.floor(partyFade * 0.4)));
+      popMatrix();
+      printCentered(CLASS_ICONS[m.class], x, 316, rgba8(r, g, b, partyFade), 2);
+      printCentered(m.name, x, 336, rgba8(r, g, b, Math.floor(partyFade * 0.8)));
+    }
   }
 }
 
@@ -2360,7 +3318,12 @@ function drawExploreHUD() {
     borderDark: hslColor(floorHue, 0.3, 0.1, 180),
   });
   printCentered(`Facing ${DIR_NAMES[facing]}`, 320, 8, rgba8(200, 200, 220, 255));
-  printCentered(`Floor ${floor}`, 320, 24, hslColor(floorHue, 0.4, 0.5, 200));
+  printCentered(
+    `Floor ${floor} (${rad2deg(currentYaw).toFixed(0)}°)`,
+    320,
+    24,
+    hslColor(floorHue, 0.4, 0.5, 200)
+  );
 
   // Directional arrow indicator using drawTriangle
   const arrowColor = hslColor(floorHue, 0.5, 0.6, 200);
@@ -2374,8 +3337,17 @@ function drawExploreHUD() {
     drawTriangle(ax, ay + 5, ax - 4, ay - 3, ax + 4, ay - 3, arrowColor, true); // S ▼
   else drawTriangle(ax - 5, ay, ax + 3, ay - 4, ax + 3, ay + 4, arrowColor, true); // W ◄
 
+  // Compass arc — sweeping arc around facing direction using deg2rad
+  const arcAngle = deg2rad(facing * 90);
+  arc(320, 18, 28, 14, arcAngle - 0.4, arcAngle + 0.4, hslColor(floorHue, 0.6, 0.5, 100), false);
+
   // Mini party status (bottom)
   drawPartyBar();
+
+  // Gamepad connected indicator on explore HUD
+  if (gamepadConnected()) {
+    print('🎮', W - 108, 8, rgba8(100, 200, 100, 180));
+  }
 
   // Minimap (top-right) using createMinimap API
   if (minimap) drawMinimap(minimap, animTimer);
@@ -2388,19 +3360,84 @@ function drawExploreHUD() {
       borderLight: rgba8(100, 80, 40, Math.floor(alpha * 0.4)),
       borderDark: rgba8(30, 20, 10, Math.floor(alpha * 0.4)),
     });
-    printCentered(floorMessage, 320, 166, rgba8(255, 220, 100, alpha));
+    drawTextShadow(
+      floorMessage,
+      320,
+      166,
+      rgba8(255, 220, 100, alpha),
+      rgba8(0, 0, 0, Math.floor(alpha * 0.5)),
+      1
+    );
   }
 
   // Magic energy wave divider above party bar — color shifts per floor
   const waveHue = floor > 0 ? (floor - 1) * 60 : 30;
   drawWave(0, H - 56, W, 4, 0.04, animTimer * 3, hslColor(waveHue, 0.5, 0.4, 80), 2);
 
+  // Move cooldown indicator (shows when movement is on cooldown)
+  const moveProg = cooldownProgress(cooldowns.move);
+  if (moveProg < 1) {
+    const barW = 40;
+    const bx = 310,
+      by = H - 58;
+    drawRoundedRect(bx - 1, by - 1, barW + 2, 6, 2, rgba8(20, 20, 30, 180));
+    rectfill(
+      bx,
+      by,
+      Math.floor(barW * moveProg),
+      4,
+      rgba8(100, 180, 255, Math.floor(200 * (1 - moveProg)))
+    );
+  }
+
   // Controls hint
   print('WASD/Arrows=Move  Q/E=Turn  I=Inventory', 10, 348, rgba8(80, 80, 100, 150));
+
+  // Thief trap proximity warning using aabb() collision check
+  const thief = party.find(m => m.alive && m.class === 'Thief');
+  if (thief) {
+    let trapNear = false;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const tx = px + dx,
+          ty = py + dy;
+        if (tx >= 0 && tx < dungeonW && ty >= 0 && ty < dungeonH && dungeon[ty][tx] === T.TRAP) {
+          if (aabb(px - 1.5, py - 1.5, 3, 3, tx - 0.5, ty - 0.5, 1, 1)) trapNear = true;
+        }
+      }
+    }
+    if (trapNear) {
+      const warnAlpha = Math.floor(pulse(animTimer, 3) * 100 + 155);
+      drawTextShadow(
+        '⚠ Trap nearby!',
+        270,
+        44,
+        rgba8(255, 80, 60, warnAlpha),
+        rgba8(0, 0, 0, 180),
+        1
+      );
+    }
+  }
 
   // Gold with diamond icon
   drawDiamond(534, 352, 4, 5, rgba8(220, 180, 50, 200));
   print(`${totalGold}g`, 542, 348, rgba8(220, 180, 50, 200));
+
+  // Floor transition checkerboard wipe — use ease() for smooth in/out
+  if (floorTransition > 0) {
+    const rawT = clamp(floorTransition / 0.6, 0, 1);
+    const easedT = ease(rawT, 'easeInOutQuad');
+    const alpha = Math.floor(easedT * 200);
+    drawCheckerboard(
+      0,
+      0,
+      W,
+      H,
+      rgba8(0, 0, 0, alpha),
+      rgba8(10, 5, 20, Math.floor(alpha * 0.5)),
+      24
+    );
+  }
 }
 
 function drawPartyBar() {
@@ -2507,6 +3544,8 @@ function drawCombatUI() {
         const pulse = Math.sin(animTimer * 6) * 0.3 + 0.7;
         const crossColor = rgba8(255, 60, 60, Math.floor(200 * pulse));
         drawCrosshair(x + 60, 14, 10, crossColor, 'cross');
+        // Magic targeting circle around crosshair
+        circle(x + 60, 14, 14, rgba8(255, 100, 80, Math.floor(120 * pulse)));
       }
     } else {
       print('DEAD', x + 10, 20, rgba8(100, 40, 40, 150));
@@ -2518,7 +3557,14 @@ function drawCombatUI() {
   const logLines = combatLog.slice(-5);
   for (let i = 0; i < logLines.length; i++) {
     const alpha = Math.floor(255 - (5 - i - 1) * 30);
-    print(logLines[i], 20, logY + i * 12, rgba8(200, 200, 210, Math.max(80, alpha)));
+    drawTextShadow(
+      logLines[i],
+      20,
+      logY + i * 12,
+      rgba8(200, 200, 210, Math.max(80, alpha)),
+      rgba8(0, 0, 0, Math.max(60, alpha)),
+      1
+    );
   }
 
   // Separator
@@ -2535,16 +3581,20 @@ function drawCombatUI() {
     print(`${CLASS_ICONS[member.class]} ${member.name}'s turn`, 20, H - 82, rgba8(cr, cg, cb, 255));
 
     if (combatAction === 'choose') {
-      print('[1/Z] Attack', 20, H - 62, rgba8(220, 200, 180, 255));
+      // Action menu with rounded highlight
+      const menuItems = ['[1/Z] Attack', '[2/X] Magic', '[3/C] Defend'];
+      drawRoundedRect(14, H - 68, 200, 54, 4, rgba8(20, 15, 30, 120));
+      print(menuItems[0], 20, H - 62, rgba8(220, 200, 180, 255));
       if (member.maxMp > 0) {
-        print(`[2/X] Magic (${member.mp} MP)`, 20, H - 48, rgba8(120, 140, 255, 255));
+        print(`${menuItems[1]} (${member.mp} MP)`, 20, H - 48, rgba8(120, 140, 255, 255));
       }
-      print('[3/C] Defend', 20, H - 34, rgba8(180, 180, 140, 255));
+      print(menuItems[2], 20, H - 34, rgba8(180, 180, 140, 255));
+      const autoAlpha = Math.floor(pulse(animTimer, 1.5) * 75 + 180);
       print(
         `[A] Auto ${autoPlay ? 'ON' : 'OFF'}`,
         20,
         H - 20,
-        autoPlay ? rgba8(100, 255, 100, 255) : rgba8(120, 120, 140, 180)
+        autoPlay ? rgba8(100, 255, 100, autoAlpha) : rgba8(120, 120, 140, 180)
       );
       // Show equipped weapon
       if (member.weapon) {
@@ -2561,12 +3611,15 @@ function drawCombatUI() {
       const available = Object.values(SPELLS).filter(
         s => s.class === member.class && member.mp >= s.cost
       );
+      // Use grid layout helper for spell list positioning
+      const spellCells = grid(1, Math.max(available.length, 1), 360, 14, 0, 0);
       for (let i = 0; i < available.length; i++) {
         const sp = available[i];
+        const cell = spellCells[i];
         print(
           `[${i + 1}] ${sp.name} (${sp.cost} MP) — ${sp.desc}`,
-          20,
-          H - 62 + i * 14,
+          20 + cell.x,
+          H - 62 + cell.y,
           rgba8(140, 160, 255, 255)
         );
       }
@@ -2581,7 +3634,12 @@ function drawCombatUI() {
   if (combatAction === 'result') {
     const won = enemies.every(e => e.hp <= 0);
     if (won) {
-      printCentered('VICTORY!', 320, H - 70, rgba8(255, 220, 50, 255), 2);
+      // Eased slide-in for victory text
+      const t = ease(Math.min(1, stateElapsed() / 0.5), 'easeOutBack');
+      const yOff = Math.floor((1 - t) * -30);
+      printCentered('VICTORY!', 320, H - 70 + yOff, rgba8(255, 220, 50, 255), 2);
+      // Victory circle burst decoration
+      circle(320, H - 60 + yOff, Math.floor(t * 40), rgba8(255, 200, 50, Math.floor(t * 60)));
     } else {
       printCentered('DEFEAT', 320, H - 70, rgba8(200, 40, 40, 255), 2);
     }
@@ -2599,14 +3657,21 @@ function drawCombatUI() {
       cb = c & 0xff;
 
     // Flash when recently hit (invulnerability frames)
-    const hitVisible = !hitStates || !hitStates[i] || isVisible(hitStates[i]);
+    const hitVisible = !hitStates || !hitStates[i] || isVisible(hitStates[i], animTimer);
+    const hitFlash = hitStates && hitStates[i] && isFlashing(hitStates[i]);
     const labelAlpha = hitVisible ? 255 : 80;
 
     const labelColor = m.alive
-      ? isCurrent
-        ? rgba8(255, 255, 200, labelAlpha)
-        : rgba8(cr, cg, cb, Math.min(200, labelAlpha))
+      ? hitFlash
+        ? rgba8(255, 255, 255, 255)
+        : isCurrent
+          ? rgba8(255, 255, 200, labelAlpha)
+          : rgba8(cr, cg, cb, Math.min(200, labelAlpha))
       : rgba8(80, 80, 80, 150);
+    // Show invulnerability shield indicator (isInvulnerable API)
+    if (hitStates && hitStates[i] && isInvulnerable(hitStates[i])) {
+      print('🛡', W - 214, y, rgba8(100, 200, 255, 200));
+    }
     print(`${isCurrent ? '►' : ' '} ${m.name}`, W - 200, y, labelColor);
     if (m.alive) {
       // Buff indicator: brighten HP text when buffed using colorMix
@@ -2627,11 +3692,15 @@ function drawCombatUI() {
 }
 
 function drawInventoryUI() {
-  drawPanel(40, 30, W - 80, H - 60, {
+  const panelW = W - 80,
+    panelH = H - 60;
+  drawPanel(centerX(panelW), centerY(panelH), panelW, panelH, {
     bgColor: rgba8(10, 8, 20, 240),
     borderLight: rgba8(80, 70, 50, 255),
     borderDark: rgba8(30, 25, 20, 255),
   });
+  // Save current font, use default for inventory title
+  const prevFont = getFont();
   printCentered('═══ PARTY STATUS ═══', 320, 40, rgba8(200, 180, 120, 255), 2);
 
   for (let i = 0; i < party.length; i++) {
@@ -2680,6 +3749,12 @@ function drawInventoryUI() {
     const totalDef = getEffectiveDef(m);
     print(`ATK:${totalAtk}  DEF:${totalDef}  SPD:${m.spd}`, 80, y + 28, rgba8(150, 150, 170, 180));
     printRight(`XP: ${m.xp}/${m.xpNext}`, 560, y + 28, rgba8(150, 150, 170, 180));
+    // XP progress bar using uiProgressBar (UI widget variant)
+    uiProgressBar(430, y + 30, 80, 4, m.xp, m.xpNext, {
+      fillColor: rgba8(180, 150, 50, 200),
+      bgColor: rgba8(30, 25, 15, 180),
+      showText: false,
+    });
 
     // Equipment
     if (m.weapon) {
@@ -2701,33 +3776,117 @@ function drawInventoryUI() {
   print(goldStr, 80, H - 90, rgba8(220, 180, 50, 230));
   print(`Floor: ${floor}`, 80 + goldMetrics.width + 12, H - 90, rgba8(150, 150, 170, 200));
   if (bossDefeated.size > 0) {
-    printRight(`Bosses slain: ${bossDefeated.size}`, 560, H - 90, rgba8(200, 100, 100, 200));
+    printRight(`Bosses slain: ${bossDefeated.size}`, 560, H - 90, n64Palette.red);
   }
 
+  // Render stats debug info using get3DStats + getParticleStats + getRenderer
+  const stats = get3DStats();
+  if (stats) {
+    let debugStr = `Tris:${stats.triangles || 0}  Draws:${stats.drawCalls || 0}  Meshes:${stats.meshes || 0}`;
+    // Append particle stats if any systems are active
+    if (particleSystems.length > 0) {
+      const pStats = getParticleStats(particleSystems[0]);
+      if (pStats) debugStr += `  Particles:${pStats.active}/${pStats.max}`;
+    }
+    debugStr += `  Frame:${frameCount}`;
+    // Show renderer type from getRenderer()
+    const renderer = getRenderer();
+    if (renderer && renderer.info)
+      debugStr += `  GL:${renderer.info.programs ? renderer.info.programs.length : '?'}prg`;
+    // Show scene object count from getScene()
+    const scene = getScene();
+    if (scene && scene.children) debugStr += `  Obj:${scene.children.length}`;
+    print(debugStr, 60, H - 55, rgba8(80, 80, 100, 120));
+  }
+  // Game stats from createGameStore
+  if (gameStats) {
+    const gs = gameStats.getState();
+    print(`Steps:${gs.steps}  Kills:${gs.kills}`, 60, H - 42, rgba8(70, 70, 90, 100));
+  }
+  // Restore font after inventory rendering
+  if (prevFont) setFont(prevFont.name || 'default');
+
   print('[S] Save Game', 60, H - 72, rgba8(100, 200, 100, 200));
+  // Visual preset toggle hint
+  const presetLabel = visualPreset ? `[V] Mode: ${visualPreset.toUpperCase()}` : '[V] Visual Mode';
+  print(presetLabel, 250, H - 72, n64Palette.cyan);
   printCentered('Press I / TAB / ESC to close', 320, H - 55, rgba8(120, 120, 150, 180));
 }
 
 function drawGameOver() {
-  // Fade-in using state machine elapsed time
-  const fadeIn = Math.min(1, stateElapsed() / 1.0);
+  // Smooth fade-in using ease() for polished game over transition
+  const fadeRaw = Math.min(1, stateElapsed() / 1.0);
+  const fadeIn = ease(fadeRaw, 'easeOutCubic');
   const fade = Math.floor(fadeIn * 220);
-  drawGradient(0, 0, W, H, rgba8(15, 0, 0, fade), rgba8(0, 0, 0, fade));
+  drawSkyGradient(rgba8(15, 0, 0, fade), rgba8(0, 0, 0, fade));
   // Pulsing red radial glow behind text
   drawRadialGradient(320, 140, 120, hslColor(0, 0.8, 0.2, 60), rgba8(0, 0, 0, 0));
-  drawGlowText('GAME OVER', 320, 120, hexColor(0xcc2828, 255), rgba8(100, 0, 0, 150), 3);
+  // Decorative ellipse frame behind title
+  ellipse(320, 130, 160, 50, rgba8(120, 20, 20, Math.floor(fade * 0.3)), false);
+  drawTextOutline('GAME OVER', 320, 120, hexColor(0xcc2828, 255), rgba8(80, 0, 0, 200), 3);
+  // Skull polygon icon above text
+  const skullAlpha = Math.floor(pulse(animTimer, 2) * 100 + 155);
+  poly(
+    [
+      [310, 85],
+      [320, 75],
+      [330, 85],
+      [325, 95],
+      [315, 95],
+    ],
+    rgba8(200, 50, 50, skullAlpha),
+    true
+  );
   printCentered(`Your party fell on Floor ${floor}`, 320, 180, rgba8(180, 150, 130, 200));
   drawDiamond(270, 204, 4, 5, hexColor(0xc8b432, 200));
   printCentered(`${totalGold} Gold collected`, 320, 200, hexColor(0xc8b432, 200));
 
-  drawPulsingText('Press SPACE to try again', 320, 260, rgba8(255, 255, 255, 255), animTimer, {
-    frequency: 3,
-    minAlpha: 135,
-  });
+  // Pulsing restart prompt using pulse() for smooth oscillation
+  const restartAlpha = Math.floor(pulse(animTimer, 1.5) * 120 + 135);
+  printCentered('Press SPACE to try again', 320, 280, rgba8(255, 255, 255, restartAlpha));
+  // Interactive restart button (createButton/updateButton/drawButton)
+  if (restartButton) {
+    updateButton(restartButton);
+    drawButton(restartButton);
+  }
 }
 
 function drawVictory() {
   drawGradient(0, 0, W, H, rgba8(10, 8, 2, 200), rgba8(2, 2, 10, 200));
+
+  // Victory crown polygon
+  const crownColor = rgba8(
+    255,
+    220,
+    50,
+    Math.floor(ease(Math.min(1, stateElapsed() / 1.5), 'easeOutBack') * 255)
+  );
+  poly(
+    [
+      [280, 55],
+      [290, 35],
+      [305, 50],
+      [320, 25],
+      [335, 50],
+      [350, 35],
+      [360, 55],
+    ],
+    crownColor,
+    true
+  );
+  poly(
+    [
+      [280, 55],
+      [290, 35],
+      [305, 50],
+      [320, 25],
+      [335, 50],
+      [350, 35],
+      [360, 55],
+    ],
+    rgba8(180, 120, 0, 200),
+    false
+  );
 
   // Celebratory starbursts using hslColor for rainbow cycling
   for (let i = 0; i < 5; i++) {
@@ -2737,12 +3896,12 @@ function drawVictory() {
     drawStarburst(sx, sy, 20, 8, 6, starColor);
   }
 
-  drawGlowText('VICTORY!', 320, 80, rgba8(255, 220, 50, 255), rgba8(180, 120, 0, 150), 3);
+  drawGlowTextCentered('VICTORY!', 320, 80, rgba8(255, 220, 50, 255), rgba8(180, 120, 0, 150), 3);
   printCentered('You conquered the Dark Tower!', 320, 140, rgba8(200, 200, 220, 255));
 
-  // Gold with diamond
-  drawDiamond(290, 174, 4, 5, rgba8(220, 180, 50, 230));
-  printCentered(`${totalGold} Gold`, 320, 170, rgba8(220, 180, 50, 230));
+  // Gold with diamond — use n64Palette for classic gold tone
+  drawDiamond(290, 174, 4, 5, n64Palette.yellow);
+  printCentered(`${totalGold} Gold`, 320, 170, n64Palette.yellow);
 
   for (let i = 0; i < party.length; i++) {
     const m = party[i];
@@ -2756,8 +3915,14 @@ function drawVictory() {
     );
   }
 
-  drawPulsingText('Press SPACE to play again', 320, 300, rgba8(255, 255, 255, 255), animTimer, {
-    frequency: 3,
-    minAlpha: 135,
-  });
+  // Pixel confetti sparkles (pset API)
+  for (let i = 0; i < 30; i++) {
+    const sx = (Math.sin(animTimer * 2 + i * 1.7) * 0.5 + 0.5) * W;
+    const sy = (animTimer * 40 + i * 37) % H;
+    pset(Math.floor(sx), Math.floor(sy), hslColor(i * 36 + animTimer * 60, 0.7, 0.6, 200));
+  }
+
+  // Pulsing restart prompt using pulse() for smooth oscillation
+  const replayAlpha = Math.floor(pulse(animTimer, 1.5) * 120 + 135);
+  printCentered('Press SPACE to play again', 320, 300, rgba8(255, 255, 255, replayAlpha));
 }

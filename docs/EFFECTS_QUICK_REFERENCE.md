@@ -292,6 +292,7 @@ const shader = createShaderMaterial('holographic', {
 
 ```javascript
 enableBloom(2.0, 0.8, 0.6);  // Bright neon glow
+enableGlitch(0.3);            // Digital distortion
 const holo = createShaderMaterial('holographic', {...});
 const shield = createShaderMaterial('shield', {...});
 ```
@@ -302,6 +303,18 @@ const shield = createShaderMaterial('shield', {...});
 enableBloom(1.2, 0.5, 0.9);  // Subtle magic glow
 const water = createShaderMaterial('water', {...});
 const magic = createParticleSystem(300, {...});
+```
+
+### Damage Feedback
+
+```javascript
+// Glitch + shake + chromatic aberration on hit
+enableGlitch(0.5);
+enableChromaticAberration(0.008);
+// Fade out over time in update()
+setGlitchIntensity(glitchTimer * 2.0);
+// When timer expires
+disableGlitch();
 ```
 
 ### Modern

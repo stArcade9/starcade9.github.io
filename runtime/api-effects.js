@@ -37,6 +37,58 @@ const ChromaticAberrationShader = {
   `,
 };
 
+// Glitch/damage shader — scanline displacement, RGB split, block artifacts
+const GlitchShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    intensity: { value: 0.0 },
+    time: { value: 0.0 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float intensity;
+    uniform float time;
+    varying vec2 vUv;
+
+    float rand(vec2 co) {
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+      vec2 uv = vUv;
+
+      // Scanline displacement — horizontal bands shift left/right
+      float scanJitter = step(0.99 - intensity * 0.3, rand(vec2(time * 1.3, floor(uv.y * 40.0))))
+                        * (rand(vec2(time, floor(uv.y * 40.0))) - 0.5) * intensity * 0.15;
+      uv.x += scanJitter;
+
+      // Block glitch — large rectangular regions shift
+      float blockY = floor(uv.y * 8.0);
+      float blockShift = step(0.97 - intensity * 0.15, rand(vec2(blockY, time * 0.7)))
+                        * (rand(vec2(blockY + 1.0, time)) - 0.5) * intensity * 0.1;
+      uv.x += blockShift;
+
+      // RGB channel split
+      float rgbShift = intensity * 0.012;
+      float r = texture2D(tDiffuse, vec2(uv.x + rgbShift, uv.y + rgbShift * 0.5)).r;
+      float g = texture2D(tDiffuse, uv).g;
+      float b = texture2D(tDiffuse, vec2(uv.x - rgbShift, uv.y - rgbShift * 0.3)).b;
+
+      // Color corruption — random bright pixels
+      float noise = step(0.995 - intensity * 0.05, rand(uv + time)) * intensity;
+
+      gl_FragColor = vec4(r + noise, g, b + noise * 0.5, 1.0);
+    }
+  `,
+};
+
 // Vignette shader
 const VignetteShader = {
   uniforms: {
@@ -81,9 +133,11 @@ export function effectsApi(gpu) {
   let fxaaPass = null;
   let chromaticAberrationPass = null;
   let vignettePass = null;
+  let glitchPass = null;
 
   // Effect states
   let effectsEnabled = false;
+  let glitchTime = 0;
 
   // Custom shader materials
   const customShaders = new Map();
@@ -102,7 +156,7 @@ export function effectsApi(gpu) {
   }
 
   // === BLOOM EFFECTS ===
-  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.85) {
+  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6) {
     initPostProcessing();
 
     if (bloomPass) {
@@ -187,7 +241,7 @@ export function effectsApi(gpu) {
   }
 
   // === VIGNETTE ===
-  function enableVignette(darkness = 1.5, offset = 0.95) {
+  function enableVignette(darkness = 1.0, offset = 0.9) {
     initPostProcessing();
     if (vignettePass) {
       vignettePass.uniforms['darkness'].value = darkness;
@@ -204,6 +258,31 @@ export function effectsApi(gpu) {
     if (vignettePass && composer) {
       composer.removePass(vignettePass);
       vignettePass = null;
+    }
+  }
+
+  // === GLITCH EFFECT ===
+  function enableGlitch(intensity = 0.5) {
+    initPostProcessing();
+    if (glitchPass) {
+      glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
+      return;
+    }
+    glitchPass = new ShaderPass(GlitchShader);
+    glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
+    composer.addPass(glitchPass);
+  }
+
+  function disableGlitch() {
+    if (glitchPass && composer) {
+      composer.removePass(glitchPass);
+      glitchPass = null;
+    }
+  }
+
+  function setGlitchIntensity(intensity) {
+    if (glitchPass) {
+      glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
     }
   }
 
@@ -701,6 +780,11 @@ export function effectsApi(gpu) {
   // Update effects (called every frame)
   function updateEffects(deltaTime) {
     updateShaderTime(deltaTime);
+    // Animate glitch time uniform for randomness
+    if (glitchPass) {
+      glitchTime += deltaTime;
+      glitchPass.uniforms['time'].value = glitchTime;
+    }
   }
 
   // === EXPOSE API ===
@@ -719,6 +803,9 @@ export function effectsApi(gpu) {
         disableChromaticAberration: disableChromaticAberration,
         enableVignette: enableVignette,
         disableVignette: disableVignette,
+        enableGlitch: enableGlitch,
+        disableGlitch: disableGlitch,
+        setGlitchIntensity: setGlitchIntensity,
 
         // Convenience
         enableRetroEffects: enableRetroEffects,
