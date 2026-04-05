@@ -31,13 +31,16 @@ export function particlesModule({ scene, counters }) {
   function createParticleSystem(maxParticles = 200, options = {}) {
     const {
       shape = 'sphere',
-      size = 0.15,
+      size = 1.0,
       segments = 4,
-      color = 0xffaa00,
-      emissive = 0xff6600,
+      color = 0xffffff,
+      startColor = color,
+      endColor = 0x000000,
+      emissive = startColor,
       emissiveIntensity = 2.0,
       gravity = -9.8,
       drag = 0.95,
+      blending = 'normal', // 'normal' | 'additive'
       // Emitter defaults
       emitterX = 0,
       emitterY = 0,
@@ -50,8 +53,17 @@ export function particlesModule({ scene, counters }) {
       spread = Math.PI, // half-angle cone spread (PI = hemisphere)
       minSize = 0.05,
       maxSize = 0.3,
-      startColor = color,
-      endColor = 0x000000,
+      // TSL-standard enhancements
+      turbulence = 0, // turbulence noise strength (0 = off)
+      turbulenceScale = 1.0, // spatial frequency of turbulence
+      attractorX = null, // attractor point (null = off)
+      attractorY = null,
+      attractorZ = null,
+      attractorStrength = 0, // pull strength toward attractor
+      sizeOverLife = null, // [start, mid, end] size multiplier curve (null = default shrink)
+      opacity = 1.0,
+      opacityOverLife = null, // [start, mid, end] opacity curve (null = default fade-out)
+      rotationSpeed = 0, // random spin speed
     } = options;
 
     // Geometry
@@ -62,15 +74,16 @@ export function particlesModule({ scene, counters }) {
       geometry = new THREE.SphereGeometry(size, segments, segments);
     }
 
-    const material = new THREE.MeshBasicMaterial({ color, vertexColors: false });
-    material.emissive = new THREE.Color(emissive);
-    // MeshBasicMaterial doesn't have emissive — use MeshStandardMaterial instead
     const stdMat = new THREE.MeshStandardMaterial({
       color,
       emissive: new THREE.Color(emissive),
       emissiveIntensity,
       roughness: 0.8,
       metalness: 0.0,
+      transparent: true,
+      opacity,
+      blending: blending === 'additive' ? THREE.AdditiveBlending : THREE.NormalBlending,
+      depthWrite: blending === 'additive' ? false : true,
     });
 
     const mesh = new THREE.InstancedMesh(geometry, stdMat, maxParticles);
@@ -122,6 +135,15 @@ export function particlesModule({ scene, counters }) {
         drag,
         startColor: new THREE.Color(startColor),
         endColor: new THREE.Color(endColor),
+        turbulence,
+        turbulenceScale,
+        attractorX,
+        attractorY,
+        attractorZ,
+        attractorStrength,
+        sizeOverLife,
+        opacityOverLife,
+        rotationSpeed,
       },
     });
 
@@ -235,6 +257,33 @@ export function particlesModule({ scene, counters }) {
         pool[base + 5] *= config.drag; // drag on vz
         pool[base + 4] += config.gravity * dt; // gravity on vy
 
+        // Turbulence noise — pseudo-3D curl noise approximation
+        if (config.turbulence > 0) {
+          const ts = config.turbulenceScale;
+          const px = pool[base + 0] * ts;
+          const py = pool[base + 1] * ts;
+          const pz = pool[base + 2] * ts;
+          // Simple noise: use sin of shifted coordinates for cheap turbulence
+          const tx = Math.sin(py * 1.7 + pz * 2.3 + age * 3.0) * config.turbulence;
+          const ty = Math.sin(pz * 1.3 + px * 2.1 + age * 2.5) * config.turbulence;
+          const tz = Math.sin(px * 1.9 + py * 1.5 + age * 2.8) * config.turbulence;
+          pool[base + 3] += tx * dt;
+          pool[base + 4] += ty * dt;
+          pool[base + 5] += tz * dt;
+        }
+
+        // Attractor force
+        if (config.attractorStrength > 0 && config.attractorX !== null) {
+          const dx = config.attractorX - pool[base + 0];
+          const dy = config.attractorY - pool[base + 1];
+          const dz = config.attractorZ - pool[base + 2];
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.01;
+          const force = config.attractorStrength / dist;
+          pool[base + 3] += (dx / dist) * force * dt;
+          pool[base + 4] += (dy / dist) * force * dt;
+          pool[base + 5] += (dz / dist) * force * dt;
+        }
+
         pool[base + 0] += pool[base + 3] * dt; // px
         pool[base + 1] += pool[base + 4] * dt; // py
         pool[base + 2] += pool[base + 5] * dt; // pz
@@ -247,11 +296,31 @@ export function particlesModule({ scene, counters }) {
         _color.setRGB(r, g, b);
         mesh.setColorAt(i, _color);
 
-        // Shrink as particle ages
-        const sz = pool[base + 11] * (1 - t * 0.8);
+        // Shrink as particle ages — use sizeOverLife curve if provided
+        let sizeMul;
+        if (config.sizeOverLife) {
+          const [s0, s1, s2] = config.sizeOverLife;
+          sizeMul = t < 0.5 ? s0 + (s1 - s0) * (t * 2) : s1 + (s2 - s1) * ((t - 0.5) * 2);
+        } else {
+          sizeMul = 1 - t * 0.8;
+        }
+        const sz = pool[base + 11] * sizeMul;
+
+        // Opacity over life — for transparent/additive particles
+        if (config.opacityOverLife && mesh.material.transparent) {
+          const [o0, o1, o2] = config.opacityOverLife;
+          const opac = t < 0.5 ? o0 + (o1 - o0) * (t * 2) : o1 + (o2 - o1) * ((t - 0.5) * 2);
+          mesh.material.opacity = opac;
+        }
+
+        // Rotation
+        const rot = config.rotationSpeed > 0 ? age * config.rotationSpeed : 0;
 
         _dummy.position.set(pool[base + 0], pool[base + 1], pool[base + 2]);
         _dummy.scale.set(sz, sz, sz);
+        if (rot) {
+          _dummy.rotation.set(rot * 0.7, rot, rot * 0.3);
+        }
         _dummy.updateMatrix();
         mesh.setMatrixAt(i, _dummy.matrix);
         needsUpdate = true;

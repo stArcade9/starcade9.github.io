@@ -175,6 +175,8 @@ export function stdApi(gpu) {
     rect(x, y, w, h, color, true);
   }
 
+  const drawRect = rectfill;
+
   function print(text, x, y, color = rgba8(255, 255, 255, 255), scale = 1) {
     BitmapFont.draw(fb, text, (x | 0) - camRef.x, (y | 0) - camRef.y, color, scale);
   }
@@ -187,6 +189,7 @@ export function stdApi(gpu) {
         line,
         rect,
         rectfill,
+        drawRect,
         circle,
         print,
         packRGBA64,

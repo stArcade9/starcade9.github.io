@@ -376,7 +376,7 @@ export function update() {
   const dt = 1 / 60;
 
   if (gameState === 'start') {
-    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ')) {
+    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
       gameState = 'playing';
     }
     return;
@@ -1144,7 +1144,7 @@ function drawStartScreen() {
 
   // Instructions
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('PRESS SPACE OR ENTER TO START', 170, 160, rgba8(255, 255, 255, Math.floor(pulse * 255)));
+  print('PRESS SPACE / TAP TO START', 190, 160, rgba8(255, 255, 255, Math.floor(pulse * 255)));
 
   // Controls
   rect(120, 200, 400, 140, rgba8(20, 20, 40, 220), true);
@@ -1324,9 +1324,9 @@ function drawGameOver() {
   print(`WAVE REACHED: ${wave}`, 250, 220, rgba8(200, 200, 200, 255));
 
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('Press SPACE or ENTER to restart', 200, 270, rgba8(255, 255, 255, Math.floor(pulse * 255)));
+  print('Press SPACE / Tap to restart', 205, 270, rgba8(255, 255, 255, Math.floor(pulse * 255)));
 
-  if (isKeyDown('KeyR') || isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ')) {
+  if (isKeyDown('KeyR') || isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
     init();
   }
 }

@@ -30,6 +30,8 @@
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
         overflow-y: auto;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
         background-image:
           radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
           radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.05) 0%, transparent 50%);
@@ -102,6 +104,8 @@
         display: block;
         max-width: 100%;
         height: auto;
+        touch-action: none;
+        -webkit-touch-callout: none;
       }
 
       /* CRT Scanline Overlay */
@@ -413,14 +417,30 @@
       }
 
       .d-pad {
-        grid-template-columns: repeat(3, 50px);
-        grid-template-rows: repeat(3, 50px);
+        grid-template-columns: repeat(3, 58px);
+        grid-template-rows: repeat(3, 58px);
       }
 
       .action-buttons {
-        grid-template-columns: repeat(2, 60px);
-        grid-template-rows: repeat(2, 60px);
+        grid-template-columns: repeat(2, 68px);
+        grid-template-rows: repeat(2, 68px);
         transform: rotate(-15deg);
+      }
+
+      .start-select-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 10px;
+      }
+
+      .btn-start {
+        min-width: 80px;
+        height: 36px;
+        border-radius: 18px;
+        font-size: 13px;
+        letter-spacing: 2px;
+        transform: none;
       }
 
       .btn-touch {
@@ -534,6 +554,10 @@
             <div class="btn-touch btn-b" data-keys='["KeyZ", "KeyX"]'>B</div>
           </div>
         </div>
+        <div class="mobile-controls start-select-buttons">
+          <div class="btn-touch btn-start" data-keys='["Enter"]'>START</div>
+          <div class="btn-touch btn-start" data-keys='["Space"]'>SELECT</div>
+        </div>
       </div>
       <div class="panel">
         <div>
@@ -583,6 +607,7 @@
               🌃 Cyberpunk City (Open World)
             </option>
             <option value="/examples/fps-demo-3d/code.js">🔫 FPS Action Mode (Shooter)</option>
+            <option value="/examples/wad-demo/code.js">💀 FreeDoom WAD Explorer (Classic FPS)</option>
             <option value="/examples/adventure-comic-3d/code.js">
               🕵️ The Verdict (Comic Adventure)
             </option>
@@ -591,12 +616,16 @@
             <option value="/examples/strider-demo-3d/code.js">⚔️ Gauntlet 64 (Isometric Action RPG)</option>
             <option value="/examples/super-plumber-64/code.js">🍄 Super Plumber 64 (Platformer)</option>
             <option value="/examples/minecraft-demo/code.js">⛏️ Minecraft Voxel World (Sandbox)</option>
+            <option value="/examples/voxel-terrain/code.js">🌍 Voxel Terrain Explorer (Biomes)</option>
+            <option value="/examples/voxel-creative/code.js">🏗️ Voxel Creative (Building)</option>
+            <option value="/examples/voxel-creatures/code.js">🐄 Voxel Creatures (Entities)</option>
             <option value="/examples/dungeon-crawler-3d/code.js">🏰 Dungeon Crawler (Roguelike RPG)</option>
             <option value="/examples/wizardry-3d/code.js">🧙 Wizardry (First-Person Dungeon RPG)</option>
             <option value="/examples/boids-flocking/code.js">🐦 Boids Flocking (Generative Art)</option>
             <option value="/examples/game-of-life-3d/code.js">🧬 Game of Life 3D (Cellular Automata)</option>
             <option value="/examples/nature-explorer-3d/code.js">🌿 Nature Explorer (GLB Walking Sim)</option>
             <option value="/examples/generative-art/code.js">🎨 Generative Art (Processing-style)</option>
+            <option value="/examples/tsl-showcase/code.js">✨ TSL Showcase (Shading Language)</option>
             <option value="/examples/3d-advanced/code.js">🎯 Advanced 3D (Technical)</option>
             <option value="/examples/model-viewer-3d/code.js">🦊 Animated 3D Models</option>
             <option value="/examples/demoscene/code.js">🎬 Demoscene - Tron (Showcase)</option>
@@ -623,6 +652,10 @@
               🚀 Wing Commander Space (Combat)
             </option>
             <option value="/examples/pbr-showcase/code.js">🔮 PBR Showcase (Materials)</option>
+            <option value="/examples/skybox-showcase/code.js">🌌 Skybox Showcase (Environments)</option>
+            <option value="/examples/nft-worlds/code.js">🌐 NFT Worlds (Seed-Generated Voxels)</option>
+            <option value="/examples/nft-art-generator/code.js">🎲 NFT Art Generator (Seed Art)</option>
+            <option value="/examples/creative-coding/code.js">🎭 Creative Coding 3D (Generative 3D Art)</option>
           </select>
         </div>
 
@@ -768,13 +801,12 @@
     {
       "imports": {
         "three": "https://esm.sh/three@0.182.0",
+        "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+        "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
         "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
       }
     }
     </script>
-    <script type="module" src="/src/main.js"></script>
-    <script>
-      // Virtual controls code mapper
       function handleVirtualButton(element, isDown) {
         if (!element || !element.dataset || !element.dataset.keys) return;
         try {
@@ -882,11 +914,18 @@
             'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
             'hello-skybox': '/examples/hello-skybox/code.js',
             'fps-demo-3d': '/examples/fps-demo-3d/code.js',
+            'wad-demo': '/examples/wad-demo/code.js',
             'adventure-comic-3d': '/examples/adventure-comic-3d/code.js',
             '3d-advanced': '/examples/3d-advanced/code.js',
             'space-combat-3d': '/examples/space-combat-3d/code.js',
             'wing-commander-space': '/examples/wing-commander-space/code.js',
             'pbr-showcase': '/examples/pbr-showcase/code.js',
+            'voxel-terrain': '/examples/voxel-terrain/code.js',
+            'voxel-creative': '/examples/voxel-creative/code.js',
+            'voxel-creatures': '/examples/voxel-creatures/code.js',
+            'nft-worlds': '/examples/nft-worlds/code.js',
+            'nft-art-generator': '/examples/nft-art-generator/code.js',
+            'creative-coding': '/examples/creative-coding/code.js',
           };
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];

@@ -4,13 +4,16 @@
 
 The Nova64 Voxel Engine enables Minecraft-style block-based games with infinite procedurally generated worlds. It features:
 
-- **Chunk-based world management** - Efficient memory usage with 16x64x16 chunks
-- **Greedy meshing** - Optimized rendering with minimal draw calls
-- **Procedural terrain generation** - Perlin noise with biomes, caves, and height variation
-- **Multiple block types** - 15 different block materials
-- **Real-time editing** - Place and break blocks instantly
-- **Collision detection** - Full physics support for player and entities
-- **Infinite worlds** - Chunks load/unload dynamically
+- **Chunk-based world management** - Efficient memory usage with 16×128×16 chunks
+- **Simplex noise** - Seeded 2D + 3D simplex noise with fractal Brownian motion (fBm)
+- **True 3D caves** - Winding tunnel networks carved with 3D noise
+- **Per-vertex ambient occlusion** - Smooth corner shadows without lightmaps
+- **DDA voxel raycasting** - Pixel-perfect block targeting (Amanatides & Woo)
+- **Block registry** - Extensible block definitions with solid/transparent/fluid/light properties
+- **36 built-in block types** - Including ores, torches, lava, glowstone, slabs, stairs, fences, flowers
+- **Configurable world generation** - Carts can supply custom terrain generators
+- **Transparent block rendering** - Separate pass for water, glass, ice, leaves
+- **Biome system** - 8 biomes based on temperature/moisture noise
 
 ## Quick Start
 
@@ -51,16 +54,55 @@ BLOCK_TYPES.GRASS; // 1 - Green grass block
 BLOCK_TYPES.DIRT; // 2 - Brown dirt
 BLOCK_TYPES.STONE; // 3 - Gray stone
 BLOCK_TYPES.SAND; // 4 - Yellow sand
-BLOCK_TYPES.WATER; // 5 - Blue water (transparent)
+BLOCK_TYPES.WATER; // 5 - Blue water (transparent, fluid)
 BLOCK_TYPES.WOOD; // 6 - Dark brown wood log
-BLOCK_TYPES.LEAVES; // 7 - Green tree leaves
+BLOCK_TYPES.LEAVES; // 7 - Green tree leaves (transparent)
 BLOCK_TYPES.COBBLESTONE; // 8 - Gray cobblestone
 BLOCK_TYPES.PLANKS; // 9 - Wooden planks
 BLOCK_TYPES.GLASS; // 10 - Light blue glass (transparent)
 BLOCK_TYPES.BRICK; // 11 - Red brick
 BLOCK_TYPES.SNOW; // 12 - White snow
-BLOCK_TYPES.ICE; // 13 - Light blue ice
+BLOCK_TYPES.ICE; // 13 - Light blue ice (transparent)
 BLOCK_TYPES.BEDROCK; // 14 - Dark gray bedrock (bottom layer)
+BLOCK_TYPES.COAL_ORE; // 15 - Coal ore (any depth)
+BLOCK_TYPES.IRON_ORE; // 16 - Iron ore (below y=64)
+BLOCK_TYPES.GOLD_ORE; // 17 - Gold ore (below y=32)
+BLOCK_TYPES.DIAMOND_ORE; // 18 - Diamond ore (below y=16)
+BLOCK_TYPES.GRAVEL; // 19 - Gravel pockets
+BLOCK_TYPES.CLAY; // 20 - Clay (near water)
+BLOCK_TYPES.TORCH; // 21 - Torch (light emitter, non-solid)
+BLOCK_TYPES.GLOWSTONE; // 22 - Glowstone (max light emitter)
+BLOCK_TYPES.LAVA; // 23 - Lava (fluid, light emitter)
+BLOCK_TYPES.OBSIDIAN; // 24 - Obsidian
+BLOCK_TYPES.MOSSY_COBBLESTONE; // 25 - Mossy cobblestone
+
+// Shape blocks (non-cube geometry)
+BLOCK_TYPES.STONE_SLAB;     // 26 - Half-height stone slab (bottom)
+BLOCK_TYPES.STONE_SLAB_TOP; // 27 - Half-height stone slab (top)
+BLOCK_TYPES.PLANK_SLAB;     // 28 - Half-height plank slab (bottom)
+BLOCK_TYPES.STONE_STAIR;    // 29 - Stone staircase
+BLOCK_TYPES.PLANK_STAIR;    // 30 - Plank staircase
+BLOCK_TYPES.FENCE;          // 31 - Thin fence post
+BLOCK_TYPES.FLOWER;         // 32 - Flower (cross shape, non-solid)
+BLOCK_TYPES.TALL_GRASS;     // 33 - Tall grass (cross shape, non-solid)
+BLOCK_TYPES.BRICK_SLAB;     // 34 - Half-height brick slab (bottom)
+BLOCK_TYPES.BRICK_STAIR;    // 35 - Brick staircase
+```
+
+### Custom Block Registration
+
+```javascript
+// Register a custom block type for your cart
+registerVoxelBlock(100, {
+  name: 'crystal',
+  color: 0xff00ff,
+  solid: true,
+  transparent: true,
+  lightEmit: 10,
+  lightBlock: 0,
+  shape: 'slab_bottom',       // Optional: 'cube' (default), 'slab_bottom', 'slab_top', 'stair', 'fence', 'cross'
+  boundingBox: [0,0,0, 1,0.5,1], // Optional: custom [minX,minY,minZ, maxX,maxY,maxZ]
+});
 ```
 
 ## World Management
@@ -87,6 +129,74 @@ export function update(dt) {
 
 **Performance:** Automatically loads chunks within render distance (4 chunks = 64 blocks) and unloads distant chunks to manage memory.
 
+### getVoxelHighestBlock(x, z)
+
+Returns the Y coordinate of the highest non-air, non-water block at the given (x, z) position. Useful for spawning players above terrain.
+
+```javascript
+const groundY = getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z));
+player.y = groundY + 2;
+```
+
+### getVoxelBiome(x, z)
+
+Returns the biome name at the given world position. Biomes include: "Frozen Tundra", "Taiga", "Desert", "Jungle", "Savanna", "Forest", "Snowy Hills", "Plains".
+
+```javascript
+const biome = getVoxelBiome(player.x, player.z);
+print(`Biome: ${biome}`, 10, 10, 0xffffff);
+```
+
+### configureVoxelWorld(options)
+
+Configure world generation parameters. Call before generating any chunks.
+
+```javascript
+configureVoxelWorld({
+  seed: 42,           // World seed (deterministic generation)
+  chunkHeight: 128,   // Vertical chunk size (default: 128)
+  renderDistance: 6,   // Chunks in each direction (default: 4)
+  seaLevel: 62,       // Water level (default: 62)
+  generateTerrain: (chunk, ctx) => {
+    // Custom terrain generator — ctx provides BLOCK_TYPES, noise, CHUNK_SIZE, etc.
+    for (let x = 0; x < ctx.CHUNK_SIZE; x++) {
+      for (let z = 0; z < ctx.CHUNK_SIZE; z++) {
+        const height = Math.floor(ctx.noise.fbm2D(
+          chunk.chunkX * ctx.CHUNK_SIZE + x,
+          chunk.chunkZ * ctx.CHUNK_SIZE + z,
+          4, 0.5, 2.0, 0.01
+        ) * 20 + 64);
+        for (let y = 0; y < height; y++) {
+          chunk.setBlock(x, y, z, ctx.BLOCK_TYPES.STONE);
+        }
+        chunk.setBlock(x, height - 1, z, ctx.BLOCK_TYPES.GRASS);
+      }
+    }
+  },
+});
+```
+
+## Noise Functions
+
+### simplexNoise2D(x, z, octaves, persistence, lacunarity, scale)
+
+Multi-octave 2D fractal noise. Returns values in range 0..1.
+
+```javascript
+const height = simplexNoise2D(worldX, worldZ, 4, 0.5, 2.0, 0.01) * 30 + 60;
+```
+
+### simplexNoise3D(x, y, z, octaves, persistence, lacunarity, scale)
+
+Multi-octave 3D fractal noise. Returns values in range 0..1. Use for caves, ore veins, etc.
+
+```javascript
+const density = simplexNoise3D(x, y, z, 3, 0.5, 2.0, 0.04);
+if (density > 0.7) {
+  // Spawn ore here
+}
+```
+
 ## Block Manipulation
 
 ### getVoxelBlock(x, y, z)
@@ -96,7 +206,7 @@ Returns the block type at the specified world coordinates.
 **Parameters:**
 
 - `x` - World X coordinate
-- `y` - World Y coordinate (0-63)
+- `y` - World Y coordinate (0-127)
 - `z` - World Z coordinate
 
 **Returns:** Block type constant (0-14) or `BLOCK_TYPES.AIR` if out of bounds
@@ -122,7 +232,7 @@ Places or removes a block at the specified world coordinates. Automatically upda
 **Parameters:**
 
 - `x` - World X coordinate
-- `y` - World Y coordinate (0-63)
+- `y` - World Y coordinate (0-127)
 - `z` - World Z coordinate
 - `blockType` - Block type constant (use `BLOCK_TYPES.AIR` to remove)
 
@@ -161,6 +271,8 @@ Casts a ray from a point in a direction to find the first solid block hit. Perfe
 {
   hit: true,              // Whether a block was hit
   position: [x, y, z],    // Block coordinates
+  normal: [nx, ny, nz],   // Face normal of the hit surface
+  adjacent: [x, y, z],    // Block position adjacent to hit face (for placing)
   blockType: 3,           // Type of block hit
   distance: 5.2           // Distance to block
 }
@@ -183,20 +295,14 @@ const result = raycastVoxelBlock(
 );
 
 if (result.hit) {
-  // Left click to break
-  if (isMousePressed(0)) {
-    const [x, y, z] = result.position;
-    setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+  // Break block
+  if (isKeyPressed('KeyF')) {
+    setVoxelBlock(result.position[0], result.position[1], result.position[2], BLOCK_TYPES.AIR);
   }
 
-  // Right click to place
-  if (isMousePressed(2)) {
-    // Calculate adjacent block position
-    const placeX = Math.floor(result.position[0] - Math.sign(lookDir[0]) * 0.5);
-    const placeY = Math.floor(result.position[1] - Math.sign(lookDir[1]) * 0.5);
-    const placeZ = Math.floor(result.position[2] - Math.sign(lookDir[2]) * 0.5);
-
-    setVoxelBlock(placeX, placeY, placeZ, BLOCK_TYPES.COBBLESTONE);
+  // Place block on adjacent face
+  if (isKeyPressed('KeyE')) {
+    setVoxelBlock(result.adjacent[0], result.adjacent[1], result.adjacent[2], BLOCK_TYPES.COBBLESTONE);
   }
 }
 ```
@@ -619,12 +725,216 @@ function updateMining(dt) {
 }
 ```
 
+## Custom Block Shapes
+
+Blocks can have non-cube shapes. Non-cube shapes skip greedy mesh merging and emit custom geometry.
+
+### Available Shapes
+
+| Shape | Geometry | Bounding Box |
+|-------|----------|-------------|
+| `cube` | Full block (default) | [0,0,0, 1,1,1] |
+| `slab_bottom` | Half-height box, bottom | [0,0,0, 1,0.5,1] |
+| `slab_top` | Half-height box, top | [0,0.5,0, 1,1,1] |
+| `stair` | Bottom slab + back upper half | [0,0,0, 1,1,1] |
+| `fence` | Thin centered post | [0.375,0,0.375, 0.625,1,0.625] |
+| `cross` | Two diagonal X-quads | [0.15,0,0.15, 0.85,1,0.85] |
+
+### Shape Query Functions
+
+```javascript
+getVoxelBlockShape(BLOCK_TYPES.STONE_SLAB);     // 'slab_bottom'
+getVoxelBlockBoundingBox(BLOCK_TYPES.FENCE);     // [0.375,0,0.375, 0.625,1,0.625]
+isVoxelBlockFullCube(BLOCK_TYPES.STONE);         // true
+isVoxelBlockFullCube(BLOCK_TYPES.STONE_SLAB);    // false
+```
+
+Non-cube blocks don't occlude neighboring cube faces. Collision uses shape-specific bounding boxes.
+
+## Lighting System
+
+BFS flood-fill light propagation with sky light (downward) and block light (torches, glowstone, lava). Smooth per-vertex interpolation combined with ambient occlusion.
+
+```javascript
+// Get light level (0-15) at a position
+const light = getVoxelLightLevel(x, y, z);
+
+// Day/night cycle (0.0 to 1.0)
+let time = 0;
+export function update(dt) {
+  time = (time + dt * 0.01) % 1;
+  setVoxelDayTime(time);
+}
+```
+
+## Fluid Simulation
+
+Water spreads 7 blocks horizontally with BFS flow. Lava spreads 3 blocks. Fluids retract when source is removed.
+
+```javascript
+// Place a water source
+setVoxelFluidSource(10, 70, 10, BLOCK_TYPES.WATER);
+
+// Place a lava source
+setVoxelFluidSource(20, 70, 20, BLOCK_TYPES.LAVA);
+
+// Remove a fluid source (flowing blocks retract)
+removeVoxelFluidSource(10, 70, 10);
+
+// Check fluid level (0=full, 7=thinnest, -1=no fluid)
+const level = getVoxelFluidLevel(10, 69, 10);
+```
+
+## Entity System
+
+Spawn entities with physics, AI, health, and spatial hashing for efficient radius queries.
+
+```javascript
+// Spawn a zombie
+const zombie = spawnVoxelEntity('zombie', [10, 65, 10], {
+  health: 20,
+  size: [0.6, 1.8, 0.6],
+  mesh: createCube(1, 0x00ff00, [0, 0, 0]),
+  onUpdate: (entity, dt) => {
+    // AI logic — chase player, patrol, etc.
+  },
+});
+
+// Damage / heal entities
+damageVoxelEntity(zombie.id, 5);
+healVoxelEntity(zombie.id, 3);
+
+// Spatial queries
+const nearby = getVoxelEntitiesInRadius([px, py, pz], 16);
+const allZombies = getVoxelEntitiesByType('zombie');
+const total = getVoxelEntityCount();
+
+// Tick all entities (call in update)
+updateVoxelEntities(dt);
+
+// Cleanup
+removeVoxelEntity(zombie.id);
+cleanupVoxelEntities(); // Remove all
+```
+
+## ECS Components & Archetypes
+
+Attach arbitrary components to entities for flexible game logic.
+
+```javascript
+// Attach components
+setVoxelEntityComponent(id, 'inventory', { slots: 10, items: [] });
+setVoxelEntityComponent(id, 'hostile', { aggroRange: 16 });
+
+// Query/check components
+const inv = getVoxelEntityComponent(id, 'inventory');
+if (hasVoxelEntityComponent(id, 'hostile')) { /* ... */ }
+removeVoxelEntityComponent(id, 'hostile');
+
+// Query all entities with specific components
+const enemies = queryVoxelEntities(['hostile', 'ai']);
+const nearbyEnemies = queryVoxelEntities(['hostile'], e =>
+  dist(e.position, player.pos) < 32
+);
+
+// Define reusable archetypes
+createVoxelEntityArchetype('skeleton', {
+  health: 15,
+  hostile: { damage: 2 },
+  ai: { type: 'wander' },
+});
+const skel = spawnVoxelEntityFromArchetype('skeleton', [20, 65, 20]);
+
+// Built-in archetypes: 'mob', 'item', 'projectile', 'npc', 'vehicle'
+```
+
+### A* Pathfinding
+
+```javascript
+const path = findVoxelPath([0, 65, 0], [30, 68, 30], {
+  maxSteps: 1000,
+  entityHeight: 2,
+});
+// Returns array of [x,y,z] waypoints, or null if no path found
+```
+
+## Schematics & Import/Export
+
+Export and import regions or entire worlds. Regions use RLE compression.
+
+```javascript
+// Export a 10×10×10 building
+const schematic = exportVoxelRegion(0, 60, 0, 9, 69, 9);
+
+// Paste it somewhere else
+importVoxelRegion(schematic, 100, 60, 100);
+
+// Paste without overwriting existing blocks
+importVoxelRegion(schematic, 200, 60, 200, { skipAir: true });
+
+// Export/import entire worlds as JSON
+const worldData = exportVoxelWorldJSON();
+importVoxelWorldJSON(worldData);
+```
+
+## World Persistence
+
+Save and load worlds via IndexedDB.
+
+```javascript
+// Save current world
+await saveVoxelWorld('my-world');
+
+// Load a saved world
+await loadVoxelWorld('my-world');
+
+// List all saved worlds
+const worlds = await listVoxelWorlds(); // ['my-world', 'test-world']
+
+// Delete a saved world
+await deleteVoxelWorld('old-world');
+```
+
+## Texture Atlas
+
+```javascript
+// Enable/disable procedural textures (27 pixel-art tiles)
+enableVoxelTextures(true);
+
+// Load a custom texture atlas
+loadVoxelTextureAtlas('atlas.png', mapping);
+```
+
+## Swept AABB Physics (moveVoxelEntity)
+
+Full physics integration with per-axis collision, auto-step, water drag, and ground detection.
+
+```javascript
+const result = moveVoxelEntity(
+  player.pos,                // [x, y, z]
+  player.vel,                // [vx, vy, vz]
+  [0.6, 1.8, 0.6],          // collision box [w, h, d]
+  dt
+);
+player.pos = result.position;
+player.vel = result.velocity;
+player.grounded = result.grounded;
+// Also: result.hitCeiling, result.onIce, result.jumped
+```
+
+## Force-Loading Chunks
+
+```javascript
+// Synchronously load all chunks in render distance (use in init)
+forceLoadVoxelChunks(playerX, playerZ);
+```
+
 ## Troubleshooting
 
 ### Blocks Not Appearing
 
 - Call `updateVoxelWorld()` after placing blocks
-- Check if coordinates are within valid range (Y: 0-63)
+- Check if coordinates are within valid range (Y: 0-127)
 - Verify chunks are loading (check console logs)
 
 ### Performance Issues
@@ -647,15 +957,62 @@ function updateMining(dt) {
 
 ## API Reference Summary
 
-| Function                               | Description                        | Parameters                  |
-| -------------------------------------- | ---------------------------------- | --------------------------- |
-| `updateVoxelWorld(x, z)`               | Load/update chunks around position | x, z: world coords          |
-| `getVoxelBlock(x, y, z)`               | Get block type at position         | x, y, z: world coords       |
-| `setVoxelBlock(x, y, z, type)`         | Place/remove block                 | coords + block type         |
-| `raycastVoxelBlock(origin, dir, dist)` | Find block along ray               | origin, direction, distance |
-| `checkVoxelCollision(pos, size)`       | Check AABB collision               | position, half-size         |
-| `placeVoxelTree(x, y, z)`              | Generate tree structure            | x, y, z: base position      |
-| `BLOCK_TYPES.*`                        | Block type constants               | 15 types (AIR to BEDROCK)   |
+| Function | Description |
+|----------|-------------|
+| `configureVoxelWorld(opts)` | Configure world gen params |
+| `updateVoxelWorld(x, z)` | Load/unload chunks around player |
+| `forceLoadVoxelChunks(x, z)` | Sync-load all chunks in range |
+| `resetVoxelWorld()` | Clear all chunks and entities |
+| `getVoxelConfig()` | Get current world config |
+| `getVoxelBlock(x, y, z)` | Get block type at position |
+| `setVoxelBlock(x, y, z, type)` | Place/remove block |
+| `getVoxelHighestBlock(x, z)` | Highest solid block Y |
+| `getVoxelBiome(x, z)` | Biome name at position |
+| `registerVoxelBlock(id, opts)` | Register custom block |
+| `getVoxelBlockShape(id)` | Get block shape string |
+| `getVoxelBlockBoundingBox(id)` | Get block collision box |
+| `isVoxelBlockFullCube(id)` | Check if block is full cube |
+| `raycastVoxelBlock(o, d, max)` | DDA voxel raycasting |
+| `checkVoxelCollision(pos, size)` | AABB collision check |
+| `checkVoxelFluid(pos, size)` | Check if in fluid |
+| `moveVoxelEntity(pos, vel, size, dt)` | Swept AABB physics |
+| `getVoxelLightLevel(x, y, z)` | Light level 0–15 |
+| `setVoxelDayTime(t)` | Day/night cycle (0–1) |
+| `setVoxelFluidSource(x, y, z, type)` | Place fluid source |
+| `removeVoxelFluidSource(x, y, z)` | Remove fluid source |
+| `getVoxelFluidLevel(x, y, z)` | Fluid level at position |
+| `spawnVoxelEntity(type, pos, opts)` | Spawn entity |
+| `removeVoxelEntity(id)` | Remove entity |
+| `getVoxelEntity(id)` | Get entity by ID |
+| `damageVoxelEntity(id, amt)` | Damage entity |
+| `healVoxelEntity(id, amt)` | Heal entity |
+| `updateVoxelEntities(dt)` | Tick all entities |
+| `getVoxelEntitiesInRadius(pos, r)` | Spatial query |
+| `getVoxelEntitiesByType(type)` | Query by type |
+| `getVoxelEntityCount()` | Total entity count |
+| `cleanupVoxelEntities()` | Remove all entities |
+| `setVoxelEntityComponent(id, name, data)` | Attach ECS component |
+| `getVoxelEntityComponent(id, name)` | Get ECS component |
+| `hasVoxelEntityComponent(id, name)` | Check component |
+| `removeVoxelEntityComponent(id, name)` | Remove component |
+| `queryVoxelEntities(comps, fn)` | Query by components |
+| `createVoxelEntityArchetype(name, comps)` | Define archetype |
+| `spawnVoxelEntityFromArchetype(name, pos)` | Spawn from archetype |
+| `findVoxelPath(start, end, opts)` | A* pathfinding |
+| `exportVoxelRegion(...)` | Export region schematic |
+| `importVoxelRegion(data, x, y, z)` | Import schematic |
+| `exportVoxelWorldJSON()` | Export world as JSON |
+| `importVoxelWorldJSON(json)` | Import world from JSON |
+| `saveVoxelWorld(name)` | Save to IndexedDB |
+| `loadVoxelWorld(name)` | Load from IndexedDB |
+| `listVoxelWorlds()` | List saved worlds |
+| `deleteVoxelWorld(name)` | Delete saved world |
+| `enableVoxelTextures(on)` | Toggle texture atlas |
+| `loadVoxelTextureAtlas(url)` | Load custom atlas |
+| `simplexNoise2D(x,z,...)` | 2D fractal noise |
+| `simplexNoise3D(x,y,z,...)` | 3D fractal noise |
+| `placeVoxelTree(x, y, z)` | Generate tree |
+| `BLOCK_TYPES.*` | 36 block type constants |
 
 ---
 

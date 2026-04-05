@@ -12,6 +12,7 @@ import { instancingModule } from './api-3d/instancing.js';
 import { pbrModule } from './api-3d/pbr.js';
 import { sceneModule } from './api-3d/scene.js';
 import { particlesModule } from './api-3d/particles.js';
+import { tslModule } from './api-3d/tsl.js';
 
 export function threeDApi(gpu) {
   if (!gpu.getScene) return { exposeTo: () => {} };
@@ -55,6 +56,7 @@ export function threeDApi(gpu) {
   Object.assign(ctx, instancingModule(ctx));
   Object.assign(ctx, pbrModule(ctx));
   Object.assign(ctx, particlesModule(ctx));
+  Object.assign(ctx, tslModule(ctx));
   Object.assign(ctx, sceneModule(ctx)); // last: uses late binding to call other modules
 
   return {
@@ -149,6 +151,38 @@ export function threeDApi(gpu) {
         updateParticles: ctx.updateParticles,
         removeParticleSystem: ctx.removeParticleSystem,
         getParticleStats: ctx.getParticleStats,
+
+        // TSL (Three Shading Language)
+        createTSLMaterial: ctx.createTSLMaterial,
+        createTSLShaderMaterial: ctx.createTSLShaderMaterial,
+        _updateTSLMaterials: ctx._updateTSLMaterials,
+        // TSL building blocks (prefixed with tsl*)
+        tslFn: ctx.tslFn,
+        tslUniform: ctx.tslUniform,
+        tslFloat: ctx.tslFloat,
+        tslInt: ctx.tslInt,
+        tslVec2: ctx.tslVec2,
+        tslVec3: ctx.tslVec3,
+        tslVec4: ctx.tslVec4,
+        tslColor: ctx.tslColor,
+        tslSin: ctx.tslSin,
+        tslCos: ctx.tslCos,
+        tslMix: ctx.tslMix,
+        tslStep: ctx.tslStep,
+        tslSmoothstep: ctx.tslSmoothstep,
+        tslClamp: ctx.tslClamp,
+        tslFract: ctx.tslFract,
+        tslFloor: ctx.tslFloor,
+        tslAbs: ctx.tslAbs,
+        tslPow: ctx.tslPow,
+        tslHash: ctx.tslHash,
+        tslUv: ctx.tslUv,
+        tslTime: ctx.tslTime,
+        tslPositionLocal: ctx.tslPositionLocal,
+        tslPositionWorld: ctx.tslPositionWorld,
+        tslNormalLocal: ctx.tslNormalLocal,
+        tslNormalWorld: ctx.tslNormalWorld,
+        tslLoop: ctx.tslLoop,
 
         // Interaction / stats / convenience
         raycastFromCamera: ctx.raycastFromCamera,

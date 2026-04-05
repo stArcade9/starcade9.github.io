@@ -274,7 +274,7 @@ export function update(dt) {
     if (inputLock > 0) inputLock -= dt;
     updateAllButtons();
     updateMenuAnim(dt);
-    if (gameState === 'start' && inputLock <= 0 && isKeyPressed('Space')) startGame();
+    if (gameState === 'start' && inputLock <= 0 && (isKeyPressed('Space') || btnp(13))) startGame();
     return;
   }
 
@@ -692,7 +692,7 @@ function drawHUD() {
   drawTextShadow('BOOST POWER', 470, bY - 14, rgba8(200, 200, 200, 255), rgba8(0, 0, 0, 255), 1);
 
   if (g.energy > 30 && !g.p.isBoosting && Math.sin(t * 4) > 0) {
-    drawText('PRESS SPACE', 545, bY + 16, rgba8(0, 255, 255, 180));
+    drawText('TAP / PRESS A', 545, bY + 16, rgba8(0, 255, 255, 180));
   }
 
   // Invuln and Damage Effects
@@ -758,7 +758,14 @@ function drawStartScreen() {
   drawAllButtons();
 
   const fa = Math.floor(Math.sin(t * 6) * 100 + 155);
-  drawTextShadow('PRESS SPACE TO RACE', 320, 330, rgba8(255, 255, 0, fa), rgba8(0, 0, 0, 255), 2);
+  drawTextShadow(
+    'PRESS SPACE / TAP TO RACE',
+    320,
+    330,
+    rgba8(255, 255, 0, fa),
+    rgba8(0, 0, 0, 255),
+    2
+  );
   drawScanlines(30, 2);
 }
 

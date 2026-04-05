@@ -1,6 +1,71 @@
 // MYSTICAL REALM 3D - Creative Nintendo 64/PlayStation style fantasy world
 // Showcases advanced 3D features: dynamic lighting, particle systems, procedural generation
 
+// ── Cart manifest (loaded automatically by console) ──
+export const env = {
+  meta: {
+    name: 'Mystical Realm 3D',
+    version: '1.0.0',
+    author: 'Nova64',
+    description:
+      'Fantasy world with weather systems, crystal collection, and procedural generation',
+  },
+
+  text: {
+    defaultLocale: 'en',
+    strings: {
+      'game.title': 'MYSTICAL REALM',
+      'game.subtitle': 'A Fantasy Adventure',
+      'hud.health': 'Health',
+      'hud.magic': 'Magic',
+      'hud.score': 'Score',
+      'hud.crystals': 'Crystals',
+      'hud.creatures': 'Creatures',
+      'hud.time': 'Time',
+      'ui.game_over': 'GAME OVER',
+      'ui.paused': 'PAUSED',
+    },
+    locales: {
+      es: {
+        'game.title': 'REINO MÍSTICO',
+        'game.subtitle': 'Una Aventura Fantástica',
+        'hud.health': 'Salud',
+        'hud.magic': 'Magia',
+        'hud.score': 'Puntos',
+        'hud.crystals': 'Cristales',
+        'hud.creatures': 'Criaturas',
+        'hud.time': 'Tiempo',
+        'ui.game_over': 'FIN DEL JUEGO',
+        'ui.paused': 'PAUSA',
+      },
+    },
+  },
+
+  gameplay: {
+    player: {
+      hp: 100,
+      maxHp: 100,
+      speed: 8,
+      magicCharges: 3,
+      maxMagicCharges: 3,
+      startPosition: [0, 5, 0],
+    },
+    camera: {
+      offset: { x: 0, y: 12, z: 20 },
+    },
+  },
+
+  defaults: {
+    camera: { position: [0, 12, 20], target: [0, 0, 0], fov: 65 },
+    effects: {
+      pixelation: 1,
+      dithering: true,
+      bloom: { strength: 0.7, radius: 0.5, threshold: 0.5 },
+      vignette: { darkness: 1.2, offset: 0.9 },
+    },
+  },
+};
+
 // Game state management
 let gameState = 'start'; // 'start', 'playing', 'paused', 'gameover'
 let startScreenTime = 0;

@@ -1,9 +1,10 @@
 // runtime/console.js
 import { logger } from './logger.js';
 export class Nova64 {
-  constructor(gpu) {
+  constructor(gpu, manifestInst) {
     this.gpu = gpu;
     this.cart = null;
+    this._manifest = manifestInst || null;
     this._loadGeneration = 0; // Guard against concurrent loadCart race conditions
   }
   async loadCart(modulePath) {
@@ -50,6 +51,9 @@ export class Nova64 {
       globalThis.setFog(0x87ceeb, 50, 200);
     }
 
+    // Reset manifest (env + i18n + data + assets)
+    if (this._manifest) this._manifest._reset();
+
     logger.info('✅ Scene cleared, loading new cart:', modulePath);
 
     const mod = await import(/* @vite-ignore */ modulePath + '?t=' + Date.now());
@@ -77,6 +81,9 @@ export class Nova64 {
     if (typeof globalThis.clearPanels === 'function') {
       globalThis.clearPanels();
     }
+
+    // Auto-load manifest if cart exports env
+    if (this._manifest) this._manifest._loadFromCart(mod, modulePath);
 
     this.cart = {
       init: mod.init || (() => {}),

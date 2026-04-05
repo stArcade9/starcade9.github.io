@@ -23,6 +23,8 @@ import { api2d } from '../runtime/api-2d.js';
 import { presetsApi } from '../runtime/api-presets.js';
 import { generativeApi } from '../runtime/api-generative.js';
 import { gameUtilsApi } from '../runtime/api-gameutils.js';
+import { nftSeedApi } from '../runtime/nft-seed.js';
+import { manifestApi } from '../runtime/manifest.js';
 
 const canvas = document.getElementById('screen');
 
@@ -57,6 +59,8 @@ const api2dInst = api2d(gpu);
 const presetsInst = presetsApi(gpu);
 const genArtInst = generativeApi(gpu);
 const gameUtilsInst = gameUtilsApi();
+const nftSeedInst = nftSeedApi();
+const manifestInst = manifestApi();
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -82,6 +86,8 @@ api2dInst.exposeTo(g);
 presetsInst.exposeTo(g);
 genArtInst.exposeTo(g);
 gameUtilsInst.exposeTo(g);
+nftSeedInst.exposeTo(g);
+manifestInst.exposeTo(g);
 
 // Now create UI API after g has rgba8 and other functions
 uiApiInstance = uiApi(gpu, g);
@@ -94,13 +100,15 @@ Object.assign(globalThis, g);
 // inject camera ref into sprite system
 if (g.getCamera) sApi.setCameraRef(g.getCamera());
 
-const nova = new Nova64(gpu);
+const nova = new Nova64(gpu, manifestInst);
 
 let paused = false;
 let stepOnce = false;
 let statsEl = document.getElementById('stats');
+let _currentCartPath = '';
 
 async function loadCart(path) {
+  _currentCartPath = path;
   await nova.loadCart(path);
 }
 
@@ -133,6 +141,26 @@ function attachUI() {
     a.download = 'nova64.png';
     a.click();
   });
+
+  // START button (Enter key) resets the current cart when pressed
+  let _resetPending = false;
+  window.addEventListener('keydown', async e => {
+    if (e.code !== 'Enter') return;
+    // Ignore if typing in a form element
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // Only reset if a cart is loaded and not already resetting
+    if (!_currentCartPath || _resetPending) return;
+    _resetPending = true;
+    logger.info('🔄 START pressed — resetting cart:', _currentCartPath);
+    paused = false;
+    pauseBtn.textContent = 'Pause';
+    try {
+      await loadCart(_currentCartPath);
+    } finally {
+      _resetPending = false;
+    }
+  });
 }
 
 let last = performance.now();
@@ -162,6 +190,10 @@ function loop() {
     genArtInst._advanceFrame();
     // Update post-processing shader uniforms (time, etc.)
     fxApi.update(dt);
+    // Update procedural TSL material time uniforms
+    if (typeof globalThis._updateTSLMaterials === 'function') {
+      globalThis._updateTSLMaterials(dt);
+    }
 
     // Update cart first (for manual screen management)
     // Check if cart exists to prevent errors during scene transitions
@@ -249,11 +281,18 @@ const gameMap = {
   demoscene: '/examples/demoscene/code.js',
   'space-combat': '/examples/star-fox-nova-3d/code.js',
   minecraft: '/examples/minecraft-demo/code.js',
+  'voxel-terrain': '/examples/voxel-terrain/code.js',
+  'voxel-creative': '/examples/voxel-creative/code.js',
+  'voxel-creatures': '/examples/voxel-creatures/code.js',
+  'nft-worlds': '/examples/nft-worlds/code.js',
+  'nft-art': '/examples/nft-art-generator/code.js',
   boids: '/examples/boids-flocking/code.js',
   'game-of-life': '/examples/game-of-life-3d/code.js',
   nature: '/examples/nature-explorer-3d/code.js',
   dungeon: '/examples/dungeon-crawler-3d/code.js',
   wizardry: '/examples/wizardry-3d/code.js',
+  'creative-coding': '/examples/creative-coding/code.js',
+  'tsl-showcase': '/examples/tsl-showcase/code.js',
 };
 
 // Map demo names (from ?demo= URL param) to paths
@@ -274,6 +313,7 @@ const demoMap = {
   'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
   'hello-skybox': '/examples/hello-skybox/code.js',
   'fps-demo-3d': '/examples/fps-demo-3d/code.js',
+  'wad-demo': '/examples/wad-demo/code.js',
   'adventure-comic-3d': '/examples/adventure-comic-3d/code.js',
   'input-showcase': '/examples/input-showcase/code.js',
   'audio-lab': '/examples/audio-lab/code.js',
@@ -287,12 +327,20 @@ const demoMap = {
   'model-viewer-3d': '/examples/model-viewer-3d/code.js',
   '3d-advanced': '/examples/3d-advanced/code.js',
   'pbr-showcase': '/examples/pbr-showcase/code.js',
+  'skybox-showcase': '/examples/skybox-showcase/code.js',
   'generative-art': '/examples/generative-art/code.js',
   'boids-flocking': '/examples/boids-flocking/code.js',
   'game-of-life-3d': '/examples/game-of-life-3d/code.js',
   'nature-explorer-3d': '/examples/nature-explorer-3d/code.js',
   'dungeon-crawler-3d': '/examples/dungeon-crawler-3d/code.js',
   'wizardry-3d': '/examples/wizardry-3d/code.js',
+  'voxel-terrain': '/examples/voxel-terrain/code.js',
+  'voxel-creative': '/examples/voxel-creative/code.js',
+  'voxel-creatures': '/examples/voxel-creatures/code.js',
+  'nft-worlds': '/examples/nft-worlds/code.js',
+  'nft-art-generator': '/examples/nft-art-generator/code.js',
+  'creative-coding': '/examples/creative-coding/code.js',
+  'tsl-showcase': '/examples/tsl-showcase/code.js',
 };
 
 // default cart - load from URL param or default to space-harrier-3d
@@ -384,11 +432,11 @@ window.addEventListener('message', event => {
         'scanlines',
         'crt',
         'glitch',
-        'createVoxelEngine',
-        'voxelSet',
-        'voxelGet',
-        'voxelClear',
-        'voxelRender',
+        'configureVoxelWorld',
+        'setVoxelBlock',
+        'getVoxelBlock',
+        'resetVoxelWorld',
+        'updateVoxelWorld',
         'console',
         'Math',
         'Date',
@@ -440,11 +488,11 @@ window.addEventListener('message', event => {
         fxApi.scanlines,
         fxApi.crt,
         fxApi.glitch,
-        vxApi.createVoxelEngine,
-        vxApi.voxelSet,
-        vxApi.voxelGet,
-        vxApi.voxelClear,
-        vxApi.voxelRender,
+        vxApi.configureWorld,
+        vxApi.setBlock,
+        vxApi.getBlock,
+        vxApi.resetWorld,
+        vxApi.updateChunks,
         console,
         Math,
         Date,

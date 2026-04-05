@@ -191,7 +191,7 @@ export function update(dt) {
     modeTimer = 0;
     autoSwitch = false;
   }
-  if (keyp('Space')) {
+  if (keyp('Space') || btnp(13)) {
     autoSwitch = !autoSwitch;
     modeTimer = 0;
   }

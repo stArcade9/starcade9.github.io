@@ -598,106 +598,8 @@ export function effectsApi(gpu) {
     });
   }
 
-  // === PARTICLE EFFECTS ===
-  function createParticleSystem(count, options = {}) {
-    const {
-      color = 0xffffff,
-      size = 0.1,
-      speed = 1.0,
-      lifetime = 2.0,
-      spread = 1.0,
-      gravity = -1.0,
-    } = options;
-
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const velocities = new Float32Array(count * 3);
-    const lifetimes = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-
-      // Random positions in spread area
-      positions[i3] = (Math.random() - 0.5) * spread;
-      positions[i3 + 1] = (Math.random() - 0.5) * spread;
-      positions[i3 + 2] = (Math.random() - 0.5) * spread;
-
-      // Random velocities
-      velocities[i3] = (Math.random() - 0.5) * speed;
-      velocities[i3 + 1] = Math.random() * speed;
-      velocities[i3 + 2] = (Math.random() - 0.5) * speed;
-
-      // Random lifetimes
-      lifetimes[i] = Math.random() * lifetime;
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-    geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
-
-    const material = new THREE.PointsMaterial({
-      color: color,
-      size: size,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const particles = new THREE.Points(geometry, material);
-    particles.userData.velocities = velocities;
-    particles.userData.lifetimes = lifetimes;
-    particles.userData.maxLifetime = lifetime;
-    particles.userData.gravity = gravity;
-    particles.userData.speed = speed;
-    particles.userData.spread = spread;
-
-    scene.add(particles);
-
-    return particles;
-  }
-
-  // Update particle system
-  function updateParticles(particleSystem, deltaTime) {
-    if (!particleSystem || !particleSystem.geometry) return;
-
-    const positions = particleSystem.geometry.attributes.position.array;
-    const velocities = particleSystem.userData.velocities;
-    const lifetimes = particleSystem.userData.lifetimes;
-    const maxLifetime = particleSystem.userData.maxLifetime;
-    const gravity = particleSystem.userData.gravity;
-    const speed = particleSystem.userData.speed;
-    const spread = particleSystem.userData.spread;
-
-    for (let i = 0; i < positions.length; i += 3) {
-      const idx = i / 3;
-
-      // Update lifetime
-      lifetimes[idx] -= deltaTime;
-
-      if (lifetimes[idx] <= 0) {
-        // Reset particle
-        positions[i] = (Math.random() - 0.5) * spread;
-        positions[i + 1] = 0;
-        positions[i + 2] = (Math.random() - 0.5) * spread;
-
-        velocities[i] = (Math.random() - 0.5) * speed;
-        velocities[i + 1] = Math.random() * speed;
-        velocities[i + 2] = (Math.random() - 0.5) * speed;
-
-        lifetimes[idx] = maxLifetime;
-      } else {
-        // Update position
-        positions[i] += velocities[i] * deltaTime;
-        positions[i + 1] += velocities[i + 1] * deltaTime;
-        positions[i + 2] += velocities[i + 2] * deltaTime;
-
-        // Apply gravity
-        velocities[i + 1] += gravity * deltaTime;
-      }
-    }
-
-    particleSystem.geometry.attributes.position.needsUpdate = true;
-  }
+  // NOTE: Particle system is provided by api-3d/particles.js (GPU InstancedMesh).
+  // Legacy Points-based particle functions were removed to avoid overwriting the 3D API.
 
   // === CONVENIENCE: enable a full retro N64/PS1 post-processing stack in one call ===
   /**
@@ -815,9 +717,9 @@ export function effectsApi(gpu) {
         createShaderMaterial: createShaderMaterial,
         updateShaderUniform: updateShaderUniform,
 
-        // Particles
-        createParticleSystem: createParticleSystem,
-        updateParticles: updateParticles,
+        // NOTE: Particle system is provided by api-3d/particles.js (GPU InstancedMesh).
+        // The legacy Points-based particle functions here are kept internal only
+        // to avoid overwriting the more capable 3D particle API.
 
         // Utility
         isEffectsEnabled: () => effectsEnabled,

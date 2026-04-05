@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Seed System - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info { margin: 15px 0; }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child { border-bottom: none; }
+        .param-name { color: var(--accent-cyan); font-weight: bold; font-family: 'Courier New', Courier, monospace; }
+        .param-type { color: var(--accent-magenta); font-style: italic; font-size: 0.9em; }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        
+        ul { margin-left: 20px; margin-top: 10px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Documentation Index</a>
+        
+        <header>
+            <h1>🌱 NFT Seed System</h1>
+            <p class="subtitle">Deterministic world and art generation from token IDs, hashes, or numbers. Same seed = same output, always.</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The NFT Seed System enables deterministic procedural generation from any input &mdash; token IDs, blockchain hashes, or plain numbers. Every seed produces identical output across runs and devices.</p>
+            
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>FNV-1a Hashing</strong> &mdash; Convert any string (hex hash, token ID) to a 32-bit seed</li>
+                    <li><strong>xoshiro128** PRNG</strong> &mdash; High-quality seeded random number generator</li>
+                    <li><strong>Trait Mapping</strong> &mdash; Deterministic trait generation from schema definitions</li>
+                    <li><strong>ERC-721/1155 Metadata</strong> &mdash; Export standard NFT metadata JSON</li>
+                    <li><strong>Rich RNG Methods</strong> &mdash; random, range, float, pick, shuffle, gaussian, color, palette, weightedPick</li>
+                    <li><strong>Global Seed</strong> &mdash; <code>setSeed()</code> configures all subsystems (including voxel worlds)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🔧 Core Functions</h2>
+
+            <div class="function">
+                <div class="function-sig">createSeedFromHash(hashString)</div>
+                <p>Convert any string (hex hash, token ID, arbitrary text) to a deterministic 32-bit unsigned integer seed using FNV-1a hashing. Handles <code>0x</code> prefix automatically.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">hashString</span>
+                        <span class="param-type">string</span> &mdash; Any string: hex hash, token ID, name, etc.
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">number</span> &mdash; Unsigned 32-bit integer seed
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const seed1 = createSeedFromHash('0xabc123def456');
+const seed2 = createSeedFromHash('my-token-42');
+const seed3 = createSeedFromHash('12345');
+// Same input always produces the same seed</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">createSeedRNG(seed)</div>
+                <p>Create a seeded pseudo-random number generator using xoshiro128**. Returns an RNG object with many utility methods for generating random values deterministically.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">seed</span>
+                        <span class="param-type">number</span> &mdash; 32-bit integer seed
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> &mdash; RNG object (see methods below)
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const rng = createSeedRNG(42);
+
+rng.random();           // float in [0, 1)
+rng.range(1, 100);      // integer in [1, 100]
+rng.float(0.5, 2.0);    // float in [0.5, 2.0)
+rng.pick(['a','b','c']);  // random element from array
+rng.shuffle([1,2,3,4]);  // Fisher-Yates shuffle (new array)
+rng.gaussian(0, 1);     // normal distribution
+rng.color();            // random hex color 0x000000-0xffffff
+rng.bool(0.7);          // true with 70% probability
+rng.palette(5);         // array of 5 harmonious hex colors
+rng.weightedPick(
+  ['common','rare','epic'],
+  [70, 25, 5]
+);  // weighted random selection</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">seedToTraits(seed, traitSchema)</div>
+                <p>Map a seed to deterministic traits using a schema definition. Supports categorical (with optional weights), float ranges, int ranges, and boolean traits.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">seed</span>
+                        <span class="param-type">number</span> &mdash; 32-bit integer seed
+                    </div>
+                    <div class="param">
+                        <span class="param-name">traitSchema</span>
+                        <span class="param-type">object</span> &mdash; Schema defining trait types and ranges
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> &mdash; Object mapping trait names to generated values
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const traits = seedToTraits(42, {
+  biome: {
+    values: ['forest', 'desert', 'tundra', 'ocean', 'volcanic'],
+    weights: [30, 20, 15, 25, 10],
+  },
+  elevation: { type: 'float', min: 0, max: 1 },
+  hasRiver: { type: 'bool', probability: 0.4 },
+  treeCount: { type: 'int', min: 5, max: 50 },
+  rarity: {
+    values: ['common', 'uncommon', 'rare', 'legendary'],
+    weights: [60, 25, 12, 3],
+  },
+});
+// traits = { biome: 'forest', elevation: 0.73, hasRiver: true, ... }</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">exportSeedMetadata(seed, traits, opts?)</div>
+                <p>Export ERC-721/1155 compatible JSON metadata from a seed and traits object.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">seed</span>
+                        <span class="param-type">number|string</span> &mdash; The seed value
+                    </div>
+                    <div class="param">
+                        <span class="param-name">traits</span>
+                        <span class="param-type">object</span> &mdash; Traits object (from seedToTraits or custom)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">opts</span>
+                        <span class="param-type">object</span> &mdash; Optional: { name, description, image, collection, version }
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">string</span> &mdash; JSON string (ERC-721/1155 metadata format)
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const json = exportSeedMetadata(42, traits, {
+  name: 'Crystal World #42',
+  description: 'A unique procedural world',
+  image: 'ipfs://Qm...',
+  collection: 'Nova64 Worlds',
+});
+// Returns JSON with { name, description, image, attributes, properties }</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🌍 Global Seed Management</h2>
+
+            <div class="function">
+                <div class="function-sig">setSeed(hashOrNumber)</div>
+                <p>Set the global seed for all Nova64 subsystems. Accepts a number or hash string (auto-converts via FNV-1a). Automatically configures the voxel engine seed if active.</p>
+                
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">hashOrNumber</span>
+                        <span class="param-type">number|string</span> &mdash; Seed number or hash string
+                    </div>
+                </div>
+                
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">number</span> &mdash; The resolved 32-bit seed
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>// Set from number
+setSeed(42);
+
+// Set from hash
+setSeed('0xabc123');
+
+// Set from token ID
+setSeed('token-1234');
+
+// Use the global RNG
+const rng = getSeedRNG();
+const value = rng.random();</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getSeed()</div>
+                <p>Get the current global seed value.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">number|null</span> &mdash; Current seed, or null if not set
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getSeedRNG()</div>
+                <p>Get the global RNG instance created by <code>setSeed()</code>.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object|null</span> &mdash; RNG object, or null if <code>setSeed()</code> not called
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎨 RNG Object Methods</h2>
+            <p>The RNG object returned by <code>createSeedRNG()</code> provides these methods:</p>
+            
+            <table>
+                <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+                <tr><td><code>rng.random()</code></td><td>float [0, 1)</td><td>Uniform random float</td></tr>
+                <tr><td><code>rng.range(min, max)</code></td><td>integer [min, max]</td><td>Inclusive integer range</td></tr>
+                <tr><td><code>rng.float(min, max)</code></td><td>float [min, max)</td><td>Float in range</td></tr>
+                <tr><td><code>rng.pick(array)</code></td><td>element</td><td>Random array element</td></tr>
+                <tr><td><code>rng.shuffle(array)</code></td><td>new array</td><td>Fisher-Yates shuffle</td></tr>
+                <tr><td><code>rng.gaussian(mean, std)</code></td><td>float</td><td>Normal distribution (Box-Muller)</td></tr>
+                <tr><td><code>rng.color()</code></td><td>0xRRGGBB</td><td>Random hex color</td></tr>
+                <tr><td><code>rng.bool(p)</code></td><td>boolean</td><td>True with probability p (default 0.5)</td></tr>
+                <tr><td><code>rng.palette(n)</code></td><td>array of hex</td><td>n harmonious colors (analogous/complementary/triadic)</td></tr>
+                <tr><td><code>rng.weightedPick(items, weights)</code></td><td>element</td><td>Weighted random selection</td></tr>
+                <tr><td><code>rng.seed</code></td><td>number</td><td>Original seed value (property)</td></tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>📊 Trait Schema Types</h2>
+            <p>The <code>seedToTraits()</code> schema supports these trait definitions:</p>
+            
+            <table>
+                <tr><th>Type</th><th>Schema Properties</th><th>Output</th></tr>
+                <tr><td>Categorical</td><td><code>{ values: [...] }</code></td><td>Random element from values</td></tr>
+                <tr><td>Weighted</td><td><code>{ values: [...], weights: [...] }</code></td><td>Weighted random pick</td></tr>
+                <tr><td>Float</td><td><code>{ type: 'float', min, max }</code></td><td>Float in [min, max)</td></tr>
+                <tr><td>Integer</td><td><code>{ type: 'int', min, max }</code></td><td>Integer in [min, max]</td></tr>
+                <tr><td>Boolean</td><td><code>{ type: 'bool', probability }</code></td><td>true/false</td></tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>🚀 Complete Example</h2>
+            <div class="example">
+                <div class="example-title">Seed-Deterministic World Generation:</div>
+                <pre><code>let traits, rng;
+
+export function init() {
+  // Convert token hash to seed
+  const seed = setSeed('0xdeadbeef1234');
+  rng = getSeedRNG();
+
+  // Generate traits from schema
+  traits = seedToTraits(seed, {
+    biome: { values: ['forest','desert','tundra','ocean'], weights: [35,25,20,20] },
+    elevation: { type: 'float', min: 0.2, max: 0.9 },
+    hasCaves: { type: 'bool', probability: 0.6 },
+    treeCount: { type: 'int', min: 10, max: 100 },
+  });
+
+  // Configure voxel world with seed (auto-set by setSeed)
+  configureVoxelWorld({ renderDistance: 6 });
+  updateVoxelWorld(0, 0);
+
+  // Place seed-deterministic trees
+  for (let i = 0; i &lt; traits.treeCount; i++) {
+    const x = rng.range(-80, 80);
+    const z = rng.range(-80, 80);
+    const y = getVoxelHighestBlock(x, z);
+    if (y > 0) placeVoxelTree(x, y, z);
+  }
+}
+
+export function draw() {
+  print(`Seed: ${getSeed()}`, 10, 10, 0xffffff);
+  print(`Biome: ${traits.biome}`, 10, 20, 0x00ffff);
+  print(`Trees: ${traits.treeCount}`, 10, 30, 0x88ff88);
+
+  // Press M to export metadata
+  if (keyp('KeyM')) {
+    const json = exportSeedMetadata(getSeed(), traits);
+    console.log(json);
+  }
+}</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console &copy; 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

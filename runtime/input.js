@@ -89,6 +89,69 @@ class Input {
         }
       });
 
+      // Touch event listeners — map touch to mouse state + Space key for canvas taps
+      this._touchActive = false;
+
+      const handleTouchStart = e => {
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+        // Only handle touches on the canvas element itself
+        if (e.target !== canvas) return;
+        e.preventDefault();
+
+        const touch = e.changedTouches[0];
+        const rect = canvas.getBoundingClientRect();
+        this.mouse.x = Math.floor(((touch.clientX - rect.left) / rect.width) * 640);
+        this.mouse.y = Math.floor(((touch.clientY - rect.top) / rect.height) * 360);
+        this.mouse.down = true;
+        this._touchActive = true;
+
+        if (this.uiCallbacks.setMousePosition) {
+          this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
+        }
+        if (this.uiCallbacks.setMouseButton) {
+          this.uiCallbacks.setMouseButton(true);
+        }
+
+        // Tap on canvas also triggers Space key so "press space to start" works on mobile
+        this.keys.set('Space', true);
+      };
+
+      const handleTouchMove = e => {
+        if (!this._touchActive) return;
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+        e.preventDefault();
+
+        const touch = e.changedTouches[0];
+        const rect = canvas.getBoundingClientRect();
+        this.mouse.x = Math.floor(((touch.clientX - rect.left) / rect.width) * 640);
+        this.mouse.y = Math.floor(((touch.clientY - rect.top) / rect.height) * 360);
+
+        if (this.uiCallbacks.setMousePosition) {
+          this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
+        }
+      };
+
+      const handleTouchEnd = e => {
+        if (!this._touchActive) return;
+        e.preventDefault();
+        this.mouse.down = false;
+        this._touchActive = false;
+
+        if (this.uiCallbacks.setMouseButton) {
+          this.uiCallbacks.setMouseButton(false);
+        }
+
+        // Release the synthetic Space key
+        this.keys.set('Space', false);
+      };
+
+      window.addEventListener('touchstart', handleTouchStart, { passive: false });
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd, { passive: false });
+      window.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
       // Gamepad connection events
       window.addEventListener('gamepadconnected', _e => {
         // Gamepad connected

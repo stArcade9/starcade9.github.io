@@ -4,6 +4,199 @@
 // Inspired by Gauntlet, Diablo, and Hades
 // ========================================================================
 
+// ── Cart manifest (loaded automatically by console) ──
+export const env = {
+  meta: {
+    name: 'Gauntlet 64',
+    version: '1.0.0',
+    author: 'Nova64',
+    description: 'Isometric action RPG with 4 classes and procedural levels',
+  },
+
+  text: {
+    defaultLocale: 'en',
+    strings: {
+      'game.title': 'GAUNTLET 64',
+      'game.subtitle': 'Choose Your Champion',
+      'class.warrior': 'WARRIOR',
+      'class.valkyrie': 'VALKYRIE',
+      'class.wizard': 'WIZARD',
+      'class.elf': 'ELF',
+      'class.warrior.desc': 'High HP, strong melee',
+      'class.valkyrie.desc': 'Fast and balanced',
+      'class.wizard.desc': 'Powerful ranged magic',
+      'class.elf.desc': 'Fastest, ranged arrows',
+      'hud.score': 'SCORE',
+      'hud.kills': 'KILLS',
+      'hud.level': 'LEVEL',
+      'hud.hp': 'HP',
+      'ui.game_over': 'GAME OVER',
+      'ui.victory': 'VICTORY',
+    },
+    locales: {
+      es: {
+        'game.title': 'GAUNTLET 64',
+        'game.subtitle': 'Elige Tu Campeón',
+        'class.warrior': 'GUERRERO',
+        'class.valkyrie': 'VALQUIRIA',
+        'class.wizard': 'MAGO',
+        'class.elf': 'ELFO',
+        'hud.score': 'PUNTOS',
+        'hud.kills': 'MUERTES',
+        'hud.level': 'NIVEL',
+        'ui.game_over': 'FIN DEL JUEGO',
+        'ui.victory': 'VICTORIA',
+      },
+    },
+  },
+
+  entities: {
+    enemies: {
+      warrior: {
+        name: 'class.warrior',
+        hp: 120,
+        atk: 18,
+        speed: 1.0,
+        color: 0x4466cc,
+        tier: 1,
+        atkRange: 2.4,
+      },
+      valkyrie: {
+        name: 'class.valkyrie',
+        hp: 100,
+        atk: 14,
+        speed: 1.15,
+        color: 0xcc44aa,
+        tier: 1,
+        atkRange: 2.2,
+      },
+      wizard: {
+        name: 'class.wizard',
+        hp: 70,
+        atk: 22,
+        speed: 0.9,
+        color: 0x8844cc,
+        tier: 1,
+        atkRange: 3.0,
+        ranged: true,
+      },
+      elf: {
+        name: 'class.elf',
+        hp: 85,
+        atk: 12,
+        speed: 1.3,
+        color: 0x44cc66,
+        tier: 1,
+        atkRange: 2.8,
+        ranged: true,
+      },
+    },
+  },
+
+  gameplay: {
+    classes: {
+      warrior: {
+        name: 'class.warrior',
+        color: 0x4466cc,
+        hp: 120,
+        atk: 18,
+        spd: 1.0,
+        atkRange: 2.4,
+        desc: 'class.warrior.desc',
+      },
+      valkyrie: {
+        name: 'class.valkyrie',
+        color: 0xcc44aa,
+        hp: 100,
+        atk: 14,
+        spd: 1.15,
+        atkRange: 2.2,
+        desc: 'class.valkyrie.desc',
+      },
+      wizard: {
+        name: 'class.wizard',
+        color: 0x8844cc,
+        hp: 70,
+        atk: 22,
+        spd: 0.9,
+        atkRange: 3.0,
+        ranged: true,
+        projColor: 0xbb66ff,
+        projSpd: 16,
+        desc: 'class.wizard.desc',
+      },
+      elf: {
+        name: 'class.elf',
+        color: 0x44cc66,
+        hp: 85,
+        atk: 12,
+        spd: 1.3,
+        atkRange: 2.8,
+        ranged: true,
+        projColor: 0x88ff44,
+        projSpd: 22,
+        desc: 'class.elf.desc',
+      },
+    },
+    player: {
+      speed: 9,
+      attackCooldown: 0.25,
+      attackRange: 2.2,
+      attackArc: 0.6,
+      dashSpeed: 28,
+      dashDuration: 0.15,
+      dashCooldown: 0.6,
+    },
+  },
+
+  defaults: {
+    fog: { enabled: true, color: 0x336644, near: 20, far: 60 },
+    camera: { fov: 45 },
+    lighting: {
+      ambient: 0xffffff,
+      ambientIntensity: 0.6,
+      directional: { direction: [-0.5, -1, -0.3] },
+    },
+    effects: {
+      bloom: { strength: 0.5, radius: 0.4, threshold: 0.4 },
+      vignette: { darkness: 1.1, offset: 0.9 },
+    },
+  },
+
+  levels: {
+    enchanted_forest: {
+      fog: { color: 0x336644 },
+      floorColor: 0x3a6b3a,
+      wallColor: 0x5a4030,
+      accent: 0x55cc77,
+    },
+    dark_crypts: {
+      fog: { color: 0x222233 },
+      floorColor: 0x3a3a4a,
+      wallColor: 0x555566,
+      accent: 0x8888cc,
+    },
+    burning_ruins: {
+      fog: { color: 0x442200 },
+      floorColor: 0x4a3020,
+      wallColor: 0x6a3a20,
+      accent: 0xff6633,
+    },
+    frozen_wastes: {
+      fog: { color: 0x556677 },
+      floorColor: 0x667788,
+      wallColor: 0x8899aa,
+      accent: 0x44ddff,
+    },
+    demon_realm: {
+      fog: { color: 0x330022 },
+      floorColor: 0x3a1a2a,
+      wallColor: 0x5a2244,
+      accent: 0xff2266,
+    },
+  },
+};
+
 const W = 640,
   H = 360;
 const TILE = 2; // world-space tile size

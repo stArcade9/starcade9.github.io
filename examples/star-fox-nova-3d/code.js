@@ -1,6 +1,81 @@
 // ⭐ STAR FOX NOVA 64 — Space Combat Rail Shooter ⭐
 // Ultimate 3D Edition with Holographic Materials, Barrel Rolls, and Cinematic Lighting
 
+// ── Cart manifest (loaded automatically by console) ──
+export const env = {
+  meta: {
+    name: 'Star Fox Nova 64',
+    version: '1.0.0',
+    author: 'Nova64',
+    description: 'Space combat rail shooter with barrel rolls and cinematic lighting',
+  },
+
+  text: {
+    defaultLocale: 'en',
+    strings: {
+      'game.title': 'STAR FOX NOVA 64',
+      'game.subtitle': 'PRESS ENTER TO LAUNCH',
+      'hud.shield': 'SHIELD',
+      'hud.score': 'SCORE',
+      'hud.wave': 'WAVE',
+      'hud.boss': 'BOSS',
+      'hud.barrel_roll': 'BARREL ROLL!',
+      'ui.game_over': 'GAME OVER',
+      'ui.mission_complete': 'MISSION COMPLETE',
+    },
+    locales: {
+      es: {
+        'game.title': 'STAR FOX NOVA 64',
+        'game.subtitle': 'PULSA ENTER PARA DESPEGAR',
+        'hud.shield': 'ESCUDO',
+        'hud.score': 'PUNTOS',
+        'hud.wave': 'OLEADA',
+        'hud.boss': 'JEFE',
+        'hud.barrel_roll': '¡GIRO DE BARRIL!',
+        'ui.game_over': 'FIN DEL JUEGO',
+        'ui.mission_complete': 'MISIÓN CUMPLIDA',
+      },
+    },
+  },
+
+  gameplay: {
+    player: {
+      hp: 100,
+      speed: 60,
+      startPosition: [0, 5, 0],
+    },
+    colors: {
+      shipBody: 0xcccccc,
+      shipWing: 0x0055ff,
+      shipEngine: 0x00ffee,
+      shipCockpit: 0x00ffff,
+      drone: 0x222222,
+      droneEye: 0xff0044,
+      droneWing: 0x990033,
+      laser: 0x00ffcc,
+      enemyShot: 0xff0044,
+      asteroid: 0x443333,
+      ring: 0xffdd00,
+      star: 0xffffff,
+      explosion: 0xff4411,
+      spark: 0xffffaa,
+    },
+  },
+
+  defaults: {
+    fog: { enabled: true, color: 0x020308, near: 50, far: 300 },
+    lighting: {
+      ambient: 0x111122,
+      ambientIntensity: 1.2,
+      directional: { direction: [-0.5, -1, -0.5], color: 0xffffff },
+    },
+    effects: {
+      bloom: { strength: 1.2, radius: 0.4, threshold: 0.4 },
+      vignette: { darkness: 1.2, offset: 0.92 },
+    },
+  },
+};
+
 // ── State ──────────────────────────────────────────────
 let gameState = 'start'; // 'start' | 'playing' | 'gameover'
 let gameTime = 0;

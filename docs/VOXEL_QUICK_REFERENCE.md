@@ -30,6 +30,28 @@ BLOCK_TYPES.BRICK; // 11 - Red brick
 BLOCK_TYPES.SNOW; // 12 - White snow
 BLOCK_TYPES.ICE; // 13 - Ice
 BLOCK_TYPES.BEDROCK; // 14 - Bottom layer
+BLOCK_TYPES.COAL_ORE; // 15 - Coal ore
+BLOCK_TYPES.IRON_ORE; // 16 - Iron ore
+BLOCK_TYPES.GOLD_ORE; // 17 - Gold ore
+BLOCK_TYPES.DIAMOND_ORE; // 18 - Diamond ore
+BLOCK_TYPES.GRAVEL; // 19 - Gravel
+BLOCK_TYPES.CLAY; // 20 - Clay
+BLOCK_TYPES.TORCH; // 21 - Torch (light)
+BLOCK_TYPES.GLOWSTONE; // 22 - Glowstone (max light)
+BLOCK_TYPES.LAVA; // 23 - Lava (fluid, light)
+BLOCK_TYPES.OBSIDIAN; // 24 - Obsidian
+BLOCK_TYPES.MOSSY_COBBLESTONE; // 25 - Mossy cobble
+// Shape blocks
+BLOCK_TYPES.STONE_SLAB; // 26 - Stone slab (bottom)
+BLOCK_TYPES.STONE_SLAB_TOP; // 27 - Stone slab (top)
+BLOCK_TYPES.PLANK_SLAB; // 28 - Plank slab
+BLOCK_TYPES.STONE_STAIR; // 29 - Stone stair
+BLOCK_TYPES.PLANK_STAIR; // 30 - Plank stair
+BLOCK_TYPES.FENCE; // 31 - Fence post
+BLOCK_TYPES.FLOWER; // 32 - Flower (cross)
+BLOCK_TYPES.TALL_GRASS; // 33 - Tall grass (cross)
+BLOCK_TYPES.BRICK_SLAB; // 34 - Brick slab
+BLOCK_TYPES.BRICK_STAIR; // 35 - Brick stair
 ```
 
 ## 🔧 Core Functions
@@ -39,6 +61,16 @@ BLOCK_TYPES.BEDROCK; // 14 - Bottom layer
 ```javascript
 // Load chunks around player (call in update loop)
 updateVoxelWorld(playerX, playerZ);
+
+// Force-load all chunks synchronously (use in init)
+forceLoadVoxelChunks(playerX, playerZ);
+
+// Configure world before generating
+configureVoxelWorld({ seed: 42, renderDistance: 6, seaLevel: 62 });
+
+// Reset everything
+resetVoxelWorld();
+getVoxelConfig(); // current config
 ```
 
 ### Block Get/Set
@@ -94,6 +126,88 @@ for (let i = 0; i < 20; i++) {
   const z = Math.random() * 200 - 100;
   placeVoxelTree(x, 35, z);
 }
+```
+
+### Custom Block Shapes
+
+```javascript
+getVoxelBlockShape(blockId);       // 'cube', 'slab_bottom', 'stair', etc.
+getVoxelBlockBoundingBox(blockId); // [minX,minY,minZ, maxX,maxY,maxZ]
+isVoxelBlockFullCube(blockId);     // true for cubes only
+```
+
+### Lighting & Day/Night
+
+```javascript
+getVoxelLightLevel(x, y, z); // 0-15
+setVoxelDayTime(0.5);         // 0.0=midnight, 0.5=noon
+```
+
+### Fluid Simulation
+
+```javascript
+setVoxelFluidSource(x, y, z, BLOCK_TYPES.WATER);
+removeVoxelFluidSource(x, y, z);
+getVoxelFluidLevel(x, y, z); // 0=full, 7=thinnest, -1=none
+```
+
+### Entity System
+
+```javascript
+const e = spawnVoxelEntity('zombie', [10, 65, 10], { health: 20 });
+damageVoxelEntity(e.id, 5);
+healVoxelEntity(e.id, 3);
+updateVoxelEntities(dt);           // Call in update()
+getVoxelEntitiesInRadius(pos, 16); // Spatial query
+getVoxelEntitiesByType('zombie');
+getVoxelEntityCount();
+removeVoxelEntity(e.id);
+cleanupVoxelEntities();
+```
+
+### ECS Components
+
+```javascript
+setVoxelEntityComponent(id, 'hostile', { damage: 3 });
+getVoxelEntityComponent(id, 'hostile');
+hasVoxelEntityComponent(id, 'hostile');
+removeVoxelEntityComponent(id, 'hostile');
+queryVoxelEntities(['hostile', 'ai']); // All with both components
+createVoxelEntityArchetype('skeleton', { health: 15, hostile: {} });
+spawnVoxelEntityFromArchetype('skeleton', [x, y, z]);
+findVoxelPath([x1,y1,z1], [x2,y2,z2]); // A* pathfinding
+```
+
+### Schematics & Persistence
+
+```javascript
+// Region export/import (RLE compressed)
+const data = exportVoxelRegion(x1,y1,z1, x2,y2,z2);
+importVoxelRegion(data, x, y, z, { skipAir: true });
+
+// World export/import (JSON)
+const world = exportVoxelWorldJSON();
+importVoxelWorldJSON(world);
+
+// IndexedDB persistence
+await saveVoxelWorld('my-world');
+await loadVoxelWorld('my-world');
+const worlds = await listVoxelWorlds();
+await deleteVoxelWorld('old');
+```
+
+### Textures
+
+```javascript
+enableVoxelTextures(true);  // Procedural 27-tile atlas
+loadVoxelTextureAtlas('atlas.png', mapping); // Custom atlas
+```
+
+### Swept AABB Physics
+
+```javascript
+const result = moveVoxelEntity(pos, vel, [0.6, 1.8, 0.6], dt);
+// result: { position, velocity, grounded, hitCeiling, onIce }
 ```
 
 ## 💡 Common Patterns
@@ -340,13 +454,14 @@ for (let x = -10; x < 10; x++) {
 
 ## 🌍 World Info
 
-- **Chunk Size**: 16×64×16 blocks
-- **Render Distance**: 4 chunks (64 blocks)
-- **World Height**: 0-63 blocks
+- **Chunk Size**: 16×128×16 blocks
+- **Render Distance**: 4 chunks (64 blocks), configurable
+- **World Height**: 0-127 blocks
 - **Bedrock Layer**: Y=0 (indestructible)
-- **Water Level**: Y=30
-- **Surface**: Y=20-52 (varies with noise)
+- **Sea Level**: Y=62 (configurable)
+- **Block Types**: 36 built-in (IDs 0-35)
 - **Infinite**: Chunks generate on demand
+- **Persistence**: Save/load via IndexedDB
 
 ## 🎨 Terrain Features
 
