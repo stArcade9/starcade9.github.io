@@ -1,8 +1,5 @@
+// WADLoader, WADTextureManager, convertWADMap, setWallUVs are provided by the Nova64 runtime
 // FREEDOOM WAD EXPLORER — Browse & play through classic DOOM levels via FreeDoom
-// Loads freedoom1.wad from public/ and renders levels using Nova64's 3D engine
-
-import { WADLoader, convertWADMap } from '../fps-demo-3d/wad-loader.js';
-import { WADTextureManager, setWallUVs } from '../fps-demo-3d/wad-textures.js';
 
 export const env = {
   meta: {

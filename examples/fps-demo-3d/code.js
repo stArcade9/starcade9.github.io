@@ -1,5 +1,4 @@
-import { WADLoader, convertWADMap } from './wad-loader.js';
-import { WADTextureManager, setWallUVs } from './wad-textures.js';
+// WADLoader, WADTextureManager, convertWADMap, setWallUVs are provided by the Nova64 runtime
 
 // NEO-DOOM: FAST, BRIGHT, FUN ARENA SHOOTER
 // 3 levels, 4 enemy types, pickups, boss fights — now with .WAD file support!

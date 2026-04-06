@@ -24,6 +24,7 @@ import { presetsApi } from '../runtime/api-presets.js';
 import { generativeApi } from '../runtime/api-generative.js';
 import { gameUtilsApi } from '../runtime/api-gameutils.js';
 import { nftSeedApi } from '../runtime/nft-seed.js';
+import { wadApi } from '../runtime/wad.js';
 import { manifestApi } from '../runtime/manifest.js';
 
 const canvas = document.getElementById('screen');
@@ -60,6 +61,7 @@ const presetsInst = presetsApi(gpu);
 const genArtInst = generativeApi(gpu);
 const gameUtilsInst = gameUtilsApi();
 const nftSeedInst = nftSeedApi();
+const wadInst = wadApi();
 const manifestInst = manifestApi();
 
 // Create UI API - needs to be created after api is fully initialized
@@ -87,6 +89,7 @@ presetsInst.exposeTo(g);
 genArtInst.exposeTo(g);
 gameUtilsInst.exposeTo(g);
 nftSeedInst.exposeTo(g);
+wadInst.exposeTo(g);
 manifestInst.exposeTo(g);
 
 // Now create UI API after g has rgba8 and other functions

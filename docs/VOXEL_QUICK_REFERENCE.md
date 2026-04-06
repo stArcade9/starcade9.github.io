@@ -131,16 +131,16 @@ for (let i = 0; i < 20; i++) {
 ### Custom Block Shapes
 
 ```javascript
-getVoxelBlockShape(blockId);       // 'cube', 'slab_bottom', 'stair', etc.
+getVoxelBlockShape(blockId); // 'cube', 'slab_bottom', 'stair', etc.
 getVoxelBlockBoundingBox(blockId); // [minX,minY,minZ, maxX,maxY,maxZ]
-isVoxelBlockFullCube(blockId);     // true for cubes only
+isVoxelBlockFullCube(blockId); // true for cubes only
 ```
 
 ### Lighting & Day/Night
 
 ```javascript
 getVoxelLightLevel(x, y, z); // 0-15
-setVoxelDayTime(0.5);         // 0.0=midnight, 0.5=noon
+setVoxelDayTime(0.5); // 0.0=midnight, 0.5=noon
 ```
 
 ### Fluid Simulation
@@ -157,7 +157,7 @@ getVoxelFluidLevel(x, y, z); // 0=full, 7=thinnest, -1=none
 const e = spawnVoxelEntity('zombie', [10, 65, 10], { health: 20 });
 damageVoxelEntity(e.id, 5);
 healVoxelEntity(e.id, 3);
-updateVoxelEntities(dt);           // Call in update()
+updateVoxelEntities(dt); // Call in update()
 getVoxelEntitiesInRadius(pos, 16); // Spatial query
 getVoxelEntitiesByType('zombie');
 getVoxelEntityCount();
@@ -175,14 +175,14 @@ removeVoxelEntityComponent(id, 'hostile');
 queryVoxelEntities(['hostile', 'ai']); // All with both components
 createVoxelEntityArchetype('skeleton', { health: 15, hostile: {} });
 spawnVoxelEntityFromArchetype('skeleton', [x, y, z]);
-findVoxelPath([x1,y1,z1], [x2,y2,z2]); // A* pathfinding
+findVoxelPath([x1, y1, z1], [x2, y2, z2]); // A* pathfinding
 ```
 
 ### Schematics & Persistence
 
 ```javascript
 // Region export/import (RLE compressed)
-const data = exportVoxelRegion(x1,y1,z1, x2,y2,z2);
+const data = exportVoxelRegion(x1, y1, z1, x2, y2, z2);
 importVoxelRegion(data, x, y, z, { skipAir: true });
 
 // World export/import (JSON)
@@ -199,7 +199,7 @@ await deleteVoxelWorld('old');
 ### Textures
 
 ```javascript
-enableVoxelTextures(true);  // Procedural 27-tile atlas
+enableVoxelTextures(true); // Procedural 27-tile atlas
 loadVoxelTextureAtlas('atlas.png', mapping); // Custom atlas
 ```
 

@@ -1,0 +1,7 @@
+{
+  "name": "Test 2d Overlay",
+  "description": "MINIMAL 2D OVERLAY TEST - Tests if 2D rendering works AT ALL",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "test"
+}

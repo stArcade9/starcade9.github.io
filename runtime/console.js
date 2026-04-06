@@ -82,8 +82,8 @@ export class Nova64 {
       globalThis.clearPanels();
     }
 
-    // Auto-load manifest if cart exports env
-    if (this._manifest) this._manifest._loadFromCart(mod, modulePath);
+    // Auto-load manifest: meta.json (preferred) or export const env (fallback)
+    if (this._manifest) await this._manifest._loadFromCart(mod, modulePath);
 
     this.cart = {
       init: mod.init || (() => {}),

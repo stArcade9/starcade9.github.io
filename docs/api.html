@@ -375,7 +375,7 @@
                 
                 <div class="example">
                     <div class="example-title">Example: Draw random stars</div>
-                    <pre><code><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < <span class="number">100</span>; i++) {
+                    <pre><code><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) {
   <span class="keyword">const</span> x = Math.<span class="function-name">random</span>() * <span class="number">640</span>;
   <span class="keyword">const</span> y = Math.<span class="function-name">random</span>() * <span class="number">360</span>;
   <span class="function-name">pset</span>(x, y, <span class="function-name">rgba8</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>));
@@ -520,7 +520,7 @@
                 <ul>
                     <li><strong>HUD Elements:</strong> Set camera to (0, 0) before drawing UI to keep it fixed on screen</li>
                     <li><strong>Layering:</strong> Draw background first, then objects, then foreground/UI</li>
-                    <li><strong>Alpha Transparency:</strong> Lower alpha values (< 255) create semi-transparent effects</li>
+                    <li><strong>Alpha Transparency:</strong> Lower alpha values (&lt; 255) create semi-transparent effects</li>
                 </ul>
             </div>
         </section>

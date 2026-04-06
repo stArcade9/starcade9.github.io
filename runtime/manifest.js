@@ -109,8 +109,25 @@ export function manifestApi() {
       target.getMeta = getMeta;
     },
     _reset: _resetAll,
-    _loadFromCart(mod, cartPath) {
-      // Called by console.js after import — check if cart exports env
+    async _loadFromCart(mod, cartPath) {
+      // Try fetching meta.json from the cart directory (convention over configuration)
+      const basePath = cartPath ? cartPath.replace(/\/[^/]+$/, '') : '';
+      if (basePath) {
+        try {
+          const metaUrl = basePath + '/meta.json?t=' + Date.now();
+          const res = await fetch(metaUrl);
+          if (res.ok) {
+            const meta = await res.json();
+            logger.info('📄 Loaded meta.json from', basePath);
+            _loadManifest(meta, cartPath);
+            return; // meta.json is the primary source — skip export const env
+          }
+        } catch {
+          // No meta.json or fetch failed — fall through to export const env
+        }
+      }
+
+      // Fallback: check if cart exports env (legacy inline manifest)
       if (mod.env) {
         _loadManifest(mod.env, cartPath);
       }
