@@ -3,5 +3,36 @@
   "description": "Nova64 Screen Management System Demo",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA64",
+      "menu.start": "Start Game",
+      "menu.settings": "Settings",
+      "menu.credits": "Credits",
+      "menu.quit": "Quit",
+      "ui.controls": "W/S/↑↓ Navigate    Space/Enter Select"
+    },
+    "locales": {
+      "es": {
+        "game.title": "NOVA64",
+        "menu.start": "Iniciar Juego",
+        "menu.settings": "Configuración",
+        "menu.credits": "Créditos",
+        "menu.quit": "Salir",
+        "ui.controls": "W/S/↑↓ Navegar    Espacio/Enter Seleccionar"
+      }
+    }
+  },
+
+  "defaults": {
+    "fog": { "color": "#001122", "near": 20, "far": 100 },
+    "camera": { "position": [0, 5, 10], "fov": 60 },
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
 }

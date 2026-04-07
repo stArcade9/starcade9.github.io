@@ -3,5 +3,97 @@
   "description": "THE VERDICT — A 3D Noir Comic Adventure",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "game"
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "THE VERDICT",
+      "game.subtitle": "A 3D Noir Comic Adventure",
+      "ui.investigate": "[E] Investigate",
+      "ui.talk": "[E] Talk",
+      "ui.controls": "WASD: Move | E: Interact | ARROWS: Navigate Menu",
+      "speaker.detective": "Detective",
+      "speaker.suspect": "Suspect",
+      "speaker.narrator": "Narrator"
+    },
+    "locales": {
+      "es": {
+        "game.title": "EL VEREDICTO",
+        "game.subtitle": "Una Aventura Noir en 3D",
+        "ui.investigate": "[E] Investigar",
+        "ui.talk": "[E] Hablar",
+        "ui.controls": "WASD: Mover | E: Interactuar | FLECHAS: Navegar Menú",
+        "speaker.detective": "Detective",
+        "speaker.suspect": "Sospechoso",
+        "speaker.narrator": "Narrador"
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "moveSpeed": 5,
+      "interactionRange": 2.5
+    },
+    "typewriter": {
+      "charsPerSecond": 30,
+      "tickInterval": 0.06
+    },
+    "colors": {
+      "floor": "#2a1800",
+      "walls": "#222222",
+      "wallAccent": "#1e1e1e",
+      "desk": "#2a1600",
+      "window": "#8ab4d4",
+      "evidence": "#00ff88",
+      "speakerDetective": "#4466dd",
+      "speakerSuspect": "#dd3333",
+      "speakerNarrator": "#33aa55"
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#0a0a14",
+      "near": 8,
+      "far": 28
+    },
+    "lighting": {
+      "ambient": "#2a3040",
+      "ambientIntensity": 1.2,
+      "directional": {
+        "direction": [
+          -0.4,
+          -1,
+          -0.3
+        ],
+        "color": "#aabbcc"
+      },
+      "deskLamp": {
+        "color": "#ff9933",
+        "position": [
+          1.5,
+          2.8,
+          -0.3
+        ],
+        "intensity": 6
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1,
+        "radius": 0.5,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 0.85,
+        "offset": 1
+      }
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "skipDialogue": false,
+        "showAllClues": false
+      }
+    }
+  }
 }

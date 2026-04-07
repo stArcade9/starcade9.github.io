@@ -1,7 +1,51 @@
 {
-  "name": "Nft Worlds",
-  "description": "─── NFT Worlds — Seed-Generated Voxel Worlds ─────────────────────────",
+  "name": "NFT Worlds",
+  "description": "NFT Worlds — Seed-Generated Voxel Worlds",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "creative"
+  "category": "creative",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NFT WORLDS",
+      "biome.forest": "Forest",
+      "biome.desert": "Desert",
+      "biome.tundra": "Tundra",
+      "biome.ocean": "Ocean",
+      "biome.mushroom": "Mushroom",
+      "biome.crystal": "Crystal",
+      "biome.volcanic": "Volcanic",
+      "biome.floating": "Floating",
+      "time.dawn": "Dawn",
+      "time.noon": "Noon",
+      "time.dusk": "Dusk",
+      "time.night": "Night"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUNDOS NFT",
+        "biome.forest": "Bosque",
+        "biome.desert": "Desierto",
+        "biome.tundra": "Tundra",
+        "biome.ocean": "Océano",
+        "biome.mushroom": "Hongos",
+        "biome.crystal": "Cristal",
+        "biome.volcanic": "Volcánico",
+        "biome.floating": "Flotante",
+        "time.dawn": "Amanecer",
+        "time.noon": "Mediodía",
+        "time.dusk": "Atardecer",
+        "time.night": "Noche"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "flyMode": false,
+        "timeSpeed": "1x"
+      }
+    }
+  }
 }

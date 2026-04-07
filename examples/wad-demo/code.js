@@ -1,15 +1,6 @@
 // WADLoader, WADTextureManager, convertWADMap, setWallUVs are provided by the Nova64 runtime
 // FREEDOOM WAD EXPLORER — Browse & play through classic DOOM levels via FreeDoom
 
-export const env = {
-  meta: {
-    name: 'FreeDoom WAD Explorer',
-    version: '1.0.0',
-    author: 'Nova64',
-    description: 'Explore classic DOOM levels from the open-source FreeDoom WAD',
-  },
-};
-
 // ── State ──
 let gameTime = 0;
 let gameState = 'loading'; // loading, menu, playing, gameover, levelclear, victory

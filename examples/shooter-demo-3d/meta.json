@@ -3,5 +3,155 @@
   "description": "STAR COMBAT 64 - True 3D Space Fighter",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "STAR COMBAT 64",
+      "game.subtitle": "3D Space Fighter",
+      "ui.missionBriefing": "MISSION BRIEFING",
+      "ui.missionFailed": "MISSION FAILED",
+      "ui.finalScore": "Final Score",
+      "ui.levelReached": "Level Reached",
+      "ui.controls": "ARROWS: Move | Z: Fire | X: Charge Shot"
+    },
+    "locales": {
+      "es": {
+        "game.title": "COMBATE ESTELAR 64",
+        "game.subtitle": "Caza Espacial 3D",
+        "ui.missionBriefing": "INFORME DE MISIÓN",
+        "ui.missionFailed": "MISIÓN FALLIDA",
+        "ui.finalScore": "Puntuación Final",
+        "ui.levelReached": "Nivel Alcanzado",
+        "ui.controls": "FLECHAS: Mover | Z: Disparar | X: Disparo Cargado"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "normal": {
+        "name": "Fighter",
+        "hp": 2,
+        "speed": 8,
+        "color": "#ff4444",
+        "size": 0.6,
+        "fireChance": 0.3
+      },
+      "fast": {
+        "name": "Interceptor",
+        "hp": 1,
+        "speed": 14,
+        "color": "#ffaa00",
+        "size": 0.4,
+        "fireChance": 0.4
+      },
+      "tank": {
+        "name": "Cruiser",
+        "hp": 10,
+        "speed": 4,
+        "color": "#ff00ff",
+        "size": 1.2,
+        "fireChance": 0.8
+      },
+      "boss": {
+        "name": "Capital Ship",
+        "hp": 50,
+        "speed": 2,
+        "color": "#ff0000",
+        "size": 3
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "health": 100,
+      "shield": 100,
+      "energy": 100,
+      "position": [
+        0,
+        0,
+        -5
+      ]
+    },
+    "weapons": {
+      "normal": {
+        "damage": 1,
+        "speed": 25,
+        "color": "#ffff00",
+        "cooldown": 0.15
+      },
+      "charged": {
+        "damage": 3,
+        "speed": 25,
+        "color": "#00ffff",
+        "cooldown": 0.4,
+        "energyCost": 20
+      }
+    },
+    "formations": [
+      "line",
+      "V",
+      "diamond",
+      "circle"
+    ],
+    "colors": {
+      "player": {
+        "body": "#4488ff",
+        "wing": "#2266dd",
+        "cockpit": "#88ccff"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#000511",
+      "near": 20,
+      "far": 80
+    },
+    "lighting": {
+      "keyLightDirection": [
+        -0.5,
+        -1,
+        -0.8
+      ]
+    },
+    "effects": {
+      "pixelation": {
+        "enabled": true,
+        "size": 1
+      },
+      "dithering": true,
+      "bloom": {
+        "strength": 1,
+        "radius": 0.4,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 0.88,
+        "offset": 1.4
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        2,
+        0
+      ],
+      "target": [
+        0,
+        0,
+        -10
+      ],
+      "fov": 75
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "infiniteEnergy": false,
+        "maxWeapon": false,
+        "skipLevel": false
+      }
+    }
+  }
 }

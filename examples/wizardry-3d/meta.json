@@ -3,5 +3,786 @@
   "description": "First-person grid-based dungeon RPG inspired by Wizardry",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "game"
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "WIZARDRY NOVA 64",
+      "game.subtitle": "Proving Grounds",
+      "class.fighter": "Fighter",
+      "class.mage": "Mage",
+      "class.priest": "Priest",
+      "class.thief": "Thief",
+      "spell.fireball": "Fireball",
+      "spell.ice_bolt": "Ice Bolt",
+      "spell.shield": "Mana Shield",
+      "spell.lightning": "Lightning Bolt",
+      "spell.slow": "Slow",
+      "spell.heal": "Heal",
+      "spell.bless": "Bless",
+      "spell.turn_undead": "Turn Undead",
+      "spell.revive": "Revive",
+      "spell.group_heal": "Group Heal",
+      "spell.smite": "Smite",
+      "spell.backstab": "Backstab",
+      "ui.attack": "ATTACK",
+      "ui.spell": "SPELL",
+      "ui.defend": "DEFEND",
+      "ui.flee": "FLEE",
+      "ui.inventory": "Inventory",
+      "ui.shop": "Shop",
+      "ui.game_over": "GAME OVER",
+      "ui.victory": "VICTORY"
+    },
+    "locales": {
+      "es": {
+        "game.title": "WIZARDRY NOVA 64",
+        "game.subtitle": "Campos de Prueba",
+        "class.fighter": "Guerrero",
+        "class.mage": "Mago",
+        "class.priest": "Sacerdote",
+        "class.thief": "Ladrón",
+        "spell.fireball": "Bola de Fuego",
+        "spell.heal": "Curar",
+        "spell.revive": "Revivir",
+        "ui.attack": "ATACAR",
+        "ui.spell": "HECHIZO",
+        "ui.defend": "DEFENDER",
+        "ui.flee": "HUIR",
+        "ui.inventory": "Inventario",
+        "ui.shop": "Tienda",
+        "ui.game_over": "FIN DEL JUEGO",
+        "ui.victory": "VICTORIA"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "kobold": {
+        "name": "Kobold",
+        "hp": 8,
+        "atk": 3,
+        "def": 1,
+        "xp": 5,
+        "color": "#886644",
+        "tier": 1,
+        "shape": "small"
+      },
+      "giant_rat": {
+        "name": "Giant Rat",
+        "hp": 6,
+        "atk": 2,
+        "def": 0,
+        "xp": 3,
+        "color": "#666655",
+        "tier": 1,
+        "shape": "beast"
+      },
+      "skeleton": {
+        "name": "Skeleton",
+        "hp": 12,
+        "atk": 4,
+        "def": 2,
+        "xp": 8,
+        "color": "#ccccaa",
+        "tier": 1,
+        "shape": "undead"
+      },
+      "bat_swarm": {
+        "name": "Bat Swarm",
+        "hp": 5,
+        "atk": 2,
+        "def": 0,
+        "xp": 4,
+        "color": "#554444",
+        "tier": 1,
+        "shape": "beast"
+      },
+      "goblin": {
+        "name": "Goblin",
+        "hp": 10,
+        "atk": 3,
+        "def": 1,
+        "xp": 6,
+        "color": "#668844",
+        "tier": 1,
+        "shape": "small"
+      },
+      "orc": {
+        "name": "Orc",
+        "hp": 18,
+        "atk": 6,
+        "def": 3,
+        "xp": 15,
+        "color": "#448833",
+        "tier": 2,
+        "shape": "brute"
+      },
+      "zombie": {
+        "name": "Zombie",
+        "hp": 22,
+        "atk": 5,
+        "def": 2,
+        "xp": 12,
+        "color": "#556644",
+        "tier": 2,
+        "shape": "undead"
+      },
+      "dark_elf": {
+        "name": "Dark Elf",
+        "hp": 15,
+        "atk": 8,
+        "def": 4,
+        "xp": 20,
+        "color": "#443366",
+        "tier": 2,
+        "shape": "caster"
+      },
+      "gargoyle": {
+        "name": "Gargoyle",
+        "hp": 25,
+        "atk": 7,
+        "def": 5,
+        "xp": 18,
+        "color": "#888888",
+        "tier": 2,
+        "shape": "brute"
+      },
+      "mimic": {
+        "name": "Mimic",
+        "hp": 20,
+        "atk": 9,
+        "def": 3,
+        "xp": 22,
+        "color": "#886633",
+        "tier": 2,
+        "shape": "small"
+      },
+      "specter": {
+        "name": "Specter",
+        "hp": 16,
+        "atk": 7,
+        "def": 2,
+        "xp": 16,
+        "color": "#6666aa",
+        "tier": 2,
+        "shape": "ghost"
+      },
+      "troll": {
+        "name": "Troll",
+        "hp": 35,
+        "atk": 10,
+        "def": 5,
+        "xp": 30,
+        "color": "#336633",
+        "tier": 3,
+        "shape": "brute"
+      },
+      "wraith": {
+        "name": "Wraith",
+        "hp": 25,
+        "atk": 12,
+        "def": 3,
+        "xp": 35,
+        "color": "#333355",
+        "tier": 3,
+        "shape": "ghost"
+      },
+      "dragon": {
+        "name": "Dragon",
+        "hp": 60,
+        "atk": 15,
+        "def": 8,
+        "xp": 80,
+        "color": "#cc4422",
+        "tier": 3,
+        "shape": "dragon"
+      },
+      "fire_elemental": {
+        "name": "Fire Elemental",
+        "hp": 30,
+        "atk": 14,
+        "def": 4,
+        "xp": 40,
+        "color": "#ff4400",
+        "tier": 3,
+        "shape": "caster"
+      },
+      "medusa": {
+        "name": "Medusa",
+        "hp": 28,
+        "atk": 11,
+        "def": 6,
+        "xp": 45,
+        "color": "#448844",
+        "tier": 3,
+        "shape": "caster"
+      },
+      "iron_golem": {
+        "name": "Iron Golem",
+        "hp": 50,
+        "atk": 9,
+        "def": 10,
+        "xp": 50,
+        "color": "#777788",
+        "tier": 3,
+        "shape": "brute"
+      },
+      "demon_lord": {
+        "name": "Demon Lord",
+        "hp": 70,
+        "atk": 18,
+        "def": 8,
+        "xp": 100,
+        "color": "#aa2222",
+        "tier": 4,
+        "shape": "dragon"
+      },
+      "lich": {
+        "name": "Lich",
+        "hp": 45,
+        "atk": 20,
+        "def": 5,
+        "xp": 90,
+        "color": "#6644aa",
+        "tier": 4,
+        "shape": "caster"
+      },
+      "death_knight": {
+        "name": "Death Knight",
+        "hp": 55,
+        "atk": 16,
+        "def": 9,
+        "xp": 85,
+        "color": "#333344",
+        "tier": 4,
+        "shape": "undead"
+      }
+    },
+    "bosses": {
+      "goblin_chieftain": {
+        "name": "Goblin Chieftain",
+        "hp": 40,
+        "atk": 6,
+        "def": 3,
+        "xp": 30,
+        "color": "#668833",
+        "shape": "brute",
+        "floor": 1
+      },
+      "lich_king": {
+        "name": "Lich King",
+        "hp": 80,
+        "atk": 14,
+        "def": 6,
+        "xp": 100,
+        "color": "#6622aa",
+        "shape": "caster",
+        "floor": 3
+      },
+      "ancient_dragon": {
+        "name": "Ancient Dragon",
+        "hp": 150,
+        "atk": 20,
+        "def": 10,
+        "xp": 200,
+        "color": "#ff3300",
+        "shape": "dragon",
+        "floor": 5
+      },
+      "frost_titan": {
+        "name": "Frost Titan",
+        "hp": 120,
+        "atk": 18,
+        "def": 12,
+        "xp": 180,
+        "color": "#88bbff",
+        "shape": "brute",
+        "floor": 6
+      },
+      "infernal_archon": {
+        "name": "Infernal Archon",
+        "hp": 200,
+        "atk": 25,
+        "def": 12,
+        "xp": 300,
+        "color": "#ff2200",
+        "shape": "dragon",
+        "floor": 7
+      }
+    }
+  },
+  "items": {
+    "iron_sword": {
+      "name": "Iron Sword",
+      "type": "weapon",
+      "atk": 2,
+      "def": 0,
+      "class": "Fighter",
+      "rarity": "common"
+    },
+    "battle_axe": {
+      "name": "Battle Axe",
+      "type": "weapon",
+      "atk": 3,
+      "def": 0,
+      "class": "Fighter",
+      "rarity": "uncommon"
+    },
+    "holy_mace": {
+      "name": "Holy Mace",
+      "type": "weapon",
+      "atk": 2,
+      "def": 1,
+      "class": "Priest",
+      "rarity": "common"
+    },
+    "arcane_staff": {
+      "name": "Arcane Staff",
+      "type": "weapon",
+      "atk": 1,
+      "def": 0,
+      "class": "Mage",
+      "rarity": "common",
+      "mpBonus": 3
+    },
+    "shadow_dagger": {
+      "name": "Shadow Dagger",
+      "type": "weapon",
+      "atk": 3,
+      "def": 0,
+      "class": "Thief",
+      "rarity": "common"
+    },
+    "flame_blade": {
+      "name": "Flame Blade",
+      "type": "weapon",
+      "atk": 5,
+      "def": 0,
+      "class": "Fighter",
+      "rarity": "rare"
+    },
+    "staff_of_power": {
+      "name": "Staff of Power",
+      "type": "weapon",
+      "atk": 2,
+      "def": 0,
+      "class": "Mage",
+      "rarity": "rare",
+      "mpBonus": 6
+    },
+    "vorpal_dagger": {
+      "name": "Vorpal Dagger",
+      "type": "weapon",
+      "atk": 6,
+      "def": 0,
+      "class": "Thief",
+      "rarity": "rare"
+    },
+    "blessed_hammer": {
+      "name": "Blessed Hammer",
+      "type": "weapon",
+      "atk": 4,
+      "def": 1,
+      "class": "Priest",
+      "rarity": "uncommon"
+    },
+    "frost_brand": {
+      "name": "Frost Brand",
+      "type": "weapon",
+      "atk": 4,
+      "def": 0,
+      "class": "Fighter",
+      "rarity": "uncommon",
+      "mpBonus": 1
+    },
+    "wand_of_lightning": {
+      "name": "Wand of Lightning",
+      "type": "weapon",
+      "atk": 3,
+      "def": 0,
+      "class": "Mage",
+      "rarity": "uncommon",
+      "mpBonus": 4
+    },
+    "chain_mail": {
+      "name": "Chain Mail",
+      "type": "armor",
+      "atk": 0,
+      "def": 2,
+      "class": "Fighter",
+      "rarity": "common"
+    },
+    "leather_armor": {
+      "name": "Leather Armor",
+      "type": "armor",
+      "atk": 0,
+      "def": 1,
+      "class": "Thief",
+      "rarity": "common"
+    },
+    "mage_robe": {
+      "name": "Mage Robe",
+      "type": "armor",
+      "atk": 0,
+      "def": 1,
+      "class": "Mage",
+      "rarity": "common",
+      "mpBonus": 2
+    },
+    "plate_armor": {
+      "name": "Plate Armor",
+      "type": "armor",
+      "atk": 0,
+      "def": 4,
+      "class": "Fighter",
+      "rarity": "uncommon"
+    },
+    "blessed_vestments": {
+      "name": "Blessed Vestments",
+      "type": "armor",
+      "atk": 0,
+      "def": 2,
+      "class": "Priest",
+      "rarity": "uncommon",
+      "mpBonus": 3
+    },
+    "dragon_scale": {
+      "name": "Dragon Scale",
+      "type": "armor",
+      "atk": 1,
+      "def": 6,
+      "class": "Fighter",
+      "rarity": "rare"
+    },
+    "shadow_cloak": {
+      "name": "Shadow Cloak",
+      "type": "armor",
+      "atk": 1,
+      "def": 3,
+      "class": "Thief",
+      "rarity": "rare"
+    },
+    "frost_mail": {
+      "name": "Frost Mail",
+      "type": "armor",
+      "atk": 0,
+      "def": 5,
+      "class": "Fighter",
+      "rarity": "rare"
+    },
+    "archmage_robe": {
+      "name": "Archmage Robe",
+      "type": "armor",
+      "atk": 0,
+      "def": 2,
+      "class": "Mage",
+      "rarity": "rare",
+      "mpBonus": 5
+    },
+    "holy_plate": {
+      "name": "Holy Plate",
+      "type": "armor",
+      "atk": 0,
+      "def": 4,
+      "class": "Priest",
+      "rarity": "rare",
+      "mpBonus": 4
+    },
+    "assassin_garb": {
+      "name": "Assassin Garb",
+      "type": "armor",
+      "atk": 2,
+      "def": 2,
+      "class": "Thief",
+      "rarity": "uncommon"
+    },
+    "healing_potion": {
+      "name": "Healing Potion",
+      "type": "consumable",
+      "effect": {
+        "heal": 25
+      },
+      "cost": 15,
+      "rarity": "common"
+    },
+    "mana_potion": {
+      "name": "Mana Potion",
+      "type": "consumable",
+      "effect": {
+        "mp": 10
+      },
+      "cost": 20,
+      "rarity": "common"
+    },
+    "revival_herb": {
+      "name": "Revival Herb",
+      "type": "consumable",
+      "effect": {
+        "revive": 15
+      },
+      "cost": 50,
+      "rarity": "uncommon"
+    },
+    "party_heal": {
+      "name": "Party Heal",
+      "type": "consumable",
+      "effect": {
+        "partyHeal": 15
+      },
+      "cost": 40,
+      "rarity": "uncommon"
+    },
+    "whetstone": {
+      "name": "Whetstone",
+      "type": "consumable",
+      "effect": {
+        "buffAtk": 2
+      },
+      "cost": 30,
+      "rarity": "common"
+    },
+    "iron_shield_item": {
+      "name": "Iron Shield",
+      "type": "consumable",
+      "effect": {
+        "buffDef": 2
+      },
+      "cost": 30,
+      "rarity": "common"
+    }
+  },
+  "gameplay": {
+    "classes": {
+      "fighter": {
+        "name": "class.fighter",
+        "color": "#ff4444",
+        "icon": "⚔",
+        "hp": 30,
+        "mp": 0,
+        "atk": 6,
+        "def": 4
+      },
+      "mage": {
+        "name": "class.mage",
+        "color": "#4488ff",
+        "icon": "✦",
+        "hp": 18,
+        "mp": 15,
+        "atk": 3,
+        "def": 2
+      },
+      "priest": {
+        "name": "class.priest",
+        "color": "#ffdd44",
+        "icon": "✚",
+        "hp": 22,
+        "mp": 12,
+        "atk": 4,
+        "def": 3
+      },
+      "thief": {
+        "name": "class.thief",
+        "color": "#44ff88",
+        "icon": "◆",
+        "hp": 24,
+        "mp": 5,
+        "atk": 5,
+        "def": 3
+      }
+    },
+    "spells": {
+      "FIRE": {
+        "name": "spell.fireball",
+        "cost": 3,
+        "dmg": 12,
+        "type": "attack",
+        "class": "Mage"
+      },
+      "ICE": {
+        "name": "spell.ice_bolt",
+        "cost": 2,
+        "dmg": 8,
+        "type": "attack",
+        "class": "Mage"
+      },
+      "SHIELD": {
+        "name": "spell.shield",
+        "cost": 4,
+        "amount": 4,
+        "type": "buff_def",
+        "class": "Mage"
+      },
+      "LIGHTNING": {
+        "name": "spell.lightning",
+        "cost": 4,
+        "dmg": 15,
+        "type": "attack",
+        "class": "Mage"
+      },
+      "SLOW": {
+        "name": "spell.slow",
+        "cost": 3,
+        "amount": 3,
+        "type": "debuff_def",
+        "class": "Mage"
+      },
+      "HEAL": {
+        "name": "spell.heal",
+        "cost": 2,
+        "amount": 15,
+        "type": "heal",
+        "class": "Priest"
+      },
+      "BLESS": {
+        "name": "spell.bless",
+        "cost": 3,
+        "amount": 3,
+        "type": "buff",
+        "class": "Priest"
+      },
+      "TURN_UNDEAD": {
+        "name": "spell.turn_undead",
+        "cost": 2,
+        "dmg": 20,
+        "type": "undead",
+        "class": "Priest"
+      },
+      "REVIVE": {
+        "name": "spell.revive",
+        "cost": 6,
+        "amount": 10,
+        "type": "revive",
+        "class": "Priest"
+      },
+      "GROUP_HEAL": {
+        "name": "spell.group_heal",
+        "cost": 5,
+        "amount": 10,
+        "type": "group_heal",
+        "class": "Priest"
+      },
+      "SMITE": {
+        "name": "spell.smite",
+        "cost": 3,
+        "dmg": 10,
+        "type": "attack",
+        "class": "Priest"
+      },
+      "BACKSTAB": {
+        "name": "spell.backstab",
+        "cost": 2,
+        "dmg": 18,
+        "type": "attack",
+        "class": "Thief"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "enabled": true,
+      "color": "#1a1510",
+      "near": 4,
+      "far": 18
+    },
+    "lighting": {
+      "ambient": "#665544",
+      "ambientIntensity": 0.55,
+      "directional": {
+        "direction": [
+          0.3,
+          -1,
+          0.3
+        ],
+        "color": "#998877",
+        "intensity": 0.6
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.3,
+        "radius": 0.2,
+        "threshold": 0.7
+      },
+      "vignette": {
+        "darkness": 1.2,
+        "offset": 0.9
+      }
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "maxGold": false,
+        "allSpells": false,
+        "floorSkip": false,
+        "xpMultiplier": "1x"
+      }
+    }
+  },
+  "levels": {
+    "musty_cellars": {
+      "fog": {
+        "color": "#1a1510"
+      },
+      "lighting": {
+        "ambient": "#665544",
+        "ambientIntensity": 0.55
+      }
+    },
+    "flooded_crypts": {
+      "fog": {
+        "color": "#0a1520"
+      },
+      "lighting": {
+        "ambient": "#445566",
+        "ambientIntensity": 0.5
+      }
+    },
+    "fungal_warrens": {
+      "fog": {
+        "color": "#0a1a0a"
+      },
+      "lighting": {
+        "ambient": "#447744",
+        "ambientIntensity": 0.55
+      }
+    },
+    "obsidian_vaults": {
+      "fog": {
+        "color": "#0a0a1a"
+      },
+      "lighting": {
+        "ambient": "#334466",
+        "ambientIntensity": 0.45
+      }
+    },
+    "dragons_lair": {
+      "fog": {
+        "color": "#200a00"
+      },
+      "lighting": {
+        "ambient": "#774422",
+        "ambientIntensity": 0.5
+      }
+    },
+    "frozen_catacombs": {
+      "fog": {
+        "color": "#1a2535"
+      },
+      "lighting": {
+        "ambient": "#5577aa",
+        "ambientIntensity": 0.5
+      }
+    },
+    "infernal_pit": {
+      "fog": {
+        "color": "#300800"
+      },
+      "lighting": {
+        "ambient": "#883311",
+        "ambientIntensity": 0.45
+      }
+    }
+  }
 }

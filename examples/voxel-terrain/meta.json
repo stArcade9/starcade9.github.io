@@ -3,5 +3,52 @@
   "description": "Voxel Terrain Explorer — Showcases biomes, day/night, textures, and lighting",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "VOXEL TERRAIN EXPLORER",
+      "ui.loading": "GENERATING TERRAIN...",
+      "ui.modeFly": "[FLY]",
+      "ui.modeWalk": "[WALK]",
+      "ui.texOn": "T=Tex:ON",
+      "ui.texOff": "T=Tex:OFF",
+      "ui.aoOn": "O=AO:ON",
+      "ui.aoOff": "O=AO:OFF",
+      "ui.shadOn": "L=Shad:ON",
+      "ui.shadOff": "L=Shad:OFF",
+      "ui.lightOn": "P=Light:ON",
+      "ui.lightOff": "P=Light:OFF"
+    },
+    "locales": {
+      "es": {
+        "game.title": "EXPLORADOR DE TERRENO VOXEL",
+        "ui.loading": "GENERANDO TERRENO...",
+        "ui.modeFly": "[VOLAR]",
+        "ui.modeWalk": "[CAMINAR]"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#87ceeb",
+      "near": 20,
+      "far": 60
+    },
+    "camera": {
+      "position": [
+        0,
+        80,
+        0
+      ]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "flyMode": false,
+        "renderDistance": "3",
+        "timeSpeed": "normal"
+      }
+    }
+  }
 }

@@ -1,7 +1,35 @@
 {
-  "name": "Nft Art Generator",
-  "description": "─── NFT Art Generator — Seed-Deterministic Generative Art ─────────────",
+  "name": "NFT Art Generator",
+  "description": "NFT Art Generator — Seed-Deterministic Generative Art",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "creative"
+  "category": "creative",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NFT ART GENERATOR",
+      "sketch.flowField": "Flow Field",
+      "sketch.tiling": "Geometric Tiling",
+      "sketch.organic": "Organic Growth",
+      "sketch.abstract": "Abstract Composition",
+      "ui.controls": "N=next P=previous S=cycle style M=metadata"
+    },
+    "locales": {
+      "es": {
+        "game.title": "GENERADOR DE ARTE NFT",
+        "sketch.flowField": "Campo de Flujo",
+        "sketch.tiling": "Mosaico Geométrico",
+        "sketch.organic": "Crecimiento Orgánico",
+        "sketch.abstract": "Composición Abstracta"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "autoGenerate": false
+      }
+    }
+  }
 }

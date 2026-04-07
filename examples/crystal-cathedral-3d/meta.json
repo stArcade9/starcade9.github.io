@@ -3,5 +3,59 @@
   "description": "CRYSTAL CATHEDRAL 3D - Ultimate Nintendo 64/PlayStation visual showcase",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "CRYSTAL CATHEDRAL 3D",
+      "ui.enter": "◆ ENTER CATHEDRAL ◆",
+      "ui.features": "✨ FEATURES"
+    },
+    "locales": {
+      "es": {
+        "game.title": "CATEDRAL DE CRISTAL 3D",
+        "ui.enter": "◆ ENTRAR A LA CATEDRAL ◆",
+        "ui.features": "✨ CARACTERÍSTICAS"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#000011",
+      "near": 40,
+      "far": 120
+    },
+    "lighting": {
+      "ambient": "#202040"
+    },
+    "effects": {
+      "pixelation": {
+        "enabled": true
+      },
+      "dithering": true,
+      "bloom": {
+        "strength": 0.8,
+        "radius": 0.4,
+        "threshold": 0.5
+      },
+      "vignette": {
+        "darkness": 0.9,
+        "offset": 1.4
+      }
+    },
+    "camera": {
+      "position": [
+        25,
+        8,
+        0
+      ],
+      "fov": 70
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "freeCamera": false
+      }
+    }
+  }
 }

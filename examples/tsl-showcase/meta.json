@@ -1,7 +1,60 @@
 {
-  "name": "Tsl Showcase",
-  "description": "examples/tsl-showcase/code.js",
+  "name": "TSL Showcase",
+  "description": "TSL Showcase — Three.js Shading Language demos with procedural materials",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "TSL SHOWCASE",
+      "scene.galaxy": "Galaxy Spiral",
+      "scene.terrain": "Procedural Terrain",
+      "scene.tornado": "Energy Tornado",
+      "scene.lab": "Material Lab",
+      "ui.nextScene": "[ENTER] Next Scene"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUESTRA TSL",
+        "scene.galaxy": "Espiral Galáctica",
+        "scene.terrain": "Terreno Procedural",
+        "scene.tornado": "Tornado de Energía",
+        "scene.lab": "Laboratorio de Materiales",
+        "ui.nextScene": "[ENTER] Siguiente Escena"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#050510",
+      "near": 20,
+      "far": 60
+    },
+    "lighting": {
+      "ambient": "#222233",
+      "ambientIntensity": 1
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1.5,
+        "radius": 0.4,
+        "threshold": 0.2
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        15,
+        20
+      ],
+      "fov": 60
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "autoAdvance": false
+      }
+    }
+  }
 }

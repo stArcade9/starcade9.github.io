@@ -1,7 +1,100 @@
 {
   "name": "Star Fox Nova 64",
   "description": "Space combat rail shooter with barrel rolls and cinematic lighting",
-  "author": "Nova64 Team",
+  "author": "Nova64",
   "version": "1.0.0",
-  "category": "game"
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "STAR FOX NOVA 64",
+      "game.subtitle": "PRESS ENTER TO LAUNCH",
+      "hud.shield": "SHIELD",
+      "hud.score": "SCORE",
+      "hud.wave": "WAVE",
+      "hud.boss": "BOSS",
+      "hud.barrel_roll": "BARREL ROLL!",
+      "ui.game_over": "GAME OVER",
+      "ui.mission_complete": "MISSION COMPLETE"
+    },
+    "locales": {
+      "es": {
+        "game.title": "STAR FOX NOVA 64",
+        "game.subtitle": "PULSA ENTER PARA DESPEGAR",
+        "hud.shield": "ESCUDO",
+        "hud.score": "PUNTOS",
+        "hud.wave": "OLEADA",
+        "hud.boss": "JEFE",
+        "hud.barrel_roll": "GIRO DE BARRIL!",
+        "ui.game_over": "FIN DEL JUEGO",
+        "ui.mission_complete": "MISION CUMPLIDA"
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 100,
+      "speed": 60,
+      "startPosition": [
+        0,
+        5,
+        0
+      ]
+    },
+    "colors": {
+      "shipBody": "#cccccc",
+      "shipWing": "#0055ff",
+      "shipEngine": "#00ffee",
+      "shipCockpit": "#00ffff",
+      "drone": "#222222",
+      "droneEye": "#ff0044",
+      "droneWing": "#990033",
+      "laser": "#00ffcc",
+      "enemyShot": "#ff0044",
+      "asteroid": "#443333",
+      "ring": "#ffdd00",
+      "star": "#ffffff",
+      "explosion": "#ff4411",
+      "spark": "#ffffaa"
+    }
+  },
+  "defaults": {
+    "fog": {
+      "enabled": true,
+      "color": "#020308",
+      "near": 50,
+      "far": 300
+    },
+    "lighting": {
+      "ambient": "#111122",
+      "directional": {
+        "direction": [
+          -0.5,
+          -1,
+          -0.5
+        ],
+        "color": "#ffffff"
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1.2,
+        "radius": 0.4,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 1.2,
+        "offset": 0.92
+      }
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "godMode": false,
+        "infiniteAmmo": false,
+        "speedMultiplier": 1,
+        "showColliders": false
+      }
+    }
+  }
 }

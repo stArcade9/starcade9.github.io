@@ -3,5 +3,16 @@
   "description": "ABSOLUTE MINIMUM TEST - Does 2D work at all?",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "test"
+  "category": "test",
+
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "MINIMUM TEST"
+    }
+  },
+
+  "defaults": {
+    "cheats": { "enabled": false, "items": {} }
+  }
 }

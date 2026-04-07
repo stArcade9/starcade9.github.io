@@ -3,5 +3,148 @@
   "description": "⭐ SPACE HARRIER NOVA 64 - Exceptional 2.5D/3D Rail Shooter ⭐",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "game"
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "SPACE HARRIER",
+      "game.subtitle": "NOVA 64",
+      "ui.startMission": "START MISSION",
+      "ui.wave": "WAVE",
+      "ui.score": "SCORE",
+      "ui.lives": "LIVES",
+      "ui.streak": "STREAK!",
+      "ui.clearBonus": "CLEAR BONUS",
+      "ui.gameOver": "GAME OVER",
+      "ui.bossWarning": "WARNING: BOSS APPROACHING"
+    },
+    "locales": {
+      "es": {
+        "game.title": "SPACE HARRIER",
+        "game.subtitle": "NOVA 64",
+        "ui.startMission": "INICIAR MISIÓN",
+        "ui.wave": "OLEADA",
+        "ui.score": "PUNTUACIÓN",
+        "ui.lives": "VIDAS",
+        "ui.streak": "¡RACHA!",
+        "ui.clearBonus": "BONO DE LIMPIEZA",
+        "ui.gameOver": "FIN DEL JUEGO",
+        "ui.bossWarning": "ALERTA: JEFE ACERCÁNDOSE"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "normal": {
+        "name": "Normal",
+        "hp": 30,
+        "speed": 1,
+        "color": "#aa22ff",
+        "score": 500
+      },
+      "fast": {
+        "name": "Fast",
+        "hp": 15,
+        "speed": 1.5,
+        "color": "#ff4400",
+        "score": 700
+      },
+      "tank": {
+        "name": "Tank",
+        "hp": 80,
+        "speed": 0.6,
+        "color": "#4488ff",
+        "score": 1000
+      },
+      "boss": {
+        "name": "Boss",
+        "hp": 200,
+        "speed": 0.4,
+        "color": "#ff0000",
+        "score": 3000
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 100,
+      "lives": 3,
+      "speed": 45,
+      "boundsX": [
+        -22,
+        22
+      ],
+      "boundsY": [
+        0,
+        18
+      ]
+    },
+    "weapons": {
+      "normal": {
+        "cooldown": 0.12,
+        "speed": 180,
+        "lifetime": 2,
+        "color": "#ffff00"
+      },
+      "rapid": {
+        "cooldown": 0.04
+      }
+    },
+    "powerups": {
+      "health": {
+        "color": "#44ff44"
+      },
+      "rapid": {
+        "color": "#ffff00",
+        "duration": 8
+      },
+      "spread": {
+        "color": "#ff8800",
+        "duration": 8
+      },
+      "shield": {
+        "color": "#4488ff",
+        "duration": 8
+      }
+    },
+    "colors": {
+      "sky": "#aa22ff",
+      "ground": [
+        "#22cc55",
+        "#118833"
+      ],
+      "player": "#ff3333",
+      "bullet": "#ffff00"
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#aa22ff",
+      "near": 30,
+      "far": 150
+    },
+    "lighting": {
+      "ambient": "#ffffff"
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1,
+        "radius": 0.5,
+        "threshold": 0.3
+      },
+      "vignette": {
+        "darkness": 0.95,
+        "offset": 1
+      }
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "infiniteLives": false,
+        "rapidFire": false,
+        "skipWave": false
+      }
+    }
+  }
 }

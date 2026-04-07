@@ -3,5 +3,185 @@
   "description": "CYBERPUNK CITY 3D - Ultimate Nintendo 64 Style 3D City",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "CYBERPUNK CITY 3D",
+      "game.enter": "▶ ENTER THE CITY ▶",
+      "game.controls": "🎮 CONTROLS",
+      "game.description": "EXPLORE THE NEON METROPOLIS",
+      "mission.data_heist": "DATA HEIST",
+      "mission.drone_sweep": "DRONE SWEEP",
+      "mission.speed_run": "SPEED RUN",
+      "mission.complete": "MISSION COMPLETE",
+      "mission.failed": "MISSION FAILED",
+      "ui.health": "HULL",
+      "ui.score": "CREDITS"
+    },
+    "locales": {
+      "es": {
+        "game.title": "CIUDAD CYBERPUNK 3D",
+        "game.enter": "▶ ENTRAR A LA CIUDAD ▶",
+        "game.controls": "🎮 CONTROLES",
+        "game.description": "EXPLORA LA METRÓPOLIS DE NEÓN",
+        "mission.data_heist": "ROBO DE DATOS",
+        "mission.drone_sweep": "BARRIDO DE DRONES",
+        "mission.speed_run": "CARRERA VELOZ",
+        "mission.complete": "MISIÓN COMPLETA",
+        "mission.failed": "MISIÓN FALLIDA",
+        "ui.health": "BLINDAJE",
+        "ui.score": "CRÉDITOS"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "drone": {
+        "name": "Drone",
+        "hp": 60,
+        "color": "#ff2222",
+        "speed": 12,
+        "respawnTime": 8
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "health": 100,
+      "damageCooldown": 0.8
+    },
+    "colors": {
+      "buildings": [
+        "#4a4a7a",
+        "#5a5a8a",
+        "#6a6a9a",
+        "#3a3a6a"
+      ],
+      "neon": [
+        "#ff0099",
+        "#00ff99",
+        "#9900ff",
+        "#ffff00",
+        "#00ffff",
+        "#ff6600"
+      ],
+      "neonGlow": [
+        "#ff55cc",
+        "#55ffcc",
+        "#cc55ff",
+        "#ffffaa",
+        "#aaffff",
+        "#ffaa66"
+      ],
+      "vehicles": [
+        "#ff6666",
+        "#66ff66",
+        "#6666ff",
+        "#ffff66",
+        "#ff66ff"
+      ],
+      "particles": [
+        "#ffaa00",
+        "#aa00ff",
+        "#00ffaa",
+        "#ff00aa",
+        "#aaffff",
+        "#ffaaff"
+      ],
+      "underglow": [
+        "#00ffff",
+        "#ff00ff",
+        "#ffff00",
+        "#00ff00",
+        "#ff0000"
+      ]
+    },
+    "world": {
+      "citySize": 100,
+      "buildingCount": 50,
+      "vehicleCount": 12,
+      "particleCount": 200
+    },
+    "missions": {
+      "DATA_HEIST": {
+        "targetBase": 2,
+        "timeLimitBase": 45,
+        "rewardBase": 500
+      },
+      "DRONE_SWEEP": {
+        "targetBase": 1,
+        "timeLimitBase": 60,
+        "rewardBase": 800
+      },
+      "SPEED_RUN": {
+        "target": 1,
+        "timeLimitBase": 25,
+        "rewardBase": 400
+      }
+    },
+    "dataPackets": {
+      "count": 20,
+      "color": "#00ff00"
+    },
+    "projectiles": {
+      "color": "#ff4444",
+      "speed": 30,
+      "lifetime": 3
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#441166",
+      "near": 30,
+      "far": 180
+    },
+    "lighting": {
+      "ambient": "#664488",
+      "keyLight": "#ffaaff",
+      "keyLightDirection": [
+        -0.3,
+        -0.7,
+        -0.4
+      ]
+    },
+    "effects": {
+      "pixelation": {
+        "enabled": true,
+        "size": 1
+      },
+      "dithering": true,
+      "bloom": {
+        "strength": 1.5,
+        "radius": 0.3,
+        "threshold": 0.25
+      },
+      "chromaticAberration": 0.003,
+      "vignette": {
+        "darkness": 0.85,
+        "offset": 1.6
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        20,
+        30
+      ],
+      "target": [
+        0,
+        10,
+        0
+      ],
+      "fov": 75
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "infiniteTime": false,
+        "allMissions": false
+      }
+    }
+  }
 }

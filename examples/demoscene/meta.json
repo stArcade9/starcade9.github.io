@@ -1,21 +1,76 @@
 {
-  "title": "Demoscene - Tron Odyssey",
+  "name": "Demoscene - Tron Odyssey",
+  "description": "An epic visual showcase featuring bloom, post-processing, particles, dynamic shaders, and cinematic camera work",
   "author": "Nova64 Team",
-  "description": "An epic visual showcase featuring bloom, post-processing, particles, dynamic shaders, and cinematic camera work. Journey through 5 unique scenes in a neon digital realm.",
   "version": "1.0.0",
   "category": "demo",
-  "tags": ["demoscene", "effects", "3d", "tron", "neon", "particles", "bloom", "postprocessing"],
-  "features": [
-    "Advanced bloom and post-processing",
-    "Dynamic particle systems",
-    "5 unique animated scenes",
-    "Cinematic camera choreography",
-    "Procedural neon geometry",
-    "GPU-accelerated effects"
+  "tags": [
+    "demoscene",
+    "effects",
+    "3d",
+    "tron",
+    "neon",
+    "particles",
+    "bloom",
+    "postprocessing"
   ],
-  "controls": {
-    "mouse": "Navigate UI buttons",
-    "keyboard": "Space/Enter to start"
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA64 DEMOSCENE",
+      "game.subtitle": "TRON ODYSSEY",
+      "scene.grid": "GRID AWAKENING",
+      "scene.tunnel": "DATA TUNNEL",
+      "scene.city": "DIGITAL CITY",
+      "scene.core": "ENERGY CORE",
+      "scene.void": "THE VOID"
+    },
+    "locales": {
+      "es": {
+        "game.title": "DEMOSCENE NOVA64",
+        "game.subtitle": "ODISEA TRON",
+        "scene.grid": "DESPERTAR DE LA CUADRÍCULA",
+        "scene.tunnel": "TÚNEL DE DATOS",
+        "scene.city": "CIUDAD DIGITAL",
+        "scene.core": "NÚCLEO DE ENERGÍA",
+        "scene.void": "EL VACÍO"
+      }
+    }
   },
-  "thumbnail": "thumbnail.png"
+  "defaults": {
+    "fog": {
+      "color": "#000020",
+      "near": 30,
+      "far": 150
+    },
+    "lighting": {
+      "ambient": "#1a1a2a"
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1.2,
+        "radius": 0.6,
+        "threshold": 0.3
+      },
+      "chromaticAberration": 0.003,
+      "vignette": {
+        "darkness": 0.85,
+        "offset": 1.5
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        15,
+        35
+      ],
+      "fov": 75
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "sceneSelect": "auto"
+      }
+    }
+  }
 }

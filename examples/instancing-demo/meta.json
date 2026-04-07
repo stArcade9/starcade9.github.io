@@ -3,5 +3,51 @@
   "description": "NOVA64 INSTANCING SHOWCASE",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "INSTANCING SHOWCASE",
+      "ui.wireframe": "F: Wireframe",
+      "ui.sceneSelect": "1/2/3: Scenes"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUESTRA DE INSTANCIAS",
+        "ui.wireframe": "F: Alambre",
+        "ui.sceneSelect": "1/2/3: Escenas"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#0a0a1a",
+      "near": 30,
+      "far": 120
+    },
+    "lighting": {
+      "ambient": "#223344",
+      "ambientIntensity": 0.4
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.8,
+        "radius": 0.3,
+        "threshold": 0.5
+      },
+      "vignette": {
+        "darkness": 0.85,
+        "offset": 1
+      }
+    },
+    "camera": {
+      "fov": 60
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "maxInstances": "1000"
+      }
+    }
+  }
 }

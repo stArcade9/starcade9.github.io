@@ -1,7 +1,54 @@
 {
   "name": "Audio Lab",
-  "description": "examples/audio-lab/code.js",
+  "description": "Interactive spatial 3D audio playground",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "AUDIO LAB",
+      "game.subtitle": "Interactive Spatial 3D Audio",
+      "sound.jump": "Jump",
+      "sound.coin": "Coin",
+      "sound.laser": "Laser",
+      "sound.explosion": "Explosion",
+      "sound.powerup": "Power Up"
+    },
+    "locales": {
+      "es": {
+        "game.title": "LABORATORIO DE AUDIO",
+        "game.subtitle": "Audio Espacial 3D Interactivo",
+        "sound.jump": "Salto",
+        "sound.coin": "Moneda",
+        "sound.laser": "Láser",
+        "sound.explosion": "Explosión",
+        "sound.powerup": "Power Up"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#050510",
+      "near": 15,
+      "far": 40
+    },
+    "lighting": {
+      "ambient": "#334466",
+      "ambientIntensity": 1.2
+    },
+    "camera": {
+      "position": [
+        0,
+        6,
+        10
+      ]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "allSounds": false
+      }
+    }
+  }
 }

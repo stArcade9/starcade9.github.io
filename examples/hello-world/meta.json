@@ -3,5 +3,26 @@
   "description": "Hello World — Nova64 minimal cart",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "test"
+  "category": "test",
+
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "Hello, Nova64!"
+    },
+    "locales": {
+      "es": {
+        "game.title": "¡Hola, Nova64!"
+      }
+    }
+  },
+
+  "defaults": {
+    "lighting": { "ambient": "#ffffff", "ambientIntensity": 1.5 },
+    "camera": { "position": [0, 1, 4] },
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
 }

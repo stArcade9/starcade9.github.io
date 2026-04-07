@@ -1,7 +1,69 @@
 {
-  "name": "Meadow",
+  "name": "Nature Explorer 3D",
   "description": "NATURE EXPLORER 3D — Immersive Low-Poly Wilderness with Wildlife & Discovery",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NATURE EXPLORER 3D",
+      "biome.meadow": "Meadow",
+      "biome.pine": "Pine Forest",
+      "biome.cherry": "Cherry Grove",
+      "biome.autumn": "Autumn Woods",
+      "animal.deer": "Deer",
+      "animal.rabbit": "Rabbit",
+      "animal.fox": "Fox",
+      "animal.bear": "Bear",
+      "animal.owl": "Owl"
+    },
+    "locales": {
+      "es": {
+        "game.title": "EXPLORADOR NATURAL 3D",
+        "biome.meadow": "Pradera",
+        "biome.pine": "Bosque de Pinos",
+        "biome.cherry": "Cerezos",
+        "biome.autumn": "Bosque Otoñal",
+        "animal.deer": "Ciervo",
+        "animal.rabbit": "Conejo",
+        "animal.fox": "Zorro",
+        "animal.bear": "Oso",
+        "animal.owl": "Búho"
+      }
+    }
+  },
+  "gameplay": {
+    "colors": {
+      "meadow": {
+        "grass": "#5a9c4f",
+        "trees": "#228b22",
+        "flowers": "#88ccaa"
+      },
+      "pine": {
+        "grass": "#3d7a3d",
+        "trees": "#1a5c1a",
+        "accent": "#668877"
+      },
+      "cherry": {
+        "grass": "#6aac5f",
+        "blossoms": "#ff88aa",
+        "accent": "#ddaacc"
+      },
+      "autumn": {
+        "grass": "#8a7a4f",
+        "leaves": "#cc6622",
+        "accent": "#aa9966"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "flyMode": false,
+        "showAllAnimals": false
+      }
+    }
+  }
 }

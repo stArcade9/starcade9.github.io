@@ -1,7 +1,61 @@
 {
-  "name": "Gold",
+  "name": "PBR Showcase",
   "description": "PBR SHOWCASE — Physically Based Rendering Material Gallery",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "PBR SHOWCASE",
+      "scene.grid": "Material Grid",
+      "scene.metals": "Metals",
+      "scene.gems": "Gems & Glass",
+      "scene.mixed": "Mixed",
+      "scene.emissive": "Emissive",
+      "scene.shapes": "Shapes"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUESTRA PBR",
+        "scene.grid": "Cuadrícula de Materiales",
+        "scene.metals": "Metales",
+        "scene.gems": "Gemas y Cristal",
+        "scene.mixed": "Mixto",
+        "scene.emissive": "Emisivo",
+        "scene.shapes": "Formas"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#060e1a",
+      "near": 22,
+      "far": 60
+    },
+    "lighting": {
+      "ambient": "#2a3a55",
+      "ambientIntensity": 1.6
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.5,
+        "radius": 0.35,
+        "threshold": 0.35
+      },
+      "vignette": {
+        "darkness": 0.75,
+        "offset": 1
+      }
+    },
+    "camera": {
+      "fov": 58
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "autoRotate": true
+      }
+    }
+  }
 }

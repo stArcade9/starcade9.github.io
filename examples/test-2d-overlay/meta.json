@@ -1,7 +1,20 @@
 {
-  "name": "Test 2d Overlay",
+  "name": "Test 2D Overlay",
   "description": "MINIMAL 2D OVERLAY TEST - Tests if 2D rendering works AT ALL",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "test"
+  "category": "test",
+
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "2D OVERLAY TEST",
+      "ui.hello": "HELLO 2D OVERLAY"
+    }
+  },
+
+  "defaults": {
+    "camera": { "position": [0, 5, 15] },
+    "cheats": { "enabled": false, "items": {} }
+  }
 }

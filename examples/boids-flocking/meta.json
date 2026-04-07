@@ -3,5 +3,32 @@
   "description": "BOIDS FLOCKING SIMULATION — Mesmerizing Emergent Behavior",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "BOIDS FLOCKING",
+      "mode.flocking": "FLOCKING",
+      "mode.predator": "PREDATOR CHASE",
+      "mode.vortex": "COSMIC VORTEX",
+      "mode.fireworks": "FIREWORKS"
+    },
+    "locales": {
+      "es": {
+        "game.title": "BANDADA DE BOIDS",
+        "mode.flocking": "BANDADA",
+        "mode.predator": "CAZA DEPREDADOR",
+        "mode.vortex": "VÓRTICE CÓSMICO",
+        "mode.fireworks": "FUEGOS ARTIFICIALES"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "maxBoids": "100"
+      }
+    }
+  }
 }

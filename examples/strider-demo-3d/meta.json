@@ -1,7 +1,223 @@
 {
   "name": "Gauntlet 64",
   "description": "Isometric action RPG with 4 classes and procedural levels",
-  "author": "Nova64 Team",
+  "author": "Nova64",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "GAUNTLET 64",
+      "game.subtitle": "Choose Your Champion",
+      "class.warrior": "WARRIOR",
+      "class.valkyrie": "VALKYRIE",
+      "class.wizard": "WIZARD",
+      "class.elf": "ELF",
+      "class.warrior.desc": "High HP, strong melee",
+      "class.valkyrie.desc": "Fast and balanced",
+      "class.wizard.desc": "Powerful ranged magic",
+      "class.elf.desc": "Fastest, ranged arrows",
+      "hud.score": "SCORE",
+      "hud.kills": "KILLS",
+      "hud.level": "LEVEL",
+      "hud.hp": "HP",
+      "ui.game_over": "GAME OVER",
+      "ui.victory": "VICTORY"
+    },
+    "locales": {
+      "es": {
+        "game.title": "GAUNTLET 64",
+        "game.subtitle": "Elige Tu Champion",
+        "class.warrior": "GUERRERO",
+        "class.valkyrie": "VALQUIRIA",
+        "class.wizard": "MAGO",
+        "class.elf": "ELFO",
+        "hud.score": "PUNTOS",
+        "hud.kills": "MUERTES",
+        "hud.level": "NIVEL",
+        "ui.game_over": "FIN DEL JUEGO",
+        "ui.victory": "VICTORIA"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "warrior": {
+        "name": "class.warrior",
+        "hp": 120,
+        "atk": 18,
+        "speed": 1,
+        "color": "#4466cc",
+        "tier": 1,
+        "atkRange": 2.4
+      },
+      "valkyrie": {
+        "name": "class.valkyrie",
+        "hp": 100,
+        "atk": 14,
+        "speed": 1.15,
+        "color": "#cc44aa",
+        "tier": 1,
+        "atkRange": 2.2
+      },
+      "wizard": {
+        "name": "class.wizard",
+        "hp": 70,
+        "atk": 22,
+        "speed": 0.9,
+        "color": "#8844cc",
+        "tier": 1,
+        "atkRange": 3,
+        "ranged": true
+      },
+      "elf": {
+        "name": "class.elf",
+        "hp": 85,
+        "atk": 12,
+        "speed": 1.3,
+        "color": "#44cc66",
+        "tier": 1,
+        "atkRange": 2.8,
+        "ranged": true
+      }
+    }
+  },
+  "gameplay": {
+    "classes": {
+      "warrior": {
+        "name": "class.warrior",
+        "color": "#4466cc",
+        "hp": 120,
+        "atk": 18,
+        "spd": 1,
+        "atkRange": 2.4,
+        "desc": "class.warrior.desc"
+      },
+      "valkyrie": {
+        "name": "class.valkyrie",
+        "color": "#cc44aa",
+        "hp": 100,
+        "atk": 14,
+        "spd": 1.15,
+        "atkRange": 2.2,
+        "desc": "class.valkyrie.desc"
+      },
+      "wizard": {
+        "name": "class.wizard",
+        "color": "#8844cc",
+        "hp": 70,
+        "atk": 22,
+        "spd": 0.9,
+        "atkRange": 3,
+        "ranged": true,
+        "projColor": "#bb66ff",
+        "projSpd": 16,
+        "desc": "class.wizard.desc"
+      },
+      "elf": {
+        "name": "class.elf",
+        "color": "#44cc66",
+        "hp": 85,
+        "atk": 12,
+        "spd": 1.3,
+        "atkRange": 2.8,
+        "ranged": true,
+        "projColor": "#88ff44",
+        "projSpd": 22,
+        "desc": "class.elf.desc"
+      }
+    },
+    "player": {
+      "speed": 9,
+      "attackCooldown": 0.25,
+      "attackRange": 2.2,
+      "attackArc": 0.6,
+      "dashSpeed": 28,
+      "dashDuration": 0.15,
+      "dashCooldown": 0.6
+    }
+  },
+  "defaults": {
+    "fog": {
+      "enabled": true,
+      "color": "#336644",
+      "near": 20,
+      "far": 60
+    },
+    "camera": {
+      "fov": 45
+    },
+    "lighting": {
+      "ambient": "#ffffff",
+      "directional": {
+        "direction": [
+          -0.5,
+          -1,
+          -0.3
+        ]
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.5,
+        "radius": 0.4,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 1.1,
+        "offset": 0.9
+      }
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "godMode": false,
+        "speedMultiplier": 1,
+        "showColliders": false,
+        "skipToLevel": 0
+      }
+    }
+  },
+  "levels": {
+    "enchanted_forest": {
+      "fog": {
+        "color": "#336644"
+      },
+      "floorColor": "#3a6b3a",
+      "wallColor": "#5a4030",
+      "accent": "#55cc77"
+    },
+    "dark_crypts": {
+      "fog": {
+        "color": "#222233"
+      },
+      "floorColor": "#3a3a4a",
+      "wallColor": "#555566",
+      "accent": "#8888cc"
+    },
+    "burning_ruins": {
+      "fog": {
+        "color": "#442200"
+      },
+      "floorColor": "#4a3020",
+      "wallColor": "#6a3a20",
+      "accent": "#ff6633"
+    },
+    "frozen_wastes": {
+      "fog": {
+        "color": "#556677"
+      },
+      "floorColor": "#667788",
+      "wallColor": "#8899aa",
+      "accent": "#44ddff"
+    },
+    "demon_realm": {
+      "fog": {
+        "color": "#330022"
+      },
+      "floorColor": "#3a1a2a",
+      "wallColor": "#5a2244",
+      "accent": "#ff2266"
+    }
+  }
 }

@@ -1,7 +1,368 @@
 {
   "name": "Minecraft Demo",
   "description": "Voxel world with biomes, ores, caves, and mobs",
-  "author": "Nova64 Team",
-  "version": "1.0.0",
-  "category": "demo"
+  "author": "Nova64",
+  "version": "2.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "MINECRAFT DEMO",
+      "block.grass": "GRASS",
+      "block.dirt": "DIRT",
+      "block.stone": "STONE",
+      "block.sand": "SAND",
+      "block.water": "WATER",
+      "block.wood": "WOOD",
+      "block.leaves": "LEAVES",
+      "block.cobblestone": "COBBLESTONE",
+      "block.planks": "PLANKS",
+      "block.brick": "BRICK",
+      "block.coal_ore": "COAL ORE",
+      "block.iron_ore": "IRON ORE",
+      "block.torch": "TORCH",
+      "block.glowstone": "GLOWSTONE",
+      "hud.block": "Block",
+      "hud.biome": "Biome",
+      "hud.pos": "Pos",
+      "hud.time": "Time",
+      "hud.fps": "FPS",
+      "hud.save": "SAVED!",
+      "hud.load": "LOADED!",
+      "hud.crosshair": "+",
+      "mob.pig": "Pig",
+      "mob.cow": "Cow",
+      "mob.chicken": "Chicken",
+      "mob.sheep": "Sheep"
+    },
+    "locales": {
+      "es": {
+        "game.title": "DEMO DE MINECRAFT",
+        "block.grass": "HIERBA",
+        "block.dirt": "TIERRA",
+        "block.stone": "PIEDRA",
+        "block.sand": "ARENA",
+        "block.water": "AGUA",
+        "block.wood": "MADERA",
+        "block.leaves": "HOJAS",
+        "block.cobblestone": "ADOQUIN",
+        "block.planks": "TABLONES",
+        "block.brick": "LADRILLO",
+        "block.coal_ore": "MENA DE CARBON",
+        "block.iron_ore": "MENA DE HIERRO",
+        "block.torch": "ANTORCHA",
+        "block.glowstone": "PIEDRA LUMINOSA",
+        "hud.block": "Bloque",
+        "hud.biome": "Bioma",
+        "hud.pos": "Pos",
+        "hud.time": "Hora",
+        "hud.save": "GUARDADO!",
+        "hud.load": "CARGADO!",
+        "mob.pig": "Cerdo",
+        "mob.cow": "Vaca",
+        "mob.chicken": "Pollo",
+        "mob.sheep": "Oveja"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "pig": {
+        "name": "mob.pig",
+        "hp": 10,
+        "color": "#ffaaaa",
+        "size": [
+          0.8,
+          0.8,
+          0.8
+        ],
+        "behavior": "wander",
+        "tier": 1,
+        "loot": [
+          {
+            "item": "porkchop",
+            "chance": 1
+          }
+        ]
+      },
+      "cow": {
+        "name": "mob.cow",
+        "hp": 15,
+        "color": "#886644",
+        "size": [
+          1,
+          1.2,
+          1
+        ],
+        "behavior": "wander",
+        "tier": 1,
+        "loot": [
+          {
+            "item": "beef",
+            "chance": 1
+          },
+          {
+            "item": "leather",
+            "chance": 0.5
+          }
+        ]
+      },
+      "chicken": {
+        "name": "mob.chicken",
+        "hp": 5,
+        "color": "#ffffff",
+        "size": [
+          0.5,
+          0.6,
+          0.5
+        ],
+        "behavior": "wander",
+        "tier": 1,
+        "loot": [
+          {
+            "item": "feather",
+            "chance": 0.8
+          }
+        ]
+      },
+      "sheep": {
+        "name": "mob.sheep",
+        "hp": 10,
+        "color": "#eeeeee",
+        "size": [
+          0.8,
+          0.9,
+          0.8
+        ],
+        "behavior": "wander",
+        "tier": 1,
+        "loot": [
+          {
+            "item": "wool",
+            "chance": 1
+          }
+        ]
+      }
+    }
+  },
+  "items": {
+    "porkchop": {
+      "name": "item.porkchop",
+      "type": "consumable",
+      "effect": {
+        "heal": 4
+      },
+      "stackable": true,
+      "rarity": "common"
+    },
+    "beef": {
+      "name": "item.beef",
+      "type": "consumable",
+      "effect": {
+        "heal": 5
+      },
+      "stackable": true,
+      "rarity": "common"
+    },
+    "leather": {
+      "name": "item.leather",
+      "type": "material",
+      "stackable": true,
+      "rarity": "common"
+    },
+    "feather": {
+      "name": "item.feather",
+      "type": "material",
+      "stackable": true,
+      "rarity": "common"
+    },
+    "wool": {
+      "name": "item.wool",
+      "type": "material",
+      "stackable": true,
+      "rarity": "common"
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 20,
+      "maxHp": 20,
+      "speed": 0.15,
+      "jumpForce": 0.35,
+      "startPosition": [
+        0,
+        80,
+        0
+      ]
+    },
+    "blocks": {
+      "1": {
+        "name": "block.grass",
+        "color": "#55cc33"
+      },
+      "2": {
+        "name": "block.dirt",
+        "color": "#996644"
+      },
+      "3": {
+        "name": "block.stone",
+        "color": "#aaaaaa"
+      },
+      "4": {
+        "name": "block.sand",
+        "color": "#ffdd88"
+      },
+      "5": {
+        "name": "block.water",
+        "color": "#2288dd"
+      },
+      "6": {
+        "name": "block.wood",
+        "color": "#774422"
+      },
+      "7": {
+        "name": "block.leaves",
+        "color": "#116622"
+      },
+      "8": {
+        "name": "block.cobblestone",
+        "color": "#667788"
+      },
+      "9": {
+        "name": "block.planks",
+        "color": "#ddaa55"
+      },
+      "11": {
+        "name": "block.brick",
+        "color": "#cc4433"
+      },
+      "15": {
+        "name": "block.coal_ore",
+        "color": "#444444"
+      },
+      "16": {
+        "name": "block.iron_ore",
+        "color": "#ccaa88"
+      },
+      "21": {
+        "name": "block.torch",
+        "color": "#ffdd44"
+      },
+      "22": {
+        "name": "block.glowstone",
+        "color": "#ffeeaa"
+      }
+    },
+    "hotbarBlocks": [
+      1,
+      3,
+      9,
+      6,
+      11,
+      21,
+      22,
+      8,
+      4
+    ],
+    "gravity": 0.02,
+    "dayNightSpeed": 0.00028
+  },
+  "defaults": {
+    "sky": {
+      "type": "gradient",
+      "topColor": "#87ceeb",
+      "bottomColor": "#e0f0ff"
+    },
+    "fog": {
+      "enabled": true,
+      "color": "#87ceeb",
+      "near": 25,
+      "far": 50
+    },
+    "camera": {
+      "position": [
+        0,
+        80,
+        0
+      ],
+      "target": [
+        0,
+        80,
+        -10
+      ],
+      "fov": 75
+    },
+    "lighting": {
+      "ambient": "#666666",
+      "directional": {
+        "direction": [
+          1,
+          2,
+          1
+        ],
+        "color": "#ffffff",
+        "intensity": 0.6
+      }
+    },
+    "effects": {},
+    "voxel": {
+      "renderDistance": 3,
+      "maxMeshRebuildsPerFrame": 3,
+      "enableLOD": true,
+      "textures": true
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "noclip": false,
+        "godMode": false,
+        "speedMultiplier": 1,
+        "jumpMultiplier": 1,
+        "noFog": false,
+        "dayLocked": false
+      }
+    }
+  },
+  "levels": {
+    "overworld": {
+      "sky": {
+        "type": "gradient",
+        "topColor": "#87ceeb",
+        "bottomColor": "#e0f0ff"
+      },
+      "fog": {
+        "color": "#87ceeb",
+        "near": 25,
+        "far": 50
+      }
+    },
+    "caves": {
+      "sky": {
+        "type": "solid",
+        "color": "#000000"
+      },
+      "fog": {
+        "color": "#111111",
+        "near": 5,
+        "far": 20
+      },
+      "lighting": {
+        "ambient": "#222222"
+      }
+    },
+    "nether": {
+      "sky": {
+        "type": "solid",
+        "color": "#330000"
+      },
+      "fog": {
+        "color": "#330808",
+        "near": 8,
+        "far": 30
+      },
+      "lighting": {
+        "ambient": "#441111"
+      }
+    }
+  }
 }

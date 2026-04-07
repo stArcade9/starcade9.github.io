@@ -15,6 +15,13 @@ let _tFunc = k => k; // i18n t() reference, injected at init
 
 // ── Helpers ──────────────────────────────────────────────────
 
+/** Parse hex color string to number. Supports "#RRGGBB", "0xRRGGBB". */
+function parseColor(c) {
+  if (typeof c === 'number') return c;
+  if (typeof c === 'string') return parseInt(c.replace(/^#|^0x/i, ''), 16) || 0;
+  return 0;
+}
+
 /** Deep-copy an object and resolve any i18n key fields via t(). */
 function resolve(obj) {
   if (!obj) return null;
@@ -24,6 +31,8 @@ function resolve(obj) {
   if (copy.description && typeof copy.description === 'string')
     copy.description = _tFunc(copy.description);
   if (copy.dialog && typeof copy.dialog === 'string') copy.dialog = _tFunc(copy.dialog);
+  // Parse color fields from hex strings
+  if (typeof copy.color === 'string') copy.color = parseColor(copy.color);
   return copy;
 }
 

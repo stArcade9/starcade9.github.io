@@ -3,5 +3,54 @@
   "description": "GPU Particle System Demo — Nova64",
   "author": "Nova64 Team",
   "version": "1.0.0",
-  "category": "demo"
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "PARTICLE SYSTEMS",
+      "scene.inferno": "🔥 Inferno",
+      "scene.blizzard": "❄ Blizzard",
+      "scene.forge": "⚡ Forge",
+      "scene.galaxy": "🌌 Galaxy",
+      "scene.waterfall": "🌊 Waterfall",
+      "ui.controls": "1-5: Scene | SPACE/TAP: Burst | WASD: Orbit | QE: Zoom"
+    },
+    "locales": {
+      "es": {
+        "game.title": "SISTEMAS DE PARTÍCULAS",
+        "scene.inferno": "🔥 Infierno",
+        "scene.blizzard": "❄ Ventisca",
+        "scene.forge": "⚡ Forja",
+        "scene.galaxy": "🌌 Galaxia",
+        "scene.waterfall": "🌊 Cascada"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#0a0200",
+      "near": 20,
+      "far": 50
+    },
+    "lighting": {
+      "ambient": "#331100",
+      "ambientIntensity": 0.5
+    },
+    "effects": {
+      "bloom": {
+        "strength": 2,
+        "radius": 0.6,
+        "threshold": 0.2
+      }
+    },
+    "camera": {
+      "fov": 70
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "maxParticles": "1000"
+      }
+    }
+  }
 }
