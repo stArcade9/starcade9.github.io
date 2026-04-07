@@ -117,6 +117,7 @@ async function loadCart(path) {
 
 function attachUI() {
   const sel = document.getElementById('cart');
+  if (!sel) return; // headless / cart-runner mode — no panel UI
   const pauseBtn = document.getElementById('pause');
   const stepBtn = document.getElementById('step');
   const shotBtn = document.getElementById('shot');
@@ -262,7 +263,7 @@ function loop() {
     }
   }
 
-  statsEl.textContent = statsText;
+  if (statsEl) statsEl.textContent = statsText;
   requestAnimationFrame(loop);
 }
 
@@ -390,7 +391,9 @@ const demoMap = {
 // Listen for messages from Game Studio to execute code
 window.addEventListener('message', async event => {
   if (event.data && event.data.type === 'EXECUTE_CODE') {
-    const postLog = (msg) => { if (event.source) event.source.postMessage({ type: "CART_LOG", message: msg }, event.origin); };
+    const postLog = msg => {
+      if (event.source) event.source.postMessage({ type: 'CART_LOG', message: msg }, event.origin);
+    };
     console.log('🎮 Game Studio: Executing code...');
     console.log('📝 Code to execute:', event.data.code.substring(0, 200) + '...');
     console.log('🔧 Available APIs:', {
@@ -407,11 +410,12 @@ window.addEventListener('message', async event => {
       // Full scene reset — clear all 3D objects, lights, effects, fog, skybox, camera
       console.log('🧹 Resetting scene for new cart...');
       if (typeof nova64api.clearScene === 'function') nova64api.clearScene();
-      if (typeof nova64api.clearFog   === 'function') nova64api.clearFog();
+      if (typeof nova64api.clearFog === 'function') nova64api.clearFog();
       if (typeof nova64api.clearSkybox === 'function') nova64api.clearSkybox();
       if (typeof nova64api.disableBloom === 'function') nova64api.disableBloom();
       if (typeof nova64api.disableVignette === 'function') nova64api.disableVignette();
-      if (typeof nova64api.disableChromaticAberration === 'function') nova64api.disableChromaticAberration();
+      if (typeof nova64api.disableChromaticAberration === 'function')
+        nova64api.disableChromaticAberration();
       if (typeof nova64api.disableGlitch === 'function') nova64api.disableGlitch();
       if (typeof nova64api.setCameraPosition === 'function') nova64api.setCameraPosition(0, 5, 10);
       if (typeof nova64api.setCameraTarget === 'function') nova64api.setCameraTarget(0, 0, 0);
@@ -424,7 +428,9 @@ window.addEventListener('message', async event => {
       console.log('🔨 Creating game function...');
       // Dynamically build param list from nova64api so ALL Nova64 APIs are local variables
       // in user code — avoids window.print and other globalThis clobbering issues.
-      const _apiNames = Object.keys(nova64api).filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) && k.length >= 3);
+      const _apiNames = Object.keys(nova64api).filter(
+        k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) && k.length >= 3
+      );
       const _apiValues = _apiNames.map(k => nova64api[k]);
       const gameFunction = new Function(
         ..._apiNames,
