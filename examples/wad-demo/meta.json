@@ -25,11 +25,7 @@
       "armor": 0,
       "ammo": 50,
       "speed": 12,
-      "startPosition": [
-        0,
-        1.5,
-        0
-      ]
+      "startPosition": [0, 1.5, 0]
     },
     "materials": {
       "floor": {
@@ -93,22 +89,8 @@
         "intensity": 3
       }
     },
-    "accentColors": [
-      "#00aaff",
-      "#ff6600",
-      "#cc00ff",
-      "#00ff88",
-      "#ff0066",
-      "#ffaa00"
-    ],
-    "fogColors": [
-      "#001122",
-      "#221100",
-      "#110022",
-      "#002211",
-      "#220011",
-      "#111122"
-    ],
+    "accentColors": ["#00aaff", "#ff6600", "#cc00ff", "#00ff88", "#ff0066", "#ffaa00"],
+    "fogColors": ["#001122", "#221100", "#110022", "#002211", "#220011", "#111122"],
     "shootCooldown": 0.1,
     "bulletSpeed": 80,
     "muzzleFlashDuration": 0.06,
@@ -124,11 +106,7 @@
     "lighting": {
       "ambient": "#ffffff",
       "directional": {
-        "direction": [
-          -1,
-          -2,
-          -1
-        ],
+        "direction": [-1, -2, -1],
         "color": "#ffffee",
         "intensity": 1.2
       }

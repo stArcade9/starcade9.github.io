@@ -60,20 +60,12 @@
       "ambient": "#2a3040",
       "ambientIntensity": 1.2,
       "directional": {
-        "direction": [
-          -0.4,
-          -1,
-          -0.3
-        ],
+        "direction": [-0.4, -1, -0.3],
         "color": "#aabbcc"
       },
       "deskLamp": {
         "color": "#ff9933",
-        "position": [
-          1.5,
-          2.8,
-          -0.3
-        ],
+        "position": [1.5, 2.8, -0.3],
         "intensity": 6
       }
     },

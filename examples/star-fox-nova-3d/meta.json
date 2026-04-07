@@ -35,11 +35,7 @@
     "player": {
       "hp": 100,
       "speed": 60,
-      "startPosition": [
-        0,
-        5,
-        0
-      ]
+      "startPosition": [0, 5, 0]
     },
     "colors": {
       "shipBody": "#cccccc",
@@ -68,11 +64,7 @@
     "lighting": {
       "ambient": "#111122",
       "directional": {
-        "direction": [
-          -0.5,
-          -1,
-          -0.5
-        ],
+        "direction": [-0.5, -1, -0.5],
         "color": "#ffffff"
       }
     },

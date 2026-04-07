@@ -140,11 +140,7 @@
       "ambient": "#ffffff",
       "ambientIntensity": 0.75,
       "directional": {
-        "direction": [
-          1,
-          2,
-          1
-        ],
+        "direction": [1, 2, 1],
         "color": "#ffffff"
       }
     },
@@ -156,16 +152,8 @@
       }
     },
     "camera": {
-      "position": [
-        0,
-        12,
-        18
-      ],
-      "target": [
-        0,
-        2,
-        -5
-      ],
+      "position": [0, 12, 18],
+      "target": [0, 2, -5],
       "fov": 60
     },
     "cheats": {

@@ -67,11 +67,7 @@
       "health": 100,
       "shield": 100,
       "energy": 100,
-      "position": [
-        0,
-        0,
-        -5
-      ]
+      "position": [0, 0, -5]
     },
     "weapons": {
       "normal": {
@@ -88,12 +84,7 @@
         "energyCost": 20
       }
     },
-    "formations": [
-      "line",
-      "V",
-      "diamond",
-      "circle"
-    ],
+    "formations": ["line", "V", "diamond", "circle"],
     "colors": {
       "player": {
         "body": "#4488ff",
@@ -109,11 +100,7 @@
       "far": 80
     },
     "lighting": {
-      "keyLightDirection": [
-        -0.5,
-        -1,
-        -0.8
-      ]
+      "keyLightDirection": [-0.5, -1, -0.8]
     },
     "effects": {
       "pixelation": {
@@ -132,16 +119,8 @@
       }
     },
     "camera": {
-      "position": [
-        0,
-        2,
-        0
-      ],
-      "target": [
-        0,
-        0,
-        -10
-      ],
+      "position": [0, 2, 0],
+      "target": [0, 0, -10],
       "fov": 75
     },
     "cheats": {

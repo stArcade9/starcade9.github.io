@@ -36,11 +36,7 @@
       "id": "pig",
       "name": "Pig",
       "color": "#ffaaaa",
-      "size": [
-        0.8,
-        0.8,
-        0.8
-      ],
+      "size": [0.8, 0.8, 0.8],
       "health": 10,
       "ai": "wander"
     },
@@ -48,11 +44,7 @@
       "id": "cow",
       "name": "Cow",
       "color": "#886644",
-      "size": [
-        1,
-        1.2,
-        1
-      ],
+      "size": [1, 1.2, 1],
       "health": 15,
       "ai": "wander"
     },
@@ -60,11 +52,7 @@
       "id": "chicken",
       "name": "Chicken",
       "color": "#ffffff",
-      "size": [
-        0.5,
-        0.6,
-        0.5
-      ],
+      "size": [0.5, 0.6, 0.5],
       "health": 5,
       "ai": "wander"
     },
@@ -72,11 +60,7 @@
       "id": "sheep",
       "name": "Sheep",
       "color": "#eeeeee",
-      "size": [
-        0.8,
-        0.9,
-        0.8
-      ],
+      "size": [0.8, 0.9, 0.8],
       "health": 10,
       "ai": "wander"
     },
@@ -84,11 +68,7 @@
       "id": "zombie",
       "name": "Zombie",
       "color": "#44aa44",
-      "size": [
-        0.7,
-        1.6,
-        0.7
-      ],
+      "size": [0.7, 1.6, 0.7],
       "health": 20,
       "ai": "chase"
     },
@@ -96,11 +76,7 @@
       "id": "slime",
       "name": "Slime",
       "color": "#44ff44",
-      "size": [
-        0.6,
-        0.6,
-        0.6
-      ],
+      "size": [0.6, 0.6, 0.6],
       "health": 8,
       "ai": "wander"
     }
@@ -112,11 +88,7 @@
       "far": 100
     },
     "camera": {
-      "position": [
-        0,
-        80,
-        0
-      ]
+      "position": [0, 80, 0]
     },
     "cheats": {
       "enabled": false,

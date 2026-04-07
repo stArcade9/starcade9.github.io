@@ -38,11 +38,7 @@
       "ambientIntensity": 1.2
     },
     "camera": {
-      "position": [
-        0,
-        6,
-        10
-      ]
+      "position": [0, 6, 10]
     },
     "cheats": {
       "enabled": false,

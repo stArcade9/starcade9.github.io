@@ -117,11 +117,7 @@
     "lighting": {
       "ambient": "#333333",
       "directional": {
-        "direction": [
-          0.5,
-          -0.5,
-          0.5
-        ],
+        "direction": [0.5, -0.5, 0.5],
         "color": "#ffffff"
       }
     },

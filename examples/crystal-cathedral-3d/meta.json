@@ -44,11 +44,7 @@
       }
     },
     "camera": {
-      "position": [
-        25,
-        8,
-        0
-      ],
+      "position": [25, 8, 0],
       "fov": 70
     },
     "cheats": {

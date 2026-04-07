@@ -70,14 +70,8 @@
       "hp": 100,
       "lives": 3,
       "speed": 45,
-      "boundsX": [
-        -22,
-        22
-      ],
-      "boundsY": [
-        0,
-        18
-      ]
+      "boundsX": [-22, 22],
+      "boundsY": [0, 18]
     },
     "weapons": {
       "normal": {
@@ -109,10 +103,7 @@
     },
     "colors": {
       "sky": "#aa22ff",
-      "ground": [
-        "#22cc55",
-        "#118833"
-      ],
+      "ground": ["#22cc55", "#118833"],
       "player": "#ff3333",
       "bullet": "#ffff00"
     }

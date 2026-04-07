@@ -121,11 +121,7 @@
       "armor": 0,
       "ammo": 50,
       "speed": 12,
-      "startPosition": [
-        2,
-        1.5,
-        2
-      ]
+      "startPosition": [2, 1.5, 2]
     },
     "materials": {
       "floor": {
@@ -196,11 +192,7 @@
     "lighting": {
       "ambient": "#ffffff",
       "directional": {
-        "direction": [
-          -1,
-          -2,
-          -1
-        ],
+        "direction": [-1, -2, -1],
         "color": "#ffffee",
         "intensity": 1.2
       }

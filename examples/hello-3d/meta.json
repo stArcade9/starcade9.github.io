@@ -33,11 +33,7 @@
       "dithering": true
     },
     "camera": {
-      "position": [
-        0,
-        5,
-        15
-      ],
+      "position": [0, 5, 15],
       "fov": 60
     },
     "cheats": {

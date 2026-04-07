@@ -52,50 +52,12 @@
       "damageCooldown": 0.8
     },
     "colors": {
-      "buildings": [
-        "#4a4a7a",
-        "#5a5a8a",
-        "#6a6a9a",
-        "#3a3a6a"
-      ],
-      "neon": [
-        "#ff0099",
-        "#00ff99",
-        "#9900ff",
-        "#ffff00",
-        "#00ffff",
-        "#ff6600"
-      ],
-      "neonGlow": [
-        "#ff55cc",
-        "#55ffcc",
-        "#cc55ff",
-        "#ffffaa",
-        "#aaffff",
-        "#ffaa66"
-      ],
-      "vehicles": [
-        "#ff6666",
-        "#66ff66",
-        "#6666ff",
-        "#ffff66",
-        "#ff66ff"
-      ],
-      "particles": [
-        "#ffaa00",
-        "#aa00ff",
-        "#00ffaa",
-        "#ff00aa",
-        "#aaffff",
-        "#ffaaff"
-      ],
-      "underglow": [
-        "#00ffff",
-        "#ff00ff",
-        "#ffff00",
-        "#00ff00",
-        "#ff0000"
-      ]
+      "buildings": ["#4a4a7a", "#5a5a8a", "#6a6a9a", "#3a3a6a"],
+      "neon": ["#ff0099", "#00ff99", "#9900ff", "#ffff00", "#00ffff", "#ff6600"],
+      "neonGlow": ["#ff55cc", "#55ffcc", "#cc55ff", "#ffffaa", "#aaffff", "#ffaa66"],
+      "vehicles": ["#ff6666", "#66ff66", "#6666ff", "#ffff66", "#ff66ff"],
+      "particles": ["#ffaa00", "#aa00ff", "#00ffaa", "#ff00aa", "#aaffff", "#ffaaff"],
+      "underglow": ["#00ffff", "#ff00ff", "#ffff00", "#00ff00", "#ff0000"]
     },
     "world": {
       "citySize": 100,
@@ -139,11 +101,7 @@
     "lighting": {
       "ambient": "#664488",
       "keyLight": "#ffaaff",
-      "keyLightDirection": [
-        -0.3,
-        -0.7,
-        -0.4
-      ]
+      "keyLightDirection": [-0.3, -0.7, -0.4]
     },
     "effects": {
       "pixelation": {
@@ -163,16 +121,8 @@
       }
     },
     "camera": {
-      "position": [
-        0,
-        20,
-        30
-      ],
-      "target": [
-        0,
-        10,
-        0
-      ],
+      "position": [0, 20, 30],
+      "target": [0, 10, 0],
       "fov": 75
     },
     "cheats": {

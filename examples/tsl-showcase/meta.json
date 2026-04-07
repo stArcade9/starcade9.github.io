@@ -43,11 +43,7 @@
       }
     },
     "camera": {
-      "position": [
-        0,
-        15,
-        20
-      ],
+      "position": [0, 15, 20],
       "fov": 60
     },
     "cheats": {

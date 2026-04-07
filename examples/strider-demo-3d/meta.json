@@ -150,11 +150,7 @@
     "lighting": {
       "ambient": "#ffffff",
       "directional": {
-        "direction": [
-          -0.5,
-          -1,
-          -0.3
-        ]
+        "direction": [-0.5, -1, -0.3]
       }
     },
     "effects": {

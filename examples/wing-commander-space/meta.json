@@ -113,17 +113,9 @@
       }
     },
     "asteroids": {
-      "speedRange": [
-        5,
-        15
-      ],
+      "speedRange": [5, 15],
       "spawnDistance": 100,
-      "colors": [
-        "#666666",
-        "#888888",
-        "#555555",
-        "#777766"
-      ]
+      "colors": ["#666666", "#888888", "#555555", "#777766"]
     }
   },
   "defaults": {
@@ -135,11 +127,7 @@
     "lighting": {
       "ambient": "#222233",
       "directional": {
-        "direction": [
-          0.5,
-          -0.5,
-          0.5
-        ],
+        "direction": [0.5, -0.5, 0.5],
         "color": "#ffffff"
       }
     },

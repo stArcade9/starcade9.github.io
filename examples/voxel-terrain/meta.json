@@ -36,11 +36,7 @@
       "far": 60
     },
     "camera": {
-      "position": [
-        0,
-        80,
-        0
-      ]
+      "position": [0, 80, 0]
     },
     "cheats": {
       "enabled": false,

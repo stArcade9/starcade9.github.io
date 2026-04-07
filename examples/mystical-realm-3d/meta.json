@@ -40,11 +40,7 @@
       "speed": 8,
       "magicCharges": 3,
       "maxMagicCharges": 3,
-      "startPosition": [
-        0,
-        5,
-        0
-      ]
+      "startPosition": [0, 5, 0]
     },
     "camera": {
       "offset": {
@@ -53,63 +49,34 @@
         "z": 20
       }
     },
-    "crystalColors": [
-      "#ff4444",
-      "#44ff44",
-      "#4444ff",
-      "#ffff44",
-      "#ff44ff",
-      "#44ffff"
-    ],
+    "crystalColors": ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"],
     "creatures": {
       "orbs": {
         "count": 8,
         "color": "#ffff88",
-        "altitude": [
-          15,
-          25
-        ]
+        "altitude": [15, 25]
       },
       "wisps": {
         "count": 6,
         "color": "#9933cc",
         "atk": 8,
         "aggroRange": 18,
-        "speed": [
-          5,
-          8
-        ]
+        "speed": [5, 8]
       },
       "fireSprites": {
         "count": 4,
         "color": "#ff4400",
         "atk": 12,
         "aggroRange": 14,
-        "speed": [
-          8,
-          11
-        ]
+        "speed": [8, 11]
       }
     },
-    "weather": [
-      "clear",
-      "rain",
-      "storm",
-      "mystical"
-    ]
+    "weather": ["clear", "rain", "storm", "mystical"]
   },
   "defaults": {
     "camera": {
-      "position": [
-        0,
-        12,
-        20
-      ],
-      "target": [
-        0,
-        0,
-        0
-      ],
+      "position": [0, 12, 20],
+      "target": [0, 0, 0],
       "fov": 65
     },
     "effects": {

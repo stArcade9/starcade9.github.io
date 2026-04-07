@@ -68,10 +68,7 @@
         "impulseColor": "#ff4444"
       },
       "sandbox": {
-        "towerSize": [
-          5,
-          3
-        ],
+        "towerSize": [5, 3],
         "maxObjects": 60
       }
     },
@@ -93,11 +90,7 @@
       "ambient": "#ffffff",
       "ambientIntensity": 0.6,
       "directional": {
-        "direction": [
-          0.5,
-          -1,
-          0.3
-        ],
+        "direction": [0.5, -1, 0.3],
         "color": "#ffffff"
       }
     },

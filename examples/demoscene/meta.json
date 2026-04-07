@@ -4,16 +4,7 @@
   "author": "Nova64 Team",
   "version": "1.0.0",
   "category": "demo",
-  "tags": [
-    "demoscene",
-    "effects",
-    "3d",
-    "tron",
-    "neon",
-    "particles",
-    "bloom",
-    "postprocessing"
-  ],
+  "tags": ["demoscene", "effects", "3d", "tron", "neon", "particles", "bloom", "postprocessing"],
   "text": {
     "defaultLocale": "en",
     "strings": {
@@ -59,11 +50,7 @@
       }
     },
     "camera": {
-      "position": [
-        0,
-        15,
-        35
-      ],
+      "position": [0, 15, 35],
       "fov": 75
     },
     "cheats": {
