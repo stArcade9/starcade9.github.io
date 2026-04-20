@@ -20,6 +20,7 @@ let lightCycles = [];
 let digitalTowers = [];
 let particleSystems = [];
 let energyFields = [];
+let terrainBlocks = [];
 
 // Camera control
 let camera = {
@@ -155,55 +156,69 @@ function initStartScreen() {
 }
 
 async function buildStartScene() {
-  // Create a VIBRANT neon intro scene
-  // Glowing grid floor - subtle base glow
-  const gridSize = 80;
-  gridFloor = createAdvancedCube(
-    gridSize,
-    {
-      color: COLORS.neonCyan,
-      emissive: COLORS.neonCyan,
-      emissiveIntensity: 0.3, // Reduced from 0.8 - subtle foundation
-      flatShading: true,
-    },
-    [0, -0.5, 0]
-  );
-  setScale(gridFloor, 1, 0.01, 1); // Make it flat
+  // === VAPORWAVE DEMOSCENE INTRO ===
+  // 1. Procedural Noise Terrain
+  for (let x = -60; x <= 60; x += 3) {
+    for (let z = -60; z <= 60; z += 3) {
+      // Procedural height mapping using simplex noise
+      const height = simplexNoise2D(x, z, 3, 0.5, 2.0, 0.04) * 8 + 4;
 
-  // Grid lines with moderate emissive glow
-  for (let i = -40; i <= 40; i += 5) {
-    // Horizontal - alternating cyan and magenta
-    const hColor = i % 10 === 0 ? COLORS.neonCyan : COLORS.electric;
-    const hLine = createAdvancedCube(
-      1,
-      {
-        color: hColor,
-        emissive: hColor,
-        emissiveIntensity: 0.6, // Reduced from 1.2
-        flatShading: true,
-      },
-      [0, 0.1, i]
-    );
-    setScale(hLine, gridSize, 0.15, 0.3);
-    tunnelSegments.push(hLine);
+      // Vaporwave grid palette mapping based on height
+      let tColor = COLORS.neonCyan;
+      if (height > 8) tColor = COLORS.neonMagenta;
+      else if (height > 6) tColor = COLORS.electric;
+      else if (height > 4) tColor = COLORS.neonPink;
 
-    // Vertical - alternating colors
-    const vColor = i % 10 === 0 ? COLORS.neonMagenta : COLORS.neonPink;
-    const vLine = createAdvancedCube(
-      1,
-      {
-        color: vColor,
-        emissive: vColor,
-        emissiveIntensity: 0.6, // Reduced from 1.2
-        flatShading: true,
-      },
-      [i, 0.1, 0]
-    );
-    setScale(vLine, 0.3, 0.15, gridSize);
-    tunnelSegments.push(vLine);
+      const tBlock = createAdvancedCube(
+        3,
+        {
+          color: tColor,
+          emissive: tColor,
+          emissiveIntensity: (height / 12) * 0.5, // Brighter peaks
+          flatShading: true,
+        },
+        [x, height / 2 - 5, z]
+      );
+      setScale(tBlock, 1, height, 1);
+
+      // Store in terrainBlocks to be animated/moved if needed, or simply leave them static
+      terrainBlocks.push({ mesh: tBlock, isTerrain: true, origY: height / 2 - 5 });
+    }
   }
 
-  // Floating GLOWING crystalline structures - much brighter
+  // 2. The Vaporwave Sun (TSL)
+  // Use 'plasma' or 'lava' for a fiery vaporwave sun
+  const sunMat = createTSLMaterial('plasma', { speed: 0.2, opacity: 0.95 });
+  const sun = createSphere(25, 0xffffff, [0, 15, -120], 32);
+  sun.material = sunMat;
+  // Keep track of the sun to animate later
+  digitalTowers.push({ mesh: sun, isSun: true, rotSpeed: 0.2 });
+
+  // 3. Noise-based Procedural Clouds (TSL)
+  const cloudMat = createTSLMaterial('void', { speed: 0.1, opacity: 0.7 });
+  for (let i = 0; i < 30; i++) {
+    const cx = (Math.random() - 0.5) * 150;
+    const cy = 25 + Math.random() * 15;
+    const cz = -20 - Math.random() * 80;
+    const cloudSize = 5 + Math.random() * 10;
+
+    // Use simplex volume to shape the cloud a bit
+    const density = simplexNoise3D(cx, cy, cz, 2, 0.5, 2.0, 0.1);
+    if (density > -0.2) {
+      const cloud = createCube(cloudSize, 0xffffff, [cx, cy, cz]);
+      setScale(cloud, 2, 0.5, 1);
+      cloud.material = cloudMat;
+      digitalTowers.push({
+        mesh: cloud,
+        isCloud: true,
+        rotSpeed: 0.05,
+        origX: cx,
+        speedX: 1 + Math.random() * 2,
+      });
+    }
+  }
+
+  // 4. Floating GLOWING crystalline structures (Keep these for aesthetic)
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2;
     const radius = 25;
@@ -212,27 +227,27 @@ async function buildStartScene() {
     const size = 2 + Math.random() * 3;
 
     // Rainbow of colors for crystals
-    const crystalColors = [
-      COLORS.neonCyan,
-      COLORS.neonMagenta,
-      COLORS.neonYellow,
-      COLORS.neonPink,
-      COLORS.neonGreen,
-    ];
-    const crystalColor = crystalColors[i % crystalColors.length];
+    const crystalColor = COLORS.neonYellow;
 
     const crystal = createAdvancedCube(
       size,
       {
         color: crystalColor,
         emissive: crystalColor,
-        emissiveIntensity: 0.8, // Reduced from 1.5 - bright but not blinding
+        emissiveIntensity: 0.8,
         flatShading: true,
       },
       [x, size, z]
     );
     setRotation(crystal, Math.PI / 4, angle, Math.PI / 6);
-    digitalTowers.push({ mesh: crystal, x, z, angle, rotSpeed: 0.5 + Math.random() });
+    digitalTowers.push({
+      mesh: crystal,
+      x,
+      z,
+      angle,
+      rotSpeed: 0.5 + Math.random(),
+      isCrystal: true,
+    });
   }
 
   // Particle system
@@ -346,6 +361,26 @@ export function update(dt) {
     }
   }
 
+  // Global Vaporwave Animation for Background Elements
+  digitalTowers.forEach(obj => {
+    if (obj.isCloud) {
+      obj.mesh.position.x += obj.speedX * dt;
+      if (obj.mesh.position.x > 80) obj.mesh.position.x = -80;
+      rotateMesh(obj.mesh, 0, obj.rotSpeed * dt, 0);
+    } else if (obj.isSun) {
+      rotateMesh(obj.mesh, 0, obj.rotSpeed * dt, 0);
+    }
+  });
+  terrainBlocks.forEach(seg => {
+    if (seg.isTerrain) {
+      const hOffset =
+        Math.sin(seg.mesh.position.x * 0.1 + gameTime) *
+        Math.cos(seg.mesh.position.z * 0.1 + gameTime) *
+        1.5;
+      setPosition(seg.mesh, seg.mesh.position.x, seg.origY + hOffset, seg.mesh.position.z);
+    }
+  });
+
   // Update current scene
   updateCurrentScene(dt);
   updateCamera(dt);
@@ -353,10 +388,30 @@ export function update(dt) {
 }
 
 function updateStartSceneAnimation(dt) {
-  // Rotate crystals
-  digitalTowers.forEach(tower => {
-    tower.angle += tower.rotSpeed * dt;
-    setRotation(tower.mesh, Math.PI / 4 + Math.sin(gameTime * 2) * 0.2, tower.angle, Math.PI / 6);
+  // Animate elements based on their type
+  digitalTowers.forEach(obj => {
+    if (obj.isCrystal) {
+      obj.angle += obj.rotSpeed * dt;
+      setRotation(obj.mesh, Math.PI / 4 + Math.sin(gameTime * 2) * 0.2, obj.angle, Math.PI / 6);
+    } else if (obj.isSun) {
+      rotateMesh(obj.mesh, 0, obj.rotSpeed * dt, 0); // Sun rotating
+    } else if (obj.isCloud) {
+      obj.mesh.position.x += obj.speedX * dt;
+      if (obj.mesh.position.x > 80) obj.mesh.position.x = -80; // Wrap clouds
+      rotateMesh(obj.mesh, 0, obj.rotSpeed * dt, 0); // Cloud drift
+    }
+  });
+
+  // Terrain wave effect
+  terrainBlocks.forEach(seg => {
+    if (seg.isTerrain) {
+      // Simulate moving forward by undulating the terrain's y position based on time
+      const hOffset =
+        Math.sin(seg.mesh.position.x * 0.1 + gameTime) *
+        Math.cos(seg.mesh.position.z * 0.1 + gameTime) *
+        1.5;
+      setPosition(seg.mesh, seg.mesh.position.x, seg.origY + hOffset, seg.mesh.position.z);
+    }
   });
 }
 
@@ -384,14 +439,16 @@ function updateCurrentScene(dt) {
 
 // Scene 0: GRID AWAKENING
 function updateGridAwakening(dt, progress) {
-  // Rotate floating crystals
-  digitalTowers.forEach((tower, i) => {
-    const heightOffset = Math.sin(gameTime * 2 + i) * 3;
-    const rotSpeed = 1 + Math.sin(gameTime + i) * 0.5;
-    tower.angle += rotSpeed * dt;
+  // Rotate floating crystals & animate scene objects
+  digitalTowers.forEach((obj, i) => {
+    if (obj.isCrystal) {
+      const heightOffset = Math.sin(gameTime * 2 + i) * 3;
+      const rotSpeed = 1 + Math.sin(gameTime + i) * 0.5;
+      obj.angle += rotSpeed * dt;
 
-    setPosition(tower.mesh, tower.x, 4 + heightOffset, tower.z);
-    setRotation(tower.mesh, gameTime * 0.5, tower.angle, gameTime * 0.3);
+      setPosition(obj.mesh, obj.x, 4 + heightOffset, obj.z);
+      setRotation(obj.mesh, gameTime * 0.5, obj.angle, gameTime * 0.3);
+    }
   });
 
   // Spawn pulse rings periodically

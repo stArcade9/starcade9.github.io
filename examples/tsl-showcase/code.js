@@ -1,22 +1,45 @@
 // examples/tsl-showcase/code.js
 // TSL (Three Shading Language) Showcase — demonstrates Nova64's TSL integration
 // Scenes: Galaxy Spiral, Procedural Terrain, Energy Tornado, Material Lab
+// Navigate: Space/Enter = next scene, Arrow Left = prev scene
 
 let currentScene = 0;
 const SCENE_COUNT = 4;
 let sceneTime = 0;
-let meshes = [];
+let ids = []; // mesh IDs returned by create* functions
 let particles = null;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+
+function hslToHex(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h * 12) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * Math.max(0, Math.min(1, color)));
+  };
+  return (f(0) << 16) | (f(8) << 8) | f(4);
+}
+
+/** Apply a material to a mesh ID (safely via getMesh + traverse) */
+function applyMat(id, mat) {
+  const mesh = getMesh(id);
+  if (mesh) {
+    mesh.traverse(child => {
+      if (child.isMesh) child.material = mat;
+    });
+  }
+}
+
+// ─── Scene management ────────────────────────────────────────────────────
 
 export function init() {
   setupScene(0);
 }
 
-function clearAll() {
-  meshes.forEach(m => {
-    if (m) removeMesh(m);
-  });
-  meshes = [];
+function teardown() {
+  ids.forEach(id => removeMesh(id));
+  ids = [];
   if (particles) {
     removeParticleSystem(particles);
     particles = null;
@@ -25,10 +48,11 @@ function clearAll() {
 }
 
 function setupScene(idx) {
-  clearAll();
+  teardown();
   sceneTime = 0;
+  currentScene = ((idx % SCENE_COUNT) + SCENE_COUNT) % SCENE_COUNT;
 
-  switch (idx) {
+  switch (currentScene) {
     case 0:
       setupGalaxy();
       break;
@@ -44,49 +68,68 @@ function setupScene(idx) {
   }
 }
 
-// ─── Scene 0: Galaxy Spiral ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Scene 0: Galaxy Spiral
+// ═══════════════════════════════════════════════════════════════════════════
 
 function setupGalaxy() {
-  setCameraPosition(0, 15, 20);
+  setCameraPosition(0, 18, 22);
   setCameraTarget(0, 0, 0);
-  setFog(0x050510, 20, 60);
+  setCameraFOV(50);
+  setFog(0x020208, 25, 70);
+  setAmbientLight(0x111133);
+  createPointLight(0x6666ff, 2.0, 40, [0, 8, 0]);
+  createPointLight(0xff4488, 1.0, 30, [10, 3, -5]);
 
-  // Galaxy disc made of cubes with TSL galaxy material
-  const galaxyMat = createTSLMaterial('galaxy', { speed: 0.3, opacity: 0.95 });
-  const core = createSphere(3, 0xffffff, [0, 0, 0]);
-  core.material = galaxyMat;
-  meshes.push(core);
+  // Glowing galaxy core — large sphere with galaxy shader
+  const coreId = createSphere(4, 0xffffff, [0, 0, 0], 24);
+  applyMat(coreId, createTSLMaterial('galaxy', { speed: 0.3 }));
+  ids.push(coreId);
 
-  // Spiral arms — small cubes orbiting
+  // Inner halo ring — torus with void shader
+  const haloId = createTorus(6, 0.4, 0xffffff, [0, 0, 0]);
+  applyMat(haloId, createTSLMaterial('void', { speed: 0.2 }));
+  const haloMesh = getMesh(haloId);
+  if (haloMesh) haloMesh.rotation.x = Math.PI / 2;
+  ids.push(haloId);
+
+  // Spiral arms — three arms of emissive stars
   for (let arm = 0; arm < 3; arm++) {
     const armOffset = (arm / 3) * Math.PI * 2;
-    for (let i = 0; i < 40; i++) {
-      const r = 4 + i * 0.3;
-      const angle = armOffset + i * 0.15;
+    for (let i = 0; i < 50; i++) {
+      const r = 5 + i * 0.35;
+      const angle = armOffset + i * 0.18;
       const x = Math.cos(angle) * r;
       const z = Math.sin(angle) * r;
-      const y = (Math.random() - 0.5) * 1.5;
-      const starSize = 0.15 + Math.random() * 0.3;
-      const hue = 0.55 + arm * 0.15 + Math.random() * 0.1;
-      const col = hslToHex(hue, 0.8, 0.6);
-      const star = createCube(starSize, col, [x, y, z], {
+      const y = (Math.random() - 0.5) * 0.8;
+      const size = 0.12 + Math.random() * 0.25;
+      const hue = 0.55 + arm * 0.12;
+      const col = hslToHex(hue, 0.9, 0.65 + Math.random() * 0.15);
+      const starId = createCube(size, col, [x, y, z], {
         emissive: col,
-        emissiveIntensity: 1.5,
+        emissiveIntensity: 2.5,
       });
-      meshes.push(star);
+      ids.push(starId);
     }
   }
 
+  // Outer dust ring with rainbow shader
+  const dustId = createTorus(16, 0.15, 0xffffff, [0, 0, 0]);
+  applyMat(dustId, createTSLMaterial('rainbow', { speed: 0.5 }));
+  const dustMesh = getMesh(dustId);
+  if (dustMesh) dustMesh.rotation.x = Math.PI / 2;
+  ids.push(dustId);
+
   // Particles — stardust
-  particles = createParticleSystem(300, {
-    emitRate: 40,
-    minLife: 2,
-    maxLife: 5,
-    minSpeed: 0.5,
-    maxSpeed: 2,
+  particles = createParticleSystem(400, {
+    emitRate: 60,
+    minLife: 3,
+    maxLife: 6,
+    minSpeed: 0.3,
+    maxSpeed: 1.5,
     spread: Math.PI,
-    minSize: 0.05,
-    maxSize: 0.15,
+    minSize: 0.04,
+    maxSize: 0.12,
     startColor: 0x8888ff,
     endColor: 0x220044,
     emissive: 0x8888ff,
@@ -94,219 +137,352 @@ function setupGalaxy() {
     gravity: 0,
     drag: 0.99,
     blending: 'additive',
-    turbulence: 2,
-    turbulenceScale: 0.5,
+    turbulence: 1.5,
+    turbulenceScale: 0.4,
     opacityOverLife: [0, 1, 0],
   });
 
-  enableBloom(1.5, 0.4, 0.2);
+  enableBloom(1.8, 0.5, 0.15);
+  enableVignette(1.0, 0.75);
 }
 
-// ─── Scene 1: Procedural Terrain ────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Scene 1: Procedural Terrain
+// ═══════════════════════════════════════════════════════════════════════════
 
 function setupTerrain() {
-  setCameraPosition(0, 12, 18);
+  setCameraPosition(0, 14, 20);
   setCameraTarget(0, 0, 0);
-  setFog(0x1a2a3a, 20, 50);
+  setCameraFOV(50);
+  setFog(0x1a1020, 18, 50);
+  setAmbientLight(0x221122);
+  createPointLight(0xff6600, 2.0, 40, [0, 15, 0]);
+  createPointLight(0x44aaff, 1.5, 30, [-10, 8, 5]);
+  createPointLight(0xff2200, 1.0, 25, [8, 3, -8]);
 
-  // Ground plane with lava material
-  const lavaMat = createTSLMaterial('lava', { speed: 0.5, opacity: 1.0 });
-  const lavaPlane = createPlane(30, 30, [0, -0.5, 0]);
-  lavaPlane.material = lavaMat;
-  lavaPlane.rotation.x = -Math.PI / 2;
-  meshes.push(lavaPlane);
+  // Lava floor with lava2 shader (Phase 1 improved lava)
+  const floorId = createPlane(35, 35, 0xff4400, [0, -0.5, 0]);
+  const floorMesh = getMesh(floorId);
+  if (floorMesh) floorMesh.rotation.x = -Math.PI / 2;
+  applyMat(floorId, createLavaMaterial({ speed: 0.15, intensity: 3.0 }));
+  ids.push(floorId);
 
-  // Terrain pillars — procedurally placed
-  for (let x = -8; x <= 8; x += 2) {
-    for (let z = -8; z <= 8; z += 2) {
-      const height = Math.abs(Math.sin(x * 0.4) * Math.cos(z * 0.5)) * 6 + 0.5;
-      const dist = Math.sqrt(x * x + z * z);
-      if (dist < 2) continue; // Clear center
-      const col = dist < 5 ? 0x884422 : 0x556644;
-      const pillar = createCube(1.5, col, [x, height / 2, z]);
-      setScale(pillar, 1.5, height, 1.5);
-      meshes.push(pillar);
+  // Procedural terrain pillars
+  const seed = 42;
+  for (let gx = -8; gx <= 8; gx += 2) {
+    for (let gz = -8; gz <= 8; gz += 2) {
+      const dist = Math.sqrt(gx * gx + gz * gz);
+      if (dist < 3) continue; // clear center
+      // Deterministic height based on position
+      const h = Math.abs(Math.sin(gx * 0.4 + seed) * Math.cos(gz * 0.5 + seed)) * 7 + 0.5;
+      const col = dist < 5 ? 0x664422 : dist < 8 ? 0x556644 : 0x445533;
+      const pillarId = createCube(1.6, col, [gx, h / 2, gz]);
+      setScale(pillarId, 1.6, h, 1.6);
+      ids.push(pillarId);
 
-      // Crystal on top of some pillars
-      if (Math.random() > 0.6 && height > 3) {
-        const crystalMat = createTSLMaterial('electricity', {
-          speed: 2,
-          color: 0x44ffaa,
-          opacity: 0.8,
-        });
-        const crystal = createCone(0.3, 1, [x, height + 0.5, z]);
-        crystal.material = crystalMat;
-        meshes.push(crystal);
+      // Electric crystals on tall pillars
+      if (h > 4 && (gx + gz + seed) % 3 === 0) {
+        const crystalId = createCone(0.35, 1.2, 0x44ffaa, [gx, h + 0.6, gz]);
+        applyMat(crystalId, createTSLMaterial('electricity', { speed: 2.5, color: 0x44ffaa }));
+        ids.push(crystalId);
+      }
+
+      // Water pools in low spots
+      if (h < 2 && dist > 5) {
+        const poolId = createPlane(1.8, 1.8, 0x2244aa, [gx, 0.1, gz]);
+        const poolMesh = getMesh(poolId);
+        if (poolMesh) poolMesh.rotation.x = -Math.PI / 2;
+        applyMat(poolId, createWaterMaterial({ speed: 0.4 }));
+        ids.push(poolId);
       }
     }
   }
 
-  enableBloom(0.8, 0.3, 0.4);
-  enableVignette(1.0, 0.85);
+  // Central vortex portal
+  const portalId = createTorus(2.5, 0.3, 0xffffff, [0, 3, 0]);
+  applyMat(portalId, createVortexMaterial({ speed: 1.5 }));
+  ids.push(portalId);
+
+  enableBloom(1.0, 0.35, 0.35);
+  enableVignette(1.0, 0.8);
 }
 
-// ─── Scene 2: Energy Tornado ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Scene 2: Energy Tornado
+// ═══════════════════════════════════════════════════════════════════════════
 
 function setupTornado() {
-  setCameraPosition(10, 8, 10);
-  setCameraTarget(0, 5, 0);
-  setFog(0x0a0a20, 15, 40);
+  setCameraPosition(12, 10, 12);
+  setCameraTarget(0, 6, 0);
+  setCameraFOV(50);
+  setFog(0x060618, 15, 45);
+  setAmbientLight(0x110022);
+  createPointLight(0xff44aa, 3.0, 40, [0, 12, 0]);
+  createPointLight(0x4400ff, 2.0, 30, [-8, 4, 8]);
 
-  // Tornado funnel — layered rings with plasma material
-  for (let layer = 0; layer < 20; layer++) {
-    const y = layer * 0.6;
-    const radius = 3 - layer * 0.1;
-    const segments = 12;
+  // Ground plane with plasma shader
+  const groundId = createPlane(30, 30, 0x110022, [0, -0.1, 0]);
+  const groundMesh = getMesh(groundId);
+  if (groundMesh) groundMesh.rotation.x = -Math.PI / 2;
+  applyMat(groundId, createPlasmaMaterial({ speed: 0.3 }));
+  ids.push(groundId);
+
+  // Tornado funnel — layered rings of glowing blocks
+  for (let layer = 0; layer < 25; layer++) {
+    const y = layer * 0.55;
+    const radius = 3.5 - layer * 0.12;
+    const segments = 10 + Math.floor(layer * 0.5);
+    const twist = layer * 0.15; // pre-twist per layer
     for (let s = 0; s < segments; s++) {
-      const angle = (s / segments) * Math.PI * 2;
+      const angle = (s / segments) * Math.PI * 2 + twist;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      const blockSize = 0.4 - layer * 0.01;
-      const hue = 0.6 + layer * 0.02;
-      const col = hslToHex(hue, 0.9, 0.5 + layer * 0.02);
-      const block = createCube(blockSize, col, [x, y, z], {
+      const blockSize = 0.35 - layer * 0.008;
+      const hue = 0.7 + layer * 0.015;
+      const col = hslToHex(hue, 0.95, 0.5 + layer * 0.015);
+      const blockId = createCube(Math.max(blockSize, 0.1), col, [x, y, z], {
         emissive: col,
-        emissiveIntensity: 2,
+        emissiveIntensity: 2.5,
       });
-      meshes.push(block);
+      ids.push(blockId);
     }
   }
 
-  // Debris particles swirling around tornado
-  particles = createParticleSystem(400, {
-    emitRate: 60,
+  // Orbiting energy orbs with shockwave material
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2;
+    const orbId = createSphere(0.6, 0xffffff, [Math.cos(angle) * 5, 6, Math.sin(angle) * 5]);
+    applyMat(orbId, createShockwaveMaterial({ speed: 0.5 }));
+    ids.push(orbId);
+  }
+
+  // Debris particles
+  particles = createParticleSystem(500, {
+    emitRate: 80,
     emitterY: 0,
     minLife: 2,
     maxLife: 4,
     minSpeed: 3,
-    maxSpeed: 8,
+    maxSpeed: 10,
     spread: Math.PI * 0.3,
-    minSize: 0.08,
-    maxSize: 0.25,
+    minSize: 0.06,
+    maxSize: 0.2,
     startColor: 0xff4488,
     endColor: 0x4400ff,
     emissive: 0xff4488,
-    emissiveIntensity: 4,
+    emissiveIntensity: 5,
     gravity: -2,
     drag: 0.97,
     blending: 'additive',
-    turbulence: 5,
-    turbulenceScale: 0.3,
+    turbulence: 6,
+    turbulenceScale: 0.25,
     attractorX: 0,
-    attractorY: 6,
+    attractorY: 7,
     attractorZ: 0,
-    attractorStrength: 8,
+    attractorStrength: 10,
     sizeOverLife: [0.5, 1.0, 0.2],
     opacityOverLife: [0, 1, 0],
-    rotationSpeed: 3,
+    rotationSpeed: 4,
   });
 
-  enableBloom(1.8, 0.5, 0.15);
+  enableBloom(2.0, 0.5, 0.12);
+  enableVignette(1.2, 0.7);
 }
 
-// ─── Scene 3: Material Lab ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Scene 3: Material Lab — all 12 presets + custom GLSL
+// ═══════════════════════════════════════════════════════════════════════════
 
 function setupMaterialLab() {
-  setCameraPosition(0, 4, 12);
-  setCameraTarget(0, 2, 0);
-  setFog(0x0f0f1f, 15, 40);
+  setCameraPosition(0, 6, 16);
+  setCameraTarget(0, 2.5, 0);
+  setCameraFOV(55);
+  setFog(0x0a0a18, 20, 50);
+  setAmbientLight(0x222244);
+  createPointLight(0xffffff, 2.0, 40, [0, 12, 10]);
+  createPointLight(0xff4400, 1.0, 25, [-10, 6, -5]);
+  createPointLight(0x0044ff, 1.0, 25, [10, 6, -5]);
 
-  const presets = ['plasma', 'galaxy', 'lava', 'electricity', 'rainbow', 'void'];
-  const spacing = 3.5;
-  const startX = -((presets.length - 1) * spacing) / 2;
+  // All 12 presets — two rows of 6 spheres
+  const presets = [
+    // Row 0 — originals
+    { name: 'plasma', fn: () => createTSLMaterial('plasma', { speed: 2.0 }) },
+    { name: 'galaxy', fn: () => createTSLMaterial('galaxy', { speed: 0.5 }) },
+    { name: 'lava', fn: () => createTSLMaterial('lava', { speed: 1.0 }) },
+    {
+      name: 'electricity',
+      fn: () => createTSLMaterial('electricity', { speed: 3.0, color: 0x44aaff }),
+    },
+    { name: 'rainbow', fn: () => createTSLMaterial('rainbow', { speed: 1.0 }) },
+    { name: 'void', fn: () => createTSLMaterial('void', { speed: 0.3 }) },
+    // Row 1 — Phase 1 new
+    { name: 'lava2', fn: () => createLavaMaterial({ speed: 0.2, intensity: 3.0 }) },
+    { name: 'vortex', fn: () => createVortexMaterial({ speed: 1.0 }) },
+    { name: 'plasma2', fn: () => createPlasmaMaterial({ speed: 1.0 }) },
+    { name: 'water', fn: () => createWaterMaterial({ speed: 0.5 }) },
+    { name: 'hologram', fn: () => createHologramMaterial({ speed: 1.0 }) },
+    { name: 'shockwave', fn: () => createShockwaveMaterial({ speed: 0.3 }) },
+  ];
+
+  const cols = 6;
+  const spacingX = 4.0;
+  const startX = -((cols - 1) * spacingX) / 2;
 
   for (let i = 0; i < presets.length; i++) {
-    const x = startX + i * spacing;
-    const mat = createTSLMaterial(presets[i]);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + col * spacingX;
+    const y = row === 0 ? 4.5 : 1.0;
+    const z = -row * 3;
 
-    // Sphere with TSL material
-    const sphere = createSphere(1.2, 0xffffff, [x, 3, 0]);
-    sphere.material = mat;
-    meshes.push(sphere);
-
-    // Cube with same preset material (separate instance)
-    const cubeMat = createTSLMaterial(presets[i]);
-    const cube = createCube(1.5, 0xffffff, [x, 0.75, 0]);
-    cube.material = cubeMat;
-    meshes.push(cube);
+    const sphereId = createSphere(1.3, 0xffffff, [x, y, z], 20);
+    applyMat(sphereId, presets[i].fn());
+    ids.push(sphereId);
   }
 
-  // Custom shader material — user-style GLSL
+  // Custom GLSL shader sphere — floating above center
   const customMat = createTSLShaderMaterial(
     null,
     /* glsl */ `
     uniform float uTime;
     varying vec2 vUv;
     void main() {
-      float r = sin(vUv.x * 10.0 + uTime) * 0.5 + 0.5;
-      float g = sin(vUv.y * 10.0 + uTime * 1.3) * 0.5 + 0.5;
-      float b = sin((vUv.x + vUv.y) * 5.0 + uTime * 0.7) * 0.5 + 0.5;
-      gl_FragColor = vec4(r, g, b, 1.0);
+      float r = sin(vUv.x * 12.0 + uTime * 1.5) * 0.5 + 0.5;
+      float g = sin(vUv.y * 12.0 + uTime * 1.8) * 0.5 + 0.5;
+      float b = sin((vUv.x + vUv.y) * 8.0 + uTime) * 0.5 + 0.5;
+      gl_FragColor = vec4(r * r, g, b * b, 1.0);
     }
   `
   );
-  const customSphere = createSphere(1.5, 0xffffff, [0, 6, -3]);
-  customSphere.material = customMat;
-  meshes.push(customSphere);
+  const customId = createSphere(1.8, 0xffffff, [0, 7.5, -1.5], 24);
+  applyMat(customId, customMat);
+  ids.push(customId);
 
-  enableBloom(1.0, 0.3, 0.3);
-  enableVignette(0.8, 0.9);
+  // Floor
+  const floorId = createPlane(40, 20, 0x0a0a1e, [0, -0.5, -1]);
+  const floorMesh = getMesh(floorId);
+  if (floorMesh) floorMesh.rotation.x = -Math.PI / 2;
+  ids.push(floorId);
+
+  enableBloom(1.2, 0.35, 0.3);
+  enableVignette(0.8, 0.85);
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────
-
-function hslToHex(h, s, l) {
-  const a = s * Math.min(l, 1 - l);
-  const f = n => {
-    const k = (n + h * 12) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * Math.max(0, Math.min(1, color)));
-  };
-  return (f(0) << 16) | (f(8) << 8) | f(4);
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// Update & Draw
+// ═══════════════════════════════════════════════════════════════════════════
 
 export function update(dt) {
   sceneTime += dt;
 
-  // Cycle scenes with Enter or Space
-  if (keyp('Enter') || keyp('Space')) {
-    currentScene = (currentScene + 1) % SCENE_COUNT;
-    setupScene(currentScene);
+  // Navigate scenes
+  if (keyp('Space') || keyp('Enter') || keyp('ArrowRight') || keyp('ArrowDown')) {
+    setupScene(currentScene + 1);
+    return;
+  }
+  if (keyp('ArrowLeft') || keyp('ArrowUp')) {
+    setupScene(currentScene - 1);
+    return;
   }
 
-  // Rotate objects gently
-  meshes.forEach((m, i) => {
-    if (m && m.parent) {
-      rotateMesh(m, 0, dt * 0.3 * (i % 2 === 0 ? 1 : -1), 0);
-    }
-  });
+  // Rotate all objects gently
+  for (let i = 0; i < ids.length; i++) {
+    const dir = i % 2 === 0 ? 1 : -1;
+    rotateMesh(ids[i], 0, dt * 0.3 * dir, 0);
+  }
 
-  // Update tornado rotation for scene 2
-  if (currentScene === 2) {
-    meshes.forEach((m, i) => {
-      if (m && m.parent) {
-        const speed = 0.5 + (i % 20) * 0.05;
-        rotateMesh(m, 0, dt * speed, 0);
-      }
-    });
+  // Scene-specific animation
+  if (currentScene === 0) {
+    // Galaxy: slow galactic rotation for the whole field
+    const cy = 18 + Math.sin(sceneTime * 0.1) * 1.5;
+    const cx = Math.sin(sceneTime * 0.05) * 3;
+    setCameraPosition(cx, cy, 22);
+  } else if (currentScene === 2) {
+    // Tornado: faster rotation for funnel blocks + orbiting camera
+    for (let i = 0; i < ids.length; i++) {
+      const speed = 0.6 + (i % 25) * 0.04;
+      rotateMesh(ids[i], 0, dt * speed, 0);
+    }
+    const camAngle = sceneTime * 0.15;
+    setCameraPosition(
+      Math.cos(camAngle) * 14,
+      10 + Math.sin(sceneTime * 0.2) * 2,
+      Math.sin(camAngle) * 14
+    );
+    setCameraTarget(0, 6, 0);
+  } else if (currentScene === 3) {
+    // Material Lab: gentle camera bob
+    const cy = 6 + Math.sin(sceneTime * 0.12) * 0.4;
+    setCameraPosition(0, cy, 16);
   }
 
   updateParticles(dt);
 }
 
 const sceneNames = ['Galaxy Spiral', 'Procedural Terrain', 'Energy Tornado', 'Material Lab'];
+const sceneDescs = [
+  'Galaxy + Void + Rainbow shaders',
+  'Lava2 + Water + Vortex + Electricity shaders',
+  'Plasma2 + Shockwave shaders',
+  'All 12 presets + custom GLSL',
+];
 
 export function draw() {
-  print('TSL SHOWCASE', 220, 10, 0x00ffff);
-  print(sceneNames[currentScene], 210, 25, 0xffffff);
-  print('[ENTER] Next Scene', 230, 345, 0x888888);
+  const W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  const H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  const num = currentScene + 1;
 
-  // Scene-specific HUD
+  // Title bar
+  print('TSL SHOWCASE', 10, 8, 0x00ffcc, 2);
+  print(`${num}/${SCENE_COUNT}`, W - 50, 10, 0x00ffcc);
+
+  // Scene name + description
+  const name = sceneNames[currentScene];
+  const nameW = name.length * 8;
+  print(name, Math.floor((W - nameW) / 2), 38, 0xffffff, 2);
+  const desc = sceneDescs[currentScene];
+  const descW = desc.length * 7;
+  print(desc, Math.floor((W - descW) / 2), 58, 0x888899);
+
+  // Navigation hint
+  const hint = 'SPACE / ENTER  next     ARROWS  prev/next';
+  const hintW = hint.length * 7;
+  print(hint, Math.floor((W - hintW) / 2), H - 16, 0x555577);
+
+  // Dot indicators
+  const dotW = SCENE_COUNT * 14;
+  const dotX = Math.floor((W - dotW) / 2);
+  for (let i = 0; i < SCENE_COUNT; i++) {
+    const col = i === currentScene ? 0x00ffcc : 0x333344;
+    print('\u2022', dotX + i * 14, H - 30, col, 2);
+  }
+
+  // Material Lab: label each preset
   if (currentScene === 3) {
-    const presets = ['plasma', 'galaxy', 'lava', 'electric', 'rainbow', 'void'];
-    for (let i = 0; i < presets.length; i++) {
-      print(presets[i], 45 + i * 100, 320, 0xaaaaaa);
+    const names = [
+      'plasma',
+      'galaxy',
+      'lava',
+      'electric',
+      'rainbow',
+      'void',
+      'lava2',
+      'vortex',
+      'plasma2',
+      'water',
+      'hologram',
+      'shockwave',
+    ];
+    const cols = 6;
+    const spacingX = 4.0;
+    const startPx = Math.floor((W - (cols - 1) * 68) / 2);
+    for (let i = 0; i < names.length; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const lx = startPx + col * 68;
+      const ly = row === 0 ? 110 : 230;
+      print(names[i], lx, ly, row === 0 ? 0x999999 : 0x44ffaa);
     }
-    print('custom', 260, 295, 0x44ffaa);
+    print('custom GLSL', Math.floor(W / 2) - 40, 80, 0x44ffaa);
   }
 }

@@ -200,13 +200,12 @@ export class WADTextureManager {
       flipped.set(comp.pixels.subarray(srcRow, srcRow + rowBytes), dstRow);
     }
 
-    const tex = new THREE.DataTexture(flipped, comp.width, comp.height, THREE.RGBAFormat);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(flipped, comp.width, comp.height, {
+      format: 'rgba',
+      filter: 'nearest',
+      wrap: 'repeat',
+      generateMipmaps: false,
+    });
 
     this.wallTexCache.set(name, tex);
     return tex;
@@ -241,13 +240,12 @@ export class WADTextureManager {
       pixels[i * 4 + 3] = 255;
     }
 
-    const tex = new THREE.DataTexture(pixels, 64, 64, THREE.RGBAFormat);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(pixels, 64, 64, {
+      format: 'rgba',
+      filter: 'nearest',
+      wrap: 'repeat',
+      generateMipmaps: false,
+    });
 
     this.flatTexCache.set(name, tex);
     return tex;
@@ -291,11 +289,11 @@ export class WADTextureManager {
       flipped.set(pic.pixels.subarray(srcRow, srcRow + rowBytes), dstRow);
     }
 
-    const tex = new THREE.DataTexture(flipped, pic.width, pic.height, THREE.RGBAFormat);
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(flipped, pic.width, pic.height, {
+      format: 'rgba',
+      filter: 'nearest',
+      generateMipmaps: false,
+    });
 
     const result = {
       texture: tex,

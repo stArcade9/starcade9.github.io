@@ -25,4 +25,10 @@ export class Framebuffer64 {
     p[i + 2] = b;
     p[i + 3] = a;
   }
+
+  resize(w, h) {
+    this.width = w;
+    this.height = h;
+    this.pixels = new Uint16Array(w * h * 4);
+  }
 }

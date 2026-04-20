@@ -299,11 +299,13 @@ function _startLevelInner() {
         }
 
         // Apply texture with sector lighting
-        const mesh = getMesh(m);
-        mesh.material = new THREE.MeshPhongMaterial({
-          map: tex,
-          color: new THREE.Color(bri, bri, bri),
-        });
+        engine.setMeshMaterial(
+          m,
+          engine.createMaterial('phong', {
+            map: tex,
+            color: engine.createColor(bri, bri, bri),
+          })
+        );
 
         entities.walls.push({ m, x: w.x, z: w.z, r: 0 });
         textured = true;
@@ -379,18 +381,17 @@ function _startLevelInner() {
     if (sorted.length > 0) {
       const flatTex = texMgr.getFlatTexture(sorted[0][0]);
       if (flatTex) {
-        const floorTex = flatTex.clone();
+        const floorTex = engine.cloneTexture(flatTex);
         // 64 DOOM pixels per flat tile at scale 1/20 = 3.2 world units
         const tilesPerUnit = 20 / 64;
-        floorTex.repeat.set(floorSize * tilesPerUnit, floorSize * tilesPerUnit);
-        floorTex.wrapS = THREE.RepeatWrapping;
-        floorTex.wrapT = THREE.RepeatWrapping;
-        floorTex.needsUpdate = true;
-        const floorMesh = getMesh(floor);
-        floorMesh.material = new THREE.MeshPhongMaterial({
-          map: floorTex,
-          side: THREE.DoubleSide,
-        });
+        engine.setTextureRepeat(floorTex, floorSize * tilesPerUnit, floorSize * tilesPerUnit);
+        engine.setMeshMaterial(
+          floor,
+          engine.createMaterial('phong', {
+            map: floorTex,
+            side: 'double',
+          })
+        );
       }
     }
   }
@@ -468,13 +469,15 @@ function spawnEnemy(x, z, type, doomType) {
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
       sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
-      const spriteMesh = getMesh(sprite);
-      spriteMesh.material = new THREE.MeshBasicMaterial({
-        map: spriteInfo.texture,
-        transparent: true,
-        alphaTest: 0.1,
-        side: THREE.DoubleSide,
-      });
+      engine.setMeshMaterial(
+        sprite,
+        engine.createMaterial('basic', {
+          map: spriteInfo.texture,
+          transparent: true,
+          alphaTest: 0.1,
+          side: 'double',
+        })
+      );
       // Hide cube meshes
       getMesh(body).visible = false;
       getMesh(head).visible = false;
@@ -600,13 +603,15 @@ function spawnPickupAt(x, y, z, type, doomType) {
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
       sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
-      const spriteMesh = getMesh(sprite);
-      spriteMesh.material = new THREE.MeshBasicMaterial({
-        map: spriteInfo.texture,
-        transparent: true,
-        alphaTest: 0.1,
-        side: THREE.DoubleSide,
-      });
+      engine.setMeshMaterial(
+        sprite,
+        engine.createMaterial('basic', {
+          map: spriteInfo.texture,
+          transparent: true,
+          alphaTest: 0.1,
+          side: 'double',
+        })
+      );
       getMesh(m).visible = false;
     }
   }

@@ -1,11 +1,12 @@
 // runtime/api-3d/models.js
-// GLTF model loading, skeletal animation, and texture loading
+// GLTF model loading, VOX model loading, skeletal animation, and texture loading
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { VOXLoader, buildMesh as voxBuildMesh } from 'three/examples/jsm/loaders/VOXLoader.js';
 
 export function modelsModule({ scene, gpu, meshes, mixers, modelAnimations, counters }) {
-  async function loadModel(url, position = [0, 0, 0], scale = 1) {
+  async function loadModel(url, position = [0, 0, 0], scale = 1, materialOptions = {}) {
     return new Promise((resolve, reject) => {
       const loader = new GLTFLoader();
       loader.load(
@@ -19,10 +20,14 @@ export function modelsModule({ scene, gpu, meshes, mixers, modelAnimations, coun
               child.castShadow = true;
               child.receiveShadow = true;
               if (child.material) {
-                child.material = gpu.createN64Material({
+                const mat = gpu.createN64Material({
                   color: child.material.color,
                   texture: child.material.map,
+                  ...materialOptions,
                 });
+                // fog must be set before the shader compiles on next render
+                if (materialOptions.fog === false) mat.fog = false;
+                child.material = mat;
               }
             }
           });
@@ -80,5 +85,53 @@ export function modelsModule({ scene, gpu, meshes, mixers, modelAnimations, coun
     });
   }
 
-  return { loadModel, playAnimation, updateAnimations, loadTexture };
+  async function loadVoxModel(url, position = [0, 0, 0], scale = 1, options = {}) {
+    return new Promise((resolve, reject) => {
+      const loader = new VOXLoader();
+      loader.load(
+        url,
+        result => {
+          // Use scene graph if available (handles nTRN/nGRP/nSHP transforms),
+          // otherwise build meshes from raw chunks
+          let model;
+          if (result.scene) {
+            model = result.scene;
+          } else {
+            model = new THREE.Group();
+            for (const chunk of result.chunks) {
+              model.add(voxBuildMesh(chunk));
+            }
+          }
+
+          model.position.set(...position);
+          if (typeof scale === 'number') {
+            model.scale.setScalar(scale);
+          }
+
+          model.traverse(child => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              if (options.material === 'n64' && child.material) {
+                child.material = gpu.createN64Material({
+                  color: child.material.color || new THREE.Color(0xffffff),
+                  vertexColors: child.geometry.hasAttribute('color'),
+                  ...options,
+                });
+              }
+            }
+          });
+
+          scene.add(model);
+          const id = ++counters.mesh;
+          meshes.set(id, model);
+          resolve(id);
+        },
+        undefined,
+        reject
+      );
+    });
+  }
+
+  return { loadModel, loadVoxModel, playAnimation, updateAnimations, loadTexture };
 }

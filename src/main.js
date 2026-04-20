@@ -1,4 +1,4 @@
-import { Nova64 } from '../runtime/console.js';
+import { Nova64, NOVA64_VERSION } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
 import { logger } from '../runtime/logger.js';
 globalThis.novaLogger = logger;
@@ -26,20 +26,83 @@ import { gameUtilsApi } from '../runtime/api-gameutils.js';
 import { nftSeedApi } from '../runtime/nft-seed.js';
 import { wadApi } from '../runtime/wad.js';
 import { manifestApi } from '../runtime/manifest.js';
+import { canvasUIApi } from '../runtime/canvas-ui.js';
+import { hypeApi } from '../runtime/hype.js';
+import { xrModule } from '../runtime/xr.js';
+import { mediapipeModule } from '../runtime/mediapipe.js';
+import { blendApi } from '../runtime/api-blend.js';
+import { stageApi } from '../runtime/stage.js';
+import { movieClipApi } from '../runtime/movie-clip.js';
+import { filtersApi } from '../runtime/api-filters.js';
+import { camera2DApi } from '../runtime/camera-2d.js';
+import { particles2DApi } from '../runtime/api-particles-2d.js';
+import { tweenApi } from '../runtime/tween.js';
+import { DebugPanel } from '../runtime/debug-panel.js';
+import * as THREE from 'three';
 
 const canvas = document.getElementById('screen');
 
 // Create fullscreen button - stored globally for cleanup if needed
 globalThis.fullscreenButton = createFullscreenButton(canvas);
 
+// Allow URL params to override default resolution & clear color
+// e.g. ?w=1280&h=720&clearColor=0x020010
+const _qs = new URLSearchParams(window.location.search);
+const _paramW = parseInt(_qs.get('w'), 10) || 640;
+const _paramH = parseInt(_qs.get('h'), 10) || 360;
+const _paramClearColor = _qs.get('clearColor');
+
+// Apply resolution to canvas BEFORE constructing renderer
+// (GpuThreeJS reads canvas.width / canvas.height for renderer.setSize)
+canvas.width = _paramW;
+canvas.height = _paramH;
+
 // ONLY use Three.js renderer - Nintendo 64/PlayStation style 3D console
 let gpu;
 try {
-  gpu = new GpuThreeJS(canvas, 640, 360);
-  console.log('✅ Using Three.js renderer - Nintendo 64/PlayStation GPU mode');
+  gpu = new GpuThreeJS(canvas, _paramW, _paramH);
+  if (_paramClearColor) {
+    gpu.renderer.setClearColor(parseInt(_paramClearColor, 16), 1.0);
+  }
+  console.log(
+    `✅ Using Three.js renderer (${_paramW}x${_paramH}) - Nintendo 64/PlayStation GPU mode`
+  );
+
+  // Expose Three.js internals for browser DevTools extension
+  globalThis.__THREE__ = THREE;
+  globalThis.__THREE_SCENE__ = gpu.scene;
+  globalThis.__THREE_RENDERER__ = gpu.renderer;
+  globalThis.__THREE_CAMERA__ = gpu.camera;
+  if (typeof window.__THREE_DEVTOOLS__ !== 'undefined') {
+    window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.scene }));
+    window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.renderer }));
+  }
 } catch (e) {
   console.error('❌ Three.js renderer failed to initialize:', e);
   throw new Error('Fantasy console requires 3D GPU support (Three.js)');
+}
+
+// Bake in responsive resize when no fixed ?w= param is provided.
+// Fixed mode (?w=1280&h=720): renderer stays at the given pixel resolution.
+// Responsive mode (default): ResizeObserver drives gpu.resize() whenever the
+// screen container changes size, keeping the backbuffer crisp at full DPR.
+const _isResponsive = !_qs.get('w');
+if (_isResponsive) {
+  const _screenContainer = canvas.parentElement; // .screen-container
+  if (_screenContainer) {
+    new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width === 0 || height === 0) continue;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.round(width * dpr);
+        const h = Math.round(height * dpr);
+        if (w !== canvas.width || h !== canvas.height) {
+          gpu.resize(w, h);
+        }
+      }
+    }).observe(_screenContainer);
+  }
 }
 
 const api = stdApi(gpu);
@@ -63,6 +126,17 @@ const gameUtilsInst = gameUtilsApi();
 const nftSeedInst = nftSeedApi();
 const wadInst = wadApi();
 const manifestInst = manifestApi();
+const hypeInst = hypeApi();
+// ── 2D Stage & Animation system ──────────────────────────────────────────────
+const blendInst = blendApi(gpu);
+const stageInst = stageApi(gpu);
+const movieClipInst = movieClipApi(gpu);
+const filtersInst = filtersApi(gpu);
+const camera2DInst = camera2DApi(gpu);
+const particles2DInst = particles2DApi(gpu);
+const tweenInst = tweenApi();
+const xrInst = xrModule(gpu);
+const mpInst = mediapipeModule(gpu);
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -91,10 +165,26 @@ gameUtilsInst.exposeTo(nova64api);
 nftSeedInst.exposeTo(nova64api);
 wadInst.exposeTo(nova64api);
 manifestInst.exposeTo(nova64api);
+hypeInst.exposeTo(nova64api);
+// ── 2D Stage & Animation system ──────────────────────────────────────────────
+blendInst.exposeTo(nova64api);
+stageInst.exposeTo(nova64api);
+movieClipInst.exposeTo(nova64api);
+filtersInst.exposeTo(nova64api);
+camera2DInst.exposeTo(nova64api);
+particles2DInst.exposeTo(nova64api);
+tweenInst.exposeTo(nova64api);
+xrInst.exposeTo(nova64api);
+
+// Expose XR stereo render hook for gpu-threejs.js
+globalThis._xrRenderStereo = () => xrInst._renderStereo();
+
+mpInst.exposeTo(nova64api);
 
 // Now create UI API after nova64api has rgba8 and other functions
 uiApiInstance = uiApi(gpu, nova64api);
 uiApiInstance.exposeTo(nova64api);
+canvasUIApi().exposeTo(nova64api);
 
 // Connect input system to UI system for mouse events
 iApi.connectUI(uiApiInstance.setMousePosition, uiApiInstance.setMouseButton);
@@ -104,6 +194,42 @@ Object.assign(globalThis, nova64api);
 if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
 
 const nova = new Nova64(gpu, manifestInst);
+globalThis.NOVA64_VERSION = NOVA64_VERSION;
+
+// ── Debug Panel ──────────────────────────────────────────────────────────────
+const _debugPanel = new DebugPanel(gpu);
+const _debugRequested = _qs.get('debug') === '1';
+if (_debugRequested) _debugPanel.toggle();
+window.addEventListener('keydown', e => {
+  if (e.code === 'F9') {
+    e.preventDefault();
+    _debugPanel.toggle();
+  }
+});
+
+// Wire debug panel controls → game loop state
+_debugPanel.setCallbacks({
+  onPause: () => {
+    paused = !paused;
+    _debugPanel.setPaused(paused);
+    // Sync the HTML pauseBtn if it exists
+    const pb = document.getElementById('pause');
+    if (pb) pb.textContent = paused ? 'Resume' : 'Pause';
+  },
+  onStep: () => {
+    stepOnce = true;
+  },
+  onReload: () => {
+    if (_currentCartPath) loadCart(_currentCartPath);
+  },
+});
+
+// Lifecycle: notify parent window when a cart finishes loading
+nova.onCartDidLoad = path => {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'CART_LOADED', path }, '*');
+  }
+};
 
 let paused = false;
 let stepOnce = false;
@@ -134,6 +260,7 @@ function attachUI() {
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
     pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    _debugPanel.setPaused(paused);
   });
   stepBtn.addEventListener('click', () => {
     stepOnce = true;
@@ -179,7 +306,8 @@ globalThis.getFPS = () => fps;
 
 function loop() {
   const now = performance.now();
-  const dt = Math.min(0.1, (now - last) / 1000);
+  let dt = Math.min(0.1, (now - last) / 1000);
+  dt *= _debugPanel.getTimeScale();
   currentDt = dt;
   last = now;
 
@@ -252,6 +380,9 @@ function loop() {
 
   fps = Math.round(1000 / (performance.now() - now));
 
+  // Update debug panel (throttled internally)
+  _debugPanel.update();
+
   // 3D GPU stats
   let statsText = `3D GPU (Three.js) • fps: ${fps}, update: ${uMs.toFixed(2)}ms, draw: ${dMs.toFixed(2)}ms`;
 
@@ -264,7 +395,21 @@ function loop() {
   }
 
   if (statsEl) statsEl.textContent = statsText;
-  requestAnimationFrame(loop);
+
+  // XR per-frame update (VR HUD follow, etc.)
+  xrInst._tick();
+
+  // When NOT using setAnimationLoop (before startLoop is called),
+  // fall back to requestAnimationFrame
+  if (!_useAnimationLoop) requestAnimationFrame(loop);
+}
+
+let _useAnimationLoop = false;
+function startLoop() {
+  // renderer.setAnimationLoop is required for WebXR and is backward-
+  // compatible with normal rendering (acts like rAF when no XR session).
+  _useAnimationLoop = true;
+  gpu.getRenderer().setAnimationLoop(loop);
 }
 
 attachUI();
@@ -298,6 +443,7 @@ const gameMap = {
   wizardry: '/examples/wizardry-3d/code.js',
   'creative-coding': '/examples/creative-coding/code.js',
   'tsl-showcase': '/examples/tsl-showcase/code.js',
+  'shader-showcase': '/examples/shader-showcase/code.js',
 };
 
 // Map demo names (from ?demo= URL param) to paths
@@ -330,6 +476,7 @@ const demoMap = {
   'wing-commander-space': '/examples/wing-commander-space/code.js',
   'space-combat-3d': '/examples/space-combat-3d/code.js',
   'model-viewer-3d': '/examples/model-viewer-3d/code.js',
+  'vox-viewer': '/examples/vox-viewer/code.js',
   '3d-advanced': '/examples/3d-advanced/code.js',
   'pbr-showcase': '/examples/pbr-showcase/code.js',
   'skybox-showcase': '/examples/skybox-showcase/code.js',
@@ -346,6 +493,30 @@ const demoMap = {
   'nft-art-generator': '/examples/nft-art-generator/code.js',
   'creative-coding': '/examples/creative-coding/code.js',
   'tsl-showcase': '/examples/tsl-showcase/code.js',
+  'shader-showcase': '/examples/shader-showcase/code.js',
+  'hud-demo': '/examples/hud-demo/code.js',
+  'startscreen-demo': '/examples/startscreen-demo/code.js',
+  'canvas-ui-showcase': '/examples/canvas-ui-showcase/code.js',
+  'vr-demo': '/examples/vr-demo/code.js',
+  'ar-hand-demo': '/examples/ar-hand-demo/code.js',
+  'vr-sword-combat': '/examples/vr-sword-combat/code.js',
+  'blend-aurora': '/examples/blend-aurora/code.js',
+  'camera-platformer': '/examples/camera-platformer/code.js',
+  'filter-glitch': '/examples/filter-glitch/code.js',
+  'flash-demo': '/examples/flash-demo/code.js',
+  'hero-demo': '/examples/hero-demo/code.js',
+  'hype-demo': '/examples/hype-demo/code.js',
+  'movie-clock': '/examples/movie-clock/code.js',
+  'particle-fireworks': '/examples/particle-fireworks/code.js',
+  'particle-trail': '/examples/particle-trail/code.js',
+  'stage-cards': '/examples/stage-cards/code.js',
+  'stage-menu': '/examples/stage-menu/code.js',
+  'test-2d-overlay': '/examples/test-2d-overlay/code.js',
+  'test-font': '/examples/test-font/code.js',
+  'test-minimal': '/examples/test-minimal/code.js',
+  'tween-bounce': '/examples/tween-bounce/code.js',
+  'tween-logo': '/examples/tween-logo/code.js',
+  'tween-typewriter': '/examples/tween-typewriter/code.js',
 };
 
 // default cart - load from URL param or default to space-harrier-3d
@@ -353,7 +524,7 @@ const demoMap = {
   // Studio mode: skip auto-loading a cart; wait for EXECUTE_CODE from Game Studio
   if (studioMode) {
     console.log('🎮 Studio mode: waiting for code from Game Studio…');
-    requestAnimationFrame(loop);
+    startLoop();
     // Defer EXECUTE_READY until after window load so the parent's iframe
     // onLoad handler fires first, avoiding any timing race.
     const sendReady = () => {
@@ -385,30 +556,26 @@ const demoMap = {
 
   console.log(`🎮 Loading game: ${gamePath}`);
   await loadCart(gamePath);
-  requestAnimationFrame(loop);
+  startLoop();
 })();
 
 // Listen for messages from Game Studio to execute code
+let _studioGen = 0;
 window.addEventListener('message', async event => {
   if (event.data && event.data.type === 'EXECUTE_CODE') {
+    // Bump generation — any earlier in-flight execution will bail out
+    const gen = ++_studioGen;
     const postLog = msg => {
       if (event.source) event.source.postMessage({ type: 'CART_LOG', message: msg }, event.origin);
     };
     console.log('🎮 Game Studio: Executing code...');
-    console.log('📝 Code to execute:', event.data.code.substring(0, 200) + '...');
-    console.log('🔧 Available APIs:', {
-      api: typeof api,
-      iApi: typeof iApi,
-      threeDApi_instance: typeof threeDApi_instance,
-    });
 
     try {
-      // Stop current game loop if running
-      console.log('⏸️ Pausing game...');
+      // Stop current game loop and clear cart immediately
       paused = true;
+      nova.cart = null;
 
       // Full scene reset — clear all 3D objects, lights, effects, fog, skybox, camera
-      console.log('🧹 Resetting scene for new cart...');
       if (typeof nova64api.clearScene === 'function') nova64api.clearScene();
       if (typeof nova64api.clearFog === 'function') nova64api.clearFog();
       if (typeof nova64api.clearSkybox === 'function') nova64api.clearSkybox();
@@ -417,15 +584,21 @@ window.addEventListener('message', async event => {
       if (typeof nova64api.disableChromaticAberration === 'function')
         nova64api.disableChromaticAberration();
       if (typeof nova64api.disableGlitch === 'function') nova64api.disableGlitch();
+      if (typeof nova64api.clearButtons === 'function') nova64api.clearButtons();
       if (typeof nova64api.setCameraPosition === 'function') nova64api.setCameraPosition(0, 5, 10);
       if (typeof nova64api.setCameraTarget === 'function') nova64api.setCameraTarget(0, 0, 0);
-      console.log('✅ Scene reset complete');
+      if (typeof nova64api.setCameraFOV === 'function') nova64api.setCameraFOV(60);
+      // Clean up XR and MediaPipe tracking between cart loads
+      if (typeof nova64api.disableXR === 'function') nova64api.disableXR();
+      mpInst._cleanup();
       postLog('🧹 Scene reset for new cart');
+
+      // Race-condition guard: if a newer execution arrived, bail out
+      if (gen !== _studioGen) return;
 
       // Execute the new code
       const userCode = event.data.code;
 
-      console.log('🔨 Creating game function...');
       // Dynamically build param list from nova64api so ALL Nova64 APIs are local variables
       // in user code — avoids window.print and other globalThis clobbering issues.
       const _apiNames = Object.keys(nova64api).filter(
@@ -438,22 +611,18 @@ window.addEventListener('message', async event => {
           '\n; return { init: typeof init !== "undefined" ? init : null, update: typeof update !== "undefined" ? update : null, draw: typeof draw !== "undefined" ? draw : null, render: typeof render !== "undefined" ? render : null };'
       );
 
-      console.log('🚀 Executing game function...');
       const gameFunctions = gameFunction(..._apiValues);
-
-      console.log('📋 Game functions:', gameFunctions);
 
       // Call init() if defined (modern Nova64 carts use init for one-time setup)
       if (gameFunctions.init && typeof gameFunctions.init === 'function') {
-        console.log('🎬 Calling init()...');
         const initResult = gameFunctions.init();
         if (initResult instanceof Promise) await initResult;
-        console.log('✅ init() completed');
+        // Guard again after async init
+        if (gen !== _studioGen) return;
         postLog('🎬 init() completed');
       }
 
-      // Replace the cart's update/draw functions — always reset to drop stale handlers
-      console.log('🔄 Installing cart functions...');
+      // Replace the cart's update/draw functions
       nova.cart = {};
       if (gameFunctions.update) {
         nova.cart.update = gameFunctions.update;
@@ -465,10 +634,7 @@ window.addEventListener('message', async event => {
       }
 
       // Resume the game loop
-      console.log('▶️ Resuming game loop...');
       paused = false;
-
-      console.log('✅ Game Studio: Code executed successfully!');
       postLog('✅ Cart loaded and running!');
 
       // Send success message back
@@ -477,7 +643,6 @@ window.addEventListener('message', async event => {
       }
     } catch (error) {
       console.error('❌ Game Studio: Error executing code:', error);
-      console.error('Stack trace:', error.stack);
       // Always resume so the next Run attempt isn't permanently frozen
       paused = false;
       if (event.source) {

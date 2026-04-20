@@ -1,7 +1,8 @@
 // runtime/api-3d.js
 // Thin orchestrator — delegates to runtime/api-3d/*.js sub-modules
 import * as THREE from 'three';
-globalThis.THREE = THREE;
+globalThis.THREE = THREE; // @deprecated — use the global `engine` adapter instead
+import { engine, initAdapter } from './engine-adapter.js';
 import { materialsModule } from './api-3d/materials.js';
 import { primitivesModule } from './api-3d/primitives.js';
 import { transformsModule } from './api-3d/transforms.js';
@@ -59,9 +60,13 @@ export function threeDApi(gpu) {
   Object.assign(ctx, tslModule(ctx));
   Object.assign(ctx, sceneModule(ctx)); // last: uses late binding to call other modules
 
+  // Wire engine adapter — provides carts with renderer-agnostic helpers
+  initAdapter(gpu);
+
   return {
     exposeTo(target) {
       Object.assign(target, {
+        engine,
         // Primitive creation
         createCube: ctx.createCube,
         createSphere: ctx.createSphere,
@@ -79,6 +84,7 @@ export function threeDApi(gpu) {
 
         // Model and texture loading
         loadModel: ctx.loadModel,
+        loadVoxModel: ctx.loadVoxModel,
         playAnimation: ctx.playAnimation,
         updateAnimations: ctx.updateAnimations,
         loadTexture: ctx.loadTexture,
@@ -156,6 +162,13 @@ export function threeDApi(gpu) {
         createTSLMaterial: ctx.createTSLMaterial,
         createTSLShaderMaterial: ctx.createTSLShaderMaterial,
         _updateTSLMaterials: ctx._updateTSLMaterials,
+        // Convenience factories (Phase 1 Shader Pack)
+        createLavaMaterial: ctx.createLavaMaterial,
+        createVortexMaterial: ctx.createVortexMaterial,
+        createPlasmaMaterial: ctx.createPlasmaMaterial,
+        createWaterMaterial: ctx.createWaterMaterial,
+        createHologramMaterial: ctx.createHologramMaterial,
+        createShockwaveMaterial: ctx.createShockwaveMaterial,
         // TSL building blocks (prefixed with tsl*)
         tslFn: ctx.tslFn,
         tslUniform: ctx.tslUniform,
@@ -194,6 +207,7 @@ export function threeDApi(gpu) {
         getCamera: () => camera,
         getRenderer: () => renderer,
         getMesh: ctx.getMesh,
+        // engine adapter already assigned above
       });
     },
   };

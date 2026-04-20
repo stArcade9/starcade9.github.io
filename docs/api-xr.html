@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXR &amp; VR — Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info { margin: 15px 0; }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .param:last-child { border-bottom: none; }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        
+        ul { margin-left: 20px; margin-top: 10px; }
+        li { margin: 5px 0; }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🥽 WebXR &amp; VR</h1>
+            <p class="subtitle">Immersive VR, AR passthrough, and Cardboard VR for phones — all with one‑line setup</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The XR module adds immersive Virtual Reality, Augmented Reality, and Google Cardboard support to any Nova64 cart. It integrates directly with the existing camera and renderer systems, so your 3D scenes work in VR with zero refactoring.</p>
+
+            <div class="note">
+                <div class="note-title">💡 Three modes, one API</div>
+                <ul>
+                    <li><strong>WebXR VR</strong> — Full immersive VR on Quest, Vision Pro, Index, or any WebXR-compatible headset. Includes controller models, hand tracking, and a world-space HUD.</li>
+                    <li><strong>WebXR AR</strong> — Augmented reality passthrough with hit-test support for placing objects on real surfaces.</li>
+                    <li><strong>Cardboard VR</strong> — Stereoscopic split-screen with gyroscope head tracking for phones without WebXR. Works with any Google Cardboard-style viewer.</li>
+                </ul>
+            </div>
+
+            <div class="note">
+                <div class="note-title">⚠️ Important notes</div>
+                <ul>
+                    <li><strong>Post-processing is auto-disabled</strong> during VR/AR sessions (bloom, vignette, etc. don't support multi-view stereo rendering). They are restored when you exit VR.</li>
+                    <li><strong>2D HUD overlay</strong> is rendered on a world-space billboard in VR that follows your gaze at a comfortable 2m distance. Your <code>print()</code> and <code>draw()</code> calls work in VR.</li>
+                    <li><strong>HTTPS required</strong> — WebXR only works over HTTPS or localhost.</li>
+                    <li>Call <code>enableVR()</code> or <code>enableAR()</code> in your cart's <code>init()</code> function. The user clicks the "Enter VR" / "Start AR" button when ready.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🥽 VR Functions</h2>
+
+            <div class="function">
+                <div class="function-sig">enableVR(options?)</div>
+                <p>Enables WebXR VR mode. Shows an "Enter VR" button on screen. Sets up the camera rig, two controllers with grip models, hand tracking meshes, and a world-space HUD billboard.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options</span>
+                        <span class="param-type">object</span> - Optional configuration
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.referenceSpace</span>
+                        <span class="param-type">string</span> - <code>'local-floor'</code> (default), <code>'local'</code>, or <code>'bounded-floor'</code>
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export function</span> <span class="function-name">init</span>() {
+  <span class="comment">// Enable VR with default settings (standing/room-scale)</span>
+  <span class="function-name">enableVR</span>();
+
+  <span class="comment">// Build your 3D scene normally</span>
+  <span class="function-name">createCube</span>(<span class="number">2</span>, <span class="number">0x00ccff</span>, [<span class="number">0</span>, <span class="number">1</span>, <span class="number">-3</span>], { material: <span class="string">'holographic'</span> });
+  <span class="function-name">setAmbientLight</span>(<span class="number">0x404060</span>, <span class="number">0.6</span>);
+  <span class="function-name">createPointLight</span>(<span class="number">0xff6600</span>, <span class="number">1.5</span>, <span class="number">20</span>, [<span class="number">3</span>, <span class="number">4</span>, <span class="number">2</span>]);
+  <span class="function-name">setFog</span>(<span class="number">0x0a0a1a</span>, <span class="number">5</span>, <span class="number">25</span>);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">enableAR(options?)</div>
+                <p>Enables WebXR AR mode with passthrough video. Shows a "Start AR" button. Automatically requests <code>hit-test</code> and optionally <code>hand-tracking</code> and <code>dom-overlay</code> features.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options</span>
+                        <span class="param-type">object</span> - Optional configuration
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.referenceSpace</span>
+                        <span class="param-type">string</span> - <code>'local'</code> (default)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.sessionInit</span>
+                        <span class="param-type">object</span> - Extra <code>XRSessionInit</code> properties (requiredFeatures, optionalFeatures)
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export function</span> <span class="function-name">init</span>() {
+  <span class="function-name">enableAR</span>();
+  <span class="comment">// Objects will appear in the real world through passthrough</span>
+  <span class="function-name">createSphere</span>(<span class="number">0.2</span>, <span class="number">0xff00ff</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-1</span>], { material: <span class="string">'holographic'</span> });
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">enableCardboardVR()</div>
+                <p>Enables stereoscopic split-screen rendering with gyroscope head tracking for phones without WebXR. Uses <code>StereoEffect</code> (code-split, only loaded when called) and <code>DeviceOrientationEvent</code>. Automatically enters fullscreen and locks to landscape orientation.</p>
+                <div class="note">
+                    <div class="note-title">📱 iOS Permission</div>
+                    <p>On iOS 13+, the browser requires explicit user permission for device orientation. <code>enableCardboardVR()</code> handles this automatically by calling <code>DeviceOrientationEvent.requestPermission()</code>.</p>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="comment">// Cardboard mode for any phone with a gyroscope</span>
+  <span class="keyword">await</span> <span class="function-name">enableCardboardVR</span>();
+
+  <span class="function-name">createGradientSkybox</span>(<span class="number">0x0a0a2e</span>, <span class="number">0x1a1a4e</span>);
+  <span class="function-name">createCube</span>(<span class="number">3</span>, <span class="number">0x00ffcc</span>, [<span class="number">0</span>, <span class="number">1</span>, <span class="number">-5</span>], { material: <span class="string">'metallic'</span> });
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">disableXR()</div>
+                <p>Cleanly exits any active XR or Cardboard session. Removes the VR/AR button, cleans up controllers, hand models, the VR HUD, the camera rig, and restores the camera to the scene root. Safe to call even if no session is active.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="comment">// Exit VR on game over</span>
+<span class="keyword">if</span> (health &lt;= <span class="number">0</span>) {
+  <span class="function-name">disableXR</span>();
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">isXRActive()</div>
+                <p>Returns <code>true</code> while any XR mode is presenting (VR, AR, or Cardboard).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">boolean</span>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">if</span> (<span class="function-name">isXRActive</span>()) {
+    <span class="comment">// VR-specific input handling</span>
+    <span class="keyword">const</span> ctrls = <span class="function-name">getXRControllers</span>();
+    <span class="comment">// ...</span>
+  } <span class="keyword">else</span> {
+    <span class="comment">// Desktop keyboard input</span>
+    <span class="keyword">if</span> (<span class="function-name">key</span>(<span class="string">'KeyW'</span>)) player.z -= <span class="number">5</span> * dt;
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">isXRSupported()</div>
+                <p>Returns <code>true</code> if the browser has the <code>navigator.xr</code> API available. Does not check for specific session types.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">boolean</span>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getXRSession()</div>
+                <p>Returns the raw <code>XRSession</code> object for advanced usage, or <code>null</code> if not in a session.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">XRSession | null</span>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getXRMode()</div>
+                <p>Returns the current XR mode string.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">string | null</span> - <code>'vr'</code>, <code>'ar'</code>, <code>'cardboard'</code>, or <code>null</code>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎮 Controller &amp; Hand Tracking</h2>
+
+            <div class="function">
+                <div class="function-sig">getXRControllers()</div>
+                <p>Returns an array of controller state objects (typically 2 — one per hand). Each object includes world-space position, quaternion rotation, button states, analog axes, and grip position.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;ControllerState&gt;</span>
+                </div>
+
+                <h3>ControllerState Object</h3>
+                <table>
+                    <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>index</code></td><td>number</td><td>0 = left, 1 = right</td></tr>
+                        <tr><td><code>position</code></td><td>{x, y, z}</td><td>World-space position in meters</td></tr>
+                        <tr><td><code>rotation</code></td><td>{x, y, z, w}</td><td>Quaternion rotation</td></tr>
+                        <tr><td><code>buttons</code></td><td>Array</td><td>Array of <code>{ pressed, touched, value }</code></td></tr>
+                        <tr><td><code>axes</code></td><td>Array</td><td>Thumbstick/touchpad [x, y] values (-1 to 1)</td></tr>
+                        <tr><td><code>grip.position</code></td><td>{x, y, z}</td><td>Grip (handle) world-space position</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Standard Button Mapping</h3>
+                <table>
+                    <thead><tr><th>Index</th><th>Quest / Touch</th><th>Index / Vive</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Trigger</td><td>Trigger</td></tr>
+                        <tr><td>1</td><td>Grip / Squeeze</td><td>Grip</td></tr>
+                        <tr><td>2</td><td>—</td><td>Trackpad</td></tr>
+                        <tr><td>3</td><td>Thumbstick click</td><td>—</td></tr>
+                        <tr><td>4</td><td>A / X button</td><td>—</td></tr>
+                        <tr><td>5</td><td>B / Y button</td><td>—</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="example">
+                    <div class="example-title">Example — spawn objects with trigger:</div>
+                    <pre><code><span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">if</span> (!<span class="function-name">isXRActive</span>()) <span class="keyword">return</span>;
+
+  <span class="keyword">const</span> ctrls = <span class="function-name">getXRControllers</span>();
+  <span class="keyword">for</span> (<span class="keyword">const</span> ctrl <span class="keyword">of</span> ctrls) {
+    <span class="comment">// Trigger pressed (button 0)</span>
+    <span class="keyword">if</span> (ctrl.buttons[<span class="number">0</span>]?.pressed) {
+      <span class="function-name">createSphere</span>(<span class="number">0.1</span>, <span class="number">0x00ff88</span>, [
+        ctrl.position.x,
+        ctrl.position.y,
+        ctrl.position.z,
+      ]);
+    }
+
+    <span class="comment">// Thumbstick for locomotion</span>
+    <span class="keyword">const</span> [stickX, stickY] = ctrl.axes;
+    <span class="keyword">if</span> (stickY) <span class="function-name">setCameraRigPosition</span>(
+      rig.x, rig.y, rig.z - stickY * <span class="number">3</span> * dt
+    );
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getXRHands()</div>
+                <p>Returns hand-tracking joint data for devices that support it (Quest, Vision Pro). Each hand has 25 joint positions following the WebXR Hand Input spec.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;HandState&gt;</span> - Only hands that are tracked are included
+                </div>
+
+                <h3>HandState Object</h3>
+                <table>
+                    <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>index</code></td><td>number</td><td>0 = left, 1 = right</td></tr>
+                        <tr><td><code>joints</code></td><td>object</td><td>Map of joint name → <code>{x, y, z}</code> world positions</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="note">
+                    <div class="note-title">🖐️ Joint Names</div>
+                    <p>Joints follow the WebXR Hand Input spec: <code>wrist</code>, <code>thumb-metacarpal</code>, <code>thumb-phalanx-proximal</code>, <code>thumb-phalanx-distal</code>, <code>thumb-tip</code>, <code>index-finger-metacarpal</code>, … <code>index-finger-tip</code>, <code>middle-finger-tip</code>, <code>ring-finger-tip</code>, <code>pinky-finger-tip</code>, etc. (25 joints total per hand.)</p>
+                </div>
+
+                <div class="example">
+                    <div class="example-title">Example — move a cursor to index finger tip:</div>
+                    <pre><code><span class="keyword">const</span> hands = <span class="function-name">getXRHands</span>();
+<span class="keyword">if</span> (hands.length > <span class="number">0</span>) {
+  <span class="keyword">const</span> tip = hands[<span class="number">0</span>].joints[<span class="string">'index-finger-tip'</span>];
+  <span class="function-name">setPosition</span>(cursor, tip.x, tip.y, tip.z);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setCameraRigPosition(x, y, z)</div>
+                <p>Moves the VR player rig to a new world-space position. The camera (headset) position is relative to this rig origin. Use this for teleportation or smooth locomotion.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">x, y, z</span>
+                        <span class="param-type">number</span> - World-space coordinates
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example — teleport to a position:</div>
+                    <pre><code><span class="comment">// Teleport player to a new location</span>
+<span class="function-name">setCameraRigPosition</span>(<span class="number">10</span>, <span class="number">0</span>, <span class="number">-5</span>);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setXRReferenceSpace(type)</div>
+                <p>Changes the WebXR reference space type after initialization.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">type</span>
+                        <span class="param-type">string</span> - <code>'local'</code>, <code>'local-floor'</code>, or <code>'bounded-floor'</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎮 Complete VR Cart Example</h2>
+            <p>This example shows a complete VR cart with controller interaction, dual-mode input (VR + keyboard), and a HUD overlay.</p>
+            <div class="example">
+                <div class="example-title">examples/my-vr-game/code.js</div>
+                <pre><code><span class="keyword">let</span> cubes = [];
+<span class="keyword">let</span> player = { x: <span class="number">0</span>, y: <span class="number">0</span>, z: <span class="number">0</span> };
+
+<span class="keyword">export function</span> <span class="function-name">init</span>() {
+  <span class="comment">// One line to enable VR — shows "Enter VR" button</span>
+  <span class="function-name">enableVR</span>({ referenceSpace: <span class="string">'local-floor'</span> });
+
+  <span class="comment">// Build scene (works both on-screen and in VR)</span>
+  <span class="function-name">setCameraPosition</span>(<span class="number">0</span>, <span class="number">1.6</span>, <span class="number">5</span>);
+  <span class="function-name">setAmbientLight</span>(<span class="number">0x404060</span>, <span class="number">0.6</span>);
+  <span class="function-name">createPointLight</span>(<span class="number">0x00ccff</span>, <span class="number">2</span>, <span class="number">20</span>, [<span class="number">0</span>, <span class="number">5</span>, <span class="number">0</span>]);
+  <span class="function-name">setFog</span>(<span class="number">0x0a0a1a</span>, <span class="number">5</span>, <span class="number">25</span>);
+  <span class="function-name">createGradientSkybox</span>(<span class="number">0x0a0a2e</span>, <span class="number">0x1a1a4e</span>);
+
+  <span class="comment">// Floor</span>
+  <span class="keyword">const</span> floor = <span class="function-name">createPlane</span>(<span class="number">20</span>, <span class="number">20</span>, <span class="number">0x334455</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
+  <span class="function-name">rotateMesh</span>(floor, -Math.PI / <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>);
+
+  <span class="comment">// Scatter some objects</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) {
+    <span class="keyword">const</span> c = <span class="function-name">createCube</span>(<span class="number">0.5</span>, Math.random() * <span class="number">0xffffff</span>,
+      [(Math.random() - <span class="number">0.5</span>) * <span class="number">8</span>, <span class="number">0.5</span>, (Math.random() - <span class="number">0.5</span>) * <span class="number">8</span>],
+      { material: <span class="string">'holographic'</span> });
+    cubes.push(c);
+  }
+}
+
+<span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="comment">// Rotate all cubes</span>
+  cubes.forEach(c =&gt; <span class="function-name">rotateMesh</span>(c, <span class="number">0</span>, dt, <span class="number">0</span>));
+
+  <span class="keyword">if</span> (<span class="function-name">isXRActive</span>()) {
+    <span class="comment">// VR: spawn cubes with trigger</span>
+    <span class="keyword">for</span> (<span class="keyword">const</span> ctrl <span class="keyword">of</span> <span class="function-name">getXRControllers</span>()) {
+      <span class="keyword">if</span> (ctrl.buttons[<span class="number">0</span>]?.pressed) {
+        cubes.push(<span class="function-name">createCube</span>(<span class="number">0.15</span>, <span class="number">0x00ff88</span>, [
+          ctrl.position.x, ctrl.position.y, ctrl.position.z
+        ]));
+      }
+    }
+  } <span class="keyword">else</span> {
+    <span class="comment">// Desktop: keyboard controls</span>
+    <span class="keyword">if</span> (<span class="function-name">key</span>(<span class="string">'KeyW'</span>)) player.z -= <span class="number">5</span> * dt;
+    <span class="keyword">if</span> (<span class="function-name">key</span>(<span class="string">'KeyS'</span>)) player.z += <span class="number">5</span> * dt;
+    <span class="function-name">setCameraPosition</span>(player.x, <span class="number">1.6</span>, player.z + <span class="number">5</span>);
+  }
+}
+
+<span class="keyword">export function</span> <span class="function-name">draw</span>() {
+  <span class="comment">// HUD works in both VR and desktop</span>
+  <span class="function-name">print</span>(<span class="string">'My VR Game'</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">0x00ccff</span>);
+  <span class="function-name">print</span>(<span class="string">`Cubes: ${cubes.length}`</span>, <span class="number">10</span>, <span class="number">30</span>, <span class="number">0xffffff</span>);
+}</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2026 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

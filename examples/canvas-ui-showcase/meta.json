@@ -1,0 +1,24 @@
+{
+  "name": "CanvasUI Showcase",
+  "description": "Reference demo of every NML element type — primitives, SVG Path2D, inline SVG, text styles, data binding, buttons, progress bars, groups, panels, and animations.",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "CANVAS UI SHOWCASE",
+      "section.primitives": "PRIMITIVES",
+      "section.svg": "SVG INTEGRATION",
+      "section.text": "TEXT STYLES",
+      "section.interactive": "INTERACTIVE",
+      "section.layout": "LAYOUT"
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
+}

@@ -66,6 +66,8 @@
           inset 0 4px 6px rgba(255, 255, 255, 0.1),
           inset 0 -4px 6px rgba(0, 0, 0, 0.8);
         position: relative;
+        width: 100%;
+        box-sizing: border-box;
       }
 
       .hardware-brand {
@@ -85,7 +87,8 @@
 
       .screen-container {
         position: relative;
-        border-radius: 8px;
+        width: 100%;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         border: 4px solid #050505;
         box-shadow:
@@ -94,16 +97,18 @@
         background: #000;
         /* Simulate TV curve slightly */
         border-radius: 2% / 3%;
+        box-sizing: border-box;
       }
 
       canvas {
         image-rendering: auto;
-        width: 1280px;
-        height: 720px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: #000;
         display: block;
-        max-width: 100%;
-        height: auto;
         touch-action: none;
         -webkit-touch-callout: none;
       }
@@ -385,7 +390,7 @@
         }
 
         canvas {
-          max-height: 50vh;
+          /* absolute fill — no override needed */
         }
 
         /* Show mobile controls */
@@ -527,6 +532,28 @@
         background: rgba(168, 85, 247, 0.5);
       }
     </style>
+  <script type="application/json" id="nova64-i18n">
+  {
+    "console.title": "NOVA-64 Console",
+    "console.studio.title": "NOVA-64 STUDIO",
+    "console.studio.sub": "Ultimate 3D Web Engine<br>Hardware-accelerated environment",
+    "console.back": "BACK TO DASHBOARD",
+    "console.label.cart": "Cartridge Selection",
+    "console.btn.hold": "Hold",
+    "console.btn.step": "Step",
+    "console.btn.snap": "Snap",
+    "console.btn.fullscreen": "Fullscreen",
+    "console.btn.fullscreen.exit": "Exit Full",
+    "console.label.dev": "Development Array",
+    "console.btn.studio": "Asset Studio",
+    "console.btn.novaos": "NovaOS Desktop",
+    "console.btn.docs": "Engine Syntax",
+    "console.controls.title": "Controls",
+    "console.controls.move": "Move",
+    "console.controls.button": "Button",
+    "console.controls.action": "Action"
+  }
+  </script>
     <script type="importmap">
     {
       "imports": {
@@ -537,7 +564,7 @@
       }
     }
     </script>
-    <script type="module" crossorigin src="./assets/main-DZ5KAIoL.js"></script>
+    <script type="module" crossorigin src="./assets/main-qb_accud.js"></script>
   </head>
   <body>
     <div class="shell">
@@ -586,10 +613,17 @@
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            BACK TO DASHBOARD
+            <span data-i18n="console.back">BACK TO DASHBOARD</span>
           </a>
-          <div class="title">NOVA-64 STUDIO</div>
-          <div class="subtitle">Ultimate 3D Web Engine<br />Hardware-accelerated environment</div>
+          <div class="title" data-i18n="console.studio.title">NOVA-64 STUDIO</div>
+          <div class="subtitle" data-i18n-html="console.studio.sub">Ultimate 3D Web Engine<br />Hardware-accelerated environment</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <select id="lang-select" title="Language" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:#94a3b8;font-size:11px;padding:4px 6px;cursor:pointer;">
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="ja">JA</option>
+            </select>
+          </div>
         </div>
 
         <div class="hr"></div>
@@ -599,7 +633,7 @@
         </div>
 
         <div class="col">
-          <label>Cartridge Selection</label>
+          <label data-i18n="console.label.cart">Cartridge Selection</label>
           <select id="cart">
             <option value="/examples/hello-world/code.js">⭐ Hello World (Start Here)</option>
             <option value="/examples/space-harrier-3d/code.js">
@@ -634,9 +668,12 @@
             <option value="/examples/wizardry-3d/code.js">🧙 Wizardry (First-Person Dungeon RPG)</option>
             <option value="/examples/boids-flocking/code.js">🐦 Boids Flocking (Generative Art)</option>
             <option value="/examples/game-of-life-3d/code.js">🧬 Game of Life 3D (Cellular Automata)</option>
+            <option value="/examples/hype-demo/code.js">✨ HYPE Framework Demo (Creative Coding)</option>
+            <option value="/examples/flash-demo/code.js">⚡ Flash Demo (10 × 2D Showcase Scenes)</option>
             <option value="/examples/nature-explorer-3d/code.js">🌿 Nature Explorer (GLB Walking Sim)</option>
             <option value="/examples/generative-art/code.js">🎨 Generative Art (Processing-style)</option>
             <option value="/examples/tsl-showcase/code.js">✨ TSL Showcase (Shading Language)</option>
+            <option value="/examples/shader-showcase/code.js">✨ Shader Showcase (Material Gallery)</option>
             <option value="/examples/3d-advanced/code.js">🎯 Advanced 3D (Technical)</option>
             <option value="/examples/model-viewer-3d/code.js">🦊 Animated 3D Models</option>
             <option value="/examples/demoscene/code.js">🎬 Demoscene - Tron (Showcase)</option>
@@ -659,6 +696,9 @@
               🖥️ Screen Demo (Multi-Screen System)
             </option>
             <option value="/examples/ui-demo/code.js">🎨 UI Demo (Interface Components)</option>
+            <option value="/examples/hud-demo/code.js">🖥️ HUD Demo (Canvas UI / NML)</option>
+            <option value="/examples/startscreen-demo/code.js">🎬 Start Screen Demo (Canvas UI / NML)</option>
+            <option value="/examples/canvas-ui-showcase/code.js">✨ Canvas UI Showcase (All NML Elements)</option>
             <option value="/examples/wing-commander-space/code.js">
               🚀 Wing Commander Space (Combat)
             </option>
@@ -667,6 +707,25 @@
             <option value="/examples/nft-worlds/code.js">🌐 NFT Worlds (Seed-Generated Voxels)</option>
             <option value="/examples/nft-art-generator/code.js">🎲 NFT Art Generator (Seed Art)</option>
             <option value="/examples/creative-coding/code.js">🎭 Creative Coding 3D (Generative 3D Art)</option>
+            <option value="/examples/vox-viewer/code.js">📦 VOX Viewer (MagicaVoxel Models)</option>
+            <option value="/examples/vr-demo/code.js">🥽 VR Demo (WebXR)</option>
+            <option value="/examples/ar-hand-demo/code.js">🤚 AR Hand Demo (MediaPipe)</option>
+            <option value="/examples/vr-sword-combat/code.js">⚔️ VR Sword Combat (WebXR)</option>
+            <option value="/examples/hero-demo/code.js">🌅 Hero Demo (Synthwave)</option>
+            <option value="/examples/blend-aurora/code.js">🌈 Blend Aurora (Visual Effect)</option>
+            <option value="/examples/camera-platformer/code.js">📷 Camera Platformer (3D Camera)</option>
+            <option value="/examples/filter-glitch/code.js">📺 Filter Glitch (Post-Processing)</option>
+            <option value="/examples/movie-clock/code.js">🕐 Movie Clock (Time Display)</option>
+            <option value="/examples/particle-fireworks/code.js">🎆 Particle Fireworks (Effects)</option>
+            <option value="/examples/particle-trail/code.js">💫 Particle Trail (Effects)</option>
+            <option value="/examples/stage-cards/code.js">🃏 Stage Cards (Transitions)</option>
+            <option value="/examples/stage-menu/code.js">📋 Stage Menu (Navigation)</option>
+            <option value="/examples/tween-bounce/code.js">🏀 Tween Bounce (Animation)</option>
+            <option value="/examples/tween-logo/code.js">✏️ Tween Logo (Animation)</option>
+            <option value="/examples/tween-typewriter/code.js">⌨️ Tween Typewriter (Animation)</option>
+            <option value="/examples/test-2d-overlay/code.js">🧪 Test 2D Overlay</option>
+            <option value="/examples/test-font/code.js">🧪 Test Font</option>
+            <option value="/examples/test-minimal/code.js">🧪 Test Minimal</option>
           </select>
         </div>
 
@@ -683,7 +742,7 @@
               <rect x="6" y="4" width="4" height="16"></rect>
               <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
-            Hold
+            <span data-i18n="console.btn.hold">Hold</span>
           </button>
           <button id="step" title="Step Frame" class="btn-primary">
             <svg
@@ -697,7 +756,7 @@
               <polygon points="5 4 15 12 5 20 5 4"></polygon>
               <line x1="19" y1="5" x2="19" y2="19"></line>
             </svg>
-            Step
+            <span data-i18n="console.btn.step">Step</span>
           </button>
           <button id="shot" title="Screenshot Canvas" class="btn-primary">
             <svg
@@ -713,7 +772,7 @@
               ></path>
               <circle cx="12" cy="13" r="4"></circle>
             </svg>
-            Snap
+            <span data-i18n="console.btn.snap">Snap</span>
           </button>
         </div>
         <button id="fullscreen" title="Toggle Fullscreen" style="width: 100%">
@@ -730,13 +789,19 @@
             <line x1="21" y1="3" x2="14" y2="10"></line>
             <line x1="3" y1="21" x2="10" y2="14"></line>
           </svg>
-          Fullscreen
+          <span data-i18n="console.btn.fullscreen">Fullscreen</span>
         </button>
+
+        <p style="margin:6px 0 0;font-size:11px;color:var(--muted);text-align:center">
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">F9</kbd> Debug &nbsp;
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Shift+X</kbd> Dev Console &nbsp;
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Enter</kbd> Restart
+        </p>
 
         <div class="hr"></div>
 
         <div class="col">
-          <label>Development Array</label>
+          <label data-i18n="console.label.dev">Development Array</label>
           <button
             id="editor"
             onclick="window.open('/os9-shell/index.html?app=sprite-editor', '_blank')"
@@ -755,7 +820,7 @@
               <path d="M2 2l7.586 7.586"></path>
               <circle cx="11" cy="11" r="2"></circle>
             </svg>
-            Asset Studio
+            <span data-i18n="console.btn.studio">Asset Studio</span>
           </button>
           <button id="os-shell" onclick="window.open('/os9-shell/index.html', '_blank')">
             <svg
@@ -770,7 +835,7 @@
               <line x1="8" y1="21" x2="16" y2="21"></line>
               <line x1="12" y1="17" x2="12" y2="21"></line>
             </svg>
-            NovaOS Desktop
+            <span data-i18n="console.btn.novaos">NovaOS Desktop</span>
           </button>
           <button id="docs" onclick="window.open('/docs/index.html', '_blank')">
             <svg
@@ -784,25 +849,25 @@
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
             </svg>
-            Engine Syntax
+            <span data-i18n="console.btn.docs">Engine Syntax</span>
           </button>
         </div>
 
         <div class="footer">
-          <div style="margin-bottom: 8px; color: #fff; font-weight: 600; text-transform: uppercase">
+          <div style="margin-bottom: 8px; color: #fff; font-weight: 600; text-transform: uppercase" data-i18n="console.controls.title">
             Controls
           </div>
           <div class="controls-hint">
             <div>
               <span class="key">W</span><span class="key">A</span><span class="key">S</span
-              ><span class="key">D</span> Move
+              ><span class="key">D</span> <span data-i18n="console.controls.move">Move</span>
             </div>
             <div>
               <span class="key">↑</span><span class="key">↓</span><span class="key">←</span
-              ><span class="key">→</span> Move
+              ><span class="key">→</span> <span data-i18n="console.controls.move">Move</span>
             </div>
-            <div><span class="key">Z</span><span class="key">X</span> Button</div>
-            <div><span class="key">Space</span> Action</div>
+            <div><span class="key">Z</span><span class="key">X</span> <span data-i18n="console.controls.button">Button</span></div>
+            <div><span class="key">Space</span> <span data-i18n="console.controls.action">Action</span></div>
           </div>
         </div>
       </div>
@@ -892,8 +957,8 @@
         const btn = document.getElementById('fullscreen');
         const isFullscreen = !!document.fullscreenElement;
         btn.innerHTML = isFullscreen
-          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="10" y1="14" x2="3" y2="21"></line><line x1="21" y1="3" x2="14" y2="10"></line></svg> Exit Full'
-          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg> Fullscreen';
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="10" y1="14" x2="3" y2="21"></line><line x1="21" y1="3" x2="14" y2="10"></line></svg> ' + ((window.__n64i18n && window.__n64i18n['console.btn.fullscreen.exit']) || 'Exit Full')
+          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg> ' + ((window.__n64i18n && window.__n64i18n['console.btn.fullscreen']) || 'Fullscreen');
       });
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -930,6 +995,8 @@
             'nft-worlds': '/examples/nft-worlds/code.js',
             'nft-art-generator': '/examples/nft-art-generator/code.js',
             'creative-coding': '/examples/creative-coding/code.js',
+            'hype-demo': '/examples/hype-demo/code.js',
+            'flash-demo': '/examples/flash-demo/code.js',
           };
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];
@@ -937,5 +1004,54 @@
         });
       }
     </script>
+
+<!-- ── I18N HYDRATION ── -->
+<script>(function () {
+  var el = document.getElementById('nova64-i18n');
+  if (!el) return;
+  var strings = JSON.parse(el.textContent);
+  window.__n64i18n = strings;
+  function apply(map) {
+    window.__n64i18n = map;
+    document.querySelectorAll('[data-i18n]').forEach(function (n) {
+      var v = map[n.dataset.i18n];
+      if (v !== undefined) n.textContent = v;
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (n) {
+      var v = map[n.dataset.i18nHtml];
+      if (v !== undefined) n.innerHTML = v;
+    });
+    if (map['console.title']) document.title = map['console.title'];
+  }
+  apply(strings);
+  var urlLang = new URLSearchParams(location.search).get('lang');
+  var storedLang = localStorage.getItem('nova64-lang');
+  var lang = urlLang || storedLang || 'en';
+  if (urlLang && urlLang !== storedLang) localStorage.setItem('nova64-lang', urlLang);
+  var sel = document.getElementById('lang-select');
+  if (sel) {
+    sel.value = lang;
+    sel.addEventListener('change', function () {
+      var l = sel.value;
+      localStorage.setItem('nova64-lang', l);
+      var u = new URL(location.href);
+      if (l === 'en') { u.searchParams.delete('lang'); } else { u.searchParams.set('lang', l); }
+      location.href = u.toString();
+    });
+  }
+  if (lang && lang !== 'en') {
+    fetch('./i18n/' + encodeURIComponent(lang) + '.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data) {
+          apply(Object.assign({}, strings, data));
+          if (sel) sel.value = lang;
+        }
+      })
+      .catch(function () {});
+  }
+}());
+</script>
+
   </body>
 </html>

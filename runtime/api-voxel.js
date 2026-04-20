@@ -4828,6 +4828,149 @@ export function voxelApi(gpu) {
   }
 
   /**
+   * Import a MagicaVoxel .vox file into the voxel world.
+   * Fetches the file, parses voxel data, maps palette colors to block types,
+   * and places blocks at the given world coordinates.
+   *
+   * @param {string} url - URL of the .vox file
+   * @param {number} x - World X origin
+   * @param {number} y - World Y origin
+   * @param {number} z - World Z origin
+   * @param {object} [options]
+   * @param {boolean} [options.registerColors=false] - Auto-register new block types from .vox palette
+   * @param {object} [options.palette] - Map of .vox color index (1-255) to block type ID
+   * @returns {Promise<{width,height,depth,voxelCount,blocksPlaced}>}
+   */
+  async function importVoxModel(url, x = 0, y = 0, z = 0, options = {}) {
+    const { VOXLoader } = await import('three/examples/jsm/loaders/VOXLoader.js');
+
+    const buffer = await fetch(url).then(r => {
+      if (!r.ok) throw new Error(`Failed to fetch .vox file: ${r.status} ${r.statusText}`);
+      return r.arrayBuffer();
+    });
+
+    const loader = new VOXLoader();
+    const result = loader.parse(buffer);
+    const chunks = result.chunks;
+    if (!chunks || chunks.length === 0)
+      return { width: 0, height: 0, depth: 0, voxelCount: 0, blocksPlaced: 0 };
+
+    const paletteMap = options.palette || {};
+    const autoRegister = options.registerColors === true;
+    const registeredColors = {}; // colorIndex → blockTypeId (for auto-register)
+    let nextAutoId = 200; // start auto-registered block IDs at 200
+
+    // Find the next available block ID for auto-registration
+    if (autoRegister) {
+      for (let id = 200; id < 256; id++) {
+        const existing = registry.get(id);
+        if (!existing || existing.name === 'unknown') {
+          nextAutoId = id;
+          break;
+        }
+      }
+    }
+
+    let totalPlaced = 0;
+    let totalVoxels = 0;
+    let maxW = 0,
+      maxH = 0,
+      maxD = 0;
+
+    for (const chunk of chunks) {
+      const { data, size, palette } = chunk;
+      const sx = size.x,
+        sy = size.y,
+        sz = size.z;
+      maxW = Math.max(maxW, sx);
+      maxH = Math.max(maxH, sz); // .vox Z is up → world Y
+      maxD = Math.max(maxD, sy);
+
+      for (let j = 0; j < data.length; j += 4) {
+        const vx = data[j + 0];
+        const vy = data[j + 1];
+        const vz = data[j + 2];
+        const colorIdx = data[j + 3];
+
+        totalVoxels++;
+
+        // Map .vox coordinates to world coordinates
+        // VOX: X right, Y forward, Z up → World: X right, Y up, Z forward
+        const wx = x + vx;
+        const wy = y + vz;
+        const wz = z + vy;
+
+        if (wy < 0 || wy >= CHUNK_HEIGHT) continue;
+
+        let blockType;
+        if (paletteMap[colorIdx] !== undefined) {
+          blockType = paletteMap[colorIdx];
+        } else if (autoRegister) {
+          if (registeredColors[colorIdx] === undefined) {
+            // Extract RGB from palette (ABGR format)
+            const hex = palette[colorIdx];
+            const r = (hex >> 0) & 0xff;
+            const g = (hex >> 8) & 0xff;
+            const b = (hex >> 16) & 0xff;
+            const color = (r << 16) | (g << 8) | b;
+
+            if (nextAutoId < 256) {
+              registry.register(nextAutoId, {
+                name: `vox_color_${colorIdx}`,
+                color,
+                solid: true,
+              });
+              registeredColors[colorIdx] = nextAutoId;
+              nextAutoId++;
+            } else {
+              // Fallback to closest existing block type
+              registeredColors[colorIdx] = findClosestBlockType(palette[colorIdx]);
+            }
+          }
+          blockType = registeredColors[colorIdx];
+        } else {
+          blockType = findClosestBlockType(palette[colorIdx]);
+        }
+
+        setBlock(wx, wy, wz, blockType);
+        totalPlaced++;
+      }
+    }
+
+    return {
+      width: maxW,
+      height: maxH,
+      depth: maxD,
+      voxelCount: totalVoxels,
+      blocksPlaced: totalPlaced,
+    };
+  }
+
+  // Find the closest registered block type by RGB color distance
+  function findClosestBlockType(paletteHex) {
+    const r = (paletteHex >> 0) & 0xff;
+    const g = (paletteHex >> 8) & 0xff;
+    const b = (paletteHex >> 16) & 0xff;
+
+    let bestId = BLOCK_TYPES.STONE; // fallback
+    let bestDist = Infinity;
+
+    for (let id = 1; id < 256; id++) {
+      const info = registry.get(id);
+      if (!info || !info.color || info.name === 'unknown') continue;
+      const br = (info.color >> 16) & 0xff;
+      const bg = (info.color >> 8) & 0xff;
+      const bb = info.color & 0xff;
+      const dist = (r - br) ** 2 + (g - bg) ** 2 + (b - bb) ** 2;
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestId = id;
+      }
+    }
+    return bestId;
+  }
+
+  /**
    * Export the entire modified world as a JSON-serializable object.
    * Only includes chunks that have been loaded/modified.
    * @returns {object} { version, seed, chunks: [...] }
@@ -5239,6 +5382,7 @@ export function voxelApi(gpu) {
       g.setVoxelFluidSource = setFluidSource;
       g.removeVoxelFluidSource = removeFluidSource;
       g.getVoxelFluidLevel = getFluidLevelWorld;
+      g.importVoxModel = importVoxModel;
     },
   };
 }

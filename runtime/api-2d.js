@@ -177,14 +177,12 @@ const n64Palette = {
 
 export function api2d(gpu) {
   const fb = gpu.getFramebuffer();
-  const W = fb.width; // 640
-  const H = fb.height; // 360
-
-  // cached camRef from std api - unused for 2D (no camera offset)
-  // const cam = { x: 0, y: 0 };
 
   // helper: write a pixel with alpha blending
+  // Uses fb.width / fb.height dynamically so resize() is picked up.
   function _blend(x, y, r, g, b, a) {
+    const W = fb.width,
+      H = fb.height;
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     if (a >= 255) {
       fb.pset(x, y, r * 257, g * 257, b * 257, 65535);
@@ -221,8 +219,8 @@ export function api2d(gpu) {
       a2 = _unpack(c2);
     const x1 = Math.max(0, x),
       y1 = Math.max(0, y);
-    const x2 = Math.min(W, x + w),
-      y2 = Math.min(H, y + h);
+    const x2 = Math.min(fb.width, x + w),
+      y2 = Math.min(fb.height, y + h);
     for (let py = y1; py < y2; py++) {
       for (let px = x1; px < x2; px++) {
         let t;
@@ -258,8 +256,8 @@ export function api2d(gpu) {
       co = _unpack(outerColor);
     const x1 = Math.max(0, cx - radius),
       y1 = Math.max(0, cy - radius);
-    const x2 = Math.min(W, cx + radius),
-      y2 = Math.min(H, cy + radius);
+    const x2 = Math.min(fb.width, cx + radius),
+      y2 = Math.min(fb.height, cy + radius);
     const r2 = radius * radius;
     for (let py = y1; py < y2; py++) {
       for (let px = x1; px < x2; px++) {
@@ -361,7 +359,7 @@ export function api2d(gpu) {
 
     if (fill) {
       const minY = Math.max(0, Math.min(...points.map(p => p[1])) | 0);
-      const maxY = Math.min(H - 1, Math.max(...points.map(p => p[1])) | 0);
+      const maxY = Math.min(fb.height - 1, Math.max(...points.map(p => p[1])) | 0);
       for (let py = minY; py <= maxY; py++) {
         const intersections = [];
         const n = points.length;
@@ -376,7 +374,7 @@ export function api2d(gpu) {
         intersections.sort((a, b) => a - b);
         for (let i = 0; i + 1 < intersections.length; i += 2) {
           const lx = Math.max(0, intersections[i] | 0);
-          const rx = Math.min(W - 1, intersections[i + 1] | 0);
+          const rx = Math.min(fb.width - 1, intersections[i + 1] | 0);
           for (let px = lx; px <= rx; px++) _blend(px, py, r, g, b, a);
         }
       }
@@ -525,9 +523,9 @@ export function api2d(gpu) {
   function drawScanlines(alpha = 80, spacing = 2) {
     const p = fb.pixels;
     const af = (255 - alpha) / 255;
-    for (let y = 0; y < H; y += spacing) {
-      for (let x = 0; x < W; x++) {
-        const i = (y * W + x) * 4;
+    for (let y = 0; y < fb.height; y += spacing) {
+      for (let x = 0; x < fb.width; x++) {
+        const i = (y * fb.width + x) * 4;
         p[i] = (p[i] * af) | 0;
         p[i + 1] = (p[i + 1] * af) | 0;
         p[i + 2] = (p[i + 2] * af) | 0;
@@ -547,8 +545,8 @@ export function api2d(gpu) {
     let s = seed | 12345;
     const x1 = Math.max(0, x),
       y1 = Math.max(0, y);
-    const x2 = Math.min(W, x + w),
-      y2 = Math.min(H, y + h);
+    const x2 = Math.min(fb.width, x + w),
+      y2 = Math.min(fb.height, y + h);
     for (let py = y1; py < y2; py++) {
       for (let px = x1; px < x2; px++) {
         s = (s * 1664525 + 1013904223) & 0xffffffff;
@@ -570,8 +568,8 @@ export function api2d(gpu) {
     size |= 0;
     const x1 = Math.max(0, x),
       y1 = Math.max(0, y);
-    const x2 = Math.min(W, x + w),
-      y2 = Math.min(H, y + h);
+    const x2 = Math.min(fb.width, x + w),
+      y2 = Math.min(fb.height, y + h);
     for (let py = y1; py < y2; py++) {
       for (let px = x1; px < x2; px++) {
         const cell = ((((px - x) / size) | 0) + (((py - y) / size) | 0)) % 2;
@@ -677,11 +675,11 @@ export function api2d(gpu) {
    */
   function drawWave(x, y, w, amplitude, frequency, phase, color, thickness = 2) {
     const { r, g, b, a } = _unpack(color);
-    for (let px = x; px < x + w && px < W; px++) {
+    for (let px = x; px < x + w && px < fb.width; px++) {
       const py = (y + Math.sin((px - x) * frequency + phase) * amplitude) | 0;
       for (let t = -thickness >> 1; t <= thickness >> 1; t++) {
         const ny = py + t;
-        if (ny >= 0 && ny < H) _blend(px, ny, r, g, b, a);
+        if (ny >= 0 && ny < fb.height) _blend(px, ny, r, g, b, a);
       }
     }
   }
@@ -698,7 +696,7 @@ export function api2d(gpu) {
       const rad = (i / 360) * spacing;
       const px = (cx + Math.cos(angle) * rad) | 0;
       const py = (cy + Math.sin(angle) * rad) | 0;
-      if (px >= 0 && px < W && py >= 0 && py < H) _blend(px, py, r, g, b, a);
+      if (px >= 0 && px < fb.width && py >= 0 && py < fb.height) _blend(px, py, r, g, b, a);
     }
   }
 
@@ -759,7 +757,7 @@ export function api2d(gpu) {
    */
   function createMinimap(opts = {}) {
     return {
-      x: opts.x ?? W - 90,
+      x: opts.x ?? fb.width - 90,
       y: opts.y ?? 10,
       width: opts.width ?? 80,
       height: opts.height ?? 80,
@@ -1049,13 +1047,14 @@ export function api2d(gpu) {
 
   /** Full-screen vertical gradient — great for sky/title backgrounds */
   function drawSkyGradient(topColor, bottomColor) {
-    drawGradient(0, 0, W, H, topColor, bottomColor, 'v');
+    drawGradient(0, 0, fb.width, fb.height, topColor, bottomColor, 'v');
   }
 
   /** Full-screen flash — use alpha 0..255 for a fade effect */
   function drawFlash(color) {
     const { r, g, b, a } = _unpack(color);
-    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) _blend(px, py, r, g, b, a);
+    for (let py = 0; py < fb.height; py++)
+      for (let px = 0; px < fb.width; px++) _blend(px, py, r, g, b, a);
   }
 
   /**

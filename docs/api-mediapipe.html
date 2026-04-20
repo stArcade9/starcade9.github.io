@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaPipe Tracking — Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info { margin: 15px 0; }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .param:last-child { border-bottom: none; }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        
+        ul { margin-left: 20px; margin-top: 10px; }
+        li { margin: 5px 0; }
+
+        .landmark-diagram {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--accent-cyan);
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        
+        <header>
+            <h1>🤖 MediaPipe Tracking</h1>
+            <p class="subtitle">Real-time hand, face, and body pose tracking via webcam — powered by Google MediaPipe Vision</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The MediaPipe module brings computer-vision tracking to Nova64 carts. Track hands, faces, and body poses using your webcam, then use the landmark data to drive 3D scenes — perfect for AR filters, gesture controls, motion capture, and interactive installations.</p>
+
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Zero bundle impact</strong> — Models (5–20 MB each) are lazy-loaded from CDN only when you call <code>init*Tracking()</code>. Carts that don't use tracking pay nothing.</li>
+                    <li><strong>GPU-accelerated</strong> — Uses WebGL delegate by default for fast inference on any device.</li>
+                    <li><strong>Poll-based API</strong> — Detection runs in a background loop; call <code>getHandLandmarks()</code> etc. in your <code>update()</code> to read the latest results.</li>
+                    <li><strong>AR camera background</strong> — One call to <code>showCameraBackground()</code> sets the webcam feed as your scene background for an AR passthrough effect.</li>
+                    <li><strong>Combine freely</strong> — You can run hand + face + pose tracking simultaneously.</li>
+                </ul>
+            </div>
+
+            <div class="note">
+                <div class="note-title">⚠️ Requirements</div>
+                <ul>
+                    <li><strong>Camera permission</strong> — The browser will prompt the user for webcam access on first call.</li>
+                    <li><strong>HTTPS required</strong> — <code>getUserMedia</code> only works over HTTPS or localhost.</li>
+                    <li><strong>Internet connection</strong> — Models are downloaded from Google's CDN on first use. Subsequent loads use browser cache.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🤚 Hand Tracking</h2>
+
+            <div class="function">
+                <div class="function-sig">await initHandTracking(options?)</div>
+                <p>Starts the webcam and initializes the MediaPipe Hand Landmarker. Begins detecting hands immediately. This function is <code>async</code> — the model download may take a few seconds on first call.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options.numHands</span>
+                        <span class="param-type">number</span> - Maximum hands to detect (default: 2)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.facing</span>
+                        <span class="param-type">string</span> - Camera facing mode: <code>'user'</code> (default) or <code>'environment'</code>
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.delegate</span>
+                        <span class="param-type">string</span> - Inference backend: <code>'GPU'</code> (default) or <code>'CPU'</code>
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="keyword">await</span> <span class="function-name">initHandTracking</span>({ numHands: <span class="number">2</span> });
+  <span class="function-name">showCameraBackground</span>(); <span class="comment">// AR passthrough</span>
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getHandLandmarks()</div>
+                <p>Returns the latest detected hand landmarks. Each hand has 21 landmark points with normalized coordinates (0–1 range, relative to the video frame).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;Array&lt;{x, y, z}&gt;&gt;</span> - One array of 21 landmarks per detected hand
+                </div>
+
+                <h3>Hand Landmark Indices</h3>
+                <div class="landmark-diagram">
+         8  12  16  20
+         |   |   |   |
+     7  11  15  19
+     |   |   |   |
+     6  10  14  18
+     |   |   |   |
+  4  5   9  13  17
+  |   \  |  /  /
+  3    \ | / /
+  |     \|//
+  2      +-------- PALM
+  |     /
+  1    /
+  |   /
+  0 WRIST
+                </div>
+                <table>
+                    <thead><tr><th>Index</th><th>Landmark</th><th>Index</th><th>Landmark</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Wrist</td><td>11</td><td>Middle finger PIP</td></tr>
+                        <tr><td>1</td><td>Thumb CMC</td><td>12</td><td>Middle finger tip</td></tr>
+                        <tr><td>2</td><td>Thumb MCP</td><td>13</td><td>Ring finger MCP</td></tr>
+                        <tr><td>3</td><td>Thumb IP</td><td>14</td><td>Ring finger PIP</td></tr>
+                        <tr><td>4</td><td>Thumb tip</td><td>15</td><td>Ring finger DIP</td></tr>
+                        <tr><td>5</td><td>Index finger MCP</td><td>16</td><td>Ring finger tip</td></tr>
+                        <tr><td>6</td><td>Index finger PIP</td><td>17</td><td>Pinky MCP</td></tr>
+                        <tr><td>7</td><td>Index finger DIP</td><td>18</td><td>Pinky PIP</td></tr>
+                        <tr><td>8</td><td>Index finger tip</td><td>19</td><td>Pinky DIP</td></tr>
+                        <tr><td>9</td><td>Middle finger MCP</td><td>20</td><td>Pinky tip</td></tr>
+                        <tr><td>10</td><td>Middle finger DIP</td><td></td><td></td></tr>
+                    </tbody>
+                </table>
+
+                <div class="example">
+                    <div class="example-title">Example — pinch detection:</div>
+                    <pre><code><span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">const</span> hands = <span class="function-name">getHandLandmarks</span>();
+  <span class="keyword">if</span> (hands.length === <span class="number">0</span>) <span class="keyword">return</span>;
+
+  <span class="keyword">const</span> thumb = hands[<span class="number">0</span>][<span class="number">4</span>];  <span class="comment">// thumb tip</span>
+  <span class="keyword">const</span> index = hands[<span class="number">0</span>][<span class="number">8</span>];  <span class="comment">// index tip</span>
+  <span class="keyword">const</span> dx = thumb.x - index.x;
+  <span class="keyword">const</span> dy = thumb.y - index.y;
+  <span class="keyword">const</span> dist = Math.sqrt(dx * dx + dy * dy);
+
+  <span class="keyword">if</span> (dist &lt; <span class="number">0.04</span>) {
+    <span class="comment">// Pinch detected!</span>
+    <span class="function-name">sfx</span>(<span class="string">'coin'</span>);
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getHandGesture()</div>
+                <p>Returns the recognized gesture for each detected hand. Uses MediaPipe's built-in gesture classifier.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;{name, score} | null&gt;</span> - One result per hand, or <code>null</code> if no gesture recognized
+                </div>
+
+                <h3>Built-in Gesture Names</h3>
+                <table>
+                    <thead><tr><th>Gesture</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>None</code></td><td>No recognized gesture</td></tr>
+                        <tr><td><code>Closed_Fist</code></td><td>All fingers curled into fist</td></tr>
+                        <tr><td><code>Open_Palm</code></td><td>All fingers extended, palm facing camera</td></tr>
+                        <tr><td><code>Pointing_Up</code></td><td>Index finger pointing upward</td></tr>
+                        <tr><td><code>Thumb_Down</code></td><td>Thumbs down gesture</td></tr>
+                        <tr><td><code>Thumb_Up</code></td><td>Thumbs up gesture</td></tr>
+                        <tr><td><code>Victory</code></td><td>Peace / victory sign (index + middle fingers)</td></tr>
+                        <tr><td><code>ILoveYou</code></td><td>ASL "I love you" (thumb + index + pinky extended)</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">const</span> gestures = <span class="function-name">getHandGesture</span>();
+<span class="keyword">if</span> (gestures[<span class="number">0</span>]?.name === <span class="string">'Closed_Fist'</span>) {
+  <span class="comment">// Fist = attack!</span>
+  <span class="function-name">triggerAttack</span>();
+} <span class="keyword">else if</span> (gestures[<span class="number">0</span>]?.name === <span class="string">'Open_Palm'</span>) {
+  <span class="comment">// Open palm = shield</span>
+  <span class="function-name">activateShield</span>();
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>😀 Face Tracking</h2>
+
+            <div class="function">
+                <div class="function-sig">await initFaceTracking(options?)</div>
+                <p>Starts the webcam and initializes the MediaPipe Face Landmarker with blend shape output. Detects face mesh (478 landmarks) and expression blend shapes.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options.numFaces</span>
+                        <span class="param-type">number</span> - Maximum faces to detect (default: 1)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.facing</span>
+                        <span class="param-type">string</span> - <code>'user'</code> (default) or <code>'environment'</code>
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.delegate</span>
+                        <span class="param-type">string</span> - <code>'GPU'</code> (default) or <code>'CPU'</code>
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code><span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="keyword">await</span> <span class="function-name">initFaceTracking</span>({ numFaces: <span class="number">1</span> });
+  <span class="function-name">showCameraBackground</span>(); <span class="comment">// webcam behind the 3D scene</span>
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getFaceLandmarks()</div>
+                <p>Returns the 478-point face mesh for each detected face. Landmarks are normalized coordinates (0–1) relative to the video frame.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;Array&lt;{x, y, z}&gt;&gt;</span> - One array of 478 landmarks per face
+                </div>
+                <div class="note">
+                    <div class="note-title">🗺️ Key Landmark Indices</div>
+                    <ul>
+                        <li><strong>1</strong> — Nose tip</li>
+                        <li><strong>33, 263</strong> — Left / right eye inner corner</li>
+                        <li><strong>133, 362</strong> — Left / right eye outer corner</li>
+                        <li><strong>159, 386</strong> — Left / right eye top (pupil area)</li>
+                        <li><strong>13, 14</strong> — Upper / lower lip center</li>
+                        <li><strong>61, 291</strong> — Left / right mouth corner</li>
+                        <li><strong>10</strong> — Forehead center</li>
+                        <li><strong>152</strong> — Chin bottom</li>
+                    </ul>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example — 3D face filter:</div>
+                    <pre><code><span class="keyword">let</span> hat;
+
+<span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="keyword">await</span> <span class="function-name">initFaceTracking</span>();
+  <span class="function-name">showCameraBackground</span>();
+  hat = <span class="function-name">createCone</span>(<span class="number">0.3</span>, <span class="number">0.8</span>, <span class="number">0xff0000</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
+}
+
+<span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">const</span> faces = <span class="function-name">getFaceLandmarks</span>();
+  <span class="keyword">if</span> (faces.length === <span class="number">0</span>) <span class="keyword">return</span>;
+
+  <span class="comment">// Place hat above forehead (landmark 10)</span>
+  <span class="keyword">const</span> forehead = faces[<span class="number">0</span>][<span class="number">10</span>];
+  <span class="keyword">const</span> x = (forehead.x - <span class="number">0.5</span>) * <span class="number">8</span>;
+  <span class="keyword">const</span> y = -(forehead.y - <span class="number">0.5</span>) * <span class="number">6</span> + <span class="number">0.6</span>;
+  <span class="function-name">setPosition</span>(hat, x, y, <span class="number">-3</span>);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getFaceBlendShapes()</div>
+                <p>Returns blend shape coefficients for each detected face — 52 expression values (0–1) for driving avatar animation or expression detection.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;BlendShapeData&gt;</span> - One set of blend shapes per face
+                </div>
+
+                <h3>Key Blend Shape Names</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Blend Shapes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Eyes</td><td><code>eyeBlinkLeft</code>, <code>eyeBlinkRight</code>, <code>eyeWideLeft</code>, <code>eyeWideRight</code>, <code>eyeSquintLeft</code>, <code>eyeSquintRight</code></td></tr>
+                        <tr><td>Brows</td><td><code>browDownLeft</code>, <code>browDownRight</code>, <code>browInnerUp</code>, <code>browOuterUpLeft</code>, <code>browOuterUpRight</code></td></tr>
+                        <tr><td>Mouth</td><td><code>mouthSmileLeft</code>, <code>mouthSmileRight</code>, <code>mouthFrownLeft</code>, <code>mouthFrownRight</code>, <code>mouthOpen</code>, <code>jawOpen</code></td></tr>
+                        <tr><td>Nose / Cheek</td><td><code>noseSneerLeft</code>, <code>noseSneerRight</code>, <code>cheekPuff</code>, <code>cheekSquintLeft</code></td></tr>
+                    </tbody>
+                </table>
+
+                <div class="example">
+                    <div class="example-title">Example — smile detection:</div>
+                    <pre><code><span class="keyword">const</span> shapes = <span class="function-name">getFaceBlendShapes</span>();
+<span class="keyword">if</span> (shapes.length > <span class="number">0</span>) {
+  <span class="keyword">const</span> bs = shapes[<span class="number">0</span>].categories;
+  <span class="keyword">const</span> smile = bs.find(b =&gt; b.categoryName === <span class="string">'mouthSmileLeft'</span>);
+  <span class="keyword">if</span> (smile?.score > <span class="number">0.5</span>) {
+    <span class="function-name">print</span>(<span class="string">'😊 Smiling!'</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">0x00ff00</span>);
+  }
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🏃 Pose Tracking</h2>
+
+            <div class="function">
+                <div class="function-sig">await initPoseTracking(options?)</div>
+                <p>Starts the webcam and initializes the MediaPipe Pose Landmarker. Detects 33 body keypoints for full-body pose estimation.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">options.numPoses</span>
+                        <span class="param-type">number</span> - Maximum poses to detect (default: 1)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.facing</span>
+                        <span class="param-type">string</span> - <code>'user'</code> (default) or <code>'environment'</code>
+                    </div>
+                    <div class="param">
+                        <span class="param-name">options.delegate</span>
+                        <span class="param-type">string</span> - <code>'GPU'</code> (default) or <code>'CPU'</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getPoseLandmarks()</div>
+                <p>Returns 33 body keypoints per detected person. Coordinates are normalized (0–1).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Array&lt;Array&lt;{x, y, z, visibility}&gt;&gt;</span> - One array of 33 landmarks per person
+                </div>
+
+                <h3>Pose Landmark Indices</h3>
+                <table>
+                    <thead><tr><th>Index</th><th>Landmark</th><th>Index</th><th>Landmark</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Nose</td><td>17</td><td>Left pinky</td></tr>
+                        <tr><td>1–3</td><td>Left eye (inner, center, outer)</td><td>18</td><td>Right pinky</td></tr>
+                        <tr><td>4–6</td><td>Right eye (inner, center, outer)</td><td>19–20</td><td>Left / right index</td></tr>
+                        <tr><td>7–8</td><td>Left / right ear</td><td>21–22</td><td>Left / right thumb</td></tr>
+                        <tr><td>9–10</td><td>Left / right mouth</td><td>23–24</td><td>Left / right hip</td></tr>
+                        <tr><td>11–12</td><td>Left / right shoulder</td><td>25–26</td><td>Left / right knee</td></tr>
+                        <tr><td>13–14</td><td>Left / right elbow</td><td>27–28</td><td>Left / right ankle</td></tr>
+                        <tr><td>15–16</td><td>Left / right wrist</td><td>29–32</td><td>Left / right heel + foot index</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="example">
+                    <div class="example-title">Example — body puppet:</div>
+                    <pre><code><span class="keyword">let</span> head, bodyMesh, leftHand, rightHand;
+
+<span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="keyword">await</span> <span class="function-name">initPoseTracking</span>();
+  <span class="function-name">showCameraBackground</span>();
+
+  head = <span class="function-name">createSphere</span>(<span class="number">0.3</span>, <span class="number">0xff8800</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-3</span>]);
+  leftHand = <span class="function-name">createSphere</span>(<span class="number">0.15</span>, <span class="number">0x00ff88</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-3</span>]);
+  rightHand = <span class="function-name">createSphere</span>(<span class="number">0.15</span>, <span class="number">0x00ff88</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-3</span>]);
+}
+
+<span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">const</span> poses = <span class="function-name">getPoseLandmarks</span>();
+  <span class="keyword">if</span> (poses.length === <span class="number">0</span>) <span class="keyword">return</span>;
+
+  <span class="keyword">const</span> p = poses[<span class="number">0</span>];
+  <span class="comment">// Map nose to head position</span>
+  <span class="function-name">setPosition</span>(head,
+    (p[<span class="number">0</span>].x - <span class="number">0.5</span>) * <span class="number">8</span>,
+    -(p[<span class="number">0</span>].y - <span class="number">0.5</span>) * <span class="number">6</span>,
+    <span class="number">-3</span>
+  );
+  <span class="comment">// Map wrists to hand spheres</span>
+  <span class="function-name">setPosition</span>(leftHand,  (p[<span class="number">15</span>].x - <span class="number">0.5</span>) * <span class="number">8</span>, -(p[<span class="number">15</span>].y - <span class="number">0.5</span>) * <span class="number">6</span>, <span class="number">-3</span>);
+  <span class="function-name">setPosition</span>(rightHand, (p[<span class="number">16</span>].x - <span class="number">0.5</span>) * <span class="number">8</span>, -(p[<span class="number">16</span>].y - <span class="number">0.5</span>) * <span class="number">6</span>, <span class="number">-3</span>);
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>📷 Camera Control</h2>
+
+            <div class="function">
+                <div class="function-sig">startCamera(facing?)</div>
+                <p>Starts the webcam. Called automatically by <code>init*Tracking()</code>, but can be called independently to preview the camera feed without tracking.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">facing</span>
+                        <span class="param-type">string</span> - <code>'user'</code> (front camera, default) or <code>'environment'</code> (rear camera)
+                    </div>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">stopCamera()</div>
+                <p>Stops the webcam, releases the media stream, and disposes the video texture. Also calls <code>hideCameraBackground()</code>.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getCameraTexture()</div>
+                <p>Returns a <code>THREE.VideoTexture</code> of the webcam feed. Useful for mapping the camera onto 3D objects (e.g., a TV screen, a mirror, a portal).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">THREE.VideoTexture | null</span>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example — webcam on a TV screen:</div>
+                    <pre><code><span class="keyword">await</span> <span class="function-name">startCamera</span>();
+<span class="keyword">const</span> tex = <span class="function-name">getCameraTexture</span>();
+<span class="comment">// Apply to a plane as a "TV screen"</span>
+tv.material.map = tex;</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">showCameraBackground()</div>
+                <p>Sets the webcam feed as the scene's background, creating an AR passthrough effect. 3D objects appear overlaid on the real world.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">hideCameraBackground()</div>
+                <p>Removes the webcam background and restores the previous scene background (skybox, color, etc.).</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">stopTracking()</div>
+                <p>Complete cleanup — closes all landmark detectors, stops the detection loop, stops the camera, and clears all cached results. Call this on game exit or cart reload.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎮 Complete Hand-Tracking AR Cart</h2>
+            <p>A full example combining hand tracking with AR camera background, pinch gestures, and 3D particle effects.</p>
+            <div class="example">
+                <div class="example-title">examples/my-ar-game/code.js</div>
+                <pre><code><span class="keyword">let</span> cursor, particles = [];
+
+<span class="keyword">export async function</span> <span class="function-name">init</span>() {
+  <span class="keyword">await</span> <span class="function-name">initHandTracking</span>({ numHands: <span class="number">2</span> });
+  <span class="function-name">showCameraBackground</span>();
+
+  cursor = <span class="function-name">createSphere</span>(<span class="number">0.15</span>, <span class="number">0xff00ff</span>, [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-3</span>],
+    { material: <span class="string">'holographic'</span> });
+  <span class="function-name">setAmbientLight</span>(<span class="number">0xffffff</span>, <span class="number">0.8</span>);
+}
+
+<span class="keyword">export function</span> <span class="function-name">update</span>(dt) {
+  <span class="keyword">const</span> hands = <span class="function-name">getHandLandmarks</span>();
+  <span class="keyword">if</span> (hands.length === <span class="number">0</span>) <span class="keyword">return</span>;
+
+  <span class="comment">// Move cursor to index finger tip</span>
+  <span class="keyword">const</span> tip = hands[<span class="number">0</span>][<span class="number">8</span>];
+  <span class="keyword">const</span> x = (tip.x - <span class="number">0.5</span>) * <span class="number">8</span>;
+  <span class="keyword">const</span> y = -(tip.y - <span class="number">0.5</span>) * <span class="number">6</span>;
+  <span class="function-name">setPosition</span>(cursor, x, y, <span class="number">-3</span>);
+
+  <span class="comment">// Pinch = spawn particle</span>
+  <span class="keyword">const</span> thumb = hands[<span class="number">0</span>][<span class="number">4</span>];
+  <span class="keyword">const</span> dist = Math.hypot(thumb.x - tip.x, thumb.y - tip.y);
+  <span class="keyword">if</span> (dist &lt; <span class="number">0.04</span>) {
+    particles.push({
+      mesh: <span class="function-name">createSphere</span>(<span class="number">0.08</span>, Math.random() * <span class="number">0xffffff</span>, [x, y, <span class="number">-3</span>]),
+      life: <span class="number">2</span>,
+    });
+  }
+
+  <span class="comment">// Fade and clean up particles</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = particles.length - <span class="number">1</span>; i >= <span class="number">0</span>; i--) {
+    particles[i].life -= dt;
+    <span class="keyword">if</span> (particles[i].life &lt;= <span class="number">0</span>) {
+      <span class="function-name">removeMesh</span>(particles[i].mesh);
+      particles.splice(i, <span class="number">1</span>);
+    }
+  }
+}
+
+<span class="keyword">export function</span> <span class="function-name">draw</span>() {
+  <span class="function-name">print</span>(<span class="string">'AR Hand Tracking'</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">0x00ffcc</span>);
+  <span class="keyword">const</span> g = <span class="function-name">getHandGesture</span>();
+  <span class="keyword">if</span> (g[<span class="number">0</span>]) <span class="function-name">print</span>(<span class="string">`Gesture: ${g[0].name}`</span>, <span class="number">10</span>, <span class="number">30</span>, <span class="number">0xffffff</span>);
+}</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2026 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+        </footer>
+    </div>
+</body>
+</html>

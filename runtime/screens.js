@@ -116,6 +116,8 @@ export class ScreenManager {
     const to = this.screens.get(toName);
     const t = Math.max(0, Math.min(1, progress));
     const e = t * t * (3 - 2 * t); // smoothstep
+    const SW = typeof globalThis.screenWidth === 'function' ? globalThis.screenWidth() : 640;
+    const SH = typeof globalThis.screenHeight === 'function' ? globalThis.screenHeight() : 360;
 
     if (type === 'fade') {
       // Cross-fade via black
@@ -123,30 +125,30 @@ export class ScreenManager {
       if (t < 0.5) {
         if (from && typeof from.draw === 'function') from.draw();
         if (midBlack > 0 && typeof globalThis.rect === 'function')
-          globalThis.rect(0, 0, 640, 360, globalThis.rgba8(0, 0, 0, Math.min(255, midBlack)), true);
+          globalThis.rect(0, 0, SW, SH, globalThis.rgba8(0, 0, 0, Math.min(255, midBlack)), true);
       } else {
         if (to && typeof to.draw === 'function') to.draw();
         const fadeIn = Math.round((1 - e) * 510);
         if (fadeIn > 0 && typeof globalThis.rect === 'function')
-          globalThis.rect(0, 0, 640, 360, globalThis.rgba8(0, 0, 0, Math.min(255, fadeIn)), true);
+          globalThis.rect(0, 0, SW, SH, globalThis.rgba8(0, 0, 0, Math.min(255, fadeIn)), true);
       }
     } else if (type === 'slide-left' || type === 'slide-right') {
       const dir = type === 'slide-left' ? -1 : 1;
-      const off = Math.round(e * 640);
+      const off = Math.round(e * SW);
       const setC = typeof globalThis.setCamera === 'function' ? globalThis.setCamera : null;
       if (from && typeof from.draw === 'function') {
         if (setC) setC(dir * off, 0);
         from.draw();
       }
       if (to && typeof to.draw === 'function') {
-        if (setC) setC(dir * off - dir * 640, 0);
+        if (setC) setC(dir * off - dir * SW, 0);
         to.draw();
       }
       if (setC) setC(0, 0);
     } else if (type === 'wipe') {
       if (to && typeof to.draw === 'function') to.draw();
       if (from && typeof from.draw === 'function') {
-        const wipeX = Math.round(e * 640);
+        const wipeX = Math.round(e * SW);
         if (typeof globalThis.setCamera === 'function') globalThis.setCamera(wipeX, 0);
         from.draw();
         if (typeof globalThis.setCamera === 'function') globalThis.setCamera(0, 0);

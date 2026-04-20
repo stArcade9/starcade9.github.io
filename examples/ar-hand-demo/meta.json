@@ -1,0 +1,7 @@
+{
+  "name": "AR Hand Tracking",
+  "description": "MediaPipe hand tracking AR demo — control 3D objects with your hands",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo"
+}

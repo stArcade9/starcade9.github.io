@@ -1,0 +1,25 @@
+{
+  "name": "HUD Demo",
+  "description": "Game HUD overlay demo using NML/CanvasUI — HP/MP/XP bars, score, ammo counter, 5-star rating, radar with sweep arm and enemy dots.",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "HUD DEMO",
+      "hud.health": "HP",
+      "hud.mana": "MP",
+      "hud.xp": "XP",
+      "hud.score": "SCORE",
+      "hud.ammo": "AMMO",
+      "hud.radar": "RADAR"
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
+}

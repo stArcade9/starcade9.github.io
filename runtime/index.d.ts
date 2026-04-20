@@ -288,7 +288,8 @@ export interface ThreeDApiInstance {
   loadModel(
     url: string,
     position?: [number, number, number],
-    options?: MeshOptions
+    scale?: number,
+    materialOptions?: MeshOptions & { fog?: boolean }
   ): Promise<MeshId>;
   playAnimation(
     meshId: MeshId,
@@ -546,11 +547,100 @@ export declare function uiButtonsModule(ctx: object): object;
 export declare function uiWidgetsModule(ctx: object): object;
 
 // ---------------------------------------------------------------------------
+// Engine adapter — renderer-agnostic API for cart authors
+// ---------------------------------------------------------------------------
+
+/** Opaque material object returned by engine.createMaterial(). */
+export type EngineMaterial = object;
+
+/** Opaque texture object returned by engine.create*Texture(). */
+export type EngineTexture = object;
+
+/** Opaque color object returned by engine.createColor(). */
+export type EngineColor = object;
+
+/** Opaque geometry object returned by engine.createPlaneGeometry(). */
+export type EngineGeometry = object;
+
+export type EngineMaterialType = 'basic' | 'phong' | 'standard';
+export type EngineFilterMode = 'nearest' | 'linear';
+export type EngineWrapMode = 'repeat' | 'clamp';
+export type EngineSideMode = 'front' | 'back' | 'double';
+
+export interface EngineMaterialOptions {
+  map?: EngineTexture;
+  color?: Color | EngineColor;
+  transparent?: boolean;
+  alphaTest?: number;
+  side?: EngineSideMode;
+  roughness?: number;
+  metalness?: number;
+  emissive?: Color;
+  flatShading?: boolean;
+  vertexColors?: boolean;
+}
+
+export interface EngineDataTextureOptions {
+  /** @default 'rgba' */
+  format?: 'rgba';
+  /** @default 'nearest' */
+  filter?: EngineFilterMode;
+  /** @default 'clamp' */
+  wrap?: EngineWrapMode;
+  /** @default true */
+  generateMipmaps?: boolean;
+}
+
+export interface EngineCanvasTextureOptions {
+  filter?: EngineFilterMode;
+  wrap?: EngineWrapMode;
+}
+
+export interface EngineAdapter {
+  /** Create a material of the given type. */
+  createMaterial(type: EngineMaterialType, opts?: EngineMaterialOptions): EngineMaterial;
+  /** Create a GPU texture from raw RGBA pixel data. */
+  createDataTexture(
+    data: Uint8Array | Uint8ClampedArray,
+    width: number,
+    height: number,
+    opts?: EngineDataTextureOptions
+  ): EngineTexture;
+  /** Create a GPU texture from an HTMLCanvasElement. */
+  createCanvasTexture(canvas: HTMLCanvasElement, opts?: EngineCanvasTextureOptions): EngineTexture;
+  /** Clone a texture. */
+  cloneTexture(tex: EngineTexture): EngineTexture;
+  /** Set repeat wrapping and tile count on a texture. */
+  setTextureRepeat(tex: EngineTexture, x: number, y: number): void;
+  /** Mark a texture as needing a GPU re-upload. */
+  invalidateTexture(tex: EngineTexture): void;
+  /** Create an opaque color value from r/g/b components (0–1). */
+  createColor(r: number, g: number, b: number): EngineColor;
+  /** Create a plane geometry. */
+  createPlaneGeometry(
+    width: number,
+    height: number,
+    segX?: number,
+    segY?: number
+  ): EngineGeometry;
+  /** Assign a material to a mesh by its Nova64 mesh ID. */
+  setMeshMaterial(meshId: MeshId, material: EngineMaterial): void;
+  /** Return the current camera world position. */
+  getCameraPosition(): { x: number; y: number; z: number };
+}
+
+export declare const engine: EngineAdapter;
+export declare function initAdapter(gpu: unknown): void;
+
+// ---------------------------------------------------------------------------
 // Global cart API (injected into globalThis at runtime)
 // Augment with: declare global { ... } in your cart's .d.ts if needed.
 // ---------------------------------------------------------------------------
 
 export interface Nova64CartGlobals {
+  // Engine adapter
+  engine: EngineAdapter;
+
   // 3D
   createCube: ThreeDApiInstance['createCube'];
   createSphere: ThreeDApiInstance['createSphere'];
@@ -679,4 +769,231 @@ export interface Nova64CartGlobals {
 
   // Audio (runtime/audio.js)
   sfx(preset: string | { wave?: string; freq?: number; dur?: number; vol?: number }): void;
+
+  // ─── 2D Stage API ────────────────────────────────────────────────────────────
+
+  // Blend modes (runtime/api-blend.js)
+  BM: {
+    NORMAL: string; ADD: string; MULTIPLY: string; SCREEN: string;
+    OVERLAY: string; DARKEN: string; LIGHTEN: string; DIFFERENCE: string;
+    EXCLUSION: string; HUE: string; SATURATION: string; COLOR: string;
+    LUMINOSITY: string; ERASE: string; NONE: string;
+  };
+  setBlendMode(mode: string): void;
+  resetBlendMode(): void;
+  withBlend(mode: string, fn: (ctx: CanvasRenderingContext2D | null) => void): void;
+  withAlpha(alpha: number, fn: (ctx: CanvasRenderingContext2D | null) => void): void;
+
+  // Stage display list (runtime/stage.js)
+  createContainer(): StageNode;
+  createSpriteNode(image: HTMLImageElement | HTMLCanvasElement | ImageBitmap, opts?: SpriteNodeOpts): StageNode;
+  createGraphicsNode(drawFn: (ctx: CanvasRenderingContext2D, node: StageNode) => void): StageNode;
+  createTextNode(text: string, opts?: TextNodeOpts): StageNode;
+  addChild(parent: StageNode, child: StageNode): StageNode;
+  removeChild(parent: StageNode, child: StageNode): boolean;
+  removeAllChildren(parent: StageNode): void;
+  setChildIndex(parent: StageNode, child: StageNode, index: number): void;
+  drawStage(root: StageNode): void;
+  hitTest(node: StageNode, px: number, py: number): boolean;
+
+  // MovieClip (runtime/movie-clip.js)
+  createMovieClip(frames: MovieClipFrame[], fps?: number, opts?: MovieClipOpts): MovieClip;
+  playClip(clip: MovieClip): void;
+  pauseClip(clip: MovieClip): void;
+  stopClip(clip: MovieClip): void;
+  gotoAndPlay(clip: MovieClip, labelOrIndex: string | number): void;
+  gotoAndStop(clip: MovieClip, labelOrIndex: string | number): void;
+  updateClips(dt: number): void;
+  drawClip(clip: MovieClip, x: number, y: number, opts?: SprOpts): void;
+
+  // Filters (runtime/api-filters.js)
+  F: {
+    blur(px: number): string;
+    brightness(v: number): string;
+    contrast(v: number): string;
+    grayscale(v?: number): string;
+    sepia(v?: number): string;
+    saturate(v: number): string;
+    hueRotate(deg: number): string;
+    invert(v?: number): string;
+    opacity(v: number): string;
+    glow(color: number, radius?: number): string;
+    shadow(color: number, dx?: number, dy?: number, radius?: number): string;
+    combine(...filters: string[]): string;
+  };
+  CM: {
+    identity: number[]; grayscale: number[]; sepia: number[];
+    invert: number[]; nightVision: number[]; warmth: number[];
+  };
+  withFilter(filter: string, fn: (ctx: CanvasRenderingContext2D | null) => void): void;
+  withColorMatrix(matrix: number[], fn: (ctx: OffscreenCanvasRenderingContext2D) => void, x?: number, y?: number, w?: number, h?: number): void;
+  applyColorMatrix(matrix: number[], x?: number, y?: number, w?: number, h?: number): void;
+
+  // Camera2D (runtime/camera-2d.js)
+  createCamera2D(opts?: Camera2DOpts): Camera2D;
+  beginCamera2D(cam: Camera2D): void;
+  endCamera2D(cam: Camera2D): void;
+  cam2DFollow(cam: Camera2D, targetX: number, targetY: number, dt: number, lerpFactor?: number): void;
+  cam2DShake(cam: Camera2D, magnitude: number, duration: number): void;
+  updateCamera2D(cam: Camera2D, dt: number): void;
+  cam2DWorldToScreen(cam: Camera2D, wx: number, wy: number): { x: number; y: number };
+  cam2DScreenToWorld(cam: Camera2D, sx: number, sy: number): { x: number; y: number };
+  cam2DGetBounds(cam: Camera2D): { left: number; right: number; top: number; bottom: number };
+
+  // 2D Particles (runtime/api-particles-2d.js)
+  createEmitter2D(opts?: Emitter2DOpts): Emitter2D;
+  burstEmitter2D(emitter: Emitter2D, count: number): void;
+  setEmitter2DActive(emitter: Emitter2D, active: boolean): void;
+  updateEmitter2D(emitter: Emitter2D, dt: number): void;
+  drawEmitter2D(emitter: Emitter2D): void;
+  getParticleCount(emitter: Emitter2D): number;
+  clearEmitter2D(emitter: Emitter2D): void;
+
+  // Tween engine (runtime/tween.js)
+  Ease: Record<string, (t: number) => number>;
+  createTween(target: object, to: Record<string, number>, duration: number, opts?: TweenOpts): Tween;
+  killTween(tween: Tween): void;
+  killTweensOf(target: object): void;
+  updateTweens(dt: number): void;
+  getTweenCount(): number;
+
+  // Enhanced sprite API (runtime/api-sprites.js)
+  sprRect(sx: number, sy: number, sw: number, sh: number, dx: number, dy: number, opts?: SprOpts): void;
+  loadAtlas(url: string): Promise<string>;
+  sprByName(name: string, x: number, y: number, opts?: SprOpts): void;
+  getAtlasFrame(name: string): { x: number; y: number; w: number; h: number; atlasId: string } | null;
+}
+
+// ─── Supporting types ─────────────────────────────────────────────────────────
+
+export interface SprOpts {
+  flipX?: boolean;
+  flipY?: boolean;
+  scale?: number;
+  scaleX?: number;
+  scaleY?: number;
+  parallax?: number;
+  rot?: number;
+  alpha?: number;
+  anchorX?: number;
+  anchorY?: number;
+  blendMode?: string;
+  tint?: number | null;
+}
+
+export interface StageNode {
+  _type: string;
+  x: number;
+  y: number;
+  scaleX: number;
+  scaleY: number;
+  rotation: number;
+  alpha: number;
+  visible: boolean;
+  blendMode: string;
+  children: StageNode[];
+  // SpriteNode extras
+  image?: HTMLImageElement | HTMLCanvasElement | ImageBitmap;
+  sx?: number; sy?: number; sw?: number; sh?: number;
+  dw?: number; dh?: number;
+  anchorX?: number; anchorY?: number;
+  tint?: number | null;
+  flipX?: boolean; flipY?: boolean;
+  // TextNode extras
+  text?: string; font?: string; fill?: string;
+  align?: string; baseline?: string;
+  stroke?: string | null; strokeWidth?: number;
+  maxWidth?: number;
+  // GraphicsNode extras
+  draw?: (ctx: CanvasRenderingContext2D, node: StageNode) => void;
+}
+
+export interface SpriteNodeOpts {
+  sx?: number; sy?: number; sw?: number; sh?: number;
+  dw?: number; dh?: number;
+  anchorX?: number; anchorY?: number;
+  tint?: number | null;
+  flipX?: boolean; flipY?: boolean;
+}
+
+export interface TextNodeOpts {
+  font?: string; fill?: string; align?: string; baseline?: string;
+  stroke?: string; strokeWidth?: number; maxWidth?: number;
+}
+
+export type MovieClipFrame =
+  | string
+  | { image: HTMLImageElement | HTMLCanvasElement; sx: number; sy: number; sw: number; sh: number };
+
+export interface MovieClipOpts {
+  loop?: boolean;
+  autoPlay?: boolean;
+  labels?: Record<string, number>;
+}
+
+export interface MovieClip {
+  frames: MovieClipFrame[];
+  fps: number;
+  loop: boolean;
+  playing: boolean;
+  frame: number;
+  labels: Record<string, number>;
+  onLoop: (() => void) | null;
+  onComplete: (() => void) | null;
+}
+
+export interface Camera2DOpts {
+  x?: number; y?: number;
+  zoom?: number; rotation?: number;
+  screenW?: number; screenH?: number;
+}
+
+export interface Camera2D {
+  x: number; y: number;
+  zoom: number; rotation: number;
+  screenW: number | null; screenH: number | null;
+}
+
+export interface Emitter2DOpts {
+  x?: number; y?: number;
+  image?: HTMLImageElement | null;
+  frames?: Array<{ sx: number; sy: number; sw: number; sh: number }> | null;
+  blendMode?: string;
+  maxParticles?: number;
+  emitRate?: number;
+  speed?: number | [number, number];
+  angle?: number | [number, number];
+  life?: number | [number, number];
+  scale?: number | [number, number];
+  alpha?: number | [number, number];
+  fadeOut?: boolean;
+  scaleDown?: boolean;
+  gravity?: number;
+  friction?: number;
+  tint?: number | null;
+  rotating?: boolean;
+  rotateSpeed?: number | null;
+}
+
+export interface Emitter2D {
+  x: number; y: number;
+  active: boolean;
+  emitRate: number;
+}
+
+export interface TweenOpts {
+  ease?: (t: number) => number;
+  delay?: number;
+  loop?: boolean;
+  yoyo?: boolean;
+  onUpdate?: (target: object, progress: number) => void;
+  onComplete?: (target: object) => void;
+}
+
+export interface Tween {
+  target: object;
+  from: Record<string, number>;
+  to: Record<string, number>;
+  duration: number;
+  _done: boolean;
 }

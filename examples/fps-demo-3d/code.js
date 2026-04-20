@@ -360,13 +360,15 @@ function spawnEnemy(x, z, type, doomType) {
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
       sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
-      const spriteMesh = getMesh(sprite);
-      spriteMesh.material = new THREE.MeshBasicMaterial({
-        map: spriteInfo.texture,
-        transparent: true,
-        alphaTest: 0.1,
-        side: THREE.DoubleSide,
-      });
+      engine.setMeshMaterial(
+        sprite,
+        engine.createMaterial('basic', {
+          map: spriteInfo.texture,
+          transparent: true,
+          alphaTest: 0.1,
+          side: 'double',
+        })
+      );
       getMesh(body).visible = false;
       getMesh(head).visible = false;
       if (detail) getMesh(detail).visible = false;
@@ -552,11 +554,13 @@ function buildWADLevel(mapName) {
           setWallUVs(m, w.len / SCALE, w.h / SCALE, texDef.width, texDef.height, w.xoff, w.yoff);
         }
 
-        const mesh = getMesh(m);
-        mesh.material = new THREE.MeshPhongMaterial({
-          map: tex,
-          color: new THREE.Color(bri, bri, bri),
-        });
+        engine.setMeshMaterial(
+          m,
+          engine.createMaterial('phong', {
+            map: tex,
+            color: engine.createColor(bri, bri, bri),
+          })
+        );
 
         entities.walls.push({ m, x: w.x, z: w.z, r: 0 });
         textured = true;
@@ -633,17 +637,16 @@ function buildWADLevel(mapName) {
     if (sorted.length > 0) {
       const flatTex = wadTexMgr.getFlatTexture(sorted[0][0]);
       if (flatTex) {
-        const floorTex = flatTex.clone();
+        const floorTex = engine.cloneTexture(flatTex);
         const tilesPerUnit = 20 / 64;
-        floorTex.repeat.set(floorSize * tilesPerUnit, floorSize * tilesPerUnit);
-        floorTex.wrapS = THREE.RepeatWrapping;
-        floorTex.wrapT = THREE.RepeatWrapping;
-        floorTex.needsUpdate = true;
-        const floorMesh = getMesh(floor);
-        floorMesh.material = new THREE.MeshPhongMaterial({
-          map: floorTex,
-          side: THREE.DoubleSide,
-        });
+        engine.setTextureRepeat(floorTex, floorSize * tilesPerUnit, floorSize * tilesPerUnit);
+        engine.setMeshMaterial(
+          floor,
+          engine.createMaterial('phong', {
+            map: floorTex,
+            side: 'double',
+          })
+        );
       }
     }
   }
@@ -958,9 +961,9 @@ export function update(dt) {
     // Update sprite billboard
     if (e.sprite) {
       setPosition(e.sprite, e.x, e.spriteH / 2, e.z);
-      const cam = getCamera();
-      const sdx = cam.position.x - e.x;
-      const sdz = cam.position.z - e.z;
+      const camPos = engine.getCameraPosition();
+      const sdx = camPos.x - e.x;
+      const sdz = camPos.z - e.z;
       setRotation(e.sprite, 0, Math.atan2(sdx, sdz), 0);
     }
 

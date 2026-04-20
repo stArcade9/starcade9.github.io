@@ -119,6 +119,8 @@ export function manifestApi() {
           if (res.ok) {
             const meta = await res.json();
             logger.info('📄 Loaded meta.json from', basePath);
+            // Store raw meta.json for the dev console display
+            if (_envInst && _envInst._setRawMeta) _envInst._setRawMeta(meta);
             _loadManifest(meta, cartPath);
             return; // meta.json is the primary source — skip export const env
           }

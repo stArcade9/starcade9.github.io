@@ -158,11 +158,9 @@ function createVoxelTexture() {
     }
   }
 
-  const tex = new globalThis.THREE.CanvasTexture(canvas);
-  tex.magFilter = globalThis.THREE.NearestFilter;
-  tex.minFilter = globalThis.THREE.NearestFilter;
+  const tex = engine.createCanvasTexture(canvas, { filter: 'nearest' });
 
-  globalThis.window.VOXEL_MATERIAL = new globalThis.THREE.MeshStandardMaterial({
+  globalThis.window.VOXEL_MATERIAL = engine.createMaterial('standard', {
     vertexColors: true,
     map: tex,
     flatShading: true,

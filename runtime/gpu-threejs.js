@@ -23,7 +23,8 @@ export class GpuThreeJS {
       failIfMajorPerformanceCaveat: false,
     });
 
-    this.renderer.setSize(canvas.width, canvas.height);
+    // false = do NOT set inline style.width/height — CSS controls display size
+    this.renderer.setSize(canvas.width, canvas.height, false);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Enhanced pixel density
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -203,12 +204,46 @@ export class GpuThreeJS {
     };
   }
 
+  // ─── Stage Canvas2D overlay ──────────────────────────────────────────────────
+  // A dedicated transparent canvas placed over the WebGL canvas in the DOM.
+  // Used by Stage, MovieClip, enhanced spr(), blend modes, and filters.
+  // z-index 11 → sits above the Three.js canvas (WebGL + framebuffer overlay).
+  getStageCtx() {
+    if (this._stageCtx) return this._stageCtx;
+    const canvas = document.createElement('canvas');
+    canvas.width = this.fb.width;
+    canvas.height = this.fb.height;
+    canvas.style.cssText =
+      'position:absolute;top:0;left:0;width:100%;height:100%;' +
+      'z-index:11;pointer-events:none;background:transparent;image-rendering:pixelated;';
+    canvas.setAttribute('aria-hidden', 'true');
+    const container = this.canvas.parentElement || document.body;
+    if (getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+    container.appendChild(canvas);
+    this._stageCanvas = canvas;
+    this._stageCtx = canvas.getContext('2d', { alpha: true });
+    return this._stageCtx;
+  }
+
+  clearStage() {
+    if (this._stageCtx) {
+      this._stageCtx.setTransform(1, 0, 0, 1, 0, 0);
+      this._stageCtx.clearRect(0, 0, this._stageCanvas.width, this._stageCanvas.height);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   beginFrame() {
     // Clear sprite batches
     this.spriteBatches.clear();
 
     // Clear 2D framebuffer
     this.fb.fill(0, 0, 0, 0);
+
+    // Clear stage Canvas2D overlay
+    this.clearStage();
   }
 
   endFrame() {
@@ -218,6 +253,14 @@ export class GpuThreeJS {
     // Update LOD levels based on current camera position
     if (typeof globalThis.updateLODs === 'function') {
       globalThis.updateLODs();
+    }
+
+    // Cardboard VR: use StereoEffect instead of normal render
+    if (typeof globalThis._xrRenderStereo === 'function' && globalThis._xrRenderStereo()) {
+      // Stereo already rendered — skip normal render but still do 2D overlay
+      // (2D overlay in cardboard mode is rendered flat, visible in both eyes)
+      this.update2DOverlay();
+      return;
     }
 
     // Render 3D scene first - check if post-processing effects are enabled
@@ -234,6 +277,9 @@ export class GpuThreeJS {
     }
 
     // RENDER 2D HUD OVERLAY!
+    // In WebXR VR/AR mode, skip the ortho overlay (it doesn't work in stereo).
+    // The VR HUD billboard is updated separately by xr._tick().
+    if (this.renderer.xr.isPresenting) return;
     this.update2DOverlay();
   }
 
@@ -288,6 +334,27 @@ export class GpuThreeJS {
   }
   getRenderer() {
     return this.renderer;
+  }
+
+  // Resize the 3D renderer to a new physical pixel resolution.
+  // CSS display size is controlled by the stylesheet — this only updates
+  // the WebGL back-buffer and 3D camera aspect ratio.
+  // The 2D framebuffer and overlay stay at the original logical resolution
+  // so that cart HUD code (which draws at e.g. 640×360) is automatically
+  // scaled up by the GPU when the overlay quad is rendered.
+  resize(w, h) {
+    this.w = w;
+    this.h = h;
+    this.canvas.width = w;
+    this.canvas.height = h;
+    this.renderer.setSize(w, h, false); // false = don't touch inline styles
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    // NOTE: Do NOT resize fb or overlay2D — they stay at the logical
+    // resolution so all 2D/HUD drawing keeps working at the original
+    // coordinate system.  The overlay orthographic camera already maps
+    // its logical-sized quad across the full WebGL viewport.
   }
 
   setCameraPosition(x, y, z) {

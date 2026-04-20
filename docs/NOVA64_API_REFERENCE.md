@@ -1,6 +1,6 @@
 # 🎮 NOVA64 API REFERENCE
 
-**Version:** 0.2.5  
+**Version:** 0.4.8  
 **Date:** March 20, 2026  
 **Resolution:** 640×360 pixels  
 **Target:** Nintendo 64 / PlayStation aesthetic

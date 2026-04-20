@@ -1,11 +1,16 @@
 // runtime/console.js
 import { logger } from './logger.js';
+
+export const NOVA64_VERSION = '0.4.8';
+
 export class Nova64 {
   constructor(gpu, manifestInst) {
     this.gpu = gpu;
     this.cart = null;
     this._manifest = manifestInst || null;
     this._loadGeneration = 0; // Guard against concurrent loadCart race conditions
+    this.onCartWillLoad = null; // (path) => void — called before cart import
+    this.onCartDidLoad = null; // (path) => void — called after cart init() completes
   }
   async loadCart(modulePath) {
     // Bump generation — any earlier in-flight loadCart will see the mismatch and bail.
@@ -56,6 +61,16 @@ export class Nova64 {
 
     logger.info('✅ Scene cleared, loading new cart:', modulePath);
 
+    // Lifecycle: onCartWillLoad — always log version, then call user callback
+    logger.info(`🎮 Nova64 v${NOVA64_VERSION} — Loading: ${modulePath}`);
+    if (typeof this.onCartWillLoad === 'function') {
+      try {
+        this.onCartWillLoad(modulePath);
+      } catch (e) {
+        logger.error('onCartWillLoad error:', e);
+      }
+    }
+
     const mod = await import(/* @vite-ignore */ modulePath + '?t=' + Date.now());
 
     // RACE-CONDITION GUARD: If a newer loadCart was called while we awaited the
@@ -101,6 +116,15 @@ export class Nova64 {
         return;
       }
       logger.info('✅ Cart init() complete:', modulePath);
+
+      // Lifecycle: onCartDidLoad — cart is fully initialised and rendering
+      if (typeof this.onCartDidLoad === 'function') {
+        try {
+          this.onCartDidLoad(modulePath);
+        } catch (e) {
+          logger.error('onCartDidLoad error:', e);
+        }
+      }
     } catch (e) {
       logger.error('❌ Cart init() threw:', e.message, e.stack);
     }

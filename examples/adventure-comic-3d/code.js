@@ -28,8 +28,8 @@ let playerPos = { x: 0, z: 6 };
 const SPEED = 5.0; // units per second
 
 // ── Overlay dimensions ───────────────────────────────────────────────────────
-const W = 320;
-const H = 240;
+let W = 640;
+let H = 360;
 
 // ── Scripts ──────────────────────────────────────────────────────────────────
 const SCRIPT_SUSPECT = [
@@ -56,6 +56,8 @@ const SCRIPT_CONFRONT = [
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 export function init() {
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
   // Atmosphere
   setFog(0x0a0a14, 8, 28);
   enableBloom(1.0, 0.5, 0.4);

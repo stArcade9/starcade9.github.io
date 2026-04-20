@@ -181,6 +181,13 @@ export function stdApi(gpu) {
     BitmapFont.draw(fb, text, (x | 0) - camRef.x, (y | 0) - camRef.y, color, scale);
   }
 
+  function screenWidth() {
+    return fb.width;
+  }
+  function screenHeight() {
+    return fb.height;
+  }
+
   return {
     exposeTo(target) {
       Object.assign(target, {
@@ -196,6 +203,8 @@ export function stdApi(gpu) {
         rgba8,
         setCamera,
         getCamera,
+        screenWidth,
+        screenHeight,
       });
     },
   };

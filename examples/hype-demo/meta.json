@@ -1,0 +1,26 @@
+{
+  "name": "HYPE Framework Demo",
+  "description": "Nova64 HYPE creative-coding framework showcase — 11 sections: Oscillators, Tweens, ColorPool, Layouts, Triggers, Swarm, and more",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "HYPE FRAMEWORK DEMO",
+      "ui.startDemo": "▶ START DEMO",
+      "ui.info": "ℹ INFO"
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#0a0a1a",
+      "near": 20,
+      "far": 50
+    },
+    "camera": {
+      "position": [0, 8, 16],
+      "fov": 60
+    }
+  }
+}
