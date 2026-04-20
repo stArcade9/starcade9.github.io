@@ -26,7 +26,7 @@ export async function init() {
   setLightDirection(3, 8, 4);
 
   // Ground plane
- // createPlane(40, 40, 0x222244, [0, -0.1, 0], { material: 'standard' });
+  // createPlane(40, 40, 0x222244, [0, -0.1, 0], { material: 'standard' });
 
   // Load the .vox house model
   try {

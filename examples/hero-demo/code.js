@@ -234,7 +234,7 @@ export async function init() {
     // ── Pick a logo material (uncomment ONE) ──
 
     // OPTION 1: Electricity — cyan lightning bolts, high contrast vs warm sun
-    const logoMat = createTSLMaterial('rainbow', { speed: 0.2,  opacity: 1.0 });
+    const logoMat = createTSLMaterial('rainbow', { speed: 0.2, opacity: 1.0 });
 
     // OPTION 2: Void — dark silhouette with purple edge glow, readable negative space
     //const logoMat = createTSLMaterial('void', { speed: 0.5, opacity: 1.0 });
