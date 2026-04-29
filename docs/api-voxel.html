@@ -215,122 +215,625 @@
             margin: 5px 0;
         }
     </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        <a href="index.html" class="back-link">&larr; Back to Documentation Index</a>
         
         <header>
             <h1>🧱 Voxel Engine</h1>
-            <p class="subtitle">Minecraft-style voxel world with chunk management and block manipulation</p>
+            <p class="subtitle">Minecraft-style voxel world with greedy meshing, lighting, fluids, entities, ECS, schematics, and custom block shapes</p>
         </header>
 
-        
-      <section>
-        <h2>📋 Overview</h2>
-        <p>The Voxel Engine provides a complete Minecraft-style block world system with efficient chunk-based rendering, block types, and world generation.</p>
-        
-        <div class="note">
-          <div class="note-title">💡 Key Features</div>
-          <ul><li><strong>Chunk System</strong> - Efficient 16×16×16 chunk loading</li><li><strong>Block Types</strong> - Multiple block materials (grass, stone, wood, etc.)</li><li><strong>Meshing</strong> - Optimized face culling and greedy meshing</li><li><strong>World Gen</strong> - Procedural terrain generation</li><li><strong>Dig/Place</strong> - Interactive block manipulation</li></ul>
-        </div>
-      
-        
-      </section>
-    
-      <section>
-        <h2>🧱 Voxel Functions</h2>
-        
-        
-        
-        <div class="function">
-          <div class="function-sig">createVoxelWorld(size)</div>
-          <p>Creates a new voxel world.</p>
-          
-          <div class="param-list">
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The Nova64 Voxel Engine provides a complete block-world system rivaling noa-engine, with 50+ API functions.</p>
             
-              <div class="param">
-                <span class="param-name">size</span> 
-                <span class="param-type">number</span> - World size in chunks (e.g., 8 = 8×8×8 chunks)
-              </div>
-            
-          </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">object</span> - Voxel world object
-          </div>
-        
-          
-          <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>const world = createVoxelWorld(8);</code></pre>
-          </div>
-        
-        </div>
-      
-        <div class="function">
-          <div class="function-sig">setBlock(x, y, z, blockType)</div>
-          <p>Places or removes a block.</p>
-          
-          <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">x, y, z</span> 
-                <span class="param-type">number</span> - Block coordinates
-              </div>
-            
-              <div class="param">
-                <span class="param-name">blockType</span> 
-                <span class="param-type">number</span> - Block ID (0=air, 1=grass, 2=stone, etc.)
-              </div>
-            
-          </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">void</span> - No return value
-          </div>
-        
-          
-          <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>setBlock(10, 5, 10, 1); // Place grass block</code></pre>
-          </div>
-        
-        </div>
-      
-        <div class="function">
-          <div class="function-sig">getBlock(x, y, z)</div>
-          <p>Gets the block type at coordinates.</p>
-          
-          <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">x, y, z</span> 
-                <span class="param-type">number</span> - Block coordinates
-              </div>
-            
-          </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">number</span> - Block type ID
-          </div>
-        
-          
-          <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>if (getBlock(x, y, z) === 0) { /* air */ }</code></pre>
-          </div>
-        
-        </div>
-      
-      </section>
-    
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Chunk System</strong> &mdash; 16&times;128&times;16 chunks with configurable render distance and async loading</li>
+                    <li><strong>Greedy Meshing</strong> &mdash; True greedy mesher with per-vertex ambient occlusion</li>
+                    <li><strong>Lighting</strong> &mdash; BFS sky light + block light propagation, day/night cycle</li>
+                    <li><strong>36 Block Types</strong> &mdash; Cubes, slabs, stairs, fences, cross shapes (flowers/grass)</li>
+                    <li><strong>Fluid Simulation</strong> &mdash; Water/lava with BFS flow and retraction</li>
+                    <li><strong>Entity System</strong> &mdash; Spawn, damage, heal entities with AI callbacks and spatial hashing</li>
+                    <li><strong>ECS Components</strong> &mdash; Attach/query arbitrary components, archetypes, A* pathfinding</li>
+                    <li><strong>Schematics</strong> &mdash; Export/import regions and worlds (RLE compressed)</li>
+                    <li><strong>Custom Block Shapes</strong> &mdash; Slabs, stairs, fences, cross shapes with shape-aware collision</li>
+                    <li><strong>LOD System</strong> &mdash; Automatic level-of-detail for distant chunks</li>
+                    <li><strong>Texture Atlas</strong> &mdash; 27 procedural pixel-art tiles, custom atlas support</li>
+                    <li><strong>World Persistence</strong> &mdash; Save/load worlds via IndexedDB</li>
+                    <li><strong>DDA Raycasting</strong> &mdash; Pixel-perfect block targeting</li>
+                    <li><strong>Swept AABB Physics</strong> &mdash; Per-axis collision, auto-step, swimming</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ─── Block Types ─────────────────────────────────────────── -->
+
+        <section>
+            <h2>📦 Block Types</h2>
+
+            <h3>Standard Cube Blocks (0&ndash;25)</h3>
+            <table>
+                <tr><th>Constant</th><th>ID</th><th>Description</th></tr>
+                <tr><td><code>BLOCK_TYPES.AIR</code></td><td>0</td><td>Empty space</td></tr>
+                <tr><td><code>BLOCK_TYPES.GRASS</code></td><td>1</td><td>Grass block</td></tr>
+                <tr><td><code>BLOCK_TYPES.DIRT</code></td><td>2</td><td>Dirt</td></tr>
+                <tr><td><code>BLOCK_TYPES.STONE</code></td><td>3</td><td>Stone</td></tr>
+                <tr><td><code>BLOCK_TYPES.SAND</code></td><td>4</td><td>Sand</td></tr>
+                <tr><td><code>BLOCK_TYPES.WATER</code></td><td>5</td><td>Water (transparent, fluid)</td></tr>
+                <tr><td><code>BLOCK_TYPES.WOOD</code></td><td>6</td><td>Wood log</td></tr>
+                <tr><td><code>BLOCK_TYPES.LEAVES</code></td><td>7</td><td>Leaves (transparent)</td></tr>
+                <tr><td><code>BLOCK_TYPES.COBBLESTONE</code></td><td>8</td><td>Cobblestone</td></tr>
+                <tr><td><code>BLOCK_TYPES.PLANKS</code></td><td>9</td><td>Wooden planks</td></tr>
+                <tr><td><code>BLOCK_TYPES.GLASS</code></td><td>10</td><td>Glass (transparent)</td></tr>
+                <tr><td><code>BLOCK_TYPES.BRICK</code></td><td>11</td><td>Brick</td></tr>
+                <tr><td><code>BLOCK_TYPES.SNOW</code></td><td>12</td><td>Snow</td></tr>
+                <tr><td><code>BLOCK_TYPES.ICE</code></td><td>13</td><td>Ice (transparent)</td></tr>
+                <tr><td><code>BLOCK_TYPES.BEDROCK</code></td><td>14</td><td>Bedrock (indestructible)</td></tr>
+                <tr><td><code>BLOCK_TYPES.COAL_ORE</code></td><td>15</td><td>Coal ore</td></tr>
+                <tr><td><code>BLOCK_TYPES.IRON_ORE</code></td><td>16</td><td>Iron ore</td></tr>
+                <tr><td><code>BLOCK_TYPES.GOLD_ORE</code></td><td>17</td><td>Gold ore</td></tr>
+                <tr><td><code>BLOCK_TYPES.DIAMOND_ORE</code></td><td>18</td><td>Diamond ore</td></tr>
+                <tr><td><code>BLOCK_TYPES.GRAVEL</code></td><td>19</td><td>Gravel</td></tr>
+                <tr><td><code>BLOCK_TYPES.CLAY</code></td><td>20</td><td>Clay</td></tr>
+                <tr><td><code>BLOCK_TYPES.TORCH</code></td><td>21</td><td>Torch (light emitter, non-solid)</td></tr>
+                <tr><td><code>BLOCK_TYPES.GLOWSTONE</code></td><td>22</td><td>Glowstone (max light)</td></tr>
+                <tr><td><code>BLOCK_TYPES.LAVA</code></td><td>23</td><td>Lava (fluid, light emitter)</td></tr>
+                <tr><td><code>BLOCK_TYPES.OBSIDIAN</code></td><td>24</td><td>Obsidian</td></tr>
+                <tr><td><code>BLOCK_TYPES.MOSSY_COBBLESTONE</code></td><td>25</td><td>Mossy cobblestone</td></tr>
+            </table>
+
+            <h3>Shape Blocks (26&ndash;35)</h3>
+            <table>
+                <tr><th>Constant</th><th>ID</th><th>Shape</th><th>Description</th></tr>
+                <tr><td><code>BLOCK_TYPES.STONE_SLAB</code></td><td>26</td><td>slab_bottom</td><td>Half-height stone slab</td></tr>
+                <tr><td><code>BLOCK_TYPES.STONE_SLAB_TOP</code></td><td>27</td><td>slab_top</td><td>Upper half stone slab</td></tr>
+                <tr><td><code>BLOCK_TYPES.PLANK_SLAB</code></td><td>28</td><td>slab_bottom</td><td>Half-height plank slab</td></tr>
+                <tr><td><code>BLOCK_TYPES.STONE_STAIR</code></td><td>29</td><td>stair</td><td>Stone staircase</td></tr>
+                <tr><td><code>BLOCK_TYPES.PLANK_STAIR</code></td><td>30</td><td>stair</td><td>Plank staircase</td></tr>
+                <tr><td><code>BLOCK_TYPES.FENCE</code></td><td>31</td><td>fence</td><td>Thin fence post</td></tr>
+                <tr><td><code>BLOCK_TYPES.FLOWER</code></td><td>32</td><td>cross</td><td>Flower (non-solid)</td></tr>
+                <tr><td><code>BLOCK_TYPES.TALL_GRASS</code></td><td>33</td><td>cross</td><td>Tall grass (non-solid)</td></tr>
+                <tr><td><code>BLOCK_TYPES.BRICK_SLAB</code></td><td>34</td><td>slab_bottom</td><td>Half-height brick slab</td></tr>
+                <tr><td><code>BLOCK_TYPES.BRICK_STAIR</code></td><td>35</td><td>stair</td><td>Brick staircase</td></tr>
+            </table>
+        </section>
+
+        <!-- ─── World Management ────────────────────────────────────── -->
+
+        <section>
+            <h2>🌍 World Management</h2>
+
+            <div class="function">
+                <div class="function-sig">configureVoxelWorld(options)</div>
+                <p>Configure world generation parameters. Call before generating chunks.</p>
+                <div class="param-list">
+                    <div class="param"><span class="param-name">options.seed</span> <span class="param-type">number</span> &mdash; World seed for deterministic generation</div>
+                    <div class="param"><span class="param-name">options.chunkHeight</span> <span class="param-type">number</span> &mdash; Vertical chunk size (default: 128)</div>
+                    <div class="param"><span class="param-name">options.renderDistance</span> <span class="param-type">number</span> &mdash; Chunks in each direction (default: 4)</div>
+                    <div class="param"><span class="param-name">options.seaLevel</span> <span class="param-type">number</span> &mdash; Water level (default: 62)</div>
+                    <div class="param"><span class="param-name">options.generateTerrain</span> <span class="param-type">function</span> &mdash; Custom terrain generator callback</div>
+                    <div class="param"><span class="param-name">options.lodLevels</span> <span class="param-type">array</span> &mdash; LOD distance thresholds [lod0Max, lod1Max]</div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>configureVoxelWorld({
+  seed: 42,
+  renderDistance: 6,
+  seaLevel: 62,
+  lodLevels: [4, 8],
+  generateTerrain: (chunk, ctx) =&gt; {
+    // Custom flat world
+    for (let x = 0; x &lt; ctx.CHUNK_SIZE; x++)
+      for (let z = 0; z &lt; ctx.CHUNK_SIZE; z++)
+        for (let y = 0; y &lt; 60; y++)
+          chunk.setBlock(x, y, z, ctx.BLOCK_TYPES.STONE);
+  },
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">updateVoxelWorld(playerX, playerZ)</div>
+                <p>Load/unload chunks around the player. Call periodically in <code>update()</code>.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>if (frameCount % 10 === 0) updateVoxelWorld(player.x, player.z);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">forceLoadVoxelChunks(playerX, playerZ)</div>
+                <p>Synchronously load all chunks in render distance. Useful for initial world setup in <code>init()</code>.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">resetVoxelWorld()</div>
+                <p>Clear all chunks, entities, and meshes. Resets world to empty state.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelConfig()</div>
+                <p>Returns the current world configuration object.</p>
+            </div>
+        </section>
+
+        <!-- ─── Block Operations ────────────────────────────────────── -->
+
+        <section>
+            <h2>🧱 Block Operations</h2>
+
+            <div class="function">
+                <div class="function-sig">getVoxelBlock(x, y, z)</div>
+                <p>Get the block type at world coordinates.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> &mdash; Block type ID (0 = AIR)</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setVoxelBlock(x, y, z, blockType)</div>
+                <p>Place or remove a block. Automatically updates chunk meshes and propagates lighting.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>setVoxelBlock(10, 65, 10, BLOCK_TYPES.STONE);    // Place stone
+setVoxelBlock(10, 65, 10, BLOCK_TYPES.AIR);      // Remove block
+setVoxelBlock(5, 60, 5, BLOCK_TYPES.STONE_SLAB); // Place slab</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelHighestBlock(x, z)</div>
+                <p>Returns the Y of the highest non-air, non-water block at (x, z). Useful for spawning.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelBiome(x, z)</div>
+                <p>Returns the biome name at world position. One of: "Frozen Tundra", "Taiga", "Desert", "Jungle", "Savanna", "Forest", "Snowy Hills", "Plains".</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">registerVoxelBlock(id, options)</div>
+                <p>Register a custom block type for your cart.</p>
+                <div class="param-list">
+                    <div class="param"><span class="param-name">id</span> <span class="param-type">number</span> &mdash; Block ID (use 100+ for custom)</div>
+                    <div class="param"><span class="param-name">options.name</span> <span class="param-type">string</span> &mdash; Block name</div>
+                    <div class="param"><span class="param-name">options.color</span> <span class="param-type">number</span> &mdash; Hex color</div>
+                    <div class="param"><span class="param-name">options.solid</span> <span class="param-type">boolean</span> &mdash; Is solid for collision (default: true)</div>
+                    <div class="param"><span class="param-name">options.transparent</span> <span class="param-type">boolean</span> &mdash; Render in transparent pass</div>
+                    <div class="param"><span class="param-name">options.fluid</span> <span class="param-type">boolean</span> &mdash; Is fluid (water/lava behavior)</div>
+                    <div class="param"><span class="param-name">options.lightEmit</span> <span class="param-type">number</span> &mdash; Light emission 0&ndash;15</div>
+                    <div class="param"><span class="param-name">options.lightBlock</span> <span class="param-type">number</span> &mdash; Light blocking 0&ndash;15</div>
+                    <div class="param"><span class="param-name">options.shape</span> <span class="param-type">string</span> &mdash; Shape type (default: 'cube')</div>
+                    <div class="param"><span class="param-name">options.boundingBox</span> <span class="param-type">array</span> &mdash; [minX, minY, minZ, maxX, maxY, maxZ] (0&ndash;1)</div>
+                </div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>registerVoxelBlock(100, {
+  name: 'crystal',
+  color: 0xff00ff,
+  solid: true,
+  transparent: true,
+  lightEmit: 10,
+  shape: 'slab_bottom',
+});</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── Custom Block Shapes ─────────────────────────────────── -->
+
+        <section>
+            <h2>🔷 Custom Block Shapes</h2>
+            <p>Blocks can have non-cube shapes. Non-cube shapes skip greedy mesh merging and emit custom geometry. They do not occlude neighboring cube faces. Collision uses shape-specific bounding boxes.</p>
+
+            <table>
+                <tr><th>Shape</th><th>Geometry</th><th>Bounding Box</th></tr>
+                <tr><td><code>cube</code></td><td>Full block (default)</td><td>[0,0,0, 1,1,1]</td></tr>
+                <tr><td><code>slab_bottom</code></td><td>Half-height box, bottom</td><td>[0,0,0, 1,0.5,1]</td></tr>
+                <tr><td><code>slab_top</code></td><td>Half-height box, top</td><td>[0,0.5,0, 1,1,1]</td></tr>
+                <tr><td><code>stair</code></td><td>Bottom slab + back upper half</td><td>[0,0,0, 1,1,1]</td></tr>
+                <tr><td><code>fence</code></td><td>Thin centered post</td><td>[0.375,0,0.375, 0.625,1,0.625]</td></tr>
+                <tr><td><code>cross</code></td><td>Two diagonal X-quads</td><td>[0.15,0,0.15, 0.85,1,0.85]</td></tr>
+            </table>
+
+            <div class="function">
+                <div class="function-sig">getVoxelBlockShape(blockId)</div>
+                <p>Returns the shape string for a block type.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">string</span> &mdash; 'cube', 'slab_bottom', 'slab_top', 'stair', 'cross', or 'fence'</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelBlockBoundingBox(blockId)</div>
+                <p>Returns the collision bounding box [minX, minY, minZ, maxX, maxY, maxZ] relative to block origin (0&ndash;1 range).</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">isVoxelBlockFullCube(blockId)</div>
+                <p>Returns <code>true</code> if the block shape is 'cube'. Non-cube blocks don't occlude neighbor faces.</p>
+            </div>
+        </section>
+
+        <!-- ─── Raycasting & Collision ──────────────────────────────── -->
+
+        <section>
+            <h2>🎯 Raycasting &amp; Collision</h2>
+
+            <div class="function">
+                <div class="function-sig">raycastVoxelBlock(origin, direction, maxDistance)</div>
+                <p>DDA voxel traversal &mdash; pixel-perfect block targeting. Returns hit info with block position, face normal, and adjacent block for placing.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; { hit, position, normal, adjacent, blockType, distance }</div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const result = raycastVoxelBlock([px, py+1.6, pz], lookDir, 10);
+if (result.hit) {
+  // Break block
+  setVoxelBlock(...result.position, BLOCK_TYPES.AIR);
+  // Place block on adjacent face
+  setVoxelBlock(...result.adjacent, BLOCK_TYPES.STONE);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">checkVoxelCollision(position, size)</div>
+                <p>AABB collision check against solid blocks (excluding fluids). Uses shape-aware bounding boxes for non-cube blocks.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">boolean</span> &mdash; true if colliding</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">checkVoxelFluid(position, size)</div>
+                <p>Check if position is inside a fluid block (water/lava).</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">boolean</span> &mdash; true if in fluid</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">moveVoxelEntity(position, velocity, size, dt)</div>
+                <p>Swept AABB physics with per-axis resolution, auto-step (0.6 blocks), water drag, and ground detection.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; { position, velocity, grounded, hitCeiling, onIce, jumped }</div>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const result = moveVoxelEntity(
+  player.pos,
+  player.vel,
+  [0.6, 1.8, 0.6],  // width, height, depth
+  dt
+);
+player.pos = result.position;
+player.vel = result.velocity;
+player.grounded = result.grounded;</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── Lighting ────────────────────────────────────────────── -->
+
+        <section>
+            <h2>💡 Lighting</h2>
+            <p>BFS flood-fill light propagation with sky light (downward) and block light (torches, glowstone, lava). Smooth per-vertex interpolation combined with ambient occlusion.</p>
+
+            <div class="function">
+                <div class="function-sig">getVoxelLightLevel(x, y, z)</div>
+                <p>Returns the light level (0&ndash;15) at a position. Max of sky light and block light.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">setVoxelDayTime(t)</div>
+                <p>Set time of day (0.0&ndash;1.0). Sky light brightness scales with time for day/night cycle.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>let time = 0;
+export function update(dt) {
+  time = (time + dt * 0.01) % 1;
+  setVoxelDayTime(time); // Smooth day/night
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── Fluid Simulation ────────────────────────────────────── -->
+
+        <section>
+            <h2>🌊 Fluid Simulation</h2>
+            <p>Water spreads 7 blocks horizontally with BFS flow. Lava spreads 3 blocks. Fluids retract when source is removed.</p>
+
+            <div class="function">
+                <div class="function-sig">setVoxelFluidSource(x, y, z, blockType)</div>
+                <p>Place a fluid source block. Flow propagation begins automatically.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>setVoxelFluidSource(10, 70, 10, BLOCK_TYPES.WATER); // Water source
+setVoxelFluidSource(20, 70, 20, BLOCK_TYPES.LAVA);  // Lava source</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">removeVoxelFluidSource(x, y, z)</div>
+                <p>Remove a fluid source. Flowing blocks retract via BFS.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelFluidLevel(x, y, z)</div>
+                <p>Returns the fluid level at a position (0 = full, 7 = thinnest, -1 = no fluid).</p>
+            </div>
+        </section>
+
+        <!-- ─── Entity System ───────────────────────────────────────── -->
+
+        <section>
+            <h2>👾 Entity System</h2>
+            <p>Spawn entities with physics, AI, health, and spatial hashing for efficient radius queries.</p>
+
+            <div class="function">
+                <div class="function-sig">spawnVoxelEntity(type, position, options?)</div>
+                <p>Spawn a new entity in the voxel world.</p>
+                <div class="param-list">
+                    <div class="param"><span class="param-name">type</span> <span class="param-type">string</span> &mdash; Entity type name</div>
+                    <div class="param"><span class="param-name">position</span> <span class="param-type">array</span> &mdash; [x, y, z] world position</div>
+                    <div class="param"><span class="param-name">options.health</span> <span class="param-type">number</span> &mdash; Max health (default: 10)</div>
+                    <div class="param"><span class="param-name">options.mesh</span> <span class="param-type">object</span> &mdash; Three.js mesh to attach</div>
+                    <div class="param"><span class="param-name">options.size</span> <span class="param-type">array</span> &mdash; Collision box [w, h, d]</div>
+                    <div class="param"><span class="param-name">options.onUpdate</span> <span class="param-type">function</span> &mdash; AI callback (entity, dt)</div>
+                </div>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; Entity object with id, position, velocity, health</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">removeVoxelEntity(id)</div>
+                <p>Remove entity and its mesh from the world.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelEntity(id)</div>
+                <p>Retrieve an entity by ID.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">damageVoxelEntity(id, amount) / healVoxelEntity(id, amount)</div>
+                <p>Modify entity health. Entity removed when health reaches 0.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">updateVoxelEntities(dt)</div>
+                <p>Tick all entity AI callbacks and physics. Call in <code>update()</code>.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelEntitiesInRadius(position, radius)</div>
+                <p>Find all entities within radius using spatial hash (O(1) bucket lookup).</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelEntitiesByType(type) / getVoxelEntityCount()</div>
+                <p>Query entities by type or get total count.</p>
+            </div>
+        </section>
+
+        <!-- ─── ECS Components ──────────────────────────────────────── -->
+
+        <section>
+            <h2>🧩 ECS Components &amp; Archetypes</h2>
+            <p>Attach arbitrary components to entities for flexible game logic. Query by component sets. Spawn from predefined archetypes.</p>
+
+            <div class="function">
+                <div class="function-sig">setVoxelEntityComponent(entityId, componentName, data)</div>
+                <p>Attach or update a component on an entity.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>setVoxelEntityComponent(id, 'inventory', { slots: 10, items: [] });
+setVoxelEntityComponent(id, 'hostile', { aggroRange: 16 });</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">getVoxelEntityComponent(entityId, componentName)</div>
+                <p>Get component data. Returns <code>undefined</code> if not present.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">hasVoxelEntityComponent(entityId, componentName)</div>
+                <p>Check if entity has a specific component.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">removeVoxelEntityComponent(entityId, componentName)</div>
+                <p>Remove a component from an entity.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">queryVoxelEntities(requiredComponents, filterFn?)</div>
+                <p>Find all entities that have all required components, with optional filter function.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>// All entities with 'hostile' and 'ai' components
+const enemies = queryVoxelEntities(['hostile', 'ai']);
+
+// With filter
+const nearbyEnemies = queryVoxelEntities(['hostile'], e =&gt;
+  dist(e.position, player.pos) &lt; 32
+);</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">createVoxelEntityArchetype(name, components)</div>
+                <p>Define a reusable entity template with default components.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">spawnVoxelEntityFromArchetype(archetypeName, position, overrides?)</div>
+                <p>Spawn an entity from a registered archetype. Built-in archetypes: <code>mob</code>, <code>item</code>, <code>projectile</code>, <code>npc</code>, <code>vehicle</code>.</p>
+                <div class="example">
+                    <div class="example-title">Example:</div>
+                    <pre><code>const zombie = spawnVoxelEntityFromArchetype('mob', [10, 65, 10], {
+  health: 20,
+});
+setVoxelEntityComponent(zombie.id, 'hostile', { damage: 3 });</code></pre>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">findVoxelPath(start, end, options?)</div>
+                <p>A* pathfinding on the voxel grid. Returns an array of [x, y, z] positions, or null if no path found.</p>
+                <div class="param-list">
+                    <div class="param"><span class="param-name">start</span> <span class="param-type">array</span> &mdash; [x, y, z] start position</div>
+                    <div class="param"><span class="param-name">end</span> <span class="param-type">array</span> &mdash; [x, y, z] target position</div>
+                    <div class="param"><span class="param-name">options.maxSteps</span> <span class="param-type">number</span> &mdash; Max search iterations (default: 1000)</div>
+                    <div class="param"><span class="param-name">options.entityHeight</span> <span class="param-type">number</span> &mdash; Entity height in blocks (default: 2)</div>
+                </div>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">array|null</span> &mdash; Array of [x,y,z] waypoints, or null</div>
+            </div>
+        </section>
+
+        <!-- ─── Schematics ──────────────────────────────────────────── -->
+
+        <section>
+            <h2>📐 Schematics &amp; World Import/Export</h2>
+
+            <div class="function">
+                <div class="function-sig">exportVoxelRegion(x1, y1, z1, x2, y2, z2)</div>
+                <p>Export a rectangular region as an RLE-compressed ArrayBuffer. Header: [version, sizeX, sizeY, sizeZ] + RLE body.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">ArrayBuffer</span></div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">importVoxelRegion(data, x, y, z, options?)</div>
+                <p>Import a schematic at the given position.</p>
+                <div class="param-list">
+                    <div class="param"><span class="param-name">options.skipAir</span> <span class="param-type">boolean</span> &mdash; Don't overwrite existing blocks with air (default: false)</div>
+                </div>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; { sizeX, sizeY, sizeZ, placed }</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">exportVoxelWorldJSON()</div>
+                <p>Export the entire world (all loaded chunks) as a JSON object with seed, config, and chunk data.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; { version, seed, chunks: [...] }</div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">importVoxelWorldJSON(json)</div>
+                <p>Import a world from a previously exported JSON object. Replaces current world state.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">object</span> &mdash; { chunksLoaded }</div>
+            </div>
+
+            <div class="example">
+                <div class="example-title">Copy/Paste a Structure:</div>
+                <pre><code>// Export a 10x10x10 building
+const schematic = exportVoxelRegion(0, 60, 0, 9, 69, 9);
+
+// Paste it somewhere else
+importVoxelRegion(schematic, 100, 60, 100);
+
+// Paste without overwriting existing blocks
+importVoxelRegion(schematic, 200, 60, 200, { skipAir: true });</code></pre>
+            </div>
+        </section>
+
+        <!-- ─── Persistence ─────────────────────────────────────────── -->
+
+        <section>
+            <h2>💾 World Persistence</h2>
+
+            <div class="function">
+                <div class="function-sig">saveVoxelWorld(name)</div>
+                <p>Save all modified chunks to IndexedDB under the given name.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">loadVoxelWorld(name)</div>
+                <p>Load a previously saved world from IndexedDB.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">listVoxelWorlds()</div>
+                <p>List all saved world names in IndexedDB.</p>
+                <div class="return-info"><strong>Returns:</strong> <span class="param-type">Promise&lt;string[]&gt;</span></div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">deleteVoxelWorld(name)</div>
+                <p>Delete a saved world from IndexedDB.</p>
+            </div>
+        </section>
+
+        <!-- ─── Texture Atlas ───────────────────────────────────────── -->
+
+        <section>
+            <h2>🎨 Texture Atlas</h2>
+
+            <div class="function">
+                <div class="function-sig">enableVoxelTextures(enabled?)</div>
+                <p>Toggle the procedural texture atlas (27 pixel-art tiles). Enabled: textured blocks. Disabled: vertex-color blocks.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">loadVoxelTextureAtlas(url, mapping?)</div>
+                <p>Load a custom texture atlas image. Mapping defines which tile index goes to which block face.</p>
+            </div>
+        </section>
+
+        <!-- ─── Noise ───────────────────────────────────────────────── -->
+
+        <section>
+            <h2>🌊 Noise Functions</h2>
+
+            <div class="function">
+                <div class="function-sig">simplexNoise2D(x, z, octaves?, persistence?, lacunarity?, scale?)</div>
+                <p>Multi-octave 2D fractal simplex noise. Returns 0&ndash;1.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">simplexNoise3D(x, y, z, octaves?, persistence?, lacunarity?, scale?)</div>
+                <p>Multi-octave 3D fractal simplex noise. Returns 0&ndash;1. Use for caves, ore veins, 3D effects.</p>
+            </div>
+        </section>
+
+        <!-- ─── Structures ──────────────────────────────────────────── -->
+
+        <section>
+            <h2>🌳 Structures</h2>
+
+            <div class="function">
+                <div class="function-sig">placeVoxelTree(x, y, z)</div>
+                <p>Generate a tree (wood trunk + leaf canopy) at the specified base position. Biome-appropriate variety: oak, birch, spruce, jungle, acacia.</p>
+            </div>
+        </section>
+
+        <!-- ─── API Summary Table ───────────────────────────────────── -->
+
+        <section>
+            <h2>📊 API Summary</h2>
+            <table>
+                <tr><th>Category</th><th>Functions</th></tr>
+                <tr><td>World</td><td>configureVoxelWorld, updateVoxelWorld, forceLoadVoxelChunks, resetVoxelWorld, getVoxelConfig</td></tr>
+                <tr><td>Blocks</td><td>getVoxelBlock, setVoxelBlock, getVoxelHighestBlock, getVoxelBiome, registerVoxelBlock</td></tr>
+                <tr><td>Shapes</td><td>getVoxelBlockShape, getVoxelBlockBoundingBox, isVoxelBlockFullCube, VOXEL_SHAPE_BBOXES</td></tr>
+                <tr><td>Raycast &amp; Collision</td><td>raycastVoxelBlock, checkVoxelCollision, checkVoxelFluid, moveVoxelEntity</td></tr>
+                <tr><td>Lighting</td><td>getVoxelLightLevel, setVoxelDayTime</td></tr>
+                <tr><td>Fluids</td><td>setVoxelFluidSource, removeVoxelFluidSource, getVoxelFluidLevel</td></tr>
+                <tr><td>Entities</td><td>spawnVoxelEntity, removeVoxelEntity, getVoxelEntity, damageVoxelEntity, healVoxelEntity, updateVoxelEntities, getVoxelEntitiesInRadius, getVoxelEntitiesByType, getVoxelEntityCount, cleanupVoxelEntities</td></tr>
+                <tr><td>ECS</td><td>setVoxelEntityComponent, getVoxelEntityComponent, hasVoxelEntityComponent, removeVoxelEntityComponent, queryVoxelEntities, createVoxelEntityArchetype, spawnVoxelEntityFromArchetype, findVoxelPath</td></tr>
+                <tr><td>Schematics</td><td>exportVoxelRegion, importVoxelRegion, exportVoxelWorldJSON, importVoxelWorldJSON</td></tr>
+                <tr><td>Persistence</td><td>saveVoxelWorld, loadVoxelWorld, listVoxelWorlds, deleteVoxelWorld</td></tr>
+                <tr><td>Textures</td><td>enableVoxelTextures, loadVoxelTextureAtlas</td></tr>
+                <tr><td>Noise</td><td>simplexNoise2D, simplexNoise3D</td></tr>
+                <tr><td>Structures</td><td>placeVoxelTree</td></tr>
+            </table>
+        </section>
 
         <footer>
-            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <p>Nova64 Fantasy Console &copy; 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
         </footer>
     </div>
 </body>

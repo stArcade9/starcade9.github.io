@@ -1,0 +1,117 @@
+{
+  "name": "Physics Lab 3D",
+  "description": "PHYSICS LAB 3D - Advanced 3D Physics Simulation",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "PHYSICS LAB 3D",
+      "demo.bouncing": "BOUNCING SPHERES",
+      "demo.pendulum": "PENDULUM CHAIN",
+      "demo.fountain": "PARTICLE FOUNTAIN",
+      "demo.gravity": "GRAVITY WELL",
+      "demo.cascade": "COLLISION CASCADE",
+      "demo.sandbox": "SANDBOX",
+      "ui.objects": "Objects",
+      "ui.score": "Score",
+      "ui.highScore": "High Score",
+      "ui.controls": "1-6: Demos | D: Debug | R: Reset | C: Chaos"
+    },
+    "locales": {
+      "es": {
+        "game.title": "LABORATORIO DE FÍSICA 3D",
+        "demo.bouncing": "ESFERAS REBOTANTES",
+        "demo.pendulum": "CADENA PENDULAR",
+        "demo.fountain": "FUENTE DE PARTÍCULAS",
+        "demo.gravity": "POZO DE GRAVEDAD",
+        "demo.cascade": "CASCADA DE COLISIONES",
+        "demo.sandbox": "CAJA DE ARENA",
+        "ui.objects": "Objetos",
+        "ui.score": "Puntuación",
+        "ui.highScore": "Récord",
+        "ui.controls": "1-6: Demos | D: Debug | R: Reset | C: Caos"
+      }
+    }
+  },
+  "gameplay": {
+    "physics": {
+      "gravity": -15,
+      "bounceDamping": 0.8,
+      "airResistance": 0.995,
+      "wallBounds": 24
+    },
+    "demos": {
+      "bouncingSpheres": {
+        "count": 12,
+        "materials": 4
+      },
+      "pendulumChain": {
+        "segments": 6,
+        "spacing": 2,
+        "constraintStrength": 0.8
+      },
+      "particleFountain": {
+        "spawnRate": 0.1,
+        "color": "#ff6600",
+        "lifetime": 3
+      },
+      "gravityWell": {
+        "orbiters": 8,
+        "orbitRadius": 12,
+        "fieldStrength": 50
+      },
+      "collisionCascade": {
+        "dominoes": 10,
+        "color": "#8844ff",
+        "impulseColor": "#ff4444"
+      },
+      "sandbox": {
+        "towerSize": [5, 3],
+        "maxObjects": 60
+      }
+    },
+    "particles": {
+      "bounce": {
+        "count": 3,
+        "color": "#ffaa44",
+        "lifetime": 1
+      },
+      "collision": {
+        "count": 5,
+        "color": "#ff4444",
+        "lifetime": 0.8
+      }
+    }
+  },
+  "defaults": {
+    "lighting": {
+      "ambient": "#ffffff",
+      "ambientIntensity": 0.6,
+      "directional": {
+        "direction": [0.5, -1, 0.3],
+        "color": "#ffffff"
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.6,
+        "radius": 0.3,
+        "threshold": 0.5
+      }
+    },
+    "camera": {
+      "orbitRadius": 25,
+      "orbitHeight": 15
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "zeroGravity": false,
+        "superBounce": false,
+        "slowMotion": false
+      }
+    }
+  }
+}

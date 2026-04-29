@@ -2,156 +2,982 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Nova64 Console — Play Now</title>
+    <title>NOVA-64 Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="./os9-shell/nova-icon.svg" type="image/svg+xml" />
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      :root { 
-        --bg: linear-gradient(135deg, #0f1115 0%, #1a1625 50%, #0f1115 100%); 
-        --panel: #151822; 
-        --text: #dcdfe4; 
-        --muted: #99a1b3; 
-        --accent: #00ffff;
-        --neon: #ff0080;
+      :root {
+        --bg: #090a0f;
+        --panel: rgba(21, 24, 34, 0.85);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #0ea5e9;
+        --accent-hover: #38bdf8;
+        --neon: #f43f5e;
+        --border: rgba(255, 255, 255, 0.1);
+        --glass: rgba(255, 255, 255, 0.05);
       }
-      html, body {
+      html,
+      body {
         background: var(--bg);
         margin: 0;
-        height: 100%;
+        min-height: 100vh;
         color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+        background-image:
+          radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 100% 100%, rgba(244, 63, 94, 0.05) 0%, transparent 50%);
       }
-      body {
-        background: linear-gradient(135deg, #0f1115 0%, #1a1625 50%, #0f1115 100%);
-        background-attachment: fixed;
+
+      .shell {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 0;
+        min-height: 100vh;
+        box-sizing: border-box;
       }
-      .shell { display: grid; grid-template-columns: 1fr 350px; gap: 16px; padding: 16px; height: 100%; box-sizing: border-box; }
-      .stage { display: grid; place-items: center; background: radial-gradient(1200px 600px at 50% 0%, #151922 20%, transparent 60%); border-radius: 12px; }
-      canvas {
-        image-rendering: pixelated; width: 1280px; height: 720px;
-        background: #000; border-radius: 8px; outline: 2px solid #00ffff;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.1);
-      }
-      .panel { 
-        background: var(--panel); 
-        border: 1px solid #1f2433; 
-        border-radius: 12px; 
-        padding: 20px; 
+
+      .stage {
         display: flex;
         flex-direction: column;
-        gap: 14px;
-        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
-        overflow-y: auto;
-        max-height: 100%;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        background: radial-gradient(circle, #1a1e29 0%, #090a0f 100%);
       }
-      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
-      .row label { font-size: 12px; color: var(--muted); }
-      select, button {
-        background: #202538; color: var(--text); border: 1px solid #2a324a; border-radius: 8px; padding: 6px 10px; font-size: 14px;
+
+      /* CRT Hardware Wrapper */
+      .hardware-bezel {
+        background: linear-gradient(145deg, #2a2a2a, #0a0a0a);
+        padding: 30px 30px 50px 30px;
+        border-radius: 20px;
+        box-shadow:
+          0 0 0 2px #444,
+          0 25px 50px -12px rgba(0, 0, 0, 0.8),
+          inset 0 4px 6px rgba(255, 255, 255, 0.1),
+          inset 0 -4px 6px rgba(0, 0, 0, 0.8);
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
       }
-      select { width: 100%; max-width: 100%; }
-      button { cursor: pointer; }
-      button:hover { background: #26304a; }
-      .badge { font-size: 12px; color: var(--muted); }
-      .hr { height: 1px; background: #222a3b; margin: 6px 0; }
-      .stat { font-variant-numeric: tabular-nums; font-size: 12px; }
-      .title { 
-        font-weight: 700; 
-        font-size: 16px; 
-        color: var(--accent);
-        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        border-bottom: 1px solid rgba(0, 255, 255, 0.3);
-        padding-bottom: 8px;
-        margin-bottom: 4px;
-      }
-      .footer { font-size: 11px; color: var(--muted); }
-      .back-btn {
-        background: linear-gradient(135deg, #8338EC 0%, #3A86FF 100%);
-        color: white;
+
+      .hardware-brand {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: 'VT323', monospace;
+        color: #888;
+        font-size: 28px;
+        letter-spacing: 6px;
+        text-shadow:
+          0 -1px 0 rgba(0, 0, 0, 0.9),
+          0 1px 0 rgba(255, 255, 255, 0.2);
         font-weight: bold;
-        border: 2px solid #8338EC;
-        box-shadow: 0 0 15px rgba(131, 56, 236, 0.3);
-        padding: 10px 20px;
-        text-decoration: none;
-        display: inline-block;
-        border-radius: 8px;
-        margin-bottom: 10px;
       }
+
+      .screen-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 4px solid #050505;
+        box-shadow:
+          inset 0 0 40px rgba(0, 0, 0, 0.9),
+          0 0 10px rgba(14, 165, 233, 0.4);
+        background: #000;
+        /* Simulate TV curve slightly */
+        border-radius: 2% / 3%;
+        box-sizing: border-box;
+      }
+
+      canvas {
+        image-rendering: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: block;
+        touch-action: none;
+        -webkit-touch-callout: none;
+      }
+
+      /* CRT Scanline Overlay */
+      .scanlines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.03),
+            rgba(0, 255, 0, 0.01),
+            rgba(0, 0, 255, 0.03)
+          );
+        background-size:
+          100% 4px,
+          3px 100%;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0.8;
+      }
+
+      .screen-glare {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+          120% 120% at 30% 10%,
+          rgba(255, 255, 255, 0.08) 0%,
+          transparent 50%
+        );
+        pointer-events: none;
+        z-index: 11;
+        mix-blend-mode: screen;
+      }
+
+      .panel {
+        background: var(--panel);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-left: 1px solid var(--border);
+        padding: 30px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+        overflow-y: auto;
+        z-index: 20;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+
+      label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      select,
+      button {
+        background: var(--glass);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s ease;
+      }
+
+      select {
+        width: 100%;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      select:hover,
+      select:focus {
+        border-color: var(--accent);
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      select option {
+        background: #1e2532;
+        color: #fff;
+      }
+
+      button {
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .btn-primary {
+        background: rgba(14, 165, 233, 0.15);
+        color: var(--accent);
+        border: 1px solid rgba(14, 165, 233, 0.3);
+      }
+      .btn-primary:hover {
+        background: rgba(14, 165, 233, 0.25);
+        border-color: var(--accent);
+      }
+
+      .btn-magic {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.2) 0%,
+          rgba(217, 70, 239, 0.2) 100%
+        );
+        border: 1px solid rgba(217, 70, 239, 0.4);
+        color: #f0abfc;
+      }
+
+      .btn-magic:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.3) 0%,
+          rgba(217, 70, 239, 0.3) 100%
+        );
+        border-color: rgba(217, 70, 239, 0.6);
+        box-shadow: 0 4px 15px rgba(217, 70, 239, 0.2);
+      }
+
+      .hr {
+        height: 1px;
+        background: var(--border);
+        margin: 4px 0;
+      }
+
+      .stat-box {
+        background: #000;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #333;
+        font-family: 'VT323', monospace;
+        font-size: 18px;
+        color: #10b981;
+        letter-spacing: 1px;
+        text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+        text-align: center;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .title {
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        font-size: 24px;
+        color: #fff;
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #0ea5e9, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .footer {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: auto;
+        padding-top: 20px;
+        text-align: center;
+      }
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: color 0.2s;
+        margin-bottom: 20px;
+      }
+
       .back-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 25px rgba(131, 56, 236, 0.5);
+        color: #fff;
+      }
+
+      .controls-hint {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .key {
+        display: inline-block;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: monospace;
+        font-size: 11px;
+        color: #cbd5e1;
+        box-shadow: 0 2px 0 #0f172a;
+      }
+
+      /* Hide standard canvas outline since we use hardware bezel */
+      #screen {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Responsive Layout for Mobile */
+      @media (max-width: 900px) {
+        body,
+        html {
+          height: auto;
+          overflow-y: auto;
+        }
+
+        .shell {
+          display: flex;
+          flex-direction: column;
+          height: auto;
+        }
+
+        .stage {
+          padding: 10px;
+          min-height: auto;
+        }
+
+        .hardware-bezel {
+          padding: 15px 15px 40px 15px;
+          width: 100%;
+          box-sizing: border-box;
+          border-radius: 12px;
+        }
+
+        .panel {
+          border-left: none;
+          border-top: 1px solid var(--border);
+          padding: 20px 16px;
+        }
+
+        canvas {
+          /* absolute fill — no override needed */
+        }
+
+        /* Show mobile controls */
+        .mobile-controls {
+          display: flex !important;
+        }
+      }
+
+      /* Mobile Controls Styling */
+      .mobile-controls {
+        display: none; /* hidden on desktop */
+        width: 100%;
+        max-width: 1280px;
+        margin-top: 20px;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+      }
+
+      .d-pad,
+      .action-buttons {
+        display: grid;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .d-pad {
+        grid-template-columns: repeat(3, 58px);
+        grid-template-rows: repeat(3, 58px);
+      }
+
+      .action-buttons {
+        grid-template-columns: repeat(2, 68px);
+        grid-template-rows: repeat(2, 68px);
+        transform: rotate(-15deg);
+      }
+
+      .start-select-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 10px;
+      }
+
+      .btn-start {
+        min-width: 80px;
+        height: 36px;
+        border-radius: 18px;
+        font-size: 13px;
+        letter-spacing: 2px;
+        transform: none;
+      }
+
+      .btn-touch {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        font-family: 'Inter', sans-serif;
+        font-weight: bold;
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow:
+          0 4px 6px rgba(0, 0, 0, 0.4),
+          inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        /* Touch specific */
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+      }
+
+      .btn-touch:active,
+      .btn-touch.active {
+        background: rgba(14, 165, 233, 0.4);
+        border-color: rgba(14, 165, 233, 0.8);
+        transform: translateY(2px);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.4),
+          inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      }
+
+      .btn-up {
+        grid-column: 2;
+        grid-row: 1;
+        border-radius: 8px 8px 4px 4px;
+      }
+      .btn-down {
+        grid-column: 2;
+        grid-row: 3;
+        border-radius: 4px 4px 8px 8px;
+      }
+      .btn-left {
+        grid-column: 1;
+        grid-row: 2;
+        border-radius: 8px 4px 4px 8px;
+      }
+      .btn-right {
+        grid-column: 3;
+        grid-row: 2;
+        border-radius: 4px 8px 8px 4px;
+      }
+      .btn-center {
+        grid-column: 2;
+        grid-row: 2;
+        border-radius: 4px;
+        border: none;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .btn-a {
+        grid-column: 2;
+        grid-row: 1;
+        border-radius: 50%;
+        font-size: 20px;
+        background: rgba(244, 63, 94, 0.2);
+        border-color: rgba(244, 63, 94, 0.4);
+      }
+      .btn-a:active,
+      .btn-a.active {
+        background: rgba(244, 63, 94, 0.5);
+      }
+      .btn-b {
+        grid-column: 1;
+        grid-row: 2;
+        border-radius: 50%;
+        font-size: 20px;
+        background: rgba(168, 85, 247, 0.2);
+        border-color: rgba(168, 85, 247, 0.4);
+      }
+      .btn-b:active,
+      .btn-b.active {
+        background: rgba(168, 85, 247, 0.5);
       }
     </style>
-  </head>
-  <body>
-    <div class="shell">
-      <div class="stage">
-        <canvas id="screen" width="640" height="360"></canvas>
-      </div>
-      <div class="panel">
-        <a href="/" class="back-btn">← Back to Home</a>
-        <div class="title">🎮 NOVA64 3D • Nintendo 64 / PlayStation GPU Console</div>
-        <div class="row">
-          <label>3D Demo</label>
-          <select id="cart">
-            <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
-            <option value="/examples/crystal-cathedral-3d/code.js">🏛️ Crystal Cathedral (Ultimate Graphics)</option>
-            <option value="/examples/mystical-realm-3d/code.js">🏰 Mystical Realm (Fantasy World)</option>
-            <option value="/examples/star-fox-nova-3d/code.js">🚀 Star Fox Nova (Space Combat)</option>
-            <option value="/examples/f-zero-nova-3d/code.js">🏁 F-Zero Nova (Racing)</option>
-            <option value="/examples/cyberpunk-city-3d/code.js">🌃 Cyberpunk City (Open World)</option>
-            <option value="/examples/physics-demo-3d/code.js">⚛️ Physics Lab (Simulation)</option>
-            <option value="/examples/shooter-demo-3d/code.js">🔫 Space Shooter (Combat)</option>
-            <option value="/examples/strider-demo-3d/code.js">⚔️ Knight Platformer (Adventure)</option>
-            <option value="/examples/super-plumber-64/code.js">🍄 Super Plumber 64 (Mario-Style 3D Platformer)</option>
-            <option value="/examples/minecraft-demo/code.js">⛏️ Minecraft Voxel World (Sandbox)</option>
-            <option value="/examples/3d-advanced/code.js">🎯 Advanced 3D (Technical)</option>
-            <option value="/examples/demoscene/code.js">🎬 Demoscene - Tron Odyssey (Visual Showcase)</option>
-          </select>
-        </div>
-        <div class="row">
-          <button id="pause">Pause</button>
-          <button id="step">Step</button>
-          <button id="shot">Screenshot</button>
-        </div>
-        <div class="row">
-          <button id="editor" onclick="window.open('/os9-shell/index.html?app=sprite-editor', '_blank')" style="width: 100%; background: linear-gradient(135deg, #8338EC 0%, #3A86FF 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border: 2px solid #8338EC; box-shadow: 0 0 20px rgba(131,56,236,0.4);">
-            🎨 Sprite Editor
-          </button>
-        </div>
-        <div class="row">
-          <button id="os-shell" onclick="window.open('/os9-shell/index.html', '_blank')" style="width: 100%; background: linear-gradient(135deg, #FF006E 0%, #8338EC 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border: 2px solid #FF006E; box-shadow: 0 0 20px rgba(255,0,110,0.4);">
-            🖥️ LAUNCH NovaOS
-          </button>
-        </div>
-        <div class="row">
-          <button id="docs" onclick="window.open('/docs/index.html', '_blank')" style="width: 100%; background: linear-gradient(135deg, #00ffff 0%, #ff0080 100%); color: white; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">📚 API Documentation</button>
-        </div>
-        <div class="hr"></div>
-        <div class="row badge">
-          <span>🎮 Three.js GPU • Nintendo 64 / PlayStation Style • Full 3D Acceleration</span>
-        </div>
-        <div class="row stat">
-          <span id="stats">fps: -, update: -, draw: - ms</span>
-        </div>
-        <div class="footer">Controls: arrows to move, Z/X to act. Built with ❤️</div>
-      </div>
-    </div>
+  <script type="application/json" id="nova64-i18n">
+  {
+    "console.title": "NOVA-64 Console",
+    "console.studio.title": "NOVA-64 STUDIO",
+    "console.studio.sub": "Ultimate 3D Web Engine<br>Hardware-accelerated environment",
+    "console.back": "BACK TO DASHBOARD",
+    "console.label.cart": "Cartridge Selection",
+    "console.btn.hold": "Hold",
+    "console.btn.step": "Step",
+    "console.btn.snap": "Snap",
+    "console.btn.fullscreen": "Fullscreen",
+    "console.btn.fullscreen.exit": "Exit Full",
+    "console.label.dev": "Development Array",
+    "console.btn.studio": "Asset Studio",
+    "console.btn.novaos": "NovaOS Desktop",
+    "console.btn.docs": "Engine Syntax",
+    "console.controls.title": "Controls",
+    "console.controls.move": "Move",
+    "console.controls.button": "Button",
+    "console.controls.action": "Action"
+  }
+  </script>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
     <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        "three": "https://esm.sh/three@0.182.0",
+        "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+        "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
       }
     }
     </script>
-    <script type="module" src="/src/main.js"></script>
+  <script type="module" crossorigin src="./assets/main-u6bfCWru.js"></script>
+</head>
+  <body>
+    <div class="shell">
+      <div class="stage">
+        <div class="hardware-bezel">
+          <div class="screen-container">
+            <canvas id="screen" width="1280" height="720"></canvas>
+            <div class="scanlines"></div>
+            <div class="screen-glare"></div>
+          </div>
+          <div class="hardware-brand">NOVA-64</div>
+        </div>
+
+        <!-- Mobile Virtual Controls -->
+        <div class="mobile-controls">
+          <div class="d-pad">
+            <div class="btn-touch btn-up" data-keys='["ArrowUp", "KeyW"]'>▲</div>
+            <div class="btn-touch btn-left" data-keys='["ArrowLeft", "KeyA"]'>◀</div>
+            <div class="btn-center"></div>
+            <div class="btn-touch btn-right" data-keys='["ArrowRight", "KeyD"]'>▶</div>
+            <div class="btn-touch btn-down" data-keys='["ArrowDown", "KeyS"]'>▼</div>
+          </div>
+          <div class="action-buttons">
+            <div class="btn-touch btn-a" data-keys='["Space", "Enter"]'>A</div>
+            <div class="btn-touch btn-b" data-keys='["KeyZ", "KeyX"]'>B</div>
+          </div>
+        </div>
+        <div class="mobile-controls start-select-buttons">
+          <div class="btn-touch btn-start" data-keys='["Enter"]'>START</div>
+          <div class="btn-touch btn-start" data-keys='["Space"]'>SELECT</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div>
+          <a href="/" class="back-btn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span data-i18n="console.back">BACK TO DASHBOARD</span>
+          </a>
+          <div class="title" data-i18n="console.studio.title">NOVA-64 STUDIO</div>
+          <div class="subtitle" data-i18n-html="console.studio.sub">Ultimate 3D Web Engine<br />Hardware-accelerated environment</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <select id="lang-select" title="Language" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:#94a3b8;font-size:11px;padding:4px 6px;cursor:pointer;">
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="ja">JA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="stat-box">
+          <span id="stats">FPS: 00 | UP: 00ms | DW: 00ms</span>
+        </div>
+
+        <div class="col">
+          <label data-i18n="console.label.cart">Cartridge Selection</label>
+          <select id="cart">
+            <option value="/examples/hello-world/code.js">⭐ Hello World (Start Here)</option>
+            <option value="/examples/space-harrier-3d/code.js">
+              🛸 Space Harrier (2.5D Rail Shooter)
+            </option>
+            <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
+            <option value="/examples/hello-namespaced/code.js">
+              📦 Hello Namespaced (nova64.* API)
+            </option>
+            <option value="/examples/crystal-cathedral-3d/code.js">
+              🏛️ Crystal Cathedral (Graphics)
+            </option>
+            <option value="/examples/mystical-realm-3d/code.js">🏰 Mystical Realm (World)</option>
+            <option value="/examples/star-fox-nova-3d/code.js">
+              🚀 Star Fox Nova (Space Combat)
+            </option>
+            <option value="/examples/f-zero-nova-3d/code.js">🏁 F-Zero Nova (Racing)</option>
+            <option value="/examples/cyberpunk-city-3d/code.js">
+              🌃 Cyberpunk City (Open World)
+            </option>
+            <option value="/examples/fps-demo-3d/code.js">🔫 FPS Action Mode (Shooter)</option>
+            <option value="/examples/wad-demo/code.js">💀 FreeDoom WAD Explorer (Classic FPS)</option>
+            <option value="/examples/adventure-comic-3d/code.js">
+              🕵️ The Verdict (Comic Adventure)
+            </option>
+            <option value="/examples/physics-demo-3d/code.js">⚛️ Physics Lab (Simulation)</option>
+            <option value="/examples/shooter-demo-3d/code.js">🔫 Space Shooter (Combat)</option>
+            <option value="/examples/strider-demo-3d/code.js">⚔️ Gauntlet 64 (Isometric Action RPG)</option>
+            <option value="/examples/super-plumber-64/code.js">🍄 Super Plumber 64 (Platformer)</option>
+            <option value="/examples/minecraft-demo/code.js">⛏️ Minecraft Voxel World (Sandbox)</option>
+            <option value="/examples/voxel-terrain/code.js">🌍 Voxel Terrain Explorer (Biomes)</option>
+            <option value="/examples/voxel-creative/code.js">🏗️ Voxel Creative (Building)</option>
+            <option value="/examples/voxel-creatures/code.js">🐄 Voxel Creatures (Entities)</option>
+            <option value="/examples/dungeon-crawler-3d/code.js">🏰 Dungeon Crawler (Roguelike RPG)</option>
+            <option value="/examples/wizardry-3d/code.js">🧙 Wizardry (First-Person Dungeon RPG)</option>
+            <option value="/examples/boids-flocking/code.js">🐦 Boids Flocking (Generative Art)</option>
+            <option value="/examples/game-of-life-3d/code.js">🧬 Game of Life 3D (Cellular Automata)</option>
+            <option value="/examples/hype-demo/code.js">✨ HYPE Framework Demo (Creative Coding)</option>
+            <option value="/examples/flash-demo/code.js">⚡ Flash Demo (10 × 2D Showcase Scenes)</option>
+            <option value="/examples/nature-explorer-3d/code.js">🌿 Nature Explorer (GLB Walking Sim)</option>
+            <option value="/examples/generative-art/code.js">🎨 Generative Art (Processing-style)</option>
+            <option value="/examples/tsl-showcase/code.js">✨ TSL Showcase (Shading Language)</option>
+            <option value="/examples/shader-showcase/code.js">✨ Shader Showcase (Material Gallery)</option>
+            <option value="/examples/3d-advanced/code.js">🎯 Advanced 3D (Technical)</option>
+            <option value="/examples/model-viewer-3d/code.js">🦊 Animated 3D Models</option>
+            <option value="/examples/demoscene/code.js">🎬 Demoscene - Tron (Showcase)</option>
+            <option value="/examples/hello-skybox/code.js">🌌 Nova Drift (Space Explorer)</option>
+            <option value="/examples/space-combat-3d/code.js">🛸 Space Combat 3D (Dogfight)</option>
+            <option value="/examples/input-showcase/code.js">
+              🎮 Input Showcase (All Controls)
+            </option>
+            <option value="/examples/audio-lab/code.js">🔊 Audio Lab (Spatial Sound)</option>
+            <option value="/examples/storage-quest/code.js">
+              💾 Storage Quest (Persistent Data)
+            </option>
+            <option value="/examples/instancing-demo/code.js">
+              ⚡ Instancing Demo (GPU Instancing + LOD)
+            </option>
+            <option value="/examples/particles-demo/code.js">
+              ✨ Particles Demo (GPU Particle System)
+            </option>
+            <option value="/examples/screen-demo/code.js">
+              🖥️ Screen Demo (Multi-Screen System)
+            </option>
+            <option value="/examples/ui-demo/code.js">🎨 UI Demo (Interface Components)</option>
+            <option value="/examples/hud-demo/code.js">🖥️ HUD Demo (Canvas UI / NML)</option>
+            <option value="/examples/startscreen-demo/code.js">🎬 Start Screen Demo (Canvas UI / NML)</option>
+            <option value="/examples/canvas-ui-showcase/code.js">✨ Canvas UI Showcase (All NML Elements)</option>
+            <option value="/examples/wing-commander-space/code.js">
+              🚀 Wing Commander Space (Combat)
+            </option>
+            <option value="/examples/pbr-showcase/code.js">🔮 PBR Showcase (Materials)</option>
+            <option value="/examples/skybox-showcase/code.js">🌌 Skybox Showcase (Environments)</option>
+            <option value="/examples/nft-worlds/code.js">🌐 NFT Worlds (Seed-Generated Voxels)</option>
+            <option value="/examples/nft-art-generator/code.js">🎲 NFT Art Generator (Seed Art)</option>
+            <option value="/examples/creative-coding/code.js">🎭 Creative Coding 3D (Generative 3D Art)</option>
+            <option value="/examples/vox-viewer/code.js">📦 VOX Viewer (MagicaVoxel Models)</option>
+            <option value="/examples/vr-demo/code.js">🥽 VR Demo (WebXR)</option>
+            <option value="/examples/ar-hand-demo/code.js">🤚 AR Hand Demo (MediaPipe)</option>
+            <option value="/examples/vr-sword-combat/code.js">⚔️ VR Sword Combat (WebXR)</option>
+            <option value="/examples/hero-demo/code.js">🌅 Hero Demo (Synthwave)</option>
+            <option value="/examples/blend-aurora/code.js">🌈 Blend Aurora (Visual Effect)</option>
+            <option value="/examples/camera-platformer/code.js">📷 Camera Platformer (3D Camera)</option>
+            <option value="/examples/filter-glitch/code.js">📺 Filter Glitch (Post-Processing)</option>
+            <option value="/examples/movie-clock/code.js">🕐 Movie Clock (Time Display)</option>
+            <option value="/examples/particle-fireworks/code.js">🎆 Particle Fireworks (Effects)</option>
+            <option value="/examples/particle-trail/code.js">💫 Particle Trail (Effects)</option>
+            <option value="/examples/stage-cards/code.js">🃏 Stage Cards (Transitions)</option>
+            <option value="/examples/stage-menu/code.js">📋 Stage Menu (Navigation)</option>
+            <option value="/examples/tween-bounce/code.js">🏀 Tween Bounce (Animation)</option>
+            <option value="/examples/tween-logo/code.js">✏️ Tween Logo (Animation)</option>
+            <option value="/examples/tween-typewriter/code.js">⌨️ Tween Typewriter (Animation)</option>
+            <option value="/examples/test-2d-overlay/code.js">🧪 Test 2D Overlay</option>
+            <option value="/examples/test-font/code.js">🧪 Test Font</option>
+            <option value="/examples/test-minimal/code.js">🧪 Test Minimal</option>
+          </select>
+        </div>
+
+        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px">
+          <button id="pause" title="Pause Engine" class="btn-primary">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+            <span data-i18n="console.btn.hold">Hold</span>
+          </button>
+          <button id="step" title="Step Frame" class="btn-primary">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+            <span data-i18n="console.btn.step">Step</span>
+          </button>
+          <button id="shot" title="Screenshot Canvas" class="btn-primary">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+              ></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span data-i18n="console.btn.snap">Snap</span>
+          </button>
+        </div>
+        <button id="fullscreen" title="Toggle Fullscreen" style="width: 100%">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+          <span data-i18n="console.btn.fullscreen">Fullscreen</span>
+        </button>
+
+        <p style="margin:6px 0 0;font-size:11px;color:var(--muted);text-align:center">
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">F9</kbd> Debug &nbsp;
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Shift+X</kbd> Dev Console &nbsp;
+          <kbd style="background:var(--glass);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Enter</kbd> Restart
+        </p>
+
+        <div class="hr"></div>
+
+        <div class="col">
+          <label data-i18n="console.label.dev">Development Array</label>
+          <button
+            id="editor"
+            onclick="window.open('/os9-shell/index.html?app=sprite-editor', '_blank')"
+            class="btn-magic"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            <span data-i18n="console.btn.studio">Asset Studio</span>
+          </button>
+          <button id="os-shell" onclick="window.open('/os9-shell/index.html', '_blank')">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span data-i18n="console.btn.novaos">NovaOS Desktop</span>
+          </button>
+          <button id="docs" onclick="window.open('/docs/index.html', '_blank')">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <span data-i18n="console.btn.docs">Engine Syntax</span>
+          </button>
+        </div>
+
+        <div class="footer">
+          <div style="margin-bottom: 8px; color: #fff; font-weight: 600; text-transform: uppercase" data-i18n="console.controls.title">
+            Controls
+          </div>
+          <div class="controls-hint">
+            <div>
+              <span class="key">W</span><span class="key">A</span><span class="key">S</span
+              ><span class="key">D</span> <span data-i18n="console.controls.move">Move</span>
+            </div>
+            <div>
+              <span class="key">↑</span><span class="key">↓</span><span class="key">←</span
+              ><span class="key">→</span> <span data-i18n="console.controls.move">Move</span>
+            </div>
+            <div><span class="key">Z</span><span class="key">X</span> <span data-i18n="console.controls.button">Button</span></div>
+            <div><span class="key">Space</span> <span data-i18n="console.controls.action">Action</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <script>
-      // Check for demo parameter in URL
+      // Virtual controls code mapper
+      function handleVirtualButton(element, isDown) {
+        if (!element || !element.dataset || !element.dataset.keys) return;
+        try {
+          const keys = JSON.parse(element.dataset.keys);
+          keys.forEach(code => {
+            window.dispatchEvent(
+              new KeyboardEvent(isDown ? 'keydown' : 'keyup', { code, bubbles: true })
+            );
+          });
+          if (isDown) {
+            element.classList.add('active');
+          } else {
+            element.classList.remove('active');
+          }
+        } catch (e) {
+          console.error('Virtual input error:', e);
+        }
+      }
+
+      // Bind touch events to on-screen buttons
+      document.querySelectorAll('.btn-touch').forEach(btn => {
+        // Prevent default double-tap zoom or context menus
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+
+        btn.addEventListener(
+          'touchstart',
+          e => {
+            e.preventDefault(); // Stop mouse fallback events
+            handleVirtualButton(e.currentTarget, true);
+          },
+          { passive: false }
+        );
+
+        btn.addEventListener(
+          'touchend',
+          e => {
+            e.preventDefault();
+            handleVirtualButton(e.currentTarget, false);
+          },
+          { passive: false }
+        );
+
+        btn.addEventListener(
+          'touchcancel',
+          e => {
+            e.preventDefault();
+            handleVirtualButton(e.currentTarget, false);
+          },
+          { passive: false }
+        );
+
+        // Add mouse support just in case someone clicks them on desktop to test
+        btn.addEventListener('mousedown', e => {
+          e.preventDefault();
+          handleVirtualButton(e.currentTarget, true);
+        });
+        btn.addEventListener('mouseup', e => {
+          e.preventDefault();
+          handleVirtualButton(e.currentTarget, false);
+        });
+        btn.addEventListener('mouseleave', e => {
+          e.preventDefault();
+          if (btn.classList.contains('active')) {
+            handleVirtualButton(e.currentTarget, false);
+          }
+        });
+      });
+
+      // Fullscreen toggle
+      document.getElementById('fullscreen').addEventListener('click', () => {
+        const target = document.querySelector('.hardware-bezel');
+        if (!document.fullscreenElement) {
+          target.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen();
+        }
+      });
+      document.addEventListener('fullscreenchange', () => {
+        const btn = document.getElementById('fullscreen');
+        const isFullscreen = !!document.fullscreenElement;
+        btn.innerHTML = isFullscreen
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="10" y1="14" x2="3" y2="21"></line><line x1="21" y1="3" x2="14" y2="10"></line></svg> ' + ((window.__n64i18n && window.__n64i18n['console.btn.fullscreen.exit']) || 'Exit Full')
+          : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg> ' + ((window.__n64i18n && window.__n64i18n['console.btn.fullscreen']) || 'Fullscreen');
+      });
+
       const urlParams = new URLSearchParams(window.location.search);
       const demoParam = urlParams.get('demo');
       if (demoParam) {
-        // Wait for the page to fully load before setting the select value
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('load', () => {
           const select = document.getElementById('cart');
           const demoMap = {
             'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
@@ -161,16 +987,85 @@
             'super-plumber-64': '/examples/super-plumber-64/code.js',
             'cyberpunk-city-3d': '/examples/cyberpunk-city-3d/code.js',
             'strider-demo-3d': '/examples/strider-demo-3d/code.js',
-            'demoscene': '/examples/demoscene/code.js',
+            'model-viewer-3d': '/examples/model-viewer-3d/code.js',
+            demoscene: '/examples/demoscene/code.js',
+            'space-harrier-3d': '/examples/space-harrier-3d/code.js',
+            'hello-3d': '/examples/hello-3d/code.js',
+            'hello-namespaced': '/examples/hello-namespaced/code.js',
+            'mystical-realm-3d': '/examples/mystical-realm-3d/code.js',
+            'physics-demo-3d': '/examples/physics-demo-3d/code.js',
+            'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
+            'hello-skybox': '/examples/hello-skybox/code.js',
+            'fps-demo-3d': '/examples/fps-demo-3d/code.js',
+            'wad-demo': '/examples/wad-demo/code.js',
+            'adventure-comic-3d': '/examples/adventure-comic-3d/code.js',
+            '3d-advanced': '/examples/3d-advanced/code.js',
+            'space-combat-3d': '/examples/space-combat-3d/code.js',
+            'wing-commander-space': '/examples/wing-commander-space/code.js',
+            'pbr-showcase': '/examples/pbr-showcase/code.js',
+            'voxel-terrain': '/examples/voxel-terrain/code.js',
+            'voxel-creative': '/examples/voxel-creative/code.js',
+            'voxel-creatures': '/examples/voxel-creatures/code.js',
+            'nft-worlds': '/examples/nft-worlds/code.js',
+            'nft-art-generator': '/examples/nft-art-generator/code.js',
+            'creative-coding': '/examples/creative-coding/code.js',
+            'hype-demo': '/examples/hype-demo/code.js',
+            'flash-demo': '/examples/flash-demo/code.js',
           };
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];
-            // Trigger change event to load the demo
-            const event = new Event('change', { bubbles: true });
-            select.dispatchEvent(event);
           }
         });
       }
     </script>
+
+<!-- ── I18N HYDRATION ── -->
+<script>(function () {
+  var el = document.getElementById('nova64-i18n');
+  if (!el) return;
+  var strings = JSON.parse(el.textContent);
+  window.__n64i18n = strings;
+  function apply(map) {
+    window.__n64i18n = map;
+    document.querySelectorAll('[data-i18n]').forEach(function (n) {
+      var v = map[n.dataset.i18n];
+      if (v !== undefined) n.textContent = v;
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (n) {
+      var v = map[n.dataset.i18nHtml];
+      if (v !== undefined) n.innerHTML = v;
+    });
+    if (map['console.title']) document.title = map['console.title'];
+  }
+  apply(strings);
+  var urlLang = new URLSearchParams(location.search).get('lang');
+  var storedLang = localStorage.getItem('nova64-lang');
+  var lang = urlLang || storedLang || 'en';
+  if (urlLang && urlLang !== storedLang) localStorage.setItem('nova64-lang', urlLang);
+  var sel = document.getElementById('lang-select');
+  if (sel) {
+    sel.value = lang;
+    sel.addEventListener('change', function () {
+      var l = sel.value;
+      localStorage.setItem('nova64-lang', l);
+      var u = new URL(location.href);
+      if (l === 'en') { u.searchParams.delete('lang'); } else { u.searchParams.set('lang', l); }
+      location.href = u.toString();
+    });
+  }
+  if (lang && lang !== 'en') {
+    fetch('./i18n/' + encodeURIComponent(lang) + '.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data) {
+          apply(Object.assign({}, strings, data));
+          if (sel) sel.value = lang;
+        }
+      })
+      .catch(function () {});
+  }
+}());
+</script>
+
   </body>
 </html>

@@ -1,26 +1,32 @@
 // runtime/physics.js
-import { aabb } from './collision.js';
 
 export function physicsApi() {
   const bodies = new Set();
   let gravity = 500; // px/s^2
   let tileSize = 8;
-  let solidFn = (tx,ty)=>false;
+  let solidFn = (_tx, _ty) => false;
 
-  function setGravity(g){ gravity = g; }
-  function setTileSize(ts){ tileSize = ts|0; }
-  function setTileSolidFn(fn){ solidFn = fn; }
+  function setGravity(g) {
+    gravity = g;
+  }
+  function setTileSize(ts) {
+    tileSize = ts | 0;
+  }
+  function setTileSolidFn(fn) {
+    solidFn = fn;
+  }
+  const setCollisionMap = setTileSolidFn; // friendlier alias
 
-  function createBody(x,y,w,h, opts={}) {
-    const b = Object.assign({ x,y,w,h, vx:0, vy:0, restitution:0, friction:0.9, onGround:false }, opts);
+  function createBody(x, y, w, h, opts = {}) {
+    const b = Object.assign(
+      { x, y, w, h, vx: 0, vy: 0, restitution: 0, friction: 0.9, onGround: false },
+      opts
+    );
     bodies.add(b);
     return b;
   }
-  function destroyBody(b){ bodies.delete(b); }
-
-  function _isSolidAt(x,y){
-    const tx = Math.floor(x/tileSize), ty = Math.floor(y/tileSize);
-    return solidFn(tx,ty);
+  function destroyBody(b) {
+    bodies.delete(b);
   }
 
   function _sweepAABB(b, dt) {
@@ -33,14 +39,14 @@ export function physicsApi() {
     // Resolve X axis
     const xdir = Math.sign(b.vx);
     if (xdir !== 0) {
-      const ahead = xdir > 0 ? (nx + b.w) : nx;
+      const ahead = xdir > 0 ? nx + b.w : nx;
       const top = Math.floor(b.y / tileSize);
       const bottom = Math.floor((b.y + b.h - 1) / tileSize);
       for (let ty = top; ty <= bottom; ty++) {
         const tx = Math.floor(ahead / tileSize);
         if (solidFn(tx, ty)) {
-          if (xdir > 0) nx = tx*tileSize - b.w - 0.01;
-          else nx = (tx+1)*tileSize + 0.01;
+          if (xdir > 0) nx = tx * tileSize - b.w - 0.01;
+          else nx = (tx + 1) * tileSize + 0.01;
           b.vx = -b.vx * b.restitution;
           break;
         }
@@ -50,17 +56,17 @@ export function physicsApi() {
     // Resolve Y axis
     const ydir = Math.sign(b.vy);
     if (ydir !== 0) {
-      const ahead = ydir > 0 ? (ny + b.h) : ny;
+      const ahead = ydir > 0 ? ny + b.h : ny;
       const left = Math.floor(nx / tileSize);
       const right = Math.floor((nx + b.w - 1) / tileSize);
       for (let tx = left; tx <= right; tx++) {
         const ty = Math.floor(ahead / tileSize);
         if (solidFn(tx, ty)) {
           if (ydir > 0) {
-            ny = ty*tileSize - b.h - 0.01;
+            ny = ty * tileSize - b.h - 0.01;
             b.onGround = true;
           } else {
-            ny = (ty+1)*tileSize + 0.01;
+            ny = (ty + 1) * tileSize + 0.01;
           }
           b.vy = -b.vy * b.restitution;
           break;
@@ -71,7 +77,8 @@ export function physicsApi() {
     // Friction on ground
     if (b.onGround) b.vx *= b.friction;
 
-    b.x = nx; b.y = ny;
+    b.x = nx;
+    b.y = ny;
   }
 
   function step(dt) {
@@ -81,8 +88,14 @@ export function physicsApi() {
   return {
     exposeTo(target) {
       Object.assign(target, {
-        createBody, destroyBody, stepPhysics: step, setGravity, setTileSize, setTileSolidFn
+        createBody,
+        destroyBody,
+        stepPhysics: step,
+        setGravity,
+        setTileSize,
+        setTileSolidFn,
+        setCollisionMap,
       });
-    }
+    },
   };
 }

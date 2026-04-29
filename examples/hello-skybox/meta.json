@@ -1,0 +1,62 @@
+{
+  "name": "Hello Skybox",
+  "description": "🌌 NOVA DRIFT — Deep Space Crystal Hunter",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA DRIFT",
+      "game.subtitle": "Deep Space Crystal Hunter",
+      "ui.crystals": "CRYSTALS",
+      "ui.thrust": "W / SPACE = thrust",
+      "ui.brake": "S = brake",
+      "ui.yaw": "A / D = yaw",
+      "ui.pitch": "Q / E = pitch"
+    },
+    "locales": {
+      "es": {
+        "game.title": "NOVA DRIFT",
+        "game.subtitle": "Cazador de Cristales Espaciales",
+        "ui.crystals": "CRISTALES",
+        "ui.thrust": "W / ESPACIO = impulso",
+        "ui.brake": "S = freno",
+        "ui.yaw": "A / D = guiñada",
+        "ui.pitch": "Q / E = cabeceo"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#000511",
+      "near": 100,
+      "far": 500
+    },
+    "lighting": {
+      "ambient": "#202040",
+      "ambientIntensity": 1
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1,
+        "radius": 0.5,
+        "threshold": 0.5
+      },
+      "vignette": {
+        "darkness": 0.85,
+        "offset": 1
+      }
+    },
+    "camera": {
+      "fov": 75
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "maxSpeed": false
+      }
+    }
+  }
+}

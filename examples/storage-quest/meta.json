@@ -1,0 +1,49 @@
+{
+  "name": "Storage Quest",
+  "description": "Storage Quest — Collect gems and upgrade your ship",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "STORAGE QUEST",
+      "ui.score": "SCORE",
+      "ui.highScore": "HIGH SCORE",
+      "ui.level": "LEVEL",
+      "ui.gems": "GEMS",
+      "ui.upgrade": "UPGRADE"
+    },
+    "locales": {
+      "es": {
+        "game.title": "BÚSQUEDA DE TESOROS",
+        "ui.score": "PUNTUACIÓN",
+        "ui.highScore": "RÉCORD",
+        "ui.level": "NIVEL",
+        "ui.gems": "GEMAS",
+        "ui.upgrade": "MEJORA"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#050515",
+      "near": 20,
+      "far": 45
+    },
+    "lighting": {
+      "ambient": "#334466",
+      "ambientIntensity": 1.1
+    },
+    "camera": {
+      "position": [0, 12, 16]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "maxGems": false,
+        "allUpgrades": false
+      }
+    }
+  }
+}

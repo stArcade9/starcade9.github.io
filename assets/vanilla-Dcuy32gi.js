@@ -1,0 +1,2 @@
+const t=t=>{let e;const n=new Set,c=(t,c)=>{const o="function"==typeof t?t(e):t;if(!Object.is(o,e)){const t=e;e=(null!=c?c:"object"!=typeof o||null===o)?o:Object.assign({},e,o),n.forEach(n=>n(e,t))}},o=()=>e,s={setState:c,getState:o,getInitialState:()=>a,subscribe:t=>(n.add(t),()=>n.delete(t))},a=e=t(c,o,s);return s},e=e=>e?t(e):t;export{e as createStore};
+//# sourceMappingURL=vanilla-Dcuy32gi.js.map

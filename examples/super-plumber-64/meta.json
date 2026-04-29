@@ -1,0 +1,195 @@
+{
+  "name": "Super Plumber 64",
+  "description": "⭐ SUPER PLUMBER 64 — 3D Platforming Adventure ⭐",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "SUPER PLUMBER 64",
+      "game.subtitle": "3D Platforming Adventure",
+      "ui.coins": "COINS",
+      "ui.lives": "LIVES",
+      "ui.health": "HEALTH",
+      "ui.zone": "ZONE",
+      "ui.gameOver": "GAME OVER",
+      "ui.victory": "STAR GET!",
+      "powerup.mushroom": "Extra Health!",
+      "powerup.star": "Star Power!",
+      "powerup.speedShoe": "Speed Boost!"
+    },
+    "locales": {
+      "es": {
+        "game.title": "SUPER PLOMERO 64",
+        "game.subtitle": "Aventura de Plataformas 3D",
+        "ui.coins": "MONEDAS",
+        "ui.lives": "VIDAS",
+        "ui.health": "SALUD",
+        "ui.zone": "ZONA",
+        "ui.gameOver": "FIN DEL JUEGO",
+        "ui.victory": "¡ESTRELLA!",
+        "powerup.mushroom": "¡Salud Extra!",
+        "powerup.star": "¡Poder Estelar!",
+        "powerup.speedShoe": "¡Velocidad!"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "goomba": {
+        "name": "Goomba",
+        "hp": 1,
+        "speed": 3,
+        "patrol": 10,
+        "color": "#aa4400",
+        "score": 200
+      },
+      "koopa": {
+        "name": "Koopa",
+        "hp": 2,
+        "speed": 4,
+        "patrol": 8,
+        "color": "#22aa22",
+        "score": 300
+      },
+      "flyGuy": {
+        "name": "Fly Guy",
+        "hp": 1,
+        "orbitRadius": 6,
+        "color": "#dd44dd",
+        "score": 250
+      },
+      "chomp": {
+        "name": "Chain Chomp",
+        "hp": 5,
+        "patrol": 6,
+        "color": "#222222",
+        "score": 500
+      }
+    }
+  },
+  "items": {
+    "coin": {
+      "name": "Coin",
+      "color": "#ffcc00",
+      "score": 100,
+      "rotationSpeed": 3
+    },
+    "mushroom": {
+      "name": "Mushroom",
+      "color": "#ff4444",
+      "effect": "health",
+      "value": 1
+    },
+    "star": {
+      "name": "Star",
+      "color": "#ffff00",
+      "effect": "invulnerability",
+      "duration": 8
+    },
+    "speedShoe": {
+      "name": "Speed Shoe",
+      "color": "#44ddff",
+      "effect": "speed",
+      "multiplier": 1.6,
+      "duration": 12
+    }
+  },
+  "gameplay": {
+    "player": {
+      "moveSpeed": 32,
+      "jumpVelocity": 18,
+      "doubleJumpVelocity": 14,
+      "gravity": {
+        "up": 35,
+        "down": 45
+      },
+      "friction": {
+        "ground": 6,
+        "ice": 0.4
+      },
+      "collision": {
+        "radius": 0.6,
+        "height": 2
+      }
+    },
+    "colors": {
+      "sky": "#44aaff",
+      "grass": "#228811",
+      "dirt": "#553311",
+      "sand": "#ccaa55",
+      "sandstone": "#bb8833",
+      "ice": "#88bbdd",
+      "snow": "#ddeeff",
+      "lava": "#ff3300",
+      "water": "#0055ff",
+      "brick": "#cc6600",
+      "plumberHat": "#ff0000",
+      "plumberFace": "#ffccaa",
+      "plumberBody": "#0022cc"
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#44aaff",
+      "near": 60,
+      "far": 180
+    },
+    "lighting": {
+      "ambient": "#ffffff",
+      "ambientIntensity": 0.75,
+      "directional": {
+        "direction": [1, 2, 1],
+        "color": "#ffffff"
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.4,
+        "radius": 0.5,
+        "threshold": 0.4
+      }
+    },
+    "camera": {
+      "position": [0, 12, 18],
+      "target": [0, 2, -5],
+      "fov": 60
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "infiniteLives": false,
+        "starPower": false,
+        "moonJump": false
+      }
+    }
+  },
+  "levels": {
+    "grassland": {
+      "fog": {
+        "color": "#44aaff"
+      },
+      "lighting": {
+        "ambient": "#ffffff"
+      }
+    },
+    "desert": {
+      "fog": {
+        "color": "#ddcc88"
+      },
+      "lighting": {
+        "ambient": "#ffeecc"
+      }
+    },
+    "ice_mountain": {
+      "fog": {
+        "color": "#aabbdd"
+      },
+      "lighting": {
+        "ambient": "#ccddff"
+      }
+    }
+  }
+}

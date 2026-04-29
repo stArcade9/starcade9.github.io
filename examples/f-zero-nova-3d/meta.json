@@ -1,0 +1,124 @@
+{
+  "name": "F Zero Nova 3D",
+  "description": "⭐ F-ZERO NOVA 3D — Anti-Gravity Racing ⭐",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "F-ZERO",
+      "game.subtitle": "NOVA 3D",
+      "ui.rank": "RANK",
+      "ui.progress": "COURSE PROGRESS",
+      "ui.hull": "HULL",
+      "ui.boost": "BOOST POWER",
+      "ui.speed": "km/h",
+      "ui.lap": "LAP",
+      "ui.finished": "RACE FINISHED",
+      "ui.crashed": "SHIP DESTROYED"
+    },
+    "locales": {
+      "es": {
+        "game.title": "F-ZERO",
+        "game.subtitle": "NOVA 3D",
+        "ui.rank": "POSICIÓN",
+        "ui.progress": "PROGRESO DEL CIRCUITO",
+        "ui.hull": "BLINDAJE",
+        "ui.boost": "PODER DE TURBO",
+        "ui.speed": "km/h",
+        "ui.lap": "VUELTA",
+        "ui.finished": "CARRERA TERMINADA",
+        "ui.crashed": "NAVE DESTRUIDA"
+      }
+    }
+  },
+  "gameplay": {
+    "racing": {
+      "maxSpeed": 250,
+      "boostSpeed": 400,
+      "trackWidth": 40
+    },
+    "acceleration": {
+      "speedUp": 150,
+      "speedDown": 80,
+      "lateralAccel": 120,
+      "handlingFriction": 4.5
+    },
+    "spawning": {
+      "propInterval": [1, 3],
+      "rivalInterval": [1.5, 4],
+      "maxRivals": 8,
+      "rivalSpeedRange": [0.5, 0.9]
+    },
+    "colors": {
+      "ship": {
+        "body": "#0044ff",
+        "cockpit": "#22aaff",
+        "engine": "#00ffff",
+        "trim": "#ffffff"
+      },
+      "rival": {
+        "body": "#ee0033",
+        "engine": "#ff4422"
+      },
+      "track": {
+        "segment1": "#05051a",
+        "segment2": "#0a0a22",
+        "wallLeft": "#ff00aa",
+        "wallRight": "#aa00ff"
+      },
+      "boostPad": "#00ffaa",
+      "spark": "#ffdd00"
+    },
+    "ui": {
+      "healthBar": {
+        "width": 150,
+        "colorGood": "#00ff00",
+        "colorBad": "#ff3232"
+      },
+      "boostBar": {
+        "width": 150,
+        "color": "#00c8ff"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#040210",
+      "near": 20,
+      "far": 300
+    },
+    "lighting": {
+      "ambient": "#222233",
+      "ambientIntensity": 1.5,
+      "keyLight": "#ffaaaa",
+      "keyLightDirection": [0, -1, -0.5]
+    },
+    "effects": {
+      "bloom": {
+        "strength": 1,
+        "radius": 0.4,
+        "threshold": 0.4
+      }
+    },
+    "camera": {
+      "fov": 85,
+      "fovBoost": 100
+    },
+    "skybox": {
+      "starCount": 1500,
+      "starSize": 2,
+      "nebulaColor": "#aa00aa"
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "godMode": false,
+        "maxBoost": false,
+        "noRivals": false,
+        "speedMultiplier": "1x"
+      }
+    }
+  }
+}

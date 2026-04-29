@@ -1,0 +1,223 @@
+{
+  "name": "Neo-Doom",
+  "description": "Fast arena shooter with 3 levels, 4 enemy types, and boss fights",
+  "author": "Nova64",
+  "version": "1.0.0",
+  "category": "game",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NEO-DOOM",
+      "game.subtitle": "ARENA SHOOTER",
+      "hud.health": "HP",
+      "hud.armor": "ARM",
+      "hud.ammo": "AMMO",
+      "hud.score": "SCORE",
+      "hud.level": "LEVEL",
+      "hud.kills": "KILLS",
+      "enemy.grunt": "Grunt",
+      "enemy.shooter": "Shooter",
+      "enemy.tank": "Tank",
+      "enemy.boss": "Boss",
+      "pickup.health": "Health Pack",
+      "pickup.ammo": "Ammo Crate",
+      "pickup.armor": "Armor Shard",
+      "ui.game_over": "GAME OVER",
+      "ui.level_clear": "LEVEL CLEAR",
+      "ui.victory": "VICTORY"
+    },
+    "locales": {
+      "es": {
+        "game.title": "NEO-DOOM",
+        "game.subtitle": "TIRADOR DE ARENA",
+        "hud.health": "VIDA",
+        "hud.armor": "ARM",
+        "hud.ammo": "MUNICIÓN",
+        "hud.score": "PUNTOS",
+        "hud.level": "NIVEL",
+        "hud.kills": "MUERTES",
+        "enemy.grunt": "Soldado",
+        "enemy.shooter": "Francotirador",
+        "enemy.tank": "Tanque",
+        "enemy.boss": "Jefe",
+        "ui.game_over": "FIN DEL JUEGO",
+        "ui.level_clear": "NIVEL SUPERADO",
+        "ui.victory": "VICTORIA"
+      }
+    }
+  },
+  "entities": {
+    "enemies": {
+      "grunt": {
+        "name": "enemy.grunt",
+        "hp": 30,
+        "speed": 3,
+        "damage": 8,
+        "xp": 10,
+        "color": "#ff3300",
+        "tier": 1
+      },
+      "shooter": {
+        "name": "enemy.shooter",
+        "hp": 25,
+        "speed": 2,
+        "damage": 12,
+        "xp": 20,
+        "color": "#00ff44",
+        "tier": 2,
+        "ranged": true
+      },
+      "tank": {
+        "name": "enemy.tank",
+        "hp": 80,
+        "speed": 1.5,
+        "damage": 15,
+        "xp": 30,
+        "color": "#9933ff",
+        "tier": 3
+      }
+    },
+    "bosses": {
+      "boss": {
+        "name": "enemy.boss",
+        "hp": 200,
+        "speed": 2,
+        "damage": 20,
+        "xp": 100,
+        "color": "#ffcc00",
+        "tier": 4
+      }
+    }
+  },
+  "items": {
+    "health_pack": {
+      "name": "pickup.health",
+      "type": "consumable",
+      "effect": {
+        "heal": 25
+      },
+      "rarity": "common"
+    },
+    "ammo_crate": {
+      "name": "pickup.ammo",
+      "type": "consumable",
+      "effect": {
+        "ammo": 20
+      },
+      "rarity": "common"
+    },
+    "armor_shard": {
+      "name": "pickup.armor",
+      "type": "consumable",
+      "effect": {
+        "armor": 15
+      },
+      "rarity": "uncommon"
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 100,
+      "armor": 0,
+      "ammo": 50,
+      "speed": 12,
+      "startPosition": [2, 1.5, 2]
+    },
+    "materials": {
+      "floor": {
+        "material": "standard",
+        "color": "#223344",
+        "roughness": 1
+      },
+      "wall": {
+        "material": "standard",
+        "color": "#dddddd",
+        "roughness": 0.8
+      },
+      "wallAccent1": {
+        "material": "standard",
+        "color": "#00aaff",
+        "roughness": 0.8
+      },
+      "wallAccent2": {
+        "material": "standard",
+        "color": "#ff6600",
+        "roughness": 0.8
+      },
+      "wallAccent3": {
+        "material": "standard",
+        "color": "#cc00ff",
+        "roughness": 0.8
+      }
+    },
+    "shootCooldown": 0.1,
+    "bulletSpeed": 80,
+    "muzzleFlashDuration": 0.06,
+    "shakeIntensity": 1.5,
+    "spawnStats": {
+      "grunt": {
+        "hp": 5,
+        "speed": 5.5,
+        "size": 1.4,
+        "damage": 12
+      },
+      "shooter": {
+        "hp": 8,
+        "speed": 4.5,
+        "size": 1.4,
+        "damage": 10
+      },
+      "tank": {
+        "hp": 20,
+        "speed": 2.5,
+        "size": 2.4,
+        "damage": 20
+      },
+      "boss": {
+        "hpBase": 60,
+        "hpPerLevel": 15,
+        "speed": 3.5,
+        "size": 3.5,
+        "damage": 18
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "enabled": true,
+      "color": "#001122",
+      "near": 5,
+      "far": 80
+    },
+    "lighting": {
+      "ambient": "#ffffff",
+      "directional": {
+        "direction": [-1, -2, -1],
+        "color": "#ffffee",
+        "intensity": 1.2
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.8,
+        "radius": 0.4,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 1.2,
+        "offset": 0.9
+      }
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "godMode": false,
+        "infiniteAmmo": false,
+        "noclip": false,
+        "speedMultiplier": 1,
+        "showColliders": false,
+        "skipToLevel": 0
+      }
+    }
+  }
+}

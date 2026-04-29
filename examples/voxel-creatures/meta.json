@@ -1,0 +1,101 @@
+{
+  "name": "Voxel Creatures",
+  "description": "Voxel Creatures — Entity system showcase with wandering mobs",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "VOXEL CREATURES",
+      "mob.pig": "Pig",
+      "mob.cow": "Cow",
+      "mob.chicken": "Chicken",
+      "mob.sheep": "Sheep",
+      "mob.zombie": "Zombie",
+      "mob.slime": "Slime",
+      "ui.spawned": "Spawned",
+      "ui.cleared": "All creatures cleared!"
+    },
+    "locales": {
+      "es": {
+        "game.title": "CRIATURAS VOXEL",
+        "mob.pig": "Cerdo",
+        "mob.cow": "Vaca",
+        "mob.chicken": "Pollo",
+        "mob.sheep": "Oveja",
+        "mob.zombie": "Zombi",
+        "mob.slime": "Slime",
+        "ui.spawned": "Generado",
+        "ui.cleared": "¡Todas las criaturas eliminadas!"
+      }
+    }
+  },
+  "entities": [
+    {
+      "id": "pig",
+      "name": "Pig",
+      "color": "#ffaaaa",
+      "size": [0.8, 0.8, 0.8],
+      "health": 10,
+      "ai": "wander"
+    },
+    {
+      "id": "cow",
+      "name": "Cow",
+      "color": "#886644",
+      "size": [1, 1.2, 1],
+      "health": 15,
+      "ai": "wander"
+    },
+    {
+      "id": "chicken",
+      "name": "Chicken",
+      "color": "#ffffff",
+      "size": [0.5, 0.6, 0.5],
+      "health": 5,
+      "ai": "wander"
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "color": "#eeeeee",
+      "size": [0.8, 0.9, 0.8],
+      "health": 10,
+      "ai": "wander"
+    },
+    {
+      "id": "zombie",
+      "name": "Zombie",
+      "color": "#44aa44",
+      "size": [0.7, 1.6, 0.7],
+      "health": 20,
+      "ai": "chase"
+    },
+    {
+      "id": "slime",
+      "name": "Slime",
+      "color": "#44ff44",
+      "size": [0.6, 0.6, 0.6],
+      "health": 8,
+      "ai": "wander"
+    }
+  ],
+  "defaults": {
+    "fog": {
+      "color": "#87ceeb",
+      "near": 30,
+      "far": 100
+    },
+    "camera": {
+      "position": [0, 80, 0]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "spawnCount": "1",
+        "peacefulMode": false
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Model Viewer 3D",
+  "description": "🎮 GLB Model Showcase for Nova64",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "MODEL VIEWER",
+      "ui.loading": "LOADING ASSET.GLB..."
+    },
+    "locales": {
+      "es": {
+        "game.title": "VISOR DE MODELOS",
+        "ui.loading": "CARGANDO ASSET.GLB..."
+      }
+    }
+  },
+  "defaults": {
+    "lighting": {
+      "ambient": "#ffffff",
+      "ambientIntensity": 0.4
+    },
+    "camera": {
+      "position": [0, 1.5, 8]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "retroEffects": false
+      }
+    }
+  }
+}

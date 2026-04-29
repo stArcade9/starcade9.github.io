@@ -1,0 +1,13 @@
+{
+  "title": "Babylon.js Demo",
+  "description": "Babylon.js backend demo for Nova64 Phase 2 - showcasing GpuBabylon runtime with 3D primitives, lighting, and camera controls",
+  "author": "Nova64 Contributors",
+  "category": "3d",
+  "tags": ["babylon", "3d", "demo", "experimental"],
+  "version": "0.1.0",
+  "backend": "babylon",
+  "controls": {
+    "camera": "Free-look with gentle bob animation",
+    "objects": "Rotating cube, orbiting sphere, static pillar"
+  }
+}

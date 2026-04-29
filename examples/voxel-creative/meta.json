@@ -1,0 +1,57 @@
+{
+  "name": "Voxel Creative",
+  "description": "Voxel Creative — Free-building sandbox with block palette and fly mode",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "creative",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "VOXEL CREATIVE",
+      "ui.welcome": "Welcome! Fly around and build freely.",
+      "ui.platformPlaced": "Platform placed!",
+      "block.grass": "GRASS",
+      "block.stone": "STONE",
+      "block.planks": "PLANKS",
+      "block.wood": "WOOD",
+      "block.brick": "BRICK",
+      "block.cobble": "COBBLE",
+      "block.sand": "SAND",
+      "block.glow": "GLOW",
+      "block.torch": "TORCH"
+    },
+    "locales": {
+      "es": {
+        "game.title": "VOXEL CREATIVO",
+        "ui.welcome": "¡Bienvenido! Vuela y construye libremente.",
+        "ui.platformPlaced": "¡Plataforma colocada!",
+        "block.grass": "HIERBA",
+        "block.stone": "PIEDRA",
+        "block.planks": "TABLAS",
+        "block.wood": "MADERA",
+        "block.brick": "LADRILLO",
+        "block.cobble": "ADOQUÍN",
+        "block.sand": "ARENA",
+        "block.glow": "BRILLO",
+        "block.torch": "ANTORCHA"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#87ceeb",
+      "near": 40,
+      "far": 120
+    },
+    "camera": {
+      "position": [8, 70, 8]
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "flySpeed": "normal",
+        "infiniteReach": false
+      }
+    }
+  }
+}

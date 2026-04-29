@@ -2,20 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./nova-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/os9-shell/nova-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>nova64 OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
     <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        "three": "https://esm.sh/three@0.182.0",
+        "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+        "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
       }
     }
     </script>
-    <script type="module" crossorigin src="./assets/index-B1Uvacma.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DIHfrTaW.css">
-  </head>
+  <script type="module" crossorigin src="/os9-shell/assets/index-mH6JBBV9.js"></script>
+</head>
   <body>
     <div id="root"></div>
   </body>

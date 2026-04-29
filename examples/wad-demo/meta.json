@@ -1,0 +1,136 @@
+{
+  "name": "FreeDoom WAD Explorer",
+  "description": "Explore classic DOOM levels from the open-source FreeDoom WAD",
+  "author": "Nova64",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "FREEDOOM WAD EXPLORER",
+      "hud.health": "HP",
+      "hud.armor": "ARM",
+      "hud.ammo": "AMMO",
+      "hud.score": "SCORE",
+      "hud.kills": "KILLS",
+      "ui.game_over": "GAME OVER",
+      "ui.level_clear": "LEVEL CLEAR",
+      "ui.victory": "VICTORY",
+      "ui.loading": "Loading FreeDoom WAD..."
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 100,
+      "armor": 0,
+      "ammo": 50,
+      "speed": 12,
+      "startPosition": [0, 1.5, 0]
+    },
+    "materials": {
+      "floor": {
+        "material": "standard",
+        "color": "#223344",
+        "roughness": 1
+      },
+      "wall": {
+        "material": "standard",
+        "color": "#dddddd",
+        "roughness": 0.8
+      },
+      "enemy": {
+        "material": "emissive",
+        "color": "#ff3300",
+        "intensity": 2
+      },
+      "enemyEye": {
+        "material": "emissive",
+        "color": "#ffffff",
+        "intensity": 3
+      },
+      "shooter": {
+        "material": "emissive",
+        "color": "#00ff44",
+        "intensity": 2
+      },
+      "tank": {
+        "material": "emissive",
+        "color": "#9933ff",
+        "intensity": 2
+      },
+      "boss": {
+        "material": "emissive",
+        "color": "#ffcc00",
+        "intensity": 3
+      },
+      "bullet": {
+        "material": "emissive",
+        "color": "#00ffcc",
+        "intensity": 4
+      },
+      "enemyBullet": {
+        "material": "emissive",
+        "color": "#ff4400",
+        "intensity": 3
+      },
+      "healthPickup": {
+        "material": "emissive",
+        "color": "#00ff44",
+        "intensity": 3
+      },
+      "ammoPickup": {
+        "material": "emissive",
+        "color": "#ffcc00",
+        "intensity": 3
+      },
+      "armorPickup": {
+        "material": "emissive",
+        "color": "#4488ff",
+        "intensity": 3
+      }
+    },
+    "accentColors": ["#00aaff", "#ff6600", "#cc00ff", "#00ff88", "#ff0066", "#ffaa00"],
+    "fogColors": ["#001122", "#221100", "#110022", "#002211", "#220011", "#111122"],
+    "shootCooldown": 0.1,
+    "bulletSpeed": 80,
+    "muzzleFlashDuration": 0.06,
+    "shakeIntensity": 1.5
+  },
+  "defaults": {
+    "fog": {
+      "enabled": true,
+      "color": "#001122",
+      "near": 5,
+      "far": 80
+    },
+    "lighting": {
+      "ambient": "#ffffff",
+      "directional": {
+        "direction": [-1, -2, -1],
+        "color": "#ffffee",
+        "intensity": 1.2
+      }
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.8,
+        "radius": 0.4,
+        "threshold": 0.4
+      },
+      "vignette": {
+        "darkness": 1.2,
+        "offset": 0.9
+      }
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "godMode": false,
+        "infiniteAmmo": false,
+        "noclip": false,
+        "speedMultiplier": 1,
+        "showColliders": false
+      }
+    }
+  }
+}

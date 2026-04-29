@@ -1,0 +1,28 @@
+{
+  "name": "Start Screen Demo",
+  "description": "Animated game title screen with NML/CanvasUI — nav menu, panels, SVG arcs, pulsing star decorations, options and credits screens.",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA 64",
+      "game.subtitle": "ULTIMATE 3D FANTASY CONSOLE",
+      "menu.play": "PLAY GAME",
+      "menu.options": "OPTIONS",
+      "menu.credits": "CREDITS",
+      "menu.hint": "CLICK A BUTTON OR PRESS START",
+      "panel.options": "OPTIONS",
+      "panel.credits": "CREDITS",
+      "btn.save": "SAVE",
+      "btn.back": "BACK"
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
+}

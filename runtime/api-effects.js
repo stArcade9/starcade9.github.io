@@ -1,11 +1,121 @@
 // runtime/api-effects.js
 // Advanced effects, shading, and post-processing API for Nova64
 import * as THREE from 'three';
+import { logger } from './logger.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+
+// Chromatic Aberration shader
+const ChromaticAberrationShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    amount: { value: 0.002 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float amount;
+    varying vec2 vUv;
+    void main() {
+      vec2 dir = vUv - 0.5;
+      float dist = length(dir);
+      vec2 offset = normalize(dir) * dist * amount;
+      float r = texture2D(tDiffuse, vUv + offset).r;
+      float g = texture2D(tDiffuse, vUv).g;
+      float b = texture2D(tDiffuse, vUv - offset).b;
+      gl_FragColor = vec4(r, g, b, 1.0);
+    }
+  `,
+};
+
+// Glitch/damage shader — scanline displacement, RGB split, block artifacts
+const GlitchShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    intensity: { value: 0.0 },
+    time: { value: 0.0 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float intensity;
+    uniform float time;
+    varying vec2 vUv;
+
+    float rand(vec2 co) {
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+      vec2 uv = vUv;
+
+      // Scanline displacement — horizontal bands shift left/right
+      float scanJitter = step(0.99 - intensity * 0.3, rand(vec2(time * 1.3, floor(uv.y * 40.0))))
+                        * (rand(vec2(time, floor(uv.y * 40.0))) - 0.5) * intensity * 0.15;
+      uv.x += scanJitter;
+
+      // Block glitch — large rectangular regions shift
+      float blockY = floor(uv.y * 8.0);
+      float blockShift = step(0.97 - intensity * 0.15, rand(vec2(blockY, time * 0.7)))
+                        * (rand(vec2(blockY + 1.0, time)) - 0.5) * intensity * 0.1;
+      uv.x += blockShift;
+
+      // RGB channel split
+      float rgbShift = intensity * 0.012;
+      float r = texture2D(tDiffuse, vec2(uv.x + rgbShift, uv.y + rgbShift * 0.5)).r;
+      float g = texture2D(tDiffuse, uv).g;
+      float b = texture2D(tDiffuse, vec2(uv.x - rgbShift, uv.y - rgbShift * 0.3)).b;
+
+      // Color corruption — random bright pixels
+      float noise = step(0.995 - intensity * 0.05, rand(uv + time)) * intensity;
+
+      gl_FragColor = vec4(r + noise, g, b + noise * 0.5, 1.0);
+    }
+  `,
+};
+
+// Vignette shader
+const VignetteShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    darkness: { value: 1.5 },
+    offset: { value: 0.95 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float darkness;
+    uniform float offset;
+    varying vec2 vUv;
+    void main() {
+      vec4 texel = texture2D(tDiffuse, vUv);
+      vec2 uv = (vUv - vec2(0.5)) * vec2(offset);
+      float vignette = 1.0 - dot(uv, uv) * darkness;
+      gl_FragColor = vec4(texel.rgb * clamp(vignette, 0.0, 1.0), texel.a);
+    }
+  `,
+};
 
 export function effectsApi(gpu) {
   if (!gpu.getScene || !gpu.getCamera || !gpu.getRenderer) {
@@ -16,14 +126,94 @@ export function effectsApi(gpu) {
   const camera = gpu.getCamera();
   const renderer = gpu.getRenderer();
 
+  // Check if this is Babylon.js backend - if so, delegate to gpu's built-in effects
+  // Babylon.js Engine has 'scenes' array and 'getRenderingCanvas' method
+  // Three.js WebGLRenderer has 'domElement' property
+  const isBabylon =
+    !renderer ||
+    renderer.scenes !== undefined ||
+    typeof renderer.getRenderingCanvas === 'function' ||
+    renderer.constructor?.name === 'Engine' ||
+    renderer.constructor?.name?.includes?.('Engine') ||
+    !renderer.domElement;
+
+  if (isBabylon) {
+    // Babylon backend has its own effects implementation in effects.js
+    // Return a wrapper that delegates to the gpu's effect functions
+    return {
+      exposeTo(target) {
+        // These will be provided by gpu.exposeTo() from GpuBabylon's effects module
+        // We just ensure they're available in the target namespace
+        const babylonEffects = [
+          'enableBloom',
+          'disableBloom',
+          'setBloomStrength',
+          'setBloomRadius',
+          'setBloomThreshold',
+          'enableFXAA',
+          'disableFXAA',
+          'enableChromaticAberration',
+          'disableChromaticAberration',
+          'enableVignette',
+          'disableVignette',
+          'enableGlitch',
+          'disableGlitch',
+          'setGlitchIntensity',
+          'enableRetroEffects',
+          'disableRetroEffects',
+          'isEffectsEnabled',
+          'enableSharpen',
+          'disableSharpen',
+          'enableGrain',
+          'disableGrain',
+          // Custom shader materials (needed by Wizardry, etc.)
+          'createShaderMaterial',
+          'updateShaderUniform',
+        ];
+
+        // Only copy functions that exist on gpu and aren't already on target
+        for (const key of babylonEffects) {
+          if (typeof gpu[key] === 'function' && !(key in target)) {
+            target[key] = gpu[key].bind(gpu);
+          }
+        }
+
+        // Provide a no-op renderEffects for compatibility
+        if (!target.renderEffects) {
+          target.renderEffects = () => {
+            // Babylon handles effects in its own render loop
+          };
+        }
+      },
+
+      // Babylon handles effect updates via gpu.updateEffects() called in its render loop
+      update(deltaTime) {
+        if (typeof gpu.updateEffects === 'function') {
+          gpu.updateEffects(deltaTime);
+        }
+      },
+
+      // Babylon handles rendering via its own scene.render()
+      render() {
+        // No-op: Babylon effects are applied in the DefaultRenderingPipeline
+      },
+    };
+  }
+
+  // === THREE.JS POST-PROCESSING IMPLEMENTATION ===
+
   // Post-processing composer
   let composer = null;
   let renderPass = null;
   let bloomPass = null;
   let fxaaPass = null;
+  let chromaticAberrationPass = null;
+  let vignettePass = null;
+  let glitchPass = null;
 
   // Effect states
   let effectsEnabled = false;
+  let glitchTime = 0;
 
   // Custom shader materials
   const customShaders = new Map();
@@ -33,7 +223,7 @@ export function effectsApi(gpu) {
     if (composer) return; // Already initialized
 
     composer = new EffectComposer(renderer);
-    
+
     // Base render pass
     renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
@@ -42,8 +232,14 @@ export function effectsApi(gpu) {
   }
 
   // === BLOOM EFFECTS ===
-  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.85) {
+  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6) {
     initPostProcessing();
+
+    // Return early if post-processing not supported (e.g., Babylon.js backend)
+    if (!composer) {
+      logger.warn('⚠️ Bloom effect not available with current backend');
+      return false;
+    }
 
     if (bloomPass) {
       composer.removePass(bloomPass);
@@ -90,6 +286,12 @@ export function effectsApi(gpu) {
   function enableFXAA() {
     initPostProcessing();
 
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ FXAA not available with current backend');
+      return false;
+    }
+
     if (fxaaPass) return;
 
     fxaaPass = new ShaderPass(FXAAShader);
@@ -98,6 +300,7 @@ export function effectsApi(gpu) {
     fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
 
     composer.addPass(fxaaPass);
+    return true;
   }
 
   function disableFXAA() {
@@ -107,8 +310,97 @@ export function effectsApi(gpu) {
     }
   }
 
+  // === CHROMATIC ABERRATION ===
+  function enableChromaticAberration(amount = 0.002) {
+    initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Chromatic aberration not available with current backend');
+      return false;
+    }
+
+    if (chromaticAberrationPass) {
+      chromaticAberrationPass.uniforms['amount'].value = amount;
+      return true;
+    }
+    chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
+    chromaticAberrationPass.uniforms['amount'].value = amount;
+    composer.addPass(chromaticAberrationPass);
+    return true;
+  }
+
+  function disableChromaticAberration() {
+    if (chromaticAberrationPass && composer) {
+      composer.removePass(chromaticAberrationPass);
+      chromaticAberrationPass = null;
+    }
+  }
+
+  // === VIGNETTE ===
+  function enableVignette(darkness = 1.0, offset = 0.9) {
+    initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Vignette effect not available with current backend');
+      return false;
+    }
+
+    if (vignettePass) {
+      vignettePass.uniforms['darkness'].value = darkness;
+      vignettePass.uniforms['offset'].value = offset;
+      return true;
+    }
+    vignettePass = new ShaderPass(VignetteShader);
+    vignettePass.uniforms['darkness'].value = darkness;
+    vignettePass.uniforms['offset'].value = offset;
+    composer.addPass(vignettePass);
+    return true;
+  }
+
+  function disableVignette() {
+    if (vignettePass && composer) {
+      composer.removePass(vignettePass);
+      vignettePass = null;
+    }
+  }
+
+  // === GLITCH EFFECT ===
+  function enableGlitch(intensity = 0.5) {
+    initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Glitch effect not available with current backend');
+      return false;
+    }
+
+    if (glitchPass) {
+      glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
+      return true;
+    }
+    glitchPass = new ShaderPass(GlitchShader);
+    glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
+    composer.addPass(glitchPass);
+    return true;
+  }
+
+  function disableGlitch() {
+    if (glitchPass && composer) {
+      composer.removePass(glitchPass);
+      glitchPass = null;
+    }
+  }
+
+  function setGlitchIntensity(intensity) {
+    if (glitchPass) {
+      glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
+    }
+  }
+
   // === CUSTOM SHADERS ===
-  
+
   // Holographic shader
   const holographicShader = {
     uniforms: {
@@ -116,7 +408,7 @@ export function effectsApi(gpu) {
       color: { value: new THREE.Color(0x00ffff) },
       scanlineSpeed: { value: 2.0 },
       glitchAmount: { value: 0.1 },
-      opacity: { value: 0.8 }
+      opacity: { value: 0.8 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -155,7 +447,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, opacity);
       }
-    `
+    `,
   };
 
   // Energy shield shader
@@ -165,7 +457,7 @@ export function effectsApi(gpu) {
       hitPosition: { value: new THREE.Vector3(0, 0, 0) },
       hitStrength: { value: 0 },
       color: { value: new THREE.Color(0x00ffff) },
-      opacity: { value: 0.6 }
+      opacity: { value: 0.6 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -214,7 +506,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, finalOpacity);
       }
-    `
+    `,
   };
 
   // Water/liquid shader
@@ -224,7 +516,7 @@ export function effectsApi(gpu) {
       color: { value: new THREE.Color(0x0088ff) },
       waveSpeed: { value: 1.0 },
       waveHeight: { value: 0.5 },
-      transparency: { value: 0.7 }
+      transparency: { value: 0.7 },
     },
     vertexShader: `
       uniform float time;
@@ -278,7 +570,7 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(finalColor, transparency);
       }
-    `
+    `,
   };
 
   // Fire/plasma shader
@@ -288,7 +580,7 @@ export function effectsApi(gpu) {
       color1: { value: new THREE.Color(0xff4400) },
       color2: { value: new THREE.Color(0xffff00) },
       intensity: { value: 1.0 },
-      speed: { value: 2.0 }
+      speed: { value: 2.0 },
     },
     vertexShader: `
       varying vec2 vUv;
@@ -353,14 +645,31 @@ export function effectsApi(gpu) {
         
         gl_FragColor = vec4(fireColor, alpha);
       }
-    `
+    `,
   };
+
+  // Detect if running on Babylon.js backend
+  function isBabylonBackend() {
+    return (
+      !renderer || renderer.scenes || renderer.constructor.name === 'Engine' || !renderer.domElement
+    );
+  }
 
   // Create material with custom shader
   function createShaderMaterial(shaderName, customUniforms = {}) {
+    // Delegate to Babylon.js backend if applicable
+    if (isBabylonBackend()) {
+      // The Babylon backend exposes createShaderMaterial on the gpu object
+      if (typeof gpu.createShaderMaterial === 'function') {
+        return gpu.createShaderMaterial(shaderName, customUniforms);
+      }
+      logger.warn(`Shader material '${shaderName}' not available with Babylon.js backend`);
+      return null;
+    }
+
     let shader;
-    
-    switch(shaderName) {
+
+    switch (shaderName) {
       case 'holographic':
         shader = holographicShader;
         break;
@@ -374,7 +683,7 @@ export function effectsApi(gpu) {
         shader = fireShader;
         break;
       default:
-        console.warn(`Unknown shader: ${shaderName}`);
+        logger.warn(`Unknown shader: ${shaderName}`);
         return null;
     }
 
@@ -391,7 +700,7 @@ export function effectsApi(gpu) {
       vertexShader: shader.vertexShader,
       fragmentShader: shader.fragmentShader,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
 
     const id = `shader_${Date.now()}_${Math.random()}`;
@@ -402,6 +711,14 @@ export function effectsApi(gpu) {
 
   // Update shader uniforms
   function updateShaderUniform(shaderId, uniformName, value) {
+    // Delegate to Babylon.js backend if applicable
+    if (isBabylonBackend()) {
+      if (typeof gpu.updateShaderUniform === 'function') {
+        return gpu.updateShaderUniform(shaderId, uniformName, value);
+      }
+      return false;
+    }
+
     const material = customShaders.get(shaderId);
     if (material && material.uniforms[uniformName]) {
       material.uniforms[uniformName].value = value;
@@ -419,105 +736,76 @@ export function effectsApi(gpu) {
     });
   }
 
-  // === PARTICLE EFFECTS ===
-  function createParticleSystem(count, options = {}) {
-    const {
-      color = 0xffffff,
-      size = 0.1,
-      speed = 1.0,
-      lifetime = 2.0,
-      spread = 1.0,
-      gravity = -1.0
-    } = options;
+  // NOTE: Particle system is provided by api-3d/particles.js (GPU InstancedMesh).
+  // Legacy Points-based particle functions were removed to avoid overwriting the 3D API.
 
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const velocities = new Float32Array(count * 3);
-    const lifetimes = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      
-      // Random positions in spread area
-      positions[i3] = (Math.random() - 0.5) * spread;
-      positions[i3 + 1] = (Math.random() - 0.5) * spread;
-      positions[i3 + 2] = (Math.random() - 0.5) * spread;
-
-      // Random velocities
-      velocities[i3] = (Math.random() - 0.5) * speed;
-      velocities[i3 + 1] = Math.random() * speed;
-      velocities[i3 + 2] = (Math.random() - 0.5) * speed;
-
-      // Random lifetimes
-      lifetimes[i] = Math.random() * lifetime;
+  // === CONVENIENCE: enable a full retro N64/PS1 post-processing stack in one call ===
+  /**
+   * enableRetroEffects(opts)
+   * One-call setup for bloom + FXAA + vignette + optional chromatic aberration.
+   * opts: {
+   *   bloom:     { strength, radius, threshold }   | false to skip  (default: {1.5, 0.4, 0.1})
+   *   fxaa:      true | false                                        (default: true)
+   *   vignette:  { darkness, offset }               | false to skip  (default: {1.3, 0.9})
+   *   chromatic: number (amount) | false to skip                     (default: false)
+   *   pixelation: number (factor) | false to skip                    (default: 1)
+   *   dithering: boolean                                              (default: true)
+   * }
+   * Call with no args for sensible defaults that match Star Fox / Crystal Cathedral look.
+   */
+  function enableRetroEffects(opts = {}) {
+    // Pixelation — delegated to gpu (api-3d)
+    const pixelFactor = opts.pixelation !== undefined ? opts.pixelation : 1;
+    if (pixelFactor !== false && typeof globalThis.enablePixelation === 'function') {
+      globalThis.enablePixelation(pixelFactor);
     }
 
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-    geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+    // Dithering — delegated to gpu (api-3d)
+    const dither = opts.dithering !== undefined ? opts.dithering : true;
+    if (dither !== false && typeof globalThis.enableDithering === 'function') {
+      globalThis.enableDithering(dither);
+    }
 
-    const material = new THREE.PointsMaterial({
-      color: color,
-      size: size,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending
-    });
+    // Bloom
+    const bloom = opts.bloom !== undefined ? opts.bloom : {};
+    if (bloom !== false) {
+      const b = typeof bloom === 'object' ? bloom : {};
+      enableBloom(b.strength ?? 1.0, b.radius ?? 0.4, b.threshold ?? 0.6);
+    }
 
-    const particles = new THREE.Points(geometry, material);
-    particles.userData.velocities = velocities;
-    particles.userData.lifetimes = lifetimes;
-    particles.userData.maxLifetime = lifetime;
-    particles.userData.gravity = gravity;
-    particles.userData.speed = speed;
-    particles.userData.spread = spread;
+    // FXAA
+    const fxaa = opts.fxaa !== undefined ? opts.fxaa : true;
+    if (fxaa !== false) {
+      enableFXAA();
+    }
 
-    scene.add(particles);
+    // Vignette
+    const vig = opts.vignette !== undefined ? opts.vignette : {};
+    if (vig !== false) {
+      const v = typeof vig === 'object' ? vig : {};
+      enableVignette(v.darkness ?? 1.3, v.offset ?? 0.9);
+    }
 
-    return particles;
+    // Chromatic aberration (off by default — slight colour fringing)
+    const chrom = opts.chromatic !== undefined ? opts.chromatic : false;
+    if (chrom !== false) {
+      enableChromaticAberration(typeof chrom === 'number' ? chrom : 0.002);
+    }
+
+    return true;
   }
 
-  // Update particle system
-  function updateParticles(particleSystem, deltaTime) {
-    if (!particleSystem || !particleSystem.geometry) return;
-
-    const positions = particleSystem.geometry.attributes.position.array;
-    const velocities = particleSystem.userData.velocities;
-    const lifetimes = particleSystem.userData.lifetimes;
-    const maxLifetime = particleSystem.userData.maxLifetime;
-    const gravity = particleSystem.userData.gravity;
-    const speed = particleSystem.userData.speed;
-    const spread = particleSystem.userData.spread;
-
-    for (let i = 0; i < positions.length; i += 3) {
-      const idx = i / 3;
-      
-      // Update lifetime
-      lifetimes[idx] -= deltaTime;
-
-      if (lifetimes[idx] <= 0) {
-        // Reset particle
-        positions[i] = (Math.random() - 0.5) * spread;
-        positions[i + 1] = 0;
-        positions[i + 2] = (Math.random() - 0.5) * spread;
-
-        velocities[i] = (Math.random() - 0.5) * speed;
-        velocities[i + 1] = Math.random() * speed;
-        velocities[i + 2] = (Math.random() - 0.5) * speed;
-
-        lifetimes[idx] = maxLifetime;
-      } else {
-        // Update position
-        positions[i] += velocities[i] * deltaTime;
-        positions[i + 1] += velocities[i + 1] * deltaTime;
-        positions[i + 2] += velocities[i + 2] * deltaTime;
-
-        // Apply gravity
-        velocities[i + 1] += gravity * deltaTime;
-      }
-    }
-
-    particleSystem.geometry.attributes.position.needsUpdate = true;
+  /**
+   * disableRetroEffects()
+   * Tear down everything enableRetroEffects() set up.
+   */
+  function disableRetroEffects() {
+    disableBloom();
+    disableFXAA();
+    disableVignette();
+    disableChromaticAberration();
+    if (typeof globalThis.enablePixelation === 'function') globalThis.enablePixelation(0);
+    if (typeof globalThis.enableDithering === 'function') globalThis.enableDithering(false);
   }
 
   // === RENDERING ===
@@ -532,6 +820,11 @@ export function effectsApi(gpu) {
   // Update effects (called every frame)
   function updateEffects(deltaTime) {
     updateShaderTime(deltaTime);
+    // Animate glitch time uniform for randomness
+    if (glitchPass) {
+      glitchTime += deltaTime;
+      glitchPass.uniforms['time'].value = glitchTime;
+    }
   }
 
   // === EXPOSE API ===
@@ -546,21 +839,31 @@ export function effectsApi(gpu) {
         setBloomThreshold: setBloomThreshold,
         enableFXAA: enableFXAA,
         disableFXAA: disableFXAA,
+        enableChromaticAberration: enableChromaticAberration,
+        disableChromaticAberration: disableChromaticAberration,
+        enableVignette: enableVignette,
+        disableVignette: disableVignette,
+        enableGlitch: enableGlitch,
+        disableGlitch: disableGlitch,
+        setGlitchIntensity: setGlitchIntensity,
+
+        // Convenience
+        enableRetroEffects: enableRetroEffects,
+        disableRetroEffects: disableRetroEffects,
 
         // Custom shaders
         createShaderMaterial: createShaderMaterial,
         updateShaderUniform: updateShaderUniform,
 
-        // Particles
-        createParticleSystem: createParticleSystem,
-        updateParticles: updateParticles,
-
-        // Rendering
-        renderEffects: renderEffects,
-        updateEffects: updateEffects,
+        // NOTE: Particle system is provided by api-3d/particles.js (GPU InstancedMesh).
+        // The legacy Points-based particle functions here are kept internal only
+        // to avoid overwriting the more capable 3D particle API.
 
         // Utility
-        isEffectsEnabled: () => effectsEnabled
+        isEffectsEnabled: () => effectsEnabled,
+
+        // Called by gpu-threejs.js endFrame() to apply the effect composer
+        renderEffects: renderEffects,
       });
     },
 
@@ -572,6 +875,6 @@ export function effectsApi(gpu) {
     // Internal render called by main loop
     render() {
       renderEffects();
-    }
+    },
   };
 }

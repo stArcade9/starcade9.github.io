@@ -1,0 +1,37 @@
+{
+  "name": "Game of Life 3D",
+  "description": "GAME OF LIFE 3D — Conway's Game of Life rendered with 3D cubes",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "GAME OF LIFE 3D",
+      "rule.conway": "CONWAY (B3/S23)",
+      "rule.highlife": "HIGH LIFE (B36/S23)",
+      "rule.daynight": "DAY & NIGHT",
+      "rule.seeds": "SEEDS",
+      "rule.diamoeba": "DIAMOEBA"
+    },
+    "locales": {
+      "es": {
+        "game.title": "JUEGO DE LA VIDA 3D",
+        "rule.conway": "CONWAY (B3/S23)",
+        "rule.highlife": "VIDA ALTA (B36/S23)",
+        "rule.daynight": "DÍA Y NOCHE",
+        "rule.seeds": "SEMILLAS",
+        "rule.diamoeba": "DIAMOEBA"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "gridSize": "32",
+        "speed": "1x"
+      }
+    }
+  }
+}

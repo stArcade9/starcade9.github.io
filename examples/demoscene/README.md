@@ -5,6 +5,7 @@ An epic visual journey through a neon digital realm, showcasing the full capabil
 ## ✨ Features
 
 ### Visual Effects
+
 - **💫 Advanced Bloom**: Intense neon glow with dynamic strength adjustment
 - **🎨 Post-Processing**: FXAA anti-aliasing and shader effects
 - **✨ GPU Particles**: Hundreds of animated particles with physics
@@ -16,30 +17,35 @@ An epic visual journey through a neon digital realm, showcasing the full capabil
 The demo features 5 unique scenes, each showcasing different aspects of the engine:
 
 #### 1. GRID AWAKENING (8s)
+
 - Pulsing neon grid floor
 - Floating crystalline structures
 - Expanding energy rings
 - Camera rises dramatically
 
 #### 2. DATA TUNNEL (10s)
+
 - High-speed tunnel fly-through
 - Streaming data particles
 - Dynamic geometry generation
 - Camera barrel roll effect
 
 #### 3. DIGITAL CITY (12s)
+
 - 40+ procedural neon towers
 - Flying light cycles with trails
 - Pulsating building effects
 - Orbiting camera movement
 
 #### 4. ENERGY CORE (10s)
+
 - Swirling energy fields
 - Intense bloom increase
 - Spiral camera movement
 - Particle explosion buildup
 
 #### 5. THE VOID (8s)
+
 - Fade to darkness
 - Final particle burst
 - Dramatic camera pullback
@@ -56,6 +62,7 @@ The demo features 5 unique scenes, each showcasing different aspects of the engi
 ## 🛠️ Technical Details
 
 ### Engine Features Showcased
+
 - Three.js 3D rendering with WebGL2
 - UnrealBloomPass for neon glow
 - FXAAShader for anti-aliasing
@@ -65,6 +72,7 @@ The demo features 5 unique scenes, each showcasing different aspects of the engi
 - Procedural geometry generation
 
 ### Performance
+
 - Optimized for 60 FPS
 - Automatic LOD and culling
 - Efficient particle management
@@ -72,13 +80,14 @@ The demo features 5 unique scenes, each showcasing different aspects of the engi
 - Progressive scene loading
 
 ### Code Structure
+
 ```javascript
 // 5 distinct scene update functions
-updateGridAwakening()    // Scene 0
-updateDataTunnel()       // Scene 1
-updateDigitalCity()      // Scene 2
-updateEnergyCore()       // Scene 3
-updateTheVoid()          // Scene 4
+updateGridAwakening(); // Scene 0
+updateDataTunnel(); // Scene 1
+updateDigitalCity(); // Scene 2
+updateEnergyCore(); // Scene 3
+updateTheVoid(); // Scene 4
 
 // Automated scene transitions
 // Dynamic camera choreography
@@ -88,6 +97,7 @@ updateTheVoid()          // Scene 4
 ## 🎨 Visual Style
 
 The demo embraces a **Tron-like cyberpunk aesthetic**:
+
 - Neon cyan, magenta, and yellow colors
 - Dark space with glowing geometry
 - Grid-based architecture
@@ -97,12 +107,14 @@ The demo embraces a **Tron-like cyberpunk aesthetic**:
 ## 🚀 How It Works
 
 ### Start Screen
+
 1. Animated 3D scene in background
 2. Pulsing title with color shift
 3. Two interactive buttons
 4. Slow camera orbit
 
 ### Demo Mode
+
 1. Each scene has a defined duration
 2. Progress bar shows scene completion
 3. Automatic transitions with fade effects
@@ -110,6 +122,7 @@ The demo embraces a **Tron-like cyberpunk aesthetic**:
 5. Dynamic effects adjust per scene
 
 ### Scene Transitions
+
 - 2-second smooth transitions
 - Fade to black with scene name display
 - Cleanup of previous scene objects
@@ -119,6 +132,7 @@ The demo embraces a **Tron-like cyberpunk aesthetic**:
 ## 📊 Stats Display
 
 The HUD shows:
+
 - Current scene name and number
 - Progress bar with percentage
 - Active effects list
@@ -128,6 +142,7 @@ The HUD shows:
 ## 🎬 Making Your Own Demoscene
 
 This code demonstrates best practices for:
+
 1. **Scene Management**: Multiple scenes with state machine
 2. **Camera Choreography**: Scripted camera movements
 3. **Effect Control**: Dynamic bloom and fog adjustments
@@ -174,4 +189,4 @@ if (sceneTime >= SCENES[currentScene].duration) {
 ---
 
 **Nova64: The Ultimate Fantasy Console** 🎮✨  
-*Now with demoscene-quality visual effects!*
+_Now with demoscene-quality visual effects!_

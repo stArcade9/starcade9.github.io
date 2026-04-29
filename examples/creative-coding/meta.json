@@ -1,0 +1,53 @@
+{
+  "name": "Creative Coding",
+  "description": "CREATIVE CODING 3D — Nova64",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "creative",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "CREATIVE CODING 3D",
+      "scene.gyroscope": "Gyroscope",
+      "scene.jellyfish": "Cosmic Jellyfish",
+      "scene.storm": "Particle Storm",
+      "scene.geometry": "Sacred Geometry"
+    },
+    "locales": {
+      "es": {
+        "game.title": "PROGRAMACIÓN CREATIVA 3D",
+        "scene.gyroscope": "Giroscopio",
+        "scene.jellyfish": "Medusa Cósmica",
+        "scene.storm": "Tormenta de Partículas",
+        "scene.geometry": "Geometría Sagrada"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#050510",
+      "near": 20,
+      "far": 80
+    },
+    "lighting": {
+      "ambient": "#111122",
+      "ambientIntensity": 0.2
+    },
+    "effects": {
+      "bloom": {
+        "strength": 2,
+        "radius": 0.6,
+        "threshold": 0.2
+      }
+    },
+    "camera": {
+      "fov": 65
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "slowMotion": false
+      }
+    }
+  }
+}

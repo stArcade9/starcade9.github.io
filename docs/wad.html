@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAD System - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115; --bg-secondary: #151822; --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4; --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff; --accent-magenta: #ff0080; --accent-yellow: #ffff00;
+            --border: #2a324a; --code-bg: #1a1d2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed; color: var(--text-primary); line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            background: var(--bg-secondary); border: 2px solid var(--accent-cyan);
+            border-radius: 12px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        h1 { color: var(--accent-cyan); font-size: 2.5em; text-shadow: 0 0 20px rgba(0, 255, 255, 0.6); margin-bottom: 10px; }
+        .back-link { display: inline-block; color: var(--accent-cyan); text-decoration: none; margin-bottom: 15px; transition: color 0.3s ease; }
+        .back-link:hover { color: #33ffff; text-decoration: underline; }
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        section { background: var(--bg-secondary); border-left: 4px solid var(--accent-cyan); padding: 25px; margin-bottom: 30px; border-radius: 8px; }
+        h2 { color: var(--accent-magenta); font-size: 2em; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255, 0, 128, 0.5); }
+        h3 { color: var(--accent-cyan); font-size: 1.4em; margin: 25px 0 15px 0; }
+        .function { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .function-sig { font-family: 'Courier New', Courier, monospace; font-size: 1.2em; color: var(--accent-yellow); margin-bottom: 15px; padding: 10px; background: var(--code-bg); border-radius: 4px; border-left: 3px solid var(--accent-yellow); }
+        .param-list, .return-info { margin: 15px 0; }
+        .param { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .param:last-child { border-bottom: none; }
+        .param-name { color: var(--accent-cyan); font-weight: bold; font-family: 'Courier New', Courier, monospace; }
+        .param-type { color: var(--accent-magenta); font-style: italic; font-size: 0.9em; }
+        .example { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 15px 0; overflow-x: auto; }
+        .example-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        pre { margin: 0; font-family: 'Courier New', Courier, monospace; line-height: 1.5; }
+        code { color: var(--text-primary); }
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .note { background: var(--bg-tertiary); border-left: 4px solid var(--accent-yellow); padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .note-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: bold; }
+        tr:nth-child(even) { background: var(--bg-tertiary); }
+        footer { text-align: center; padding: 30px 20px; color: var(--text-secondary); border-top: 1px solid var(--border); margin-top: 40px; }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>📦 WAD System</h1>
+            <p class="subtitle">Load and render classic DOOM WAD files with full texture, sprite, and level support</p>
+        </header>
+
+        <section>
+            <h2>📋 Overview</h2>
+            <p>The WAD system lets you load DOOM-format WAD files (IWAD and PWAD) and convert their levels, textures, and sprites into Nova64 3D geometry. Build your own DOOM-style FPS or explore classic levels from WADs like FreeDoom.</p>
+
+            <div class="note">
+                <div class="note-title">💡 Key Features</div>
+                <ul>
+                    <li><strong>Full WAD Parsing</strong> — IWAD and PWAD binary format with lump directory</li>
+                    <li><strong>Level Conversion</strong> — VERTEXES, LINEDEFS, SIDEDEFS, SECTORS, THINGS → Nova64 3D walls</li>
+                    <li><strong>Wall Textures</strong> — Composite multi-patch textures from TEXTURE1/TEXTURE2 + PNAMES</li>
+                    <li><strong>Floor/Ceiling Flats</strong> — 64×64 flat textures with palette lookup</li>
+                    <li><strong>Sprite Extraction</strong> — Monster and item sprites as billboard textures</li>
+                    <li><strong>Collision Data</strong> — Rasterized wall segments for physics</li>
+                    <li><strong>Thing Classification</strong> — Monsters, items, and decorations mapped to game types</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Quick Start -->
+        <section>
+            <h2>🚀 Quick Start</h2>
+
+            <div class="example">
+                <div class="example-title">Load and render a WAD file</div>
+<pre><code><span class="comment">// Fetch a WAD file</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function-name">fetch</span>(<span class="string">'freedoom1.wad'</span>);
+<span class="keyword">const</span> buffer = <span class="keyword">await</span> response.<span class="function-name">arrayBuffer</span>();
+
+<span class="comment">// Parse the WAD</span>
+<span class="keyword">const</span> wad = <span class="keyword">new</span> <span class="function-name">WADLoader</span>();
+wad.<span class="function-name">load</span>(buffer);
+
+<span class="comment">// List available maps</span>
+<span class="keyword">const</span> maps = wad.<span class="function-name">getMapNames</span>();  <span class="comment">// ['E1M1', 'E1M2', ...]</span>
+
+<span class="comment">// Parse a map</span>
+<span class="keyword">const</span> mapData = wad.<span class="function-name">getMap</span>(<span class="string">'E1M1'</span>);
+
+<span class="comment">// Convert to Nova64 3D geometry</span>
+<span class="keyword">const</span> level = <span class="function-name">convertWADMap</span>(mapData);
+
+<span class="comment">// Build walls from converted data</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> w <span class="keyword">of</span> level.walls) {
+  <span class="function-name">createCube</span>(w.len, <span class="number">0xaaaaaa</span>, [w.x, w.y, w.z], {
+    scaleY: w.h, scaleZ: <span class="number">0.1</span>,
+    material: <span class="string">'standard'</span>, roughness: <span class="number">0.8</span>
+  });
+}
+
+<span class="comment">// Set player start position</span>
+<span class="function-name">setCameraPosition</span>(level.playerStart.x, <span class="number">1.5</span>, level.playerStart.z);
+</code></pre>
+            </div>
+
+            <div class="example">
+                <div class="example-title">Load WAD with textures</div>
+<pre><code><span class="keyword">const</span> wad = <span class="keyword">new</span> <span class="function-name">WADLoader</span>();
+wad.<span class="function-name">load</span>(buffer);
+
+<span class="comment">// Create texture manager</span>
+<span class="keyword">const</span> texMgr = <span class="keyword">new</span> <span class="function-name">WADTextureManager</span>(wad);
+texMgr.<span class="function-name">init</span>();
+
+<span class="comment">// Get a wall texture as Three.js DataTexture</span>
+<span class="keyword">const</span> tex = texMgr.<span class="function-name">getWallTexture</span>(<span class="string">'STARTAN3'</span>);
+
+<span class="comment">// Get a floor flat texture</span>
+<span class="keyword">const</span> flat = texMgr.<span class="function-name">getFlatTexture</span>(<span class="string">'FLOOR0_1'</span>);
+
+<span class="comment">// Get a sprite for a monster type</span>
+<span class="keyword">const</span> sprite = texMgr.<span class="function-name">getSpriteTexture</span>(<span class="number">3004</span>);  <span class="comment">// Former Human</span>
+</code></pre>
+            </div>
+
+            <div class="example">
+                <div class="example-title">Drag-and-drop WAD loading</div>
+<pre><code><span class="keyword">let</span> wadLoaded = <span class="keyword">false</span>;
+
+<span class="keyword">export function</span> <span class="function-name">init</span>() {
+  <span class="comment">// Listen for file drop on the canvas</span>
+  document.<span class="function-name">addEventListener</span>(<span class="string">'drop'</span>, <span class="keyword">async</span> (e) => {
+    e.<span class="function-name">preventDefault</span>();
+    <span class="keyword">const</span> file = e.dataTransfer.files[<span class="number">0</span>];
+    <span class="keyword">if</span> (!file || !file.name.<span class="function-name">endsWith</span>(<span class="string">'.wad'</span>)) <span class="keyword">return</span>;
+
+    <span class="keyword">const</span> buffer = <span class="keyword">await</span> file.<span class="function-name">arrayBuffer</span>();
+    <span class="keyword">const</span> wad = <span class="keyword">new</span> <span class="function-name">WADLoader</span>();
+    wad.<span class="function-name">load</span>(buffer);
+
+    <span class="keyword">const</span> maps = wad.<span class="function-name">getMapNames</span>();
+    <span class="keyword">if</span> (maps.length > <span class="number">0</span>) {
+      buildLevel(wad, maps[<span class="number">0</span>]);
+      wadLoaded = <span class="keyword">true</span>;
+    }
+  });
+
+  document.<span class="function-name">addEventListener</span>(<span class="string">'dragover'</span>, (e) => e.<span class="function-name">preventDefault</span>());
+}
+</code></pre>
+            </div>
+        </section>
+
+        <!-- WADLoader Class -->
+        <section>
+            <h2>📦 WADLoader</h2>
+            <p>Parses IWAD and PWAD binary files, providing access to the lump directory and map data.</p>
+
+            <div class="function">
+                <div class="function-sig">new WADLoader()</div>
+                <p>Creates a new WAD loader instance.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.load(arrayBuffer)</div>
+                <p>Parses a WAD file from an ArrayBuffer. Validates the IWAD/PWAD header and reads the lump directory.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">arrayBuffer</span> <span class="param-type">ArrayBuffer</span> — The raw WAD file data
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">WADLoader</span> — The loader instance (for chaining)
+                </div>
+                <div class="return-info">
+                    <strong>Throws:</strong> <span class="param-type">Error</span> — If the file is not a valid WAD
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getMapNames()</div>
+                <p>Returns an array of map names found in the WAD (e.g., <code>E1M1</code>, <code>MAP01</code>).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">string[]</span> — Map names matching <code>E#M#</code> or <code>MAP##</code> patterns
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getMap(name)</div>
+                <p>Parses all geometry lumps for a map and returns the parsed data.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">name</span> <span class="param-type">string</span> — Map name (e.g., <code>'E1M1'</code>)
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object | null</span> — <code>{ name, vertexes, linedefs, sidedefs, sectors, things }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getPalette()</div>
+                <p>Reads the PLAYPAL lump — 256 RGB color entries (768 bytes).</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">Uint8Array | null</span> — 768-byte palette (256 × RGB)
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getLump(name)</div>
+                <p>Gets any raw lump by name.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">name</span> <span class="param-type">string</span> — Lump name (case-insensitive)
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object | null</span> — <code>{ data: Uint8Array, size: number }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getFlatLumps()</div>
+                <p>Extracts all floor/ceiling flat textures between <code>F_START</code>/<code>F_END</code> markers.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> — <code>{ [name]: Uint8Array(4096) }</code> — 64×64 indexed color data
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getPNames()</div>
+                <p>Parses the PNAMES lump — the list of patch names used by wall textures.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">string[]</span> — Patch name list
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getTextureDefs(lumpName)</div>
+                <p>Parses TEXTURE1 or TEXTURE2 lump — composite wall texture definitions.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">lumpName</span> <span class="param-type">string</span> — <code>'TEXTURE1'</code> or <code>'TEXTURE2'</code>
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> — <code>{ [name]: { name, width, height, patches[] } }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">wad.getSpriteLumps()</div>
+                <p>Extracts all sprite data between <code>S_START</code>/<code>S_END</code> markers.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> — <code>{ [name]: Uint8Array }</code> — Raw sprite picture data
+                </div>
+            </div>
+        </section>
+
+        <!-- convertWADMap -->
+        <section>
+            <h2>🗺️ convertWADMap</h2>
+
+            <div class="function">
+                <div class="function-sig">convertWADMap(map, scale?)</div>
+                <p>Converts parsed DOOM map data into Nova64-ready 3D geometry. Handles one-sided walls, two-sided walls (steps, ceiling drops), collision segments, enemy/item placement, and player start.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">map</span> <span class="param-type">object</span> — Map data from <code>wad.getMap()</code>
+                    </div>
+                    <div class="param">
+                        <span class="param-name">scale</span> <span class="param-type">number</span> — Scale factor (default: <code>1/20</code>). DOOM units → Nova64 units
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object</span> — Level data:
+                </div>
+            </div>
+
+            <table>
+                <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                <tr><td><code>walls</code></td><td>array</td><td>Wall segments: <code>{ x, y, z, len, h, ang, light, texName, xoff, yoff, step?, upper? }</code></td></tr>
+                <tr><td><code>colSegs</code></td><td>array</td><td>Collision points: <code>{ x, z, r }</code></td></tr>
+                <tr><td><code>enemies</code></td><td>array</td><td>Enemy spawns: <code>{ x, z, type, doomType }</code></td></tr>
+                <tr><td><code>items</code></td><td>array</td><td>Item pickups: <code>{ x, z, type, doomType }</code></td></tr>
+                <tr><td><code>playerStart</code></td><td>object</td><td><code>{ x, z, angle, floorH }</code></td></tr>
+                <tr><td><code>sectors</code></td><td>array</td><td>Sector data: <code>{ floorH, ceilH, floorFlat, ceilFlat, light }</code></td></tr>
+            </table>
+
+            <h3>Enemy Types</h3>
+            <table>
+                <tr><th>Type</th><th>DOOM Things</th></tr>
+                <tr><td><code>'grunt'</code></td><td>Former Human (3004), Former Sergeant (9), Imp (3001), Lost Soul (3006)</td></tr>
+                <tr><td><code>'shooter'</code></td><td>Chaingunner (65), Cacodemon (3005), Revenant (66), Arachnotron (68), Pain Elemental (71)</td></tr>
+                <tr><td><code>'tank'</code></td><td>Pinky Demon (3002), Spectre (58), Mancubus (67), Hell Knight (69)</td></tr>
+                <tr><td><code>'boss'</code></td><td>Baron of Hell (3003), Arch-Vile (64), Cyberdemon (16), Spider Mastermind (7)</td></tr>
+            </table>
+
+            <h3>Item Types</h3>
+            <table>
+                <tr><th>Type</th><th>DOOM Things</th></tr>
+                <tr><td><code>'health'</code></td><td>Stimpack (2011), Medikit (2012), Health Bonus (2014)</td></tr>
+                <tr><td><code>'armor'</code></td><td>Armor Bonus (2015), Green Armor (2018), Blue Armor (2019)</td></tr>
+                <tr><td><code>'ammo'</code></td><td>Clip (2007), Shells (2008), Rocket (2010), Cell (2047), weapons (2001–2006)</td></tr>
+            </table>
+        </section>
+
+        <!-- WADTextureManager -->
+        <section>
+            <h2>🎨 WADTextureManager</h2>
+            <p>Extracts textures, flats, and sprites from a WAD and creates Three.js <code>DataTexture</code> objects. All textures are cached for reuse.</p>
+
+            <div class="function">
+                <div class="function-sig">new WADTextureManager(wadLoader)</div>
+                <p>Creates a texture manager bound to a loaded WADLoader.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">wadLoader</span> <span class="param-type">WADLoader</span> — A WADLoader that has already called <code>.load()</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.init()</div>
+                <p>Initializes the texture manager — loads palette, patch names, texture definitions, flats, and sprites from the WAD. Must be called before using any <code>get*</code> method.</p>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.getWallTexture(name)</div>
+                <p>Returns a wall texture as a Three.js DataTexture with nearest-neighbor filtering and repeat wrapping. Composites multi-patch textures and flips vertically for Three.js.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">name</span> <span class="param-type">string</span> — Texture name (e.g., <code>'STARTAN3'</code>)
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">THREE.DataTexture | null</span>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.getTextureDef(name)</div>
+                <p>Gets the texture definition (dimensions) for UV calculation.</p>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object | null</span> — <code>{ name, width, height, patches[] }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.getFlatTexture(name)</div>
+                <p>Returns a 64×64 floor/ceiling flat texture as a Three.js DataTexture.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">name</span> <span class="param-type">string</span> — Flat name (e.g., <code>'FLOOR0_1'</code>)
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">THREE.DataTexture | null</span>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.getSpriteTexture(thingType)</div>
+                <p>Returns a sprite texture for a DOOM thing type, suitable for billboard rendering.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">thingType</span> <span class="param-type">number</span> — DOOM thing type ID (e.g., <code>3004</code> for Former Human)
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object | null</span> — <code>{ texture, width, height, leftOfs, topOfs }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.parsePicture(data)</div>
+                <p>Parses DOOM column-based picture format (patches and sprites) into RGBA pixel data.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">data</span> <span class="param-type">Uint8Array</span> — Raw picture lump data
+                    </div>
+                </div>
+                <div class="return-info">
+                    <strong>Returns:</strong> <span class="param-type">object | null</span> — <code>{ width, height, leftOfs, topOfs, pixels: Uint8Array }</code>
+                </div>
+            </div>
+
+            <div class="function">
+                <div class="function-sig">texMgr.dispose()</div>
+                <p>Frees all cached Three.js textures. Call when switching WADs or cleaning up.</p>
+            </div>
+        </section>
+
+        <!-- setWallUVs -->
+        <section>
+            <h2>🧱 setWallUVs</h2>
+
+            <div class="function">
+                <div class="function-sig">setWallUVs(meshId, wallDoomLen, wallDoomH, texWidth, texHeight, xoff, yoff)</div>
+                <p>Applies correct UV tiling and offset to a wall mesh's geometry, matching DOOM's texture alignment.</p>
+                <div class="param-list">
+                    <div class="param">
+                        <span class="param-name">meshId</span> <span class="param-type">string</span> — The Nova64 mesh ID (from createCube)
+                    </div>
+                    <div class="param">
+                        <span class="param-name">wallDoomLen</span> <span class="param-type">number</span> — Wall length in DOOM units
+                    </div>
+                    <div class="param">
+                        <span class="param-name">wallDoomH</span> <span class="param-type">number</span> — Wall height in DOOM units
+                    </div>
+                    <div class="param">
+                        <span class="param-name">texWidth</span> <span class="param-type">number</span> — Texture width in pixels
+                    </div>
+                    <div class="param">
+                        <span class="param-name">texHeight</span> <span class="param-type">number</span> — Texture height in pixels
+                    </div>
+                    <div class="param">
+                        <span class="param-name">xoff</span> <span class="param-type">number</span> — Horizontal texture offset
+                    </div>
+                    <div class="param">
+                        <span class="param-name">yoff</span> <span class="param-type">number</span> — Vertical texture offset
+                    </div>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-title">Textured wall with UV tiling</div>
+<pre><code><span class="keyword">const</span> level = <span class="function-name">convertWADMap</span>(mapData);
+<span class="keyword">const</span> texMgr = <span class="keyword">new</span> <span class="function-name">WADTextureManager</span>(wad);
+texMgr.<span class="function-name">init</span>();
+
+<span class="keyword">for</span> (<span class="keyword">const</span> w <span class="keyword">of</span> level.walls) {
+  <span class="keyword">const</span> wallId = <span class="function-name">createCube</span>(w.len, <span class="number">0xaaaaaa</span>, [w.x, w.y, w.z], {
+    scaleY: w.h, scaleZ: <span class="number">0.1</span>
+  });
+  <span class="function-name">rotateMesh</span>(wallId, <span class="number">0</span>, w.ang, <span class="number">0</span>);
+
+  <span class="comment">// Apply WAD texture</span>
+  <span class="keyword">if</span> (w.texName) {
+    <span class="keyword">const</span> tex = texMgr.<span class="function-name">getWallTexture</span>(w.texName);
+    <span class="keyword">const</span> def = texMgr.<span class="function-name">getTextureDef</span>(w.texName);
+    <span class="keyword">if</span> (tex && def) {
+      <span class="keyword">const</span> mesh = <span class="function-name">getMesh</span>(wallId);
+      mesh.material.map = tex;
+      mesh.material.needsUpdate = <span class="keyword">true</span>;
+      <span class="function-name">setWallUVs</span>(wallId, w.len * <span class="number">20</span>, w.h * <span class="number">20</span>,
+        def.width, def.height, w.xoff, w.yoff);
+    }
+  }
+}
+</code></pre>
+            </div>
+        </section>
+
+        <!-- Constants -->
+        <section>
+            <h2>📊 Constants</h2>
+
+            <h3>THING_MONSTERS</h3>
+            <p>Maps DOOM thing type IDs to enemy categories: <code>'grunt'</code>, <code>'shooter'</code>, <code>'tank'</code>, <code>'boss'</code>.</p>
+
+            <h3>THING_ITEMS</h3>
+            <p>Maps DOOM thing type IDs to pickup categories: <code>'health'</code>, <code>'armor'</code>, <code>'ammo'</code>.</p>
+
+            <h3>THING_SPRITE_PREFIX</h3>
+            <p>Maps DOOM thing type IDs to 4-character sprite name prefixes used in the WAD lump directory.</p>
+
+            <table>
+                <tr><th>Thing Type</th><th>Sprite Prefix</th><th>Name</th></tr>
+                <tr><td>3004</td><td>POSS</td><td>Former Human</td></tr>
+                <tr><td>9</td><td>SPOS</td><td>Former Sergeant</td></tr>
+                <tr><td>3001</td><td>TROO</td><td>Imp</td></tr>
+                <tr><td>3005</td><td>HEAD</td><td>Cacodemon</td></tr>
+                <tr><td>3002</td><td>SARG</td><td>Pinky Demon</td></tr>
+                <tr><td>3003</td><td>BOSS</td><td>Baron of Hell</td></tr>
+                <tr><td>16</td><td>CYBR</td><td>Cyberdemon</td></tr>
+                <tr><td>7</td><td>SPID</td><td>Spider Mastermind</td></tr>
+                <tr><td>2035</td><td>BAR1</td><td>Barrel</td></tr>
+                <tr><td>2011</td><td>STIM</td><td>Stimpack</td></tr>
+                <tr><td>2012</td><td>MEDI</td><td>Medikit</td></tr>
+            </table>
+        </section>
+
+        <!-- WAD Format Reference -->
+        <section>
+            <h2>📖 WAD Format Reference</h2>
+
+            <h3>File Structure</h3>
+            <table>
+                <tr><th>Offset</th><th>Size</th><th>Description</th></tr>
+                <tr><td>0</td><td>4 bytes</td><td>Tag: <code>IWAD</code> (game WAD) or <code>PWAD</code> (patch WAD)</td></tr>
+                <tr><td>4</td><td>4 bytes</td><td>Number of lumps (int32 LE)</td></tr>
+                <tr><td>8</td><td>4 bytes</td><td>Offset to lump directory (int32 LE)</td></tr>
+            </table>
+
+            <h3>Map Lumps</h3>
+            <p>Each map marker (e.g., <code>E1M1</code>) is followed by these lumps:</p>
+            <table>
+                <tr><th>Lump</th><th>Description</th></tr>
+                <tr><td>VERTEXES</td><td>2D vertex positions (x, y as int16)</td></tr>
+                <tr><td>LINEDEFS</td><td>Lines connecting vertices with sidedef references</td></tr>
+                <tr><td>SIDEDEFS</td><td>Texture assignments and sector references per line side</td></tr>
+                <tr><td>SECTORS</td><td>Floor/ceiling heights, flat textures, light levels</td></tr>
+                <tr><td>THINGS</td><td>Object placements: position, angle, type, flags</td></tr>
+            </table>
+
+            <h3>Texture Lumps</h3>
+            <table>
+                <tr><th>Lump</th><th>Description</th></tr>
+                <tr><td>PLAYPAL</td><td>256-color palette (768 bytes RGB)</td></tr>
+                <tr><td>PNAMES</td><td>Patch name list for composite textures</td></tr>
+                <tr><td>TEXTURE1/2</td><td>Composite wall texture definitions</td></tr>
+                <tr><td>F_START–F_END</td><td>Floor/ceiling flat textures (64×64, indexed)</td></tr>
+                <tr><td>S_START–S_END</td><td>Sprite picture data (column-based format)</td></tr>
+            </table>
+
+            <div class="note">
+                <div class="note-title">💡 Compatible WAD Files</div>
+                <p>The Nova64 WAD system works with any DOOM-format WAD including:</p>
+                <ul>
+                    <li><strong>FreeDoom</strong> — Free, open-source DOOM-compatible IWAD</li>
+                    <li><strong>DOOM Shareware</strong> — <code>doom1.wad</code></li>
+                    <li><strong>Custom PWADs</strong> — Community-made level packs</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Example Carts -->
+        <section>
+            <h2>🎮 Example Carts</h2>
+
+            <div class="function">
+                <h3>wad-demo — FreeDoom WAD Explorer</h3>
+                <p>Full FPS game that loads <code>freedoom1.wad</code> from the server or accepts drag-and-drop. Features level browsing, textured walls, enemy sprites, shooting, and pickups.</p>
+            </div>
+
+            <div class="function">
+                <h3>fps-demo-3d — Neo-Doom</h3>
+                <p>Arena shooter with 3 built-in levels and optional WAD loading. Drag-and-drop a <code>.wad</code> file or press <code>L</code> to load via file picker.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console — WAD System Documentation</p>
+        </footer>
+    </div>
+</body>
+</html>

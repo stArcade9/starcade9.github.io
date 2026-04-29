@@ -1,0 +1,53 @@
+{
+  "name": "Skybox Showcase",
+  "description": "Skybox Showcase — Nova64",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "SKYBOX SHOWCASE",
+      "scene.deepSpace": "Deep Space",
+      "scene.denseField": "Dense Starfield"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUESTRA DE SKYBOX",
+        "scene.deepSpace": "Espacio Profundo",
+        "scene.denseField": "Campo Estelar Denso"
+      }
+    }
+  },
+  "defaults": {
+    "fog": {
+      "color": "#000008",
+      "near": 30,
+      "far": 80
+    },
+    "lighting": {
+      "ambient": "#334455",
+      "ambientIntensity": 1
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.6,
+        "radius": 0.4,
+        "threshold": 0.3
+      },
+      "vignette": {
+        "darkness": 0.8,
+        "offset": 0.8
+      }
+    },
+    "camera": {
+      "fov": 70
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "autoAnimate": true
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Hero Demo",
+  "description": "Synthwave hero background — displaced terrain, neon grid lines, animated particles, and atmospheric fog. Used as the homepage embed.",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA 64",
+      "game.tagline": "ULTIMATE 3D FANTASY CONSOLE"
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
+}

@@ -1,889 +1,926 @@
-// F-ZERO NOVA 64 - High-speed anti-gravity racing
-// Inspired by F-Zero X and WipEout
+// ⭐ F-ZERO NOVA 3D — Anti-Gravity Racing ⭐
+// Ultimate Edition: Synthwave Neon Highway, Boost Mechanics, & Cinematic Bloom
 
-const CONFIG = {
-  TRACK_SEGMENTS: 60,
-  TRACK_RADIUS: 80,
-  TRACK_WIDTH: 16,
-  SEGMENT_LENGTH: 8,
-  AI_RACERS: 5,
-  MAX_LAPS: 3,
-  GRAVITY: 15,
-  AIR_RESISTANCE: 0.98,
-  GROUND_FRICTION: 0.92,
-  TURN_SPEED: 2.5,
-  ACCELERATION: 45,
-  MAX_SPEED: 180,
-  BOOST_POWER: 80,
-  BOOST_COST: 25
+// ── Configuration ──────────────────────────────────────────
+const {
+  drawGlowTextCentered,
+  drawNoise,
+  drawPanel,
+  drawRadialGradient,
+  drawScanlines,
+  line,
+  rect,
+  rgba8,
+} = nova64.draw;
+const {
+  createAdvancedCube,
+  createCube,
+  createInstancedMesh,
+  createPlane,
+  destroyMesh,
+  finalizeInstances,
+  rotateMesh,
+  setInstanceTransform,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { createSpaceSkybox, setAmbientLight, setFog, setLightColor, setLightDirection } =
+  nova64.light;
+const { F, enableBloom, enableFXAA } = nova64.fx;
+const { btn, btnp, isKeyPressed, key } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  Screen,
+  centerX,
+  clearButtons,
+  createButton,
+  createPanel,
+  drawAllButtons,
+  drawText,
+  drawTextShadow,
+  setFont,
+  setTextAlign,
+  uiColors,
+  updateAllButtons,
+} = nova64.ui;
+const {
+  createHitState,
+  createShake,
+  getShakeOffset,
+  isInvulnerable,
+  triggerHit,
+  triggerShake,
+  updateHitState,
+  updateShake,
+} = nova64.util;
+
+const C = {
+  // Materials and Colors
+  shipBody: 0x0044ff,
+  shipCockpit: 0x22aaff,
+  shipEngine: 0x00ffff,
+  shipTrim: 0xffffff,
+  rivalBody: 0xee0033,
+  rivalEngine: 0xff4422,
+
+  bgFog: 0x040210, // Deep purple synthwave space
+  trackR1: 0x05051a,
+  trackR2: 0x0a0a22,
+  neonWall: 0xff00aa, // Magenta glowing rails
+  neonWallAlt: 0xaa00ff,
+  boostPad: 0x00ffaa,
+  spark: 0xffdd00,
 };
 
-let gameState = 'menu';
-let gameTime = 0;
-let countdownTimer = 3;
+let gameState = 'start'; // 'start', 'countdown', 'playing', 'crashed', 'finished'
+let t = 0; // global time
+let inputLock = 0;
+let playerHit;
+let speedLineInstanceId = null; // GPU instanced speed lines
+let countdownTimer = 0;
+let shake;
 
-let trackSegments = [];
-let trackMeshes = [];
-let startButtons = [];
-
-let player = {
-  position: 0,
+// ── Game State ─────────────────────────────────────────────
+let g = {
   speed: 0,
-  lateralPos: 0,
-  height: 0,
-  verticalVel: 0,
-  tilt: 0,
-  roll: 0,
-  lap: 1,
-  energy: 100,
-  boostCharge: 100,
-  lapTime: 0,
-  bestLapTime: 0,
-  totalTime: 0,
-  meshes: {}
+  maxSpeed: 250,
+  boostSpeed: 400,
+  dist: 0,
+  health: 100,
+  energy: 100, // Used for boosting
+  rank: 10,
+  passCount: 0,
+
+  p: {
+    x: 0,
+    y: 1.5,
+    z: 0,
+    vx: 0,
+    roll: 0,
+    pitch: 0,
+    meshes: {},
+    isBoosting: false,
+    invuln: 0,
+  },
+
+  trackWidth: 40,
+  roadSegments: [],
+  borders: [],
+  props: [],
+  rivals: [],
+  particles: [],
+  speedLines: [],
+
+  propTimer: 0,
+  rivalTimer: 0,
 };
 
-let aiRacers = [];
-let raceStarted = false;
-let racePosition = 1;
-let particles = [];
-let speedLines = [];
-
+// ── Initialization ─────────────────────────────────────────
 export async function init() {
-  console.log('🏁 F-ZERO NOVA 64 - Initializing...');
-  
-  setCameraPosition(0, 25, 50);
-  setCameraTarget(0, 0, 0);
+  console.log('🏁 F-ZERO NOVA 3D (Ultimate) — Initializing Engine...');
+
+  // Super wide FOV for speed illusion
   setCameraFOV(85);
-  
-  // VERY bright lighting - almost daylight
-  setAmbientLight(0xffffff, 2.0);
-  setFog(0x002040, 150, 500);
-  
-  // Add space skybox for better visibility
-  createSpaceSkybox();
-  
-  await buildTrack();
-  createPlayerShip();
-  
-  for (let i = 0; i < CONFIG.AI_RACERS; i++) {
-    createAIRacer(i);
-  }
-  
-  createSpeedLines();
-  initStartScreen();
-  
-  console.log('✅ F-ZERO NOVA 64 - Ready! Track has', trackSegments.length, 'segments');
-}
+  setCameraPosition(0, 8, 15);
+  setCameraTarget(0, 0, -40);
 
-function initStartScreen() {
-  startButtons.push(
-    createButton(centerX(220), 220, 220, 55, '▶ START RACE', () => {
-      console.log('🏁 START RACE clicked! Switching to countdown...');
-      gameState = 'countdown';
-      countdownTimer = 3;
-      console.log('✅ gameState:', gameState, 'countdownTimer:', countdownTimer);
-    }, {
-      normalColor: rgba8(0, 200, 100, 255),
-      hoverColor: rgba8(0, 255, 120, 255),
-      pressedColor: rgba8(0, 160, 80, 255)
-    })
-  );
-}
+  // Atmospheric Lighting
+  setAmbientLight(0x222233, 1.5);
+  setLightDirection(0, -1, -0.5);
+  setLightColor(0xffaaaa);
 
-async function buildTrack() {
-  console.log('🏗️ Building race track...');
-  
-  for (let i = 0; i < CONFIG.TRACK_SEGMENTS; i++) {
-    const t = i / CONFIG.TRACK_SEGMENTS;
-    const angle = t * Math.PI * 2;
-    
-    const radiusVariation = Math.sin(angle * 2) * 20 + Math.cos(angle * 3) * 10;
-    const radius = CONFIG.TRACK_RADIUS + radiusVariation;
-    const elevation = Math.sin(angle * 1.5) * 15 + Math.cos(angle * 2.5) * 8;
-    const banking = Math.sin(angle * 2) * 0.4;
-    
-    const segment = {
-      x: Math.cos(angle) * radius,
-      y: elevation,
-      z: Math.sin(angle) * radius,
-      angle: angle,
-      banking: banking,
-      width: CONFIG.TRACK_WIDTH,
-      boostPad: (i % 12 === 0)
-    };
-    
-    trackSegments.push(segment);
-  }
-  
-  for (let i = 0; i < trackSegments.length; i++) {
-    const segment = trackSegments[i];
-    const nextSegment = trackSegments[(i + 1) % trackSegments.length];
-    
-    const midX = (segment.x + nextSegment.x) / 2;
-    const midY = (segment.y + nextSegment.y) / 2;
-    const midZ = (segment.z + nextSegment.z) / 2;
-    
-    const dx = nextSegment.x - segment.x;
-    const dz = nextSegment.z - segment.z;
-    const segmentAngle = Math.atan2(dz, dx);
-    const segmentLength = Math.sqrt(dx * dx + dz * dz);
-    
-    // SUPER bright track colors - light gray/white
-    const trackColor = i % 2 === 0 ? 0xccccdd : 0xddddee;
-    
-    const trackMesh = createPlane(segmentLength, segment.width, trackColor, [midX, midY, midZ]);
-    rotateMesh(trackMesh, -Math.PI/2, segmentAngle, segment.banking);
-    trackMeshes.push(trackMesh);
-    
-    // Bright yellow center line markers
-    if (i % 2 === 0) {
-      const markerMesh = createPlane(segmentLength * 0.8, 1.5, 0xffff00, [midX, midY + 0.1, midZ]);
-      rotateMesh(markerMesh, -Math.PI/2, segmentAngle, segment.banking);
-    }
-    
-    // Cyan side stripes
-    const stripeWidth = 1.0;
-    const stripeOffset = segment.width * 0.4;
-    const stripeLeft = createPlane(segmentLength * 0.9, stripeWidth, 0x00ffff, [
-      midX + Math.cos(segmentAngle + Math.PI/2) * stripeOffset,
-      midY + 0.12,
-      midZ + Math.sin(segmentAngle + Math.PI/2) * stripeOffset
-    ]);
-    rotateMesh(stripeLeft, -Math.PI/2, segmentAngle, segment.banking);
-    
-    const stripeRight = createPlane(segmentLength * 0.9, stripeWidth, 0x00ffff, [
-      midX + Math.cos(segmentAngle - Math.PI/2) * stripeOffset,
-      midY + 0.12,
-      midZ + Math.sin(segmentAngle - Math.PI/2) * stripeOffset
-    ]);
-    rotateMesh(stripeRight, -Math.PI/2, segmentAngle, segment.banking);
-    
-    // Glowing green boost pads
-    if (segment.boostPad) {
-      const boostMesh = createPlane(segmentLength * 0.6, segment.width * 0.7, 0x00ff88, [midX, midY + 0.15, midZ]);
-      rotateMesh(boostMesh, -Math.PI/2, segmentAngle, segment.banking);
-      segment.boostMesh = boostMesh;
-    }
-    
-    const barrierHeight = 5;
-    const barrierColor = 0xddddff; // Almost white barriers
-    
-    const leftX = midX + Math.cos(segmentAngle + Math.PI/2) * (segment.width/2 + 1);
-    const leftZ = midZ + Math.sin(segmentAngle + Math.PI/2) * (segment.width/2 + 1);
-    const leftBarrier = createCube(barrierHeight, barrierColor, [leftX, midY + barrierHeight/2, leftZ]);
-    rotateMesh(leftBarrier, 0, segmentAngle, 0);
-    setScale(leftBarrier, 1/barrierHeight, 1, segmentLength/barrierHeight);
-    
-    const rightX = midX + Math.cos(segmentAngle - Math.PI/2) * (segment.width/2 + 1);
-    const rightZ = midZ + Math.sin(segmentAngle - Math.PI/2) * (segment.width/2 + 1);
-    const rightBarrier = createCube(barrierHeight, barrierColor, [rightX, midY + barrierHeight/2, rightZ]);
-    rotateMesh(rightBarrier, 0, segmentAngle, 0);
-    setScale(rightBarrier, 1/barrierHeight, 1, segmentLength/barrierHeight);
-    
-    // Every segment gets bright neon lights!
-    const lightColor = i % 6 === 0 ? 0xff0099 : i % 3 === 0 ? 0x00ffff : 0xff9900;
-    createCube(1.0, lightColor, [leftX, midY + barrierHeight + 0.5, leftZ]);
-    createCube(1.0, lightColor, [rightX, midY + barrierHeight + 0.5, rightZ]);
-  }
-  
-  const startSegment = trackSegments[0];
-  // Bright yellow/white checkered finish line
-  const finishMesh = createPlane(CONFIG.SEGMENT_LENGTH, CONFIG.TRACK_WIDTH, 0xffff00, [startSegment.x, startSegment.y + 0.2, startSegment.z]);
-  rotateMesh(finishMesh, -Math.PI/2, startSegment.angle, 0);
-  
-  // Add tall glowing posts at start/finish
-  createCube(8, 0xff0000, [startSegment.x - CONFIG.TRACK_WIDTH/2, startSegment.y + 4, startSegment.z]);
-  createCube(8, 0xff0000, [startSegment.x + CONFIG.TRACK_WIDTH/2, startSegment.y + 4, startSegment.z]);
-  
-  console.log('✅ Track built with', trackSegments.length, 'segments');
-}
+  // Deep synthwave fog
+  setFog(C.bgFog, 20, 300);
 
-function createPlayerShip() {
-  const startSegment = trackSegments[0];
-  
-  // VERY bright cyan ship - highly visible
-  player.meshes.body = createCube(2, 0x00ffff, [startSegment.x, startSegment.y + 2, startSegment.z]);
-  setScale(player.meshes.body, 1, 0.3, 1.75);
-  
-  player.meshes.cockpit = createSphere(0.8, 0x00ccff, [startSegment.x, startSegment.y + 2.5, startSegment.z + 0.3], 8);
-  
-  player.meshes.wingLeft = createCube(1.5, 0x00ddff, [startSegment.x - 2, startSegment.y + 2, startSegment.z]);
-  setScale(player.meshes.wingLeft, 1, 0.2, 1.33);
-  
-  player.meshes.wingRight = createCube(1.5, 0x00ddff, [startSegment.x + 2, startSegment.y + 2, startSegment.z]);
-  setScale(player.meshes.wingRight, 1, 0.2, 1.33);
-  
-  // Super bright orange engines
-  player.meshes.engineLeft = createCube(0.6, 0xff8800, [startSegment.x - 1.5, startSegment.y + 1.5, startSegment.z - 1.5]);
-  setScale(player.meshes.engineLeft, 1, 1, 1.33);
-  
-  player.meshes.engineRight = createCube(0.6, 0xff8800, [startSegment.x + 1.5, startSegment.y + 1.5, startSegment.z - 1.5]);
-  setScale(player.meshes.engineRight, 1, 1, 1.33);
-  
-  // Bright white underglow
-  player.meshes.glow = createCube(2.5, 0xffffff, [startSegment.x, startSegment.y + 1, startSegment.z]);
-  setScale(player.meshes.glow, 1, 0.08, 1.52);
-}
+  if (typeof createSpaceSkybox === 'function') {
+    createSpaceSkybox({ starCount: 1500, starSize: 2.0, nebulae: true, nebulaColor: 0xaa00aa });
+  }
 
-function createAIRacer(index) {
-  const startSegment = trackSegments[0];
-  const offsetZ = -8 * (index + 1);
-  const lateralOffset = ((index % 3) - 1) * 4;
-  
-  const colors = [0xff0044, 0x00ff44, 0xffaa00, 0xff00ff, 0x00ffff];
-  const color = colors[index % colors.length];
-  
-  const ai = {
-    // Start AI racers slightly behind player (0.98 means almost at finish line, behind start)
-    position: 0.98 - 0.01 * (index + 1),
-    speed: 0,
-    lateralPos: lateralOffset / CONFIG.TRACK_WIDTH,
-    height: 0,
-    verticalVel: 0,
-    lap: 1,
-    lapTime: 0,
-    targetLateralPos: lateralOffset / CONFIG.TRACK_WIDTH,
-    aggressiveness: 0.3 + Math.random() * 0.4,
-    maxSpeed: CONFIG.MAX_SPEED * (0.85 + Math.random() * 0.15),
-    meshes: {}
-  };
-  
-  // Position AI racer at their starting track position
-  const aiSegmentIndex = Math.floor(ai.position * trackSegments.length);
-  const aiSegment = trackSegments[aiSegmentIndex % trackSegments.length];
-  const lateralX = Math.cos(aiSegment.angle + Math.PI/2) * ai.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  const lateralZ = Math.sin(aiSegment.angle + Math.PI/2) * ai.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  
-  ai.meshes.body = createCube(1.8, color, [aiSegment.x + lateralX, aiSegment.y + 2, aiSegment.z + lateralZ]);
-  setScale(ai.meshes.body, 1, 0.28, 1.67);
-  setRotation(ai.meshes.body, 0, aiSegment.angle + Math.PI/2, 0);
-  
-  ai.meshes.glow = createCube(2, color, [aiSegment.x + lateralX, aiSegment.y + 1.2, aiSegment.z + lateralZ]);
-  setScale(ai.meshes.glow, 1, 0.1, 1.6);
-  setRotation(ai.meshes.glow, 0, aiSegment.angle + Math.PI/2, 0);
-  
-  aiRacers.push(ai);
-}
+  // Neon over-glow
+  enableBloom(1.0, 0.4, 0.4);
+  if (typeof enableFXAA === 'function') enableFXAA();
 
-function handleInput(dt) {
-  if (gameState !== 'racing') return;
-  
-  const upPressed = key('ArrowUp') || key('KeyW');
-  const downPressed = key('ArrowDown') || key('KeyS');
-  const leftPressed = key('ArrowLeft') || key('KeyA');
-  const rightPressed = key('ArrowRight') || key('KeyD');
-  
-  // Auto-accelerate to 70% max speed if no input, full speed if pressing up
-  const targetSpeed = upPressed ? CONFIG.MAX_SPEED : CONFIG.MAX_SPEED * 0.7;
-  
-  if (upPressed) {
-    // Accelerate faster when pressing up
-    player.speed = Math.min(player.speed + CONFIG.ACCELERATION * dt, CONFIG.MAX_SPEED);
-  } else if (player.speed < targetSpeed) {
-    // Auto-accelerate to cruising speed
-    player.speed = Math.min(player.speed + CONFIG.ACCELERATION * 0.5 * dt, targetSpeed);
-  } else {
-    // Apply air resistance
-    player.speed *= CONFIG.AIR_RESISTANCE;
-  }
-  
-  if (downPressed) {
-    player.speed *= 0.95;
-  }
-  
-  const turnInput = (rightPressed ? 1 : 0) - (leftPressed ? 1 : 0);
-  
-  if (turnInput !== 0) {
-    const speedFactor = Math.max(0.3, 1 - (player.speed / CONFIG.MAX_SPEED) * 0.7);
-    player.lateralPos += turnInput * CONFIG.TURN_SPEED * speedFactor * dt;
-    player.lateralPos = Math.max(-0.9, Math.min(0.9, player.lateralPos));
-    player.roll = turnInput * 0.5;
-  } else {
-    player.lateralPos *= 0.95;
-    player.roll *= 0.9;
-  }
-  
-  if (key('Space') && player.boostCharge >= CONFIG.BOOST_COST) {
-    player.speed = Math.min(player.speed + CONFIG.BOOST_POWER, CONFIG.MAX_SPEED * 1.3);
-    player.boostCharge -= CONFIG.BOOST_COST;
-    createBoostParticles();
-  }
-  
-  if (player.boostCharge < 100) {
-    player.boostCharge += 15 * dt;
-  }
-}
+  buildPlayerShip();
+  playerHit = createHitState({ invulnDuration: 0.5, blinkRate: 40 });
+  shake = createShake({ decay: 4 });
+  initTrack();
 
-function updatePlayer(dt) {
-  if (gameState !== 'racing') return;
-  if (trackSegments.length === 0) return; // Safety check
-  
-  const speedNormalized = player.speed / 100;
-  player.position += speedNormalized * dt * 0.08;
-  
-  if (player.position >= 1) {
-    player.position -= 1;
-    player.lap++;
-    player.bestLapTime = player.lapTime > 0 ? 
-                        (player.bestLapTime === 0 ? player.lapTime : Math.min(player.bestLapTime, player.lapTime)) : 
-                        player.bestLapTime;
-    player.lapTime = 0;
-    
-    if (player.lap > CONFIG.MAX_LAPS) {
-      finishRace();
-    }
-  }
-  
-  player.lapTime += dt;
-  player.totalTime += dt;
-  
-  const segmentIndex = Math.floor(player.position * trackSegments.length);
-  const segment = trackSegments[segmentIndex % trackSegments.length];
-  const nextSegment = trackSegments[(segmentIndex + 1) % trackSegments.length];
-  
-  const segmentT = (player.position * trackSegments.length) % 1;
-  const interpX = segment.x + (nextSegment.x - segment.x) * segmentT;
-  const interpY = segment.y + (nextSegment.y - segment.y) * segmentT;
-  const interpZ = segment.z + (nextSegment.z - segment.z) * segmentT;
-  
-  const lateralX = Math.cos(segment.angle + Math.PI/2) * player.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  const lateralZ = Math.sin(segment.angle + Math.PI/2) * player.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  
-  const worldX = interpX + lateralX;
-  const worldY = interpY + player.height + 2;
-  const worldZ = interpZ + lateralZ;
-  
-  if (segment.boostPad && Math.abs(segmentT - 0.5) < 0.3) {
-    player.speed = Math.min(player.speed + 50 * dt, CONFIG.MAX_SPEED * 1.2);
-    player.boostCharge = Math.min(100, player.boostCharge + 30 * dt);
-  }
-  
-  const targetTilt = segment.banking + player.roll;
-  player.tilt += (targetTilt - player.tilt) * 5 * dt;
-  
-  const shipAngle = segment.angle + Math.PI/2;
-  
-  setPosition(player.meshes.body, worldX, worldY, worldZ);
-  setRotation(player.meshes.body, player.tilt * 0.3, shipAngle, player.tilt);
-  
-  setPosition(player.meshes.cockpit, worldX, worldY + 0.5, worldZ + 0.3);
-  setRotation(player.meshes.cockpit, 0, shipAngle, 0);
-  
-  setPosition(player.meshes.wingLeft, worldX - 2, worldY, worldZ);
-  setRotation(player.meshes.wingLeft, player.tilt * 0.2, shipAngle, player.tilt * 0.5);
-  
-  setPosition(player.meshes.wingRight, worldX + 2, worldY, worldZ);
-  setRotation(player.meshes.wingRight, player.tilt * 0.2, shipAngle, player.tilt * 0.5);
-  
-  setPosition(player.meshes.engineLeft, worldX - 1.5, worldY - 0.5, worldZ - 1.5);
-  setRotation(player.meshes.engineLeft, 0, shipAngle, 0);
-  
-  setPosition(player.meshes.engineRight, worldX + 1.5, worldY - 0.5, worldZ - 1.5);
-  setRotation(player.meshes.engineRight, 0, shipAngle, 0);
-  
-  setPosition(player.meshes.glow, worldX, worldY - 1, worldZ);
-  setRotation(player.meshes.glow, 0, shipAngle, player.tilt * 0.3);
-  
-  if (player.speed > 20 && Math.random() < 0.3) {
-    createExhaustParticle(worldX - 1.5, worldY - 0.5, worldZ - 2);
-    createExhaustParticle(worldX + 1.5, worldY - 0.5, worldZ - 2);
-  }
-}
-
-function updateAI(dt) {
-  if (gameState !== 'racing') return;
-  if (trackSegments.length === 0) return; // Safety check
-  
-  aiRacers.forEach((ai, index) => {
-    const targetSpeed = ai.maxSpeed * (0.9 + Math.random() * 0.1);
-    ai.speed += (targetSpeed - ai.speed) * 2 * dt;
-    
-    const speedNormalized = ai.speed / 100;
-    ai.position += speedNormalized * dt * 0.08;
-    
-    if (ai.position >= 1) {
-      ai.position -= 1;
-      ai.lap++;
-      ai.lapTime = 0;
-    }
-    
-    // Wrap negative positions to positive range [0, 1)
-    while (ai.position < 0) {
-      ai.position += 1;
-    }
-    
-    ai.lapTime += dt;
-    
-    const segmentIndex = Math.floor(ai.position * trackSegments.length);
-    const segment = trackSegments[segmentIndex % trackSegments.length];
-    const nextSegment = trackSegments[(segmentIndex + 1) % trackSegments.length];
-    
-    const segmentT = (ai.position * trackSegments.length) % 1;
-    const interpX = segment.x + (nextSegment.x - segment.x) * segmentT;
-    const interpY = segment.y + (nextSegment.y - segment.y) * segmentT;
-    const interpZ = segment.z + (nextSegment.z - segment.z) * segmentT;
-    
-    ai.targetLateralPos += (Math.random() - 0.5) * 0.5 * dt;
-    ai.targetLateralPos = Math.max(-0.8, Math.min(0.8, ai.targetLateralPos));
-    ai.lateralPos += (ai.targetLateralPos - ai.lateralPos) * 2 * dt;
-    
-    const lateralX = Math.cos(segment.angle + Math.PI/2) * ai.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-    const lateralZ = Math.sin(segment.angle + Math.PI/2) * ai.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-    
-    const worldX = interpX + lateralX;
-    const worldY = interpY + ai.height + 2;
-    const worldZ = interpZ + lateralZ;
-    const shipAngle = segment.angle + Math.PI/2;
-    
-    setPosition(ai.meshes.body, worldX, worldY, worldZ);
-    setRotation(ai.meshes.body, 0, shipAngle, 0);
-    
-    setPosition(ai.meshes.glow, worldX, worldY - 0.8, worldZ);
-    setRotation(ai.meshes.glow, 0, shipAngle, 0);
+  // Pre-fill track props & speed lines
+  // Speed lines use GPU instancing (40 cubes → 1 instanced mesh)
+  speedLineInstanceId = createInstancedMesh('cube', 40, 0xaabbff, {
+    size: 1,
+    material: 'emissive',
+    emissive: 0xaabbff,
+    emissiveIntensity: 1.0,
   });
-}
-
-function updateCamera(dt) {
-  if (gameState === 'menu') {
-    const angle = gameTime * 0.3;
-    setCameraPosition(
-      Math.cos(angle) * 50,
-      30,
-      Math.sin(angle) * 50
-    );
-    setCameraTarget(0, 0, 0);
-    return;
-  }
-  
-  // During countdown, show starting position
-  if (gameState === 'countdown') {
-    if (trackSegments.length > 0) {
-      const startSegment = trackSegments[0];
-      setCameraPosition(
-        startSegment.x,
-        startSegment.y + 15,
-        startSegment.z + 30
-      );
-      setCameraTarget(startSegment.x, startSegment.y, startSegment.z);
-    }
-    return;
-  }
-  
-  if (gameState !== 'racing') return;
-  if (trackSegments.length === 0) return; // Safety check
-  
-  const segmentIndex = Math.floor(player.position * trackSegments.length);
-  const segment = trackSegments[segmentIndex % trackSegments.length];
-  const nextSegment = trackSegments[(segmentIndex + 1) % trackSegments.length];
-  
-  const segmentT = (player.position * trackSegments.length) % 1;
-  const interpX = segment.x + (nextSegment.x - segment.x) * segmentT;
-  const interpY = segment.y + (nextSegment.y - segment.y) * segmentT;
-  const interpZ = segment.z + (nextSegment.z - segment.z) * segmentT;
-  
-  const lateralX = Math.cos(segment.angle + Math.PI/2) * player.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  const lateralZ = Math.sin(segment.angle + Math.PI/2) * player.lateralPos * CONFIG.TRACK_WIDTH * 0.5;
-  
-  const playerX = interpX + lateralX;
-  const playerY = interpY + 2;
-  const playerZ = interpZ + lateralZ;
-  
-  const speedFactor = player.speed / CONFIG.MAX_SPEED;
-  const cameraDistance = 12 + speedFactor * 6;
-  const cameraHeight = 6 + speedFactor * 2;
-  const lookAhead = speedFactor * 8;
-  
-  const shipAngle = segment.angle + Math.PI/2;
-  
-  const cameraX = playerX - Math.sin(shipAngle) * cameraDistance;
-  const cameraY = playerY + cameraHeight;
-  const cameraZ = playerZ - Math.cos(shipAngle) * cameraDistance;
-  
-  const targetX = playerX + Math.sin(shipAngle) * lookAhead;
-  const targetY = playerY;
-  const targetZ = playerZ + Math.cos(shipAngle) * lookAhead;
-  
-  setCameraPosition(cameraX, cameraY, cameraZ);
-  setCameraTarget(targetX, targetY, targetZ);
-  
-  const fov = 85 + speedFactor * 25;
-  setCameraFOV(fov);
-}
-
-function calculateRacePosition() {
-  let position = 1;
-  
-  aiRacers.forEach(ai => {
-    const aiProgress = ai.lap - 1 + ai.position;
-    const playerProgress = player.lap - 1 + player.position;
-    
-    if (aiProgress > playerProgress) {
-      position++;
-    }
-  });
-  
-  racePosition = position;
-}
-
-function finishRace() {
-  gameState = 'finished';
-  console.log('🏁 Race finished! Position:', racePosition);
-}
-
-function createSpeedLines() {
-  for (let i = 0; i < 20; i++) {
-    const line = createCube(0.1, 0xffffff, [0, -1000, 0]);
-    setScale(line, 1, 1, 10);
-    speedLines.push({
-      mesh: line,
-      active: false
-    });
-  }
-}
-
-function updateSpeedLines(dt) {
-  const speedFactor = player.speed / CONFIG.MAX_SPEED;
-  
-  if (speedFactor > 0.6 && gameState === 'racing') {
-    speedLines.forEach((line, index) => {
-      if (Math.random() < 0.1) {
-        line.active = true;
-        line.life = 1;
-        
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 20 + Math.random() * 30;
-        line.x = Math.cos(angle) * radius;
-        line.y = Math.random() * 20 - 10;
-        line.z = 60;
-        
-        setPosition(line.mesh, line.x, line.y, line.z);
-      }
-      
-      if (line.active) {
-        line.z -= (80 + player.speed * 0.5) * dt;
-        line.life -= dt;
-        
-        setPosition(line.mesh, line.x, line.y, line.z);
-        
-        if (line.z < -30 || line.life <= 0) {
-          line.active = false;
-          setPosition(line.mesh, 0, -1000, 0);
-        }
-      }
-    });
-  }
-}
-
-function createExhaustParticle(x, y, z) {
-  const colors = [0xff6600, 0xff4400, 0xff8800, 0xffaa00];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  
-  const particle = createSphere(0.3, color, [x, y, z], 6);
-  
-  particles.push({
-    mesh: particle,
-    x: x, y: y, z: z,
-    vx: (Math.random() - 0.5) * 5,
-    vy: (Math.random() - 0.5) * 2,
-    vz: -player.speed * 0.3,
-    life: 0.8,
-    maxLife: 0.8
-  });
-}
-
-function createBoostParticles() {
+  for (let i = 0; i < 40; i++) spawnSpeedLine(i);
+  finalizeInstances(speedLineInstanceId);
   for (let i = 0; i < 5; i++) {
-    const particle = createSphere(0.4, 0x00ffff, [0, 0, 0], 6);
-    
-    const segmentIndex = Math.floor(player.position * trackSegments.length);
-    const segment = trackSegments[segmentIndex % trackSegments.length];
-    
-    particles.push({
-      mesh: particle,
-      x: segment.x,
-      y: segment.y + 2,
-      z: segment.z,
-      vx: (Math.random() - 0.5) * 10,
-      vy: (Math.random() - 0.5) * 5,
-      vz: -20,
-      life: 1.2,
-      maxLife: 1.2
+    g.propTimer += 0.5;
+    updateTrackSpawns(1);
+    g.rivalTimer += 0.5;
+    updateRivals(1);
+  }
+
+  initStartScreen();
+}
+
+// ── Entity Construction ────────────────────────────────────
+function buildPlayerShip() {
+  const p = g.p;
+  // Sleek wedge shape (Metallic)
+  p.meshes.body = createCube(2.0, C.shipBody, [p.x, p.y, p.z], {
+    material: 'metallic',
+    metalness: 0.9,
+    roughness: 0.2,
+  });
+  setScale(p.meshes.body, 1.2, 0.4, 2.5);
+
+  p.meshes.wingL = createCube(1.0, C.shipTrim, [p.x - 1.8, p.y, p.z + 0.5], {
+    material: 'metallic',
+  });
+  setScale(p.meshes.wingL, 2.0, 0.1, 1.5);
+
+  p.meshes.wingR = createCube(1.0, C.shipTrim, [p.x + 1.8, p.y, p.z + 0.5], {
+    material: 'metallic',
+  });
+  setScale(p.meshes.wingR, 2.0, 0.1, 1.5);
+
+  p.meshes.cockpit = createCube(1.0, C.shipCockpit, [p.x, p.y + 0.5, p.z - 0.5], {
+    material: 'holographic',
+    transparent: true,
+    opacity: 0.8,
+  });
+  setScale(p.meshes.cockpit, 0.6, 0.5, 1.2);
+
+  // Twin Engines
+  p.meshes.engL = createCube(0.8, C.shipEngine, [p.x - 0.6, p.y, p.z + 2.5], {
+    material: 'emissive',
+    emissive: C.shipEngine,
+  });
+  p.meshes.engR = createCube(0.8, C.shipEngine, [p.x + 0.6, p.y, p.z + 2.5], {
+    material: 'emissive',
+    emissive: C.shipEngine,
+  });
+}
+
+function initTrack() {
+  const segLen = 40;
+  // Checkerboard pattern rolling floor
+  for (let i = 0; i < 15; i++) {
+    const z = -i * segLen + 20;
+    const color = i % 2 === 0 ? C.trackR1 : C.trackR2;
+    const mesh = createPlane(g.trackWidth * 1.5, segLen, color, [0, -1, z], {
+      material: 'standard',
+      roughness: 0.8,
+    });
+    rotateMesh(mesh, -Math.PI / 2, 0, 0);
+    g.roadSegments.push({ mesh, z, len: segLen, activeColor: color });
+
+    // Left & Right neon border rails
+    const wl = createCube(1.0, C.neonWall, [-g.trackWidth / 2 - 1, 0, z], {
+      material: 'emissive',
+      emissive: C.neonWall,
+    });
+    setScale(wl, 1.0, 2.0, segLen);
+    const wr = createCube(1.0, C.neonWall, [g.trackWidth / 2 + 1, 0, z], {
+      material: 'emissive',
+      emissive: C.neonWallAlt,
+    });
+    setScale(wr, 1.0, 2.0, segLen);
+    g.borders.push({ wl, wr, z, len: segLen });
+  }
+}
+
+function spawnRival(isFar = false) {
+  const x = (Math.random() - 0.5) * (g.trackWidth - 8);
+  const z = isFar ? -400 : -200 - Math.random() * 100;
+
+  // Basic rival shape
+  const body = createCube(2.0, C.rivalBody, [x, 1.5, z], { material: 'metallic', metalness: 0.8 });
+  setScale(body, 1.0, 0.5, 2.0);
+  const eng = createCube(0.8, C.rivalEngine, [x, 1.5, z + 2.0], {
+    material: 'emissive',
+    emissive: C.rivalEngine,
+  });
+  setScale(eng, 1.8, 0.6, 0.5);
+
+  const speedMultiplier = 0.5 + Math.random() * 0.4; // They travel at 50-90% of max speed
+
+  g.rivals.push({
+    meshes: [body, eng],
+    x,
+    y: 1.5,
+    z,
+    vx: (Math.random() - 0.5) * 10,
+    speed: g.maxSpeed * speedMultiplier,
+    passed: false,
+  });
+}
+
+function spawnSpeedLine(instanceIdx = -1) {
+  const x = (Math.random() - 0.5) * g.trackWidth * 1.4;
+  const y = 1 + Math.random() * 8;
+  const z = -400 + Math.random() * 450;
+  const len = 8.0 + Math.random() * 12;
+
+  const idx = instanceIdx >= 0 ? instanceIdx : g.speedLines.length;
+  if (speedLineInstanceId !== null) {
+    setInstanceTransform(speedLineInstanceId, idx, x, y, z, 0, 0, 0, 0.1, 0.1, len);
+  }
+  g.speedLines.push({ idx, x, y, z, len });
+}
+
+function spawnMine() {
+  const x = (Math.random() - 0.5) * 45;
+  const z = -400 - Math.random() * 200;
+
+  const mesh = createAdvancedCube(3, { material: 'emissive', emissive: 0xff0000, intensity: 2 }, [
+    x,
+    0,
+    z,
+  ]);
+  g.props.push({ type: 'mine', mesh, x: x, z: z, active: true, throb: 0 });
+}
+
+function spawnBoostPad() {
+  const x = (Math.random() - 0.5) * (g.trackWidth - 10);
+  const z = -350;
+
+  const mesh = createPlane(6, 12, C.boostPad, [x, -0.9, z], {
+    material: 'emissive',
+    emissive: C.boostPad,
+  });
+  rotateMesh(mesh, -Math.PI / 2, 0, 0);
+
+  g.props.push({ type: 'boost', mesh, x, z, active: true });
+}
+
+function createSparks(cx, cy, cz, count) {
+  for (let i = 0; i < count; i++) {
+    const mesh = createCube(0.4, C.spark, [cx, cy, cz], {
+      material: 'emissive',
+      emissive: C.spark,
+    });
+    const spd = 20 + Math.random() * 30;
+    const a = Math.random() * Math.PI * 2;
+    g.particles.push({
+      mesh,
+      x: cx,
+      y: cy,
+      z: cz,
+      vx: Math.cos(a) * spd,
+      vy: Math.abs(Math.sin(a)) * spd + 10,
+      vz: Math.random() * 20 - 10,
+      life: 0.3 + Math.random() * 0.5,
+      maxLife: 0.8,
     });
   }
 }
 
-function updateParticles(dt) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.z += p.vz * dt;
-    p.life -= dt;
-    
-    setPosition(p.mesh, p.x, p.y, p.z);
-    
-    const alpha = p.life / p.maxLife;
-    setScale(p.mesh, alpha, alpha, alpha);
-    
-    if (p.life <= 0) {
-      destroyMesh(p.mesh);
-      particles.splice(i, 1);
-    }
-  }
-}
-
+// ── Game Loop Update ───────────────────────────────────────
 export function update(dt) {
-  gameTime += dt;
-  
-  if (gameState === 'menu') {
-    updateCamera(dt);
-    updateButtons(startButtons, dt);
-    
-    if (key('Space')) {
-      gameState = 'countdown';
-      countdownTimer = 3;
-    }
+  t += dt;
+
+  if (gameState !== 'playing' && gameState !== 'countdown') {
+    if (inputLock > 0) inputLock -= dt;
+    updateAllButtons();
+    updateMenuAnim(dt);
+    if (gameState === 'start' && inputLock <= 0 && (isKeyPressed('Space') || btnp(13))) startGame();
     return;
   }
-  
+
   if (gameState === 'countdown') {
     countdownTimer -= dt;
-    updateCamera(dt);
-    
+    updateMenuAnim(dt);
     if (countdownTimer <= 0) {
-      console.log('🚦 Countdown finished! Starting race...');
-      gameState = 'racing';
-      raceStarted = true;
-      // Give player initial forward speed so they start moving
-      player.speed = 60;
-      console.log('✅ Race started! gameState:', gameState, 'Initial speed:', player.speed);
+      gameState = 'playing';
+      sfx('confirm');
+    } else if (countdownTimer < 1 || countdownTimer < 2 || countdownTimer < 3) {
+      // sfx on each count handled in draw
     }
     return;
   }
-  
-  if (gameState === 'racing') {
-    handleInput(dt);
-    updatePlayer(dt);
-    updateAI(dt);
-    updateCamera(dt);
-    calculateRacePosition();
-    updateParticles(dt);
-    updateSpeedLines(dt);
+
+  // Ship logic
+  const p = g.p;
+  updateHitState(playerHit, dt);
+  updateShake(shake, dt);
+  if (g.health <= 0) {
+    createSparks(p.x, p.y, p.z, 40);
+    // Hide ALL ship parts
+    Object.values(p.meshes).forEach(m => m && setPosition(m, 1000, 0, 0));
+    gameState = 'crashed';
+    inputLock = 1.0;
+    sfx('death');
+    initGameOver();
+    return;
   }
-  
-  if (gameState === 'finished') {
-    updateCamera(dt);
-    
-    if (key('Space')) {
-      restartRace();
+
+  // Controls
+  let ix = 0;
+  if (key('ArrowLeft') || key('KeyA') || btn(14)) ix = -1;
+  if (key('ArrowRight') || key('KeyD') || btn(15)) ix = 1;
+
+  // Shifting/Drifting (L/R Bumpers or Q/E)
+  if (key('KeyQ') || btn(4)) ix -= 1.5;
+  if (key('KeyE') || btn(5)) ix += 1.5;
+
+  const latAccel = 120;
+  p.vx += ix * latAccel * dt;
+  p.vx *= 1 - 4.5 * dt; // handling friction
+
+  // Update speed automatically
+  let targetSpeed = g.maxSpeed;
+  if (p.isBoosting) targetSpeed = g.boostSpeed;
+
+  // Acceleration / declaration matching
+  if (g.speed < targetSpeed) g.speed += 150 * dt;
+  else g.speed -= 80 * dt;
+
+  // Engine energy passively recharges
+  g.energy = Math.min(100, g.energy + dt * 5);
+
+  // Manual boost (Space or A button)
+  if ((key('Space') || btn(0)) && g.energy > 30 && !p.isBoosting) {
+    p.isBoosting = true;
+    sfx('powerup');
+  }
+  if (p.isBoosting) {
+    g.energy -= 40 * dt;
+    if (g.energy <= 0) p.isBoosting = false;
+  } else if (!key('Space') && !btn(0)) {
+    p.isBoosting = false; // Release to cancel
+  }
+
+  p.x += p.vx * dt;
+
+  // Wall collisions
+  const bw = g.trackWidth / 2 - 1.5;
+  if (p.x < -bw) {
+    p.x = -bw;
+    p.vx = 40;
+    hitWall(-bw);
+  }
+  if (p.x > bw) {
+    p.x = bw;
+    p.vx = -40;
+    hitWall(bw);
+  }
+
+  p.roll += (-p.vx * 0.015 - p.roll) * 10 * dt; // Lean into turns
+
+  updatePlayerTransforms();
+
+  g.dist += g.speed * dt;
+
+  // Progress World
+  const relSpeed = g.speed * dt;
+  updateRoad(relSpeed);
+  updateTrackSpawns(dt);
+  updateRivals(dt);
+  updateProps(dt);
+  updateParticles(dt, relSpeed);
+
+  // Dynamic Camera (Lags slightly behind ship x-movement)
+  const [shakeX, shakeY] = getShakeOffset(shake);
+  const camX = p.x * 0.4 + p.vx * 0.05;
+  const fovWarp = p.isBoosting ? 100 : 85;
+  // Tween FOV for sense of speed
+  setCameraFOV(85 + (p.isBoosting ? 15 : 0) * Math.min(1, g.speed / g.boostSpeed));
+
+  const camY = 8 - p.pitch * 5;
+  setCameraPosition(camX + shakeX, camY + shakeY, 12);
+  setCameraTarget(camX * 1.5, 0, -40);
+
+  // Track win
+  if (g.dist > 30000 && g.rank <= 1) {
+    // reached end in 1st
+    gameState = 'finished';
+    inputLock = 1.0;
+    sfx('powerup');
+    initWinScreen();
+  }
+}
+
+function hitWall(xPos) {
+  g.health -= 5;
+  g.speed *= 0.6; // heavy slow down
+  playerHit.invulnTimer = 0.2;
+  createSparks(g.p.x + (xPos < 0 ? -1.5 : 1.5), g.p.y, g.p.z, 8);
+  triggerShake(shake, 0.5);
+  sfx('hit');
+}
+
+function updatePlayerTransforms() {
+  const p = g.p;
+  if (!p.meshes.body) return;
+
+  const r = p.roll;
+  const cr = Math.cos(r),
+    sr = Math.sin(r);
+
+  // Hover bob
+  p.y = 1.5 + Math.sin(t * 10) * 0.15;
+
+  const applyR = (ox, oy, oz) => [p.x + ox * cr - oy * sr, p.y + ox * sr + oy * cr, p.z + oz];
+
+  setPosition(p.meshes.body, ...applyR(0, 0, 0));
+  setRotation(p.meshes.body, p.pitch, 0, r);
+
+  setPosition(p.meshes.wingL, ...applyR(-1.8, 0, 0.5));
+  setRotation(p.meshes.wingL, p.pitch, 0, r);
+
+  setPosition(p.meshes.wingR, ...applyR(1.8, 0, 0.5));
+  setRotation(p.meshes.wingR, p.pitch, 0, r);
+
+  setPosition(p.meshes.cockpit, ...applyR(0, 0.5, -0.5));
+  setRotation(p.meshes.cockpit, p.pitch, 0, r);
+
+  // Glow flicker based on boosting
+  const engineScl = p.isBoosting ? 1.5 + Math.random() * 0.5 : 1.0 + Math.random() * 0.2;
+
+  setPosition(p.meshes.engL, ...applyR(-0.6, 0, 2.5));
+  setRotation(p.meshes.engL, p.pitch, 0, r);
+  setScale(p.meshes.engL, 0.8, 0.8, engineScl);
+
+  setPosition(p.meshes.engR, ...applyR(0.6, 0, 2.5));
+  setRotation(p.meshes.engR, p.pitch, 0, r);
+  setScale(p.meshes.engR, 0.8, 0.8, engineScl);
+}
+
+function updateRoad(distMovement) {
+  g.roadSegments.forEach(r => {
+    r.z += distMovement;
+    if (r.z > 30) r.z -= g.roadSegments.length * r.len;
+    // Emphasize speed by flattening road pitch based on Z
+    setPosition(r.mesh, 0, -1, r.z);
+  });
+
+  g.borders.forEach(b => {
+    b.z += distMovement;
+    if (b.z > 30) b.z -= g.borders.length * b.len;
+    setPosition(b.wl, -g.trackWidth / 2 - 1, 0, b.z);
+    setPosition(b.wr, g.trackWidth / 2 + 1, 0, b.z);
+  });
+}
+
+function updateTrackSpawns(dt) {
+  g.propTimer -= dt;
+  if (g.propTimer <= 0) {
+    if (Math.random() < 0.6) spawnBoostPad();
+    else if (Math.random() < 0.8) spawnMine();
+
+    g.propTimer = 1.0 + Math.random() * 2.0;
+  }
+}
+
+function updateRivals(dt) {
+  g.rivalTimer -= dt;
+  if (g.rivalTimer <= 0 && g.rivals.length < 8) {
+    spawnRival(true);
+    g.rivalTimer = 1.5 + Math.random() * 2.5;
+  }
+
+  const p = g.p;
+  for (let i = g.rivals.length - 1; i >= 0; i--) {
+    let r = g.rivals[i];
+
+    // Relative movement
+    const relSpeed = g.speed - r.speed;
+    r.z += relSpeed * dt;
+
+    r.x += r.vx * dt;
+    if (r.x < -18 || r.x > 18) r.vx *= -1;
+
+    r.y = 1.5 + Math.sin(t * 8 + i) * 0.3;
+
+    setPosition(r.meshes[0], r.x, r.y, r.z);
+    setRotation(r.meshes[0], 0, 0, -r.vx * 0.05);
+
+    setPosition(r.meshes[1], r.x, r.y, r.z + 2.0);
+    setRotation(r.meshes[1], 0, 0, -r.vx * 0.05);
+
+    // Passed mechanic
+    if (!r.passed && r.z > p.z + 2) {
+      r.passed = true;
+      g.passCount++;
+      g.rank = Math.max(1, 10 - g.passCount);
+      sfx('coin');
+    }
+
+    // Collision with player
+    if (!isInvulnerable(playerHit) && Math.abs(r.z - p.z) < 3.5 && Math.abs(r.x - p.x) < 2.5) {
+      g.health -= 15;
+      g.speed *= 0.7; // lose heavy momentum
+      triggerHit(playerHit);
+      triggerShake(shake, 0.8);
+      sfx('explosion');
+      r.vx = r.x > p.x ? 15 : -15; // knock away
+      createSparks((r.x + p.x) / 2, 1.5, p.z, 15);
+    }
+
+    // Clean up
+    if (r.z > 50) {
+      r.meshes.forEach(m => destroyMesh(m));
+      g.rivals.splice(i, 1);
     }
   }
 }
 
+function updateProps(dt) {
+  for (let i = g.props.length - 1; i >= 0; i--) {
+    let p = g.props[i];
+    p.z += g.speed * dt;
+    setPosition(p.mesh, p.x, -0.9, p.z);
+
+    // Boost Pad hit detection
+    if (
+      p.active &&
+      p.type === 'boost' &&
+      Math.abs(p.z - g.p.z) < 4.0 &&
+      Math.abs(p.x - g.p.x) < 4.0
+    ) {
+      p.active = false;
+      g.p.isBoosting = true;
+      g.energy = Math.min(100, g.energy + 50); // Restore energy
+      g.speed = g.boostSpeed + 50; // Extra burst
+      createSparks(g.p.x, -0.5, g.p.z, 20);
+      sfx('powerup');
+    }
+
+    // Mine collision detection
+    if (
+      p.active &&
+      p.type === 'mine' &&
+      !isInvulnerable(playerHit) &&
+      Math.abs(p.z - g.p.z) < 3.0 &&
+      Math.abs(p.x - g.p.x) < 3.0
+    ) {
+      p.active = false;
+      g.health -= 25;
+      g.speed *= 0.4;
+      triggerHit(playerHit);
+      triggerShake(shake, 1.2);
+      createSparks(p.x, 0, p.z, 30);
+      sfx('explosion');
+    }
+
+    if (p.z > 30) {
+      destroyMesh(p.mesh);
+      g.props.splice(i, 1);
+    }
+  }
+}
+
+function updateParticles(dt, ds) {
+  // Environmental speed stars/lines
+  let linesUpdated = false;
+  g.speedLines.forEach(sl => {
+    sl.z += ds * 1.5; // lines fly past faster
+    if (sl.z > 40) sl.z -= 500;
+    if (speedLineInstanceId !== null) {
+      setInstanceTransform(
+        speedLineInstanceId,
+        sl.idx,
+        sl.x,
+        sl.y,
+        sl.z,
+        0,
+        0,
+        0,
+        0.1,
+        0.1,
+        sl.len
+      );
+      linesUpdated = true;
+    }
+  });
+  if (linesUpdated && speedLineInstanceId !== null) finalizeInstances(speedLineInstanceId);
+
+  // Active sparks
+  for (let i = g.particles.length - 1; i >= 0; i--) {
+    let p = g.particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.z += (p.vz + g.speed) * dt;
+    p.vy -= 40 * dt; // gravity
+    p.life -= dt;
+
+    let a = Math.max(0.01, p.life / p.maxLife);
+    setScale(p.mesh, a, a, a);
+    setPosition(p.mesh, p.x, p.y, p.z);
+
+    if (p.life <= 0) {
+      destroyMesh(p.mesh);
+      g.particles.splice(i, 1);
+    }
+  }
+}
+
+function updateMenuAnim(dt) {
+  // Make ship hover idly on menu
+  updateRoad(200 * dt);
+  const p = g.p;
+  p.y = 1.8 + Math.sin(t * 3) * 0.3;
+  p.roll = Math.sin(t * 2) * 0.1;
+  p.pitch = Math.sin(t * 1.5) * 0.05;
+
+  if (gameState !== 'crashed') updatePlayerTransforms();
+}
+
+// ── Screen Rendering ───────────────────────────────────────
 export function draw() {
-  // DON'T call cls() - it clears the 3D scene!
-  // Just draw 2D overlay on top of 3D rendering
-  
-  if (gameState === 'menu') {
-    drawMenu();
+  if (gameState === 'start') {
+    drawStartScreen();
     return;
   }
-  
   if (gameState === 'countdown') {
     drawCountdown();
     return;
   }
-  
-  if (gameState === 'racing') {
-    drawHUD();
+  if (gameState === 'crashed') {
+    drawCrashedScreen();
+    return;
   }
-  
   if (gameState === 'finished') {
-    drawResults();
+    drawFinishScreen();
+    return;
   }
-}
 
-function drawMenu() {
-  setTextAlign('center');
-  setFont('huge');
-  const titlePulse = Math.sin(gameTime * 3) * 0.3 + 0.7;
-  drawTextShadow('F-ZERO', 320, 60, rgba8(255, 100, 0, Math.floor(titlePulse * 255)), 
-                 rgba8(0, 0, 0, 255), 4, 1);
-  drawTextShadow('NOVA 64', 320, 120, rgba8(0, 200, 255, 255), rgba8(0, 0, 0, 255), 4, 1);
-  
-  setFont('large');
-  drawText('ANTI-GRAVITY RACING', 320, 180, rgba8(255, 255, 255, 255), 1);
-  
-  // Draw start button
-  drawButtons(startButtons);
-  
-  setFont('small');
-  drawText('ARROW KEYS or WASD: Steer and Accelerate', 320, 300, rgba8(200, 200, 200, 255), 1);
-  drawText('SPACE: Boost', 320, 320, rgba8(200, 200, 200, 255), 1);
-  drawText('DOWN or S: Brake', 320, 340, rgba8(200, 200, 200, 255), 1);
-}
-
-function drawCountdown() {
-  setTextAlign('center');
-  setFont('huge');
-  const count = Math.ceil(countdownTimer);
-  const text = count > 0 ? count.toString() : 'GO!';
-  const color = count > 0 ? rgba8(255, 200, 0, 255) : rgba8(0, 255, 100, 255);
-  
-  drawTextShadow(text, 320, 160, color, rgba8(0, 0, 0, 255), 8, 1);
+  // Playing HUD
+  drawHUD();
 }
 
 function drawHUD() {
-  const speedPercent = (player.speed / CONFIG.MAX_SPEED) * 100;
-  print('SPEED: ' + Math.floor(player.speed) + ' KM/H', 20, 20, rgba8(255, 255, 255, 255));
-  
-  const barWidth = 200;
-  const barHeight = 20;
-  rect(20, 35, barWidth, barHeight, rgba8(50, 50, 50, 200), true);
-  rect(20, 35, barWidth * (speedPercent / 100), barHeight, rgba8(255, 100, 0, 255), true);
-  rect(20, 35, barWidth, barHeight, rgba8(255, 255, 255, 255), false);
-  
-  print('BOOST: ' + Math.floor(player.boostCharge) + '%', 20, 65, rgba8(0, 255, 255, 255));
-  rect(20, 80, barWidth, 15, rgba8(50, 50, 50, 200), true);
-  rect(20, 80, barWidth * (player.boostCharge / 100), 15, rgba8(0, 255, 255, 255), true);
-  rect(20, 80, barWidth, 15, rgba8(255, 255, 255, 255), false);
-  
-  print('LAP: ' + player.lap + '/' + CONFIG.MAX_LAPS, 20, 110, rgba8(255, 255, 100, 255));
-  print('POSITION: ' + racePosition + '/' + (CONFIG.AI_RACERS + 1), 20, 130, rgba8(255, 150, 50, 255));
-  print('TIME: ' + player.lapTime.toFixed(2) + 's', 20, 150, rgba8(100, 255, 100, 255));
-  
-  if (player.bestLapTime > 0) {
-    print('BEST: ' + player.bestLapTime.toFixed(2) + 's', 20, 170, rgba8(255, 255, 0, 255));
-  }
-  
-  const mapX = 540;
-  const mapY = 40;
-  const mapRadius = 35;
-  
-  for (let i = 0; i < 32; i++) {
-    const angle = (i / 32) * Math.PI * 2;
-    const x = mapX + Math.cos(angle) * mapRadius;
-    const y = mapY + Math.sin(angle) * mapRadius;
-    pset(x, y, rgba8(100, 100, 150, 255));
-  }
-  
-  const playerAngle = player.position * Math.PI * 2;
-  const px = mapX + Math.cos(playerAngle) * mapRadius;
-  const py = mapY + Math.sin(playerAngle) * mapRadius;
-  rect(px - 2, py - 2, 4, 4, rgba8(0, 255, 255, 255), true);
-  
-  aiRacers.forEach(ai => {
-    const aiAngle = ai.position * Math.PI * 2;
-    const ax = mapX + Math.cos(aiAngle) * mapRadius;
-    const ay = mapY + Math.sin(aiAngle) * mapRadius;
-    pset(ax, ay, rgba8(255, 100, 100, 255));
-  });
-  
-  print('MAP', mapX - 12, mapY + mapRadius + 8, rgba8(255, 255, 255, 255));
-}
-
-function drawResults() {
-  setTextAlign('center');
-  setFont('huge');
-  drawTextShadow('RACE FINISHED', 320, 100, rgba8(255, 255, 0, 255), rgba8(0, 0, 0, 255), 4, 1);
-  
-  setFont('large');
-  const positionText = racePosition === 1 ? '1ST PLACE!' : 
-                       racePosition === 2 ? '2ND PLACE' :
-                       racePosition === 3 ? '3RD PLACE' : racePosition + 'TH PLACE';
-  const positionColor = racePosition === 1 ? rgba8(255, 215, 0, 255) : rgba8(200, 200, 200, 255);
-  drawText(positionText, 320, 160, positionColor, 1);
-  
   setFont('normal');
-  print('TOTAL TIME: ' + player.totalTime.toFixed(2) + 's', 240, 210, rgba8(255, 255, 255, 255));
-  
-  if (player.bestLapTime > 0) {
-    print('BEST LAP: ' + player.bestLapTime.toFixed(2) + 's', 240, 230, rgba8(255, 255, 100, 255));
+  setTextAlign('left');
+
+  // Top HUD Bar
+  rect(0, 0, 640, 40, rgba8(0, 5, 20, 180), true);
+  line(0, 40, 640, 40, rgba8(255, 0, 150, 150));
+
+  drawTextShadow(`RANK ${g.rank}/10`, 20, 12, rgba8(0, 255, 200, 255), rgba8(0, 0, 0, 255), 2);
+
+  setFont('large');
+  setTextAlign('right');
+  const spdTxt = Math.floor(g.speed).toString().padStart(3, '0');
+  drawTextShadow(`${spdTxt} km/h`, 620, 10, rgba8(255, 255, 0, 255), rgba8(0, 0, 0, 255), 2);
+
+  // Progress Bar
+  const progPct = Math.min(1, g.dist / 30000);
+  rect(200, 16, 240, 8, rgba8(255, 255, 255, 50), true);
+  rect(200, 16, 240 * progPct, 8, rgba8(0, 255, 255, 255), true);
+
+  setFont('small');
+  setTextAlign('center');
+  drawText('COURSE PROGRESS', 320, 4, rgba8(200, 200, 255, 180));
+
+  // Bottom HUD elements
+  const bY = 320;
+
+  // Health
+  rect(20, bY, 150, 12, rgba8(50, 0, 0, 180), true);
+  const hpC = g.health > 40 ? rgba8(0, 255, 0, 255) : rgba8(255, 50, 50, 255);
+  rect(20, bY, 150 * (g.health / 100), 12, hpC, true);
+  rect(20, bY, 150, 12, rgba8(0, 0, 0, 0), false);
+  drawTextShadow('HULL', 20, bY - 14, rgba8(200, 200, 200, 255), rgba8(0, 0, 0, 255), 1);
+
+  // Boost Energy
+  rect(470, bY, 150, 12, rgba8(0, 10, 50, 180), true);
+  const engPct = Math.max(0, g.energy / 100);
+  rect(470, bY, 150 * engPct, 12, rgba8(0, 200, 255, 255), true);
+  if (g.p.isBoosting) {
+    rect(
+      470,
+      bY,
+      150 * engPct,
+      12,
+      rgba8(255, 255, 255, Math.floor(Math.sin(t * 30) * 100 + 100)),
+      true
+    );
   }
-  
-  const pulse = Math.sin(gameTime * 4) * 0.4 + 0.6;
-  print('PRESS SPACE TO RESTART', 240, 280, rgba8(255, 255, 255, Math.floor(pulse * 255)));
+  rect(470, bY, 150, 12, rgba8(0, 0, 0, 0), false);
+  drawTextShadow('BOOST POWER', 470, bY - 14, rgba8(200, 200, 200, 255), rgba8(0, 0, 0, 255), 1);
+
+  if (g.energy > 30 && !g.p.isBoosting && Math.sin(t * 4) > 0) {
+    drawText('TAP / PRESS A', 545, bY + 16, rgba8(0, 255, 255, 180));
+  }
+
+  // Invuln and Damage Effects
+  if (isInvulnerable(playerHit)) {
+    rect(0, 0, 640, 360, rgba8(255, 0, 0, Math.floor(Math.sin(t * 40) * 50 + 50)), true);
+  }
+  if (g.speed > 350) {
+    // Hyperspeed blur effect via borders
+    const al = Math.min(60, g.speed - 350);
+    rect(0, 0, 640, 360, rgba8(0, 255, 255, al), true);
+    drawScanlines(10, 1);
+  }
 }
 
-function restartRace() {
-  player.position = 0;
-  player.speed = 0;
-  player.lateralPos = 0;
-  player.height = 0;
-  player.lap = 1;
-  player.energy = 100;
-  player.boostCharge = 100;
-  player.lapTime = 0;
-  player.bestLapTime = 0;
-  player.totalTime = 0;
-  
-  aiRacers.forEach((ai, index) => {
-    // Position AI racers at valid starting positions (just behind start line)
-    ai.position = 0.98 - 0.01 * (index + 1);
-    ai.speed = 0;
-    ai.lap = 1;
-    ai.lapTime = 0;
+function drawCountdown() {
+  drawHUD();
+  const c = Math.ceil(countdownTimer);
+  const label = c > 0 ? `${c}` : 'GO!';
+  const col = c > 0 ? rgba8(255, 255, 0, 255) : rgba8(0, 255, 100, 255);
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(label, 320, 140, col, rgba8(0, 0, 0, 200), 6);
+}
+
+function drawStartScreen() {
+  // Vignette gradient
+  drawRadialGradient(320, 180, 400, rgba8(10, 0, 60, 50), rgba8(5, 0, 15, 240));
+
+  const bob = Math.sin(t * 3) * 6;
+
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(
+    'F-ZERO',
+    320,
+    60 + bob,
+    rgba8(0, 255, 200, 255),
+    rgba8(0, 150, 255, 200),
+    4
+  );
+  drawGlowTextCentered(
+    'NOVA 3D',
+    320,
+    130 + bob,
+    rgba8(255, 0, 150, 255),
+    rgba8(150, 0, 200, 200),
+    2
+  );
+
+  const panel = createPanel(centerX(300), 190, 300, 100, {
+    bgColor: rgba8(10, 0, 30, 220),
+    borderColor: rgba8(0, 255, 255, 180),
+    borderWidth: 2,
   });
-  
+  drawPanel(panel);
+
+  setFont('small');
+  drawText('◆ ARROWS / WASD: Steer', 320, 210, uiColors.light);
+  drawText('◆ Q/E: Drift Step', 320, 230, uiColors.light);
+  drawText('◆ SPACE: Hyper Boost (Requires Power)', 320, 250, rgba8(0, 255, 255, 255));
+  drawText('◆ Avoid Rivals, Hit Green Pads!', 320, 270, rgba8(0, 255, 100, 255));
+
+  drawAllButtons();
+
+  const fa = Math.floor(Math.sin(t * 6) * 100 + 155);
+  drawTextShadow(
+    'PRESS SPACE / TAP TO RACE',
+    320,
+    330,
+    rgba8(255, 255, 0, fa),
+    rgba8(0, 0, 0, 255),
+    2
+  );
+  drawScanlines(30, 2);
+}
+
+function drawCrashedScreen() {
+  rect(0, 0, 640, 360, rgba8(80, 0, 0, 120), true);
+  drawNoise(0, 0, 640, 360, 30, Math.floor(t * 10)); // Static
+
+  setFont('huge');
+  setTextAlign('center');
+  drawTextShadow('MACHINE DESTROYED', 320, 150, rgba8(255, 50, 50, 255), rgba8(0, 0, 0, 255), 4);
+
+  drawAllButtons();
+  drawScanlines(50, 3);
+}
+
+function drawFinishScreen() {
+  rect(0, 0, 640, 360, rgba8(0, 50, 20, 180), true);
+
+  setFont('huge');
+  setTextAlign('center');
+  drawGlowTextCentered(
+    'COURSE CLEARED',
+    320,
+    120,
+    rgba8(0, 255, 100, 255),
+    rgba8(0, 150, 50, 200),
+    3
+  );
+
+  setFont('large');
+  drawTextShadow(
+    `FINAL RANK: ${g.rank}`,
+    320,
+    180,
+    rgba8(255, 255, 0, 255),
+    rgba8(0, 0, 0, 255),
+    2
+  );
+
+  drawAllButtons();
+}
+
+function startGame() {
   gameState = 'countdown';
-  countdownTimer = 3;
+  countdownTimer = 3.0;
+  inputLock = 0.3;
+  g.health = 100;
+  g.energy = 50;
+  g.dist = 0;
+  g.speed = 0;
+  g.rank = 10;
+  g.passCount = 0;
+
+  g.p.x = 0;
+  g.p.vx = 0;
+  // Restore ship meshes after crash
+  Object.values(g.p.meshes).forEach(m => m && setPosition(m, 0, 1.5, 0));
+  clearButtons();
+  sfx('select');
 }
 
-// UI Helper Functions
-function centerX(width) {
-  return (640 - width) / 2;
-}
-
-function createButton(x, y, width, height, text, onClick, colors = {}) {
-  return {
-    x, y, width, height, text, onClick,
-    normalColor: colors.normalColor || rgba8(80, 80, 120, 255),
-    hoverColor: colors.hoverColor || rgba8(100, 100, 150, 255),
-    pressedColor: colors.pressedColor || rgba8(60, 60, 100, 255),
-    hovered: false,
-    pressed: false,
-    wasPressed: false
-  };
-}
-
-function updateButtons(buttons, dt) {
-  const mx = mouseX();
-  const my = mouseY();
-  const isPressed = mousePressed();
-  
-  buttons.forEach(btn => {
-    const inBounds = mx >= btn.x && mx <= btn.x + btn.width &&
-                     my >= btn.y && my <= btn.y + btn.height;
-    
-    btn.hovered = inBounds;
-    btn.pressed = inBounds && isPressed;
-    
-    if (inBounds && isPressed && !btn.wasPressed) {
-      btn.onClick();
-    }
-    
-    btn.wasPressed = isPressed;
+function initStartScreen() {
+  clearButtons();
+  createButton(centerX(220), 310, 220, 40, '▶ START ENGINE', startGame, {
+    normalColor: rgba8(200, 0, 150, 255),
+    hoverColor: rgba8(255, 50, 200, 255),
   });
 }
 
-function drawButtons(buttons) {
-  buttons.forEach(btn => {
-    let color = btn.normalColor;
-    if (btn.pressed) {
-      color = btn.pressedColor;
-    } else if (btn.hovered) {
-      color = btn.hoverColor;
-    }
-    
-    rect(btn.x, btn.y, btn.width, btn.height, color, true);
-    rect(btn.x, btn.y, btn.width, btn.height, rgba8(255, 255, 255, 255), false);
-    
-    setTextAlign('center');
-    setFont('large');
-    const textX = btn.x + btn.width / 2;
-    const textY = btn.y + btn.height / 2 - 10;
-    drawText(btn.text, textX, textY, rgba8(255, 255, 255, 255), 1);
-  });
+function initGameOver() {
+  clearButtons();
+  createButton(
+    centerX(240),
+    220,
+    240,
+    50,
+    '↻ RETRY COURSE',
+    () => {
+      // Soft reset state then go to start menu
+      g.p.meshes.body && setPosition(g.p.meshes.body, 0, 1.5, 0); // Put ship back visually
+      gameState = 'start';
+      inputLock = 0.5;
+      initStartScreen();
+    },
+    { normalColor: rgba8(200, 50, 0, 255) }
+  );
+}
+
+function initWinScreen() {
+  clearButtons();
+  createButton(
+    centerX(240),
+    240,
+    240,
+    50,
+    '↻ PLAY AGAIN',
+    () => {
+      gameState = 'start';
+      inputLock = 0.5;
+      initStartScreen();
+    },
+    { normalColor: rgba8(0, 150, 100, 255) }
+  );
 }

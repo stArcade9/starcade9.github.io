@@ -1,580 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova64 Runtime API Documentation</title>
-    <style>
-        :root {
-            --bg-primary: #0f1115;
-            --bg-secondary: #151822;
-            --bg-tertiary: #1a1d2e;
-            --text-primary: #dcdfe4;
-            --text-secondary: #99a1b3;
-            --accent-cyan: #00ffff;
-            --accent-magenta: #ff0080;
-            --accent-yellow: #ffff00;
-            --border: #2a324a;
-            --code-bg: #1a1d2e;
-            --link-hover: #33ffff;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
-            background-attachment: fixed;
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: var(--bg-secondary);
-            border: 2px solid var(--accent-cyan);
-            border-radius: 12px;
-            padding: 40px;
-            margin-bottom: 40px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-        }
-        
-        h1 {
-            color: var(--accent-cyan);
-            font-size: 3em;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.2em;
-        }
-        
-        .version {
-            display: inline-block;
-            background: var(--accent-magenta);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            margin-top: 15px;
-        }
-        
-        .intro {
-            background: var(--bg-secondary);
-            border-left: 4px solid var(--accent-cyan);
-            padding: 25px;
-            margin-bottom: 40px;
-            border-radius: 8px;
-        }
-        
-        .intro h2 {
-            color: var(--accent-cyan);
-            margin-bottom: 15px;
-        }
-        
-        .api-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        
-        .api-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .api-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .api-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
-            border-color: var(--accent-cyan);
-        }
-        
-        .api-card:hover::before {
-            opacity: 1;
-        }
-        
-        .api-card h3 {
-            color: var(--accent-cyan);
-            font-size: 1.4em;
-            margin-bottom: 10px;
-        }
-        
-        .api-card .icon {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        .api-card .description {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-            min-height: 60px;
-        }
-        
-        .api-card .features {
-            list-style: none;
-            margin-bottom: 20px;
-        }
-        
-        .api-card .features li {
-            padding: 5px 0;
-            padding-left: 20px;
-            position: relative;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-        
-        .api-card .features li::before {
-            content: '▸';
-            position: absolute;
-            left: 0;
-            color: var(--accent-cyan);
-        }
-        
-        .api-link {
-            display: inline-block;
-            background: var(--accent-cyan);
-            color: var(--bg-primary);
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .api-link:hover {
-            background: var(--link-hover);
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
-        }
-        
-        .category-header {
-            color: var(--accent-magenta);
-            font-size: 2em;
-            margin: 40px 0 20px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border);
-            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
-        }
-        
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-            border-top: 1px solid var(--border);
-            margin-top: 60px;
-        }
-        
-        footer a {
-            color: var(--accent-cyan);
-            text-decoration: none;
-        }
-        
-        footer a:hover {
-            text-decoration: underline;
-        }
-        
-        .quick-links {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .quick-links h3 {
-            color: var(--accent-yellow);
-            margin-bottom: 15px;
-        }
-        
-        .quick-links ul {
-            list-style: none;
-            columns: 3;
-            column-gap: 20px;
-        }
-        
-        .quick-links li {
-            padding: 8px 0;
-        }
-        
-        .quick-links a {
-            color: var(--accent-cyan);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-        
-        .quick-links a:hover {
-            color: var(--link-hover);
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .api-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .quick-links ul {
-                columns: 1;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova64 — Runtime API Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#09090f;--bg2:#0f1220;--bg3:#141829;--bgcode:#080c14;
+      --text:#dde4f0;--muted:#6a7898;--border:#1c2438;
+      --cyan:#00ffff;--violet:#9d00ff;--green:#39ff14;--yellow:#ffee00;
+      --bv:rgba(157,0,255,0.25);--gv:0 0 24px rgba(157,0,255,0.35);
+      --by:rgba(255,238,0,0.25);--gy:0 0 24px rgba(255,238,0,0.3);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+    body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 3px)}
+    a{color:var(--cyan);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .terminal-hero{background:linear-gradient(180deg,#000308 0%,#0a0c10 100%);padding:72px 24px;text-align:center;border-bottom:1px solid var(--border)}
+    .term-win{display:inline-block;text-align:left;border-radius:10px;overflow:hidden;border:1px solid var(--cyan);box-shadow:0 0 38px rgba(0,255,255,.18),0 0 80px rgba(0,0,0,.7);max-width:600px;width:100%}
+    .term-titlebar{background:#1a1c22;display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid #2a2e3e}
+    .dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+    .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+    .term-title{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;margin-right:19px}
+    .term-body{background:#0a0e14;padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:2}
+    .terminal-line{color:#9cabb4}
+    .terminal-line.success{color:var(--green)}
+    .cursor{display:inline-block;width:9px;height:1.1em;background:var(--cyan);vertical-align:text-bottom;animation:blink 1.1s step-end infinite}
+    @keyframes blink{50%{opacity:0}}
+    .docs-header{text-align:center;padding:72px 24px 40px;border-bottom:1px solid var(--border)}
+    .docs-header h1{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,58px);font-weight:900;letter-spacing:-.01em;margin-bottom:14px;line-height:1.05}
+    .docs-header h1 span{color:var(--cyan)}
+    .docs-header .sub{font-size:16px;color:var(--muted);margin-bottom:22px}
+    .version{font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 13px;border-radius:20px;background:rgba(0,255,255,.07);border:1px solid rgba(0,255,255,.2);color:var(--cyan);display:inline-block}
+    .docs-nav-strip{position:sticky;top:0;z-index:100;background:rgba(9,9,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto;white-space:nowrap}
+    .docs-nav-strip ul{list-style:none;display:flex;gap:0;margin:0 auto;max-width:1200px}
+    .docs-nav-strip li a{display:block;padding:14px 18px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:all .2s;border-bottom:2px solid transparent}
+    .docs-nav-strip li a:hover{color:var(--text)}
+    .docs-nav-strip li a.active,.docs-nav-strip li a.hl-os{color:var(--violet);border-bottom-color:var(--violet)}
+    .docs-nav-strip li a.hl-console{color:var(--yellow);border-bottom-color:var(--yellow)}
+    .container{max-width:1200px;margin:0 auto;padding:48px 28px 80px}
+    .quick-links{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:52px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+    .ql{font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all .2s;background:var(--bg2)}
+    .ql:hover{border-color:var(--bv);color:var(--violet);text-decoration:none}
+    .ql.os{border-color:var(--bv);color:var(--violet)}
+    .ql.console{border-color:var(--by);color:var(--yellow)}
+    .docs-section{margin-bottom:64px}
+    .docs-section h2{font-family:'Orbitron',sans-serif;font-size:clamp(18px,2.5vw,26px);font-weight:700;margin-bottom:24px;scroll-margin-top:64px;padding-bottom:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .docs-section.os-section h2{color:var(--violet)}
+    .docs-section.console-section h2{color:var(--yellow)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-bottom:24px}
+    .api-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:26px;transition:all .25s;display:block;text-decoration:none;position:relative;overflow:hidden}
+    .api-card:hover{text-decoration:none;transform:translateY(-3px)}
+    .api-card.os-card:hover{border-color:var(--violet);box-shadow:var(--gv)}
+    .api-card.console-card:hover{border-color:var(--yellow);box-shadow:var(--gy)}
+    .api-card:not(.os-card):not(.console-card):hover{border-color:rgba(0,255,255,.35);box-shadow:0 0 24px rgba(0,255,255,.2)}
+    .api-card .icon{font-size:1.9em;margin-bottom:12px;display:block}
+    .api-card h3{font-size:15px;font-weight:700;margin-bottom:7px}
+    .api-card.os-card h3{color:var(--violet)}
+    .api-card.console-card h3{color:var(--yellow)}
+    .api-card:not(.os-card):not(.console-card) h3{color:var(--cyan)}
+    .api-card p{font-size:13px;color:var(--muted);line-height:1.65}
+    .os-hero-band{background:linear-gradient(135deg,rgba(157,0,255,.08) 0%,rgba(9,9,15,0) 100%);border:1px solid var(--bv);border-radius:14px;padding:28px 32px;margin-bottom:28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+    .os-hero-band .ohb-text h3{font-size:1.15em;font-weight:700;color:var(--violet);margin-bottom:6px;font-family:'Orbitron',sans-serif}
+    .os-hero-band .ohb-text p{font-size:14px;color:var(--muted);max-width:520px;line-height:1.7}
+    .os-hero-band a.ohb-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:8px;border:1.5px solid var(--violet);color:var(--violet);font-weight:700;font-size:14px;text-decoration:none;transition:all .2s;white-space:nowrap}
+    .os-hero-band a.ohb-btn:hover{background:var(--violet);color:#fff;box-shadow:var(--gv);text-decoration:none}
+    .docs-footer{border-top:1px solid var(--border);padding-top:32px;margin-top:20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+    .docs-footer p,.docs-footer a{font-size:13px;color:var(--muted)}
+    .docs-footer a:hover{color:var(--cyan)}
+  </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎮 Nova64 Runtime API</h1>
-            <p class="subtitle">Complete Documentation for the Nintendo 64 / PlayStation Style Fantasy Console</p>
-            <span class="version">v0.2.0</span>
-        </header>
-
-        <div class="intro">
-            <h2>📘 Welcome to Nova64 Documentation</h2>
-            <p>Nova64 is a JavaScript fantasy console inspired by classic 3D gaming consoles like the Nintendo 64 and PlayStation. This documentation covers all runtime APIs available for creating games and demos.</p>
-            <p style="margin-top: 15px;"><strong>Key Features:</strong> Full 3D acceleration with Three.js, retro-style graphics rendering, sprite system, physics engine, audio support, voxel engine, and much more!</p>
-        </div>
-
-        <div class="quick-links">
-            <h3>⚡ Quick Links</h3>
-            <ul>
-                <li><a href="api.html">2D Drawing API</a></li>
-                <li><a href="api-3d.html">3D Graphics API</a></li>
-                <li><a href="api-sprites.html">Sprite System</a></li>
-                <li><a href="api-skybox.html">Skybox API</a></li>
-                <li><a href="api-effects.html">Visual Effects</a></li>
-                <li><a href="api-voxel.html">Voxel Engine</a></li>
-                <li><a href="input.html">Input System</a></li>
-                <li><a href="audio.html">Audio System</a></li>
-                <li><a href="physics.html">Physics Engine</a></li>
-                <li><a href="collision.html">Collision Detection</a></li>
-                <li><a href="ui.html">UI System</a></li>
-                <li><a href="storage.html">Storage API</a></li>
-            </ul>
-        </div>
-
-        <h2 class="category-header">🎨 Graphics APIs</h2>
-        <div class="api-grid">
-            <div class="api-card">
-                <div class="icon">🎨</div>
-                <h3>2D Drawing API</h3>
-                <p class="description">Core 2D drawing functions for pixels, lines, rectangles, circles, and sprites.</p>
-                <ul class="features">
-                    <li>Pixel-perfect drawing</li>
-                    <li>Geometric shapes</li>
-                    <li>Camera system</li>
-                    <li>Color management (RGBA64)</li>
-                </ul>
-                <a href="api.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🎮</div>
-                <h3>3D Graphics API</h3>
-                <p class="description">Complete 3D rendering system using Three.js for meshes, materials, lighting, and cameras.</p>
-                <ul class="features">
-                    <li>Primitive shapes (cubes, spheres, etc.)</li>
-                    <li>Material system with PBR</li>
-                    <li>Lighting and shadows</li>
-                    <li>GLB model loading</li>
-                </ul>
-                <a href="api-3d.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">👾</div>
-                <h3>Sprite System</h3>
-                <p class="description">Retro-style sprite rendering with animations, transformations, and sprite sheets.</p>
-                <ul class="features">
-                    <li>8×8 sprite tiles</li>
-                    <li>Animations and flipping</li>
-                    <li>Sprite editor integration</li>
-                    <li>Layering and sorting</li>
-                </ul>
-                <a href="api-sprites.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🌌</div>
-                <h3>Skybox API</h3>
-                <p class="description">Beautiful space backgrounds with stars, nebulae, and animated effects.</p>
-                <ul class="features">
-                    <li>Procedural star fields</li>
-                    <li>Nebula gradients</li>
-                    <li>Galaxy spiral effects</li>
-                    <li>Fog system</li>
-                </ul>
-                <a href="api-skybox.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">✨</div>
-                <h3>Visual Effects</h3>
-                <p class="description">Post-processing effects like bloom, chromatic aberration, and scanlines.</p>
-                <ul class="features">
-                    <li>Bloom glow effects</li>
-                    <li>Chromatic aberration</li>
-                    <li>CRT scanlines</li>
-                    <li>FXAA anti-aliasing</li>
-                </ul>
-                <a href="api-effects.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🧱</div>
-                <h3>Voxel Engine</h3>
-                <p class="description">Minecraft-style voxel world with chunk management and block manipulation.</p>
-                <ul class="features">
-                    <li>Chunk-based terrain</li>
-                    <li>Block types and textures</li>
-                    <li>Efficient meshing</li>
-                    <li>World generation</li>
-                </ul>
-                <a href="api-voxel.html" class="api-link">View Documentation →</a>
-            </div>
-        </div>
-
-        <h2 class="category-header">🎯 Input & Interaction</h2>
-        <div class="api-grid">
-            <div class="api-card">
-                <div class="icon">🕹️</div>
-                <h3>Input System</h3>
-                <p class="description">Keyboard, mouse, and gamepad input handling with button states and axes.</p>
-                <ul class="features">
-                    <li>Keyboard key detection</li>
-                    <li>Mouse position and buttons</li>
-                    <li>Gamepad support (analog sticks)</li>
-                    <li>Button press/release states</li>
-                </ul>
-                <a href="input.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🖼️</div>
-                <h3>UI System</h3>
-                <p class="description">User interface components like buttons, panels, and text rendering.</p>
-                <ul class="features">
-                    <li>Buttons with callbacks</li>
-                    <li>Panels and containers</li>
-                    <li>Text with shadows/outlines</li>
-                    <li>Layout management</li>
-                </ul>
-                <a href="ui.html" class="api-link">View Documentation →</a>
-            </div>
-        </div>
-
-        <h2 class="category-header">🔊 Audio & Physics</h2>
-        <div class="api-grid">
-            <div class="api-card">
-                <div class="icon">🔊</div>
-                <h3>Audio System</h3>
-                <p class="description">Sound effects and music playback with volume control and synthesis.</p>
-                <ul class="features">
-                    <li>Sound effect playback</li>
-                    <li>Music streaming</li>
-                    <li>Volume control</li>
-                    <li>Audio synthesis (SFXR)</li>
-                </ul>
-                <a href="audio.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">⚛️</div>
-                <h3>Physics Engine</h3>
-                <p class="description">Simple physics simulation with gravity, velocity, and forces.</p>
-                <ul class="features">
-                    <li>Gravity simulation</li>
-                    <li>Velocity and acceleration</li>
-                    <li>Force application</li>
-                    <li>Particle systems</li>
-                </ul>
-                <a href="physics.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">💥</div>
-                <h3>Collision Detection</h3>
-                <p class="description">AABB, circle, and tilemap collision detection utilities.</p>
-                <ul class="features">
-                    <li>AABB box collisions</li>
-                    <li>Circle collisions</li>
-                    <li>Tilemap raycasting</li>
-                    <li>Collision responses</li>
-                </ul>
-                <a href="collision.html" class="api-link">View Documentation →</a>
-            </div>
-        </div>
-
-        <h2 class="category-header">🛠️ Utilities & Systems</h2>
-        <div class="api-grid">
-            <div class="api-card">
-                <div class="icon">💾</div>
-                <h3>Storage API</h3>
-                <p class="description">LocalStorage wrapper for saving and loading game data.</p>
-                <ul class="features">
-                    <li>Save/load game state</li>
-                    <li>High scores</li>
-                    <li>Settings persistence</li>
-                    <li>JSON serialization</li>
-                </ul>
-                <a href="storage.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">📺</div>
-                <h3>Screen Manager</h3>
-                <p class="description">Multi-screen game state management (title, gameplay, game over).</p>
-                <ul class="features">
-                    <li>Screen transitions</li>
-                    <li>State management</li>
-                    <li>Lifecycle callbacks</li>
-                    <li>Screen stacking</li>
-                </ul>
-                <a href="screens.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">⌨️</div>
-                <h3>Text Input</h3>
-                <p class="description">Keyboard text input handling for game UI.</p>
-                <ul class="features">
-                    <li>Text field input</li>
-                    <li>Cursor management</li>
-                    <li>Character filtering</li>
-                    <li>Clipboard support</li>
-                </ul>
-                <a href="textinput.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🖌️</div>
-                <h3>Sprite Editor</h3>
-                <p class="description">Built-in pixel art editor for creating and editing sprites.</p>
-                <ul class="features">
-                    <li>8×8 pixel editor</li>
-                    <li>Color palette</li>
-                    <li>Drawing tools</li>
-                    <li>Export/import</li>
-                </ul>
-                <a href="editor.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🖥️</div>
-                <h3>Fullscreen Button</h3>
-                <p class="description">Universal fullscreen toggle button for all demos.</p>
-                <ul class="features">
-                    <li>One-click fullscreen</li>
-                    <li>ESC key support</li>
-                    <li>Auto-positioning</li>
-                    <li>Cross-browser support</li>
-                </ul>
-                <a href="fullscreen-button.html" class="api-link">View Documentation →</a>
-            </div>
-        </div>
-
-        <h2 class="category-header">🔧 Internal Systems</h2>
-        <div class="api-grid">
-            <div class="api-card">
-                <div class="icon">🎬</div>
-                <h3>Console System</h3>
-                <p class="description">Core runtime console for loading and managing game cartridges.</p>
-                <ul class="features">
-                    <li>Cart loading</li>
-                    <li>Scene management</li>
-                    <li>Lifecycle hooks</li>
-                    <li>Error handling</li>
-                </ul>
-                <a href="console.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🖼️</div>
-                <h3>Framebuffer</h3>
-                <p class="description">Low-level pixel buffer for 2D rendering operations.</p>
-                <ul class="features">
-                    <li>Direct pixel access</li>
-                    <li>Buffer operations</li>
-                    <li>Color blending</li>
-                    <li>Memory management</li>
-                </ul>
-                <a href="framebuffer.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🔤</div>
-                <h3>Font System</h3>
-                <p class="description">Bitmap font rendering for text display.</p>
-                <ul class="features">
-                    <li>Bitmap font loading</li>
-                    <li>Character rendering</li>
-                    <li>Text measurement</li>
-                    <li>Unicode support</li>
-                </ul>
-                <a href="font.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">📦</div>
-                <h3>Asset Loader</h3>
-                <p class="description">Loading and caching of images, sounds, and models.</p>
-                <ul class="features">
-                    <li>Image loading</li>
-                    <li>Sound loading</li>
-                    <li>Model loading</li>
-                    <li>Cache management</li>
-                </ul>
-                <a href="assets.html" class="api-link">View Documentation →</a>
-            </div>
-
-            <div class="api-card">
-                <div class="icon">🎨</div>
-                <h3>GPU Systems</h3>
-                <p class="description">Low-level rendering backends (Canvas2D, WebGL2, Three.js).</p>
-                <ul class="features">
-                    <li>Canvas2D renderer</li>
-                    <li>WebGL2 renderer</li>
-                    <li>Three.js renderer</li>
-                    <li>Abstraction layer</li>
-                </ul>
-                <a href="gpu-systems.html" class="api-link">View Documentation →</a>
-            </div>
-        </div>
-
-        <footer>
-            <p>Nova64 Fantasy Console © 2025 | <a href="https://github.com/seacloud9/nova64" target="_blank">GitHub Repository</a></p>
-            <p style="margin-top: 10px;">Built with ❤️ for retro gaming enthusiasts</p>
-        </footer>
+<div class="terminal-hero">
+  <div class="term-win">
+    <div class="term-titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">nova64 &mdash; zsh</span>
     </div>
+    <div class="term-body">
+      <div class="terminal-line">$ pnpm add -g nova64</div>
+      <div class="terminal-line success">&#10003; GPU acceleration initialized</div>
+      <div class="terminal-line success">&#10003; 3D engine loaded (with actual lighting!)</div>
+      <div class="terminal-line success">&#10003; Voxel renderer standing by</div>
+      <div class="terminal-line success">&#10003; Physics engine activated</div>
+      <div class="terminal-line success">&#10003; NovaOS shell... wait what?</div>
+      <div class="terminal-line">$ nova64 --start-demo</div>
+      <div class="terminal-line">&gt;&gt;&gt; Let's make something cool <span class="cursor"></span></div>
+    </div>
+  </div>
+</div>
+<header class="docs-header">
+  <h1>NOVA<span>64</span> RUNTIME</h1>
+  <p class="sub">Complete API reference for the Nova64 3D Fantasy Console</p>
+  <span class="version">v0.4.8</span>
+</header>
+<nav class="docs-nav-strip">
+  <ul>
+    <li><a href="#novaos"    class="hl-os">&#128187; NovaOS</a></li>
+    <li><a href="#console"   class="hl-console">&#127918; Console</a></li>
+    <li><a href="#graphics"  >&#127912; Graphics</a></li>
+    <li><a href="#input"     >&#127918; Input</a></li>
+    <li><a href="#xr"       >&#129405; XR &amp; AR</a></li>
+    <li><a href="#audio"     >&#127932; Audio &amp; Physics</a></li>
+    <li><a href="#utils"     >&#129520; Utilities</a></li>
+    <li><a href="#internals" >&#9881;&#65039; Internals</a></li>
+  </ul>
+</nav>
+<div class="container">
+  <div class="quick-links">
+    <a href="os.html"           class="ql os">NovaOS Shell</a>
+    <a href="console.html"      class="ql console">Console</a>
+    <a href="api-3d.html"       class="ql">3D API</a>
+    <a href="api-effects.html"  class="ql">Effects</a>
+    <a href="api-sprites.html"  class="ql">Sprites</a>
+    <a href="api-skybox.html"   class="ql">Skybox</a>
+    <a href="api-voxel.html"    class="ql">Voxel</a>
+    <a href="api-xr.html"       class="ql">WebXR</a>
+    <a href="api-mediapipe.html" class="ql">MediaPipe</a>
+    <a href="input.html"        class="ql">Input</a>
+    <a href="audio.html"        class="ql">Audio</a>
+    <a href="physics.html"      class="ql">Physics</a>
+    <a href="storage.html"      class="ql">Storage</a>
+    <a href="font.html"         class="ql">Font</a>
+    <a href="framebuffer.html"  class="ql">Framebuffer</a>
+    <a href="gpu-systems.html"  class="ql">GPU</a>
+  </div>
+
+  <section class="docs-section os-section" id="novaos">
+    <h2>&#128187; NovaOS Shell</h2>
+    <div class="os-hero-band">
+      <div class="ohb-text">
+        <h3>Run a whole OS in your browser</h3>
+        <p>NovaOS is a Mac&nbsp;OS&nbsp;9-inspired fantasy operating system bundled with Nova64. Window manager, virtual filesystem, app framework, event bus, crystal desktop backgrounds, and a modernized boot sequence.</p>
+      </div>
+      <a href="os.html" class="ohb-btn">Full OS Docs &#8599;</a>
+    </div>
+    <div class="cards">
+      <a href="os.html#windows" class="api-card os-card">
+        <span class="icon">&#129695;</span>
+        <h3>Window Manager</h3>
+        <p>Draggable, resizable windows with Mac OS 9 chrome. Close, zoom, windowshade &mdash; all implemented.</p>
+      </a>
+      <a href="os.html#filesystem" class="api-card os-card">
+        <span class="icon">&#128193;</span>
+        <h3>Virtual Filesystem</h3>
+        <p>POSIX-like async VFS with IndexedDB persistence. Read, write, mkdir, rm, stat, readdir, aliases.</p>
+      </a>
+      <a href="os.html#apps" class="api-card os-card">
+        <span class="icon">&#128640;</span>
+        <h3>App Framework</h3>
+        <p>Register apps with mount/unmount lifecycle, menu bar integration, and icon support.</p>
+      </a>
+      <a href="os.html#events" class="api-card os-card">
+        <span class="icon">&#128225;</span>
+        <h3>Event System</h3>
+        <p>Pub/sub bus with wildcard support. Subscribe to OS events or emit custom game events.</p>
+      </a>
+      <a href="os.html#ui" class="api-card os-card">
+        <span class="icon">&#128172;</span>
+        <h3>Control Strip &amp; UI</h3>
+        <p>Control strip widgets, modal alert dialogs, auto-dismissing toast notifications.</p>
+      </a>
+      <a href="os.html#prefs" class="api-card os-card">
+        <span class="icon">&#128190;</span>
+        <h3>Preferences</h3>
+        <p>JSON-serialisable key/value store backed by the VFS. Namespaced and persistent.</p>
+      </a>
+      <a href="os.html#backgrounds" class="api-card os-card">
+        <span class="icon">&#127912;</span>
+        <h3>Desktop Backgrounds</h3>
+        <p>Built-in crystal wallpapers, solid colors, custom image URLs, and visual-only sandboxed HTML iframe backgrounds from Appearance or desktop right-click.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section console-section" id="console">
+    <h2>&#127918; Nova64 Console</h2>
+    <div class="cards">
+      <a href="console.html" class="api-card console-card">
+        <span class="icon">&#127918;</span>
+        <h3>Cart Runtime</h3>
+        <p>ES module cart system with init/update/draw lifecycle. Hot reload, cart loading, and the complete 35+ function 3D API.</p>
+      </a>
+      <a href="framebuffer.html" class="api-card console-card">
+        <span class="icon">&#127912;</span>
+        <h3>Framebuffer</h3>
+        <p>High-precision 64-bit RGBA framebuffer for 2D overlay compositing over 3D scenes. ACES tone mapping.</p>
+      </a>
+      <a href="gpu-systems.html" class="api-card console-card">
+        <span class="icon">&#128296;</span>
+        <h3>GPU Systems</h3>
+        <p>Three.js and Babylon.js backends with WebGL2 and Canvas2D fallback paths. Advanced materials, shaders, post-processing, and parity guardrails.</p>
+      </a>
+      <a href="assets.html" class="api-card console-card">
+        <span class="icon">&#128230;</span>
+        <h3>Asset Loader</h3>
+        <p>WAD-based asset bundling. Load GLTF models, sprite sheets, audio, and texture atlases from cart packages.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="graphics">
+    <h2>&#127912; 3D Graphics</h2>
+    <div class="cards">
+      <a href="api-3d.html" class="api-card">
+        <span class="icon">&#9711;</span>
+        <h3>3D Primitives</h3>
+        <p>createCube, createSphere, createPlane, createCylinder, createCone, createCapsule, createTorus. Full material options.</p>
+      </a>
+      <a href="api-effects.html" class="api-card">
+        <span class="icon">&#10024;</span>
+        <h3>Post-Process Effects</h3>
+        <p>Bloom, vignette, glitch, chromatic aberration, N64 mode, PSX mode, low-poly mode and more.</p>
+      </a>
+      <a href="api-skybox.html" class="api-card">
+        <span class="icon">&#127775;</span>
+        <h3>Skybox System</h3>
+        <p>Space skybox, gradient skybox, solid skybox. Auto-animate for dynamic sky rotation.</p>
+      </a>
+      <a href="api-sprites.html" class="api-card">
+        <span class="icon">&#127758;</span>
+        <h3>2D Sprite System</h3>
+        <p>GPU-batched sprites with parallax layers. Sprite sheets, animations, and z-sorted billboards.</p>
+      </a>
+      <a href="api-voxel.html" class="api-card">
+        <span class="icon">&#129513;</span>
+        <h3>Voxel Engine</h3>
+        <p>Full Minecraft-style voxel world with backend-aware Three.js and Babylon.js chunk/entity rendering.</p>
+      </a>
+      <a href="font.html" class="api-card">
+        <span class="icon">&#128293;</span>
+        <h3>Text &amp; HUD</h3>
+        <p>Bitmap font print, printCentered, glow text, crosshair, progress bar, minimap, floating text.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="xr">
+    <h2>&#129405; XR &amp; AR</h2>
+    <div class="cards">
+      <a href="api-xr.html" class="api-card">
+        <span class="icon">&#129405;</span>
+        <h3>WebXR &amp; VR</h3>
+        <p>Immersive VR, AR passthrough, and Cardboard VR. One-line setup with controller tracking, hand tracking, and world-space HUD.</p>
+      </a>
+      <a href="api-mediapipe.html" class="api-card">
+        <span class="icon">&#129302;</span>
+        <h3>MediaPipe Tracking</h3>
+        <p>Real-time hand, face, and body pose tracking via webcam. 21-point hands, 478-point face mesh, gesture recognition, AR camera background.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="input">
+    <h2>&#127918; Input &amp; UI</h2>
+    <div class="cards">
+      <a href="input.html" class="api-card">
+        <span class="icon">&#127918;</span>
+        <h3>Input System</h3>
+        <p>key(), keyp(), btn(), btnp() for WASD + gamepad + mouse. Single-frame press detection built in.</p>
+      </a>
+      <a href="ui.html" class="api-card">
+        <span class="icon">&#127760;</span>
+        <h3>UI System</h3>
+        <p>Game-loop integrated widgets: state machine, cooldowns, hit flash, spawner, floating text, shake effects.</p>
+      </a>
+      <a href="textinput.html" class="api-card">
+        <span class="icon">&#9000;&#65039;</span>
+        <h3>Text Input</h3>
+        <p>In-game keyboard overlay for player name entry, chat, and command prompts.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="audio">
+    <h2>&#127932; Audio &amp; Physics</h2>
+    <div class="cards">
+      <a href="audio.html" class="api-card">
+        <span class="icon">&#128266;</span>
+        <h3>Audio System</h3>
+        <p>WebAudio-based with spatial 3D positioning. Named presets: jump, coin, explosion, laser, powerup, hurt, unlock, and more.</p>
+      </a>
+      <a href="physics.html" class="api-card">
+        <span class="icon">&#9883;&#65039;</span>
+        <h3>Physics Engine</h3>
+        <p>AABB collision, gravity, createBody, stepPhysics, setCollisionMap. Simple and fast for arcade games.</p>
+      </a>
+      <a href="collision.html" class="api-card">
+        <span class="icon">&#128165;</span>
+        <h3>Collision System</h3>
+        <p>Raycasting, spatial partitioning, and voxel collision helpers. Works with both 3D objects and voxel worlds.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="utils">
+    <h2>&#129520; Utilities &amp; Systems</h2>
+    <div class="cards">
+      <a href="storage.html" class="api-card">
+        <span class="icon">&#128190;</span>
+        <h3>Persistent Storage</h3>
+        <p>saveData(), loadData(), deleteData() &mdash; JSON-serialisable cart save state backed by localStorage.</p>
+      </a>
+      <a href="screens.html" class="api-card">
+        <span class="icon">&#128250;</span>
+        <h3>Screen Manager</h3>
+        <p>Named screen stack. Push/pop/replace screens with transition hooks for title screens, menus, and game states.</p>
+      </a>
+      <a href="editor.html" class="api-card">
+        <span class="icon">&#127912;</span>
+        <h3>Sprite Editor</h3>
+        <p>In-browser pixel editor for creating and tweaking sprite sheets and textures at run time.</p>
+      </a>
+      <a href="fullscreen-button.html" class="api-card">
+        <span class="icon">&#9974;&#65039;</span>
+        <h3>Fullscreen Button</h3>
+        <p>Tappable fullscreen toggle optimised for mobile game-jam releases and kiosk mode deployments.</p>
+      </a>
+      <a href="wad.html" class="api-card">
+        <span class="icon">&#128184;</span>
+        <h3>WAD Asset Bundle</h3>
+        <p>Doom-inspired WAD loading with wall/floor textures, sprite billboards, and Babylon.js visual parity coverage.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="docs-section" id="internals">
+    <h2>&#9881;&#65039; Internal Systems</h2>
+    <div class="cards">
+      <a href="console.html" class="api-card">
+        <span class="icon">&#128187;</span>
+        <h3>Console System</h3>
+        <p>Main Nova64 class. Cart loading, hot reloading, game loop, resolution, and renderer setup.</p>
+      </a>
+      <a href="framebuffer.html" class="api-card">
+        <span class="icon">&#127912;</span>
+        <h3>Framebuffer</h3>
+        <p>64-bit RGBA compositing surface. packRGBA64, unpackRGBA64, rgba8 helpers for colour pipeline work.</p>
+      </a>
+      <a href="font.html" class="api-card">
+        <span class="icon">&#128293;</span>
+        <h3>Font System</h3>
+        <p>Bitmap font renderer with hex colour support, glyph atlas, and 6x6 to 16x16 size variants.</p>
+      </a>
+      <a href="assets.html" class="api-card">
+        <span class="icon">&#128230;</span>
+        <h3>Asset Loader</h3>
+        <p>Async loader for GLTF, images, JSON, audio, and WAD files with progress callbacks.</p>
+      </a>
+      <a href="gpu-systems.html" class="api-card">
+        <span class="icon">&#128296;</span>
+        <h3>GPU Systems</h3>
+        <p>Three.js, Babylon.js, WebGL2, and Canvas2D renderer backends with capability-gated fallback behavior.</p>
+      </a>
+      <a href="BACKEND_RUNTIME.md" class="api-card">
+        <span class="icon">&#9881;&#65039;</span>
+        <h3>Backend Runtime</h3>
+        <p>Backend architecture notes for Babylon compatibility, WAD parity, voxel routing, TSL visual checks, and focused validation commands.</p>
+      </a>
+      <a href="BABYLON_NOA_INTEGRATION.md" class="api-card">
+        <span class="icon">&#129482;</span>
+        <h3>Babylon NOA Adapter</h3>
+        <p>Experimental, opt-in NOA adapter notes for Babylon voxel parity work without bypassing the shared voxel API.</p>
+      </a>
+    </div>
+  </section>
+
+  <div class="docs-footer">
+    <p>Nova64 Fantasy Console &copy; 2026 &middot; MIT License</p>
+    <p>
+      <a href="os.html">NovaOS Shell</a> &nbsp;&middot;&nbsp;
+      <a href="console.html">Console</a> &nbsp;&middot;&nbsp;
+      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">GitHub &#8599;</a>
+    </p>
+  </div>
+</div>
+<script>
+(function(){
+  var tabs=Array.from(document.querySelectorAll('.docs-nav-strip li a'));
+  var secs=tabs.map(function(t){return document.querySelector(t.getAttribute('href'))}).filter(Boolean);
+  function update(){
+    var active=secs[0];
+    secs.forEach(function(s){if(s.getBoundingClientRect().top<=80)active=s});
+    tabs.forEach(function(t){
+      var base=t.href.split('#')[1];
+      var isA=active&&active.id===base;
+      if(isA){
+        if(!t.classList.contains('hl-os')&&!t.classList.contains('hl-console'))
+          t.classList.add('active');
+      } else {
+        t.classList.remove('active');
+      }
+    });
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+})();
+</script>
 </body>
 </html>

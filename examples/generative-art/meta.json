@@ -1,0 +1,49 @@
+{
+  "name": "Generative Art",
+  "description": "Generative Art Studio — Nova64 Fantasy Console",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "creative",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "GENERATIVE ART STUDIO",
+      "sketch.flowField": "FLOW FIELD",
+      "sketch.perlin": "PERLIN LANDSCAPE",
+      "sketch.galaxy": "SPIRAL GALAXY",
+      "sketch.garden": "PARTICLE GARDEN",
+      "sketch.wave": "WAVE INTERFERENCE",
+      "sketch.neon": "NEON GEOMETRY",
+      "sketch.reaction": "REACTION-DIFFUSION",
+      "sketch.tree": "FRACTAL TREE",
+      "sketch.voronoi": "VORONOI GLASS",
+      "sketch.mandelbrot": "MANDELBROT ZOOM",
+      "sketch.cloth": "PARTICLE CLOTH",
+      "sketch.attractors": "STRANGE ATTRACTORS",
+      "sketch.circles": "CIRCLE PACKING",
+      "sketch.pixel": "PIXEL SORTING"
+    },
+    "locales": {
+      "es": {
+        "game.title": "ESTUDIO DE ARTE GENERATIVO",
+        "sketch.flowField": "CAMPO DE FLUJO",
+        "sketch.perlin": "PAISAJE PERLIN",
+        "sketch.galaxy": "GALAXIA ESPIRAL",
+        "sketch.garden": "JARDÍN DE PARTÍCULAS",
+        "sketch.wave": "INTERFERENCIA DE ONDAS",
+        "sketch.neon": "GEOMETRÍA NEÓN",
+        "sketch.tree": "ÁRBOL FRACTAL",
+        "sketch.mandelbrot": "ZOOM MANDELBROT"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "autoAdvance": false,
+        "speed": "1x"
+      }
+    }
+  }
+}

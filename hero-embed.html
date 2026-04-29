@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova64</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #020010; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #nova64-fullscreen-btn { display: none !important; }
+  </style>
+  <script>
+    // Inject viewport dimensions + clear color into the URL so main.js picks them up
+    (function() {
+      var qs = new URLSearchParams(window.location.search);
+      var changed = false;
+      if (!qs.has('w'))  { qs.set('w', String(window.innerWidth)); changed = true; }
+      if (!qs.has('h'))  { qs.set('h', String(window.innerHeight)); changed = true; }
+      if (!qs.has('clearColor')) { qs.set('clearColor', '0x020010'); changed = true; }
+      if (!qs.has('demo')) { qs.set('demo', 'hero-demo'); changed = true; }
+      if (changed) {
+        window.history.replaceState(null, '', '?' + qs.toString());
+      }
+    })();
+  </script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.182.0",
+      "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+      "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+      "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" crossorigin src="./assets/main-u6bfCWru.js"></script>
+</head>
+<body>
+  <canvas id="screen"></canvas>
+
+</body>
+</html>

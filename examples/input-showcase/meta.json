@@ -1,0 +1,39 @@
+{
+  "name": "Input Showcase",
+  "description": "Nova64 Input System Showcase",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "INPUT SHOWCASE",
+      "input.keyboard": "KEYBOARD",
+      "input.gamepad": "GAMEPAD",
+      "input.sticks": "STICKS",
+      "input.mouse": "MOUSE",
+      "input.connect": "(connect gamepad)"
+    },
+    "locales": {
+      "es": {
+        "game.title": "MUESTRA DE CONTROLES",
+        "input.keyboard": "TECLADO",
+        "input.gamepad": "MANDO",
+        "input.sticks": "JOYSTICKS",
+        "input.mouse": "RATÓN",
+        "input.connect": "(conectar mando)"
+      }
+    }
+  },
+
+  "defaults": {
+    "fog": { "color": "#0a0a1a", "near": 20, "far": 50 },
+    "lighting": { "ambient": "#ffffff", "ambientIntensity": 1.0 },
+    "camera": { "position": [0, 0, 8] },
+    "cheats": {
+      "enabled": false,
+      "items": {}
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Mystical Realm 3D",
+  "description": "Fantasy world with weather systems, crystal collection, and procedural generation",
+  "author": "Nova64",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "MYSTICAL REALM",
+      "game.subtitle": "A Fantasy Adventure",
+      "hud.health": "Health",
+      "hud.magic": "Magic",
+      "hud.score": "Score",
+      "hud.crystals": "Crystals",
+      "hud.creatures": "Creatures",
+      "hud.time": "Time",
+      "ui.game_over": "GAME OVER",
+      "ui.paused": "PAUSED"
+    },
+    "locales": {
+      "es": {
+        "game.title": "REINO MISTICO",
+        "game.subtitle": "Una Aventura Fantastica",
+        "hud.health": "Salud",
+        "hud.magic": "Magia",
+        "hud.score": "Puntos",
+        "hud.crystals": "Cristales",
+        "hud.creatures": "Criaturas",
+        "hud.time": "Tiempo",
+        "ui.game_over": "FIN DEL JUEGO",
+        "ui.paused": "PAUSA"
+      }
+    }
+  },
+  "gameplay": {
+    "player": {
+      "hp": 100,
+      "maxHp": 100,
+      "speed": 8,
+      "magicCharges": 3,
+      "maxMagicCharges": 3,
+      "startPosition": [0, 5, 0]
+    },
+    "camera": {
+      "offset": {
+        "x": 0,
+        "y": 12,
+        "z": 20
+      }
+    },
+    "crystalColors": ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"],
+    "creatures": {
+      "orbs": {
+        "count": 8,
+        "color": "#ffff88",
+        "altitude": [15, 25]
+      },
+      "wisps": {
+        "count": 6,
+        "color": "#9933cc",
+        "atk": 8,
+        "aggroRange": 18,
+        "speed": [5, 8]
+      },
+      "fireSprites": {
+        "count": 4,
+        "color": "#ff4400",
+        "atk": 12,
+        "aggroRange": 14,
+        "speed": [8, 11]
+      }
+    },
+    "weather": ["clear", "rain", "storm", "mystical"]
+  },
+  "defaults": {
+    "camera": {
+      "position": [0, 12, 20],
+      "target": [0, 0, 0],
+      "fov": 65
+    },
+    "effects": {
+      "bloom": {
+        "strength": 0.7,
+        "radius": 0.5,
+        "threshold": 0.5
+      },
+      "vignette": {
+        "darkness": 1.2,
+        "offset": 0.9
+      }
+    },
+    "cheats": {
+      "enabled": true,
+      "items": {
+        "godMode": false,
+        "infiniteMagic": false,
+        "speedMultiplier": 1,
+        "showColliders": false
+      }
+    }
+  }
+}

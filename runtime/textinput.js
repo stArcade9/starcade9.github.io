@@ -31,7 +31,7 @@ class TextInput {
     });
     this.el = el;
   }
-  start(opts={}) {
+  start(opts = {}) {
     this.active = true;
     this.value = opts.value || '';
     this.maxLen = opts.maxLen || 128;
@@ -48,7 +48,9 @@ class TextInput {
     this.el.blur();
     return this.value;
   }
-  get() { return this.value; }
+  get() {
+    return this.value;
+  }
 }
 
 const input = new TextInput();
@@ -57,10 +59,10 @@ export function textInputApi() {
   return {
     exposeTo(target) {
       Object.assign(target, {
-        startTextInput: (opts)=>input.start(opts||{}),
-        stopTextInput: ()=>input.stop(),
-        getTextInput: ()=>input.get()
+        startTextInput: opts => input.start(opts || {}),
+        stopTextInput: () => input.stop(),
+        getTextInput: () => input.get(),
       });
-    }
+    },
   };
 }

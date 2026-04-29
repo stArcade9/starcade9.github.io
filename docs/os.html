@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaOS Shell — Nova64 Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:     #09090f;
+      --bg2:    #0f1220;
+      --bg3:    #141829;
+      --bgcode: #080c14;
+      --text:   #dde4f0;
+      --muted:  #6a7898;
+      --cyan:   #00ffff;
+      --violet: #9d00ff;
+      --green:  #39ff14;
+      --yellow: #ffee00;
+      --border: #1c2438;
+      --bv:     rgba(157,0,255,0.25);
+      --gv:     0 0 24px rgba(157,0,255,0.35);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
+    body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 3px)}
+    a{color:var(--cyan);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .page{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    @media(max-width:900px){.page{grid-template-columns:1fr}}
+    .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--bg2);border-right:1px solid var(--border);padding:24px 0}
+    @media(max-width:900px){.sidebar{display:none}}
+    .sb-brand{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+    .sb-logo{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--violet);text-decoration:none;letter-spacing:.05em;display:block}
+    .sb-back{font-size:11px;color:var(--muted);margin-top:6px;display:block;font-family:'JetBrains Mono',monospace}
+    .sb-back:hover{color:var(--cyan);text-decoration:none}
+    .sb-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:8px 20px 4px;display:block;font-family:'JetBrains Mono',monospace}
+    .sb-link{display:block;padding:7px 20px;font-size:13px;color:var(--muted);text-decoration:none;transition:all .15s;border-left:2px solid transparent}
+    .sb-link:hover{color:var(--text);background:rgba(157,0,255,.05);border-left-color:var(--bv);text-decoration:none}
+    .sb-link.active{color:var(--violet);border-left-color:var(--violet);background:rgba(157,0,255,.06)}
+    .sb-gap{height:8px}
+    .content{padding:48px 56px 80px;max-width:960px}
+    @media(max-width:768px){.content{padding:24px 20px 60px}}
+    .back-nav{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:36px;transition:color .2s;font-family:'JetBrains Mono',monospace}
+    .back-nav:hover{color:var(--cyan);text-decoration:none}
+    .page-hd{margin-bottom:52px;padding-bottom:36px;border-bottom:1px solid var(--border)}
+    .page-stamp{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--violet);display:block;margin-bottom:14px}
+    .page-hd h1{font-family:'Orbitron',sans-serif;font-size:clamp(28px,4vw,52px);font-weight:900;color:var(--text);letter-spacing:-.01em;margin-bottom:16px;line-height:1.05}
+    .page-hd h1 span{color:var(--violet)}
+    .lead{font-size:17px;color:var(--muted);max-width:600px;line-height:1.75}
+    .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+    .bdg{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 11px;border-radius:4px;border:1px solid var(--bv);color:var(--violet);background:rgba(157,0,255,.07);white-space:nowrap}
+    .doc-sec{margin-bottom:72px;scroll-margin-top:48px}
+    .doc-sec>h2{font-size:1.55em;font-weight:700;color:var(--text);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .doc-sec h3{font-size:1.05em;font-weight:700;color:var(--cyan);margin:28px 0 10px}
+    .doc-sec h3.v{color:var(--violet)}
+    .doc-sec p{font-size:15px;color:var(--muted);line-height:1.75;margin-bottom:14px}
+    .doc-sec ul{list-style:none;margin:0 0 16px}
+    .doc-sec ul li{padding:4px 0 4px 18px;position:relative;font-size:14px;color:var(--muted);line-height:1.65}
+    .doc-sec ul li::before{content:'\25B8';position:absolute;left:0;color:var(--violet);font-size:11px;top:7px}
+    pre,code{font-family:'JetBrains Mono',monospace}
+    code{background:rgba(0,255,255,.07);color:var(--cyan);padding:2px 7px;border-radius:4px;font-size:13px}
+    pre{background:var(--bgcode);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:8px;padding:20px 24px;overflow-x:auto;margin:14px 0 24px;font-size:13px;line-height:1.75;color:#c8d6f0;tab-size:2}
+    .tw{overflow-x:auto;margin:14px 0 28px}
+    .tbl{width:100%;border-collapse:collapse;font-size:13px}
+    .tbl th{background:var(--bg3);color:var(--violet);text-align:left;padding:10px 14px;font-weight:700;border-bottom:2px solid var(--bv);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+    .tbl td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;line-height:1.6}
+    .tbl tr:hover td{background:rgba(157,0,255,.04)}
+    .tbl td.m{color:var(--cyan);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+    .sig{color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:12px}
+    .ret{color:#aaf;font-size:12px;font-family:'JetBrains Mono',monospace}
+    .callout{background:rgba(157,0,255,.06);border:1px solid rgba(157,0,255,.2);border-left:3px solid var(--violet);border-radius:8px;padding:15px 20px;margin:14px 0 24px;font-size:14px;color:var(--muted);line-height:1.65}
+    .callout.tip{border-left-color:var(--cyan);background:rgba(0,255,255,.04);border-color:rgba(0,255,255,.18)}
+    .callout.warn{border-left-color:var(--yellow);background:rgba(255,238,0,.04);border-color:rgba(255,238,0,.18)}
+    .callout strong{color:var(--text)}
+    .steps{margin:16px 0 24px}
+    .step{display:flex;gap:16px;margin-bottom:18px}
+    .step-n{flex-shrink:0;width:28px;height:28px;background:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;box-shadow:0 0 16px rgba(157,0,255,.45);font-family:'JetBrains Mono',monospace}
+    .step-b h4{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+    .step-b p{font-size:13px;color:var(--muted);margin:0;line-height:1.65}
+    .scut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:10px;margin:14px 0 24px}
+    .scut{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .2s}
+    .scut:hover{border-color:var(--bv)}
+    .scut .desc{font-size:13px;color:var(--muted)}
+    .scut kbd{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg3);border:1px solid var(--bv);color:var(--violet);padding:3px 9px;border-radius:4px;white-space:nowrap}
+    .app-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:18px 0 24px}
+    .app-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:22px;transition:all .2s}
+    .app-card:hover{border-color:var(--bv);box-shadow:var(--gv);transform:translateY(-2px)}
+    .ap-ic{font-size:2em;margin-bottom:10px;display:block}
+    .app-card h4{font-size:14px;font-weight:700;color:var(--violet);margin-bottom:6px}
+    .app-card h4 code{font-size:11px;color:var(--muted);background:none;padding:0}
+    .app-card p{font-size:13px;color:var(--muted);line-height:1.65}
+    .pg-foot{border-top:1px solid var(--border);padding-top:32px;margin-top:40px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+    .pg-foot p,.pg-foot a{font-size:13px;color:var(--muted)}
+    .pg-foot a:hover{color:var(--cyan)}
+  </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+<div class="page">
+<aside class="sidebar">
+  <div class="sb-brand">
+    <a href="index.html" class="sb-logo">&#127918; NOVA64 DOCS</a>
+    <a href="../os9-shell/index.html" target="_blank" rel="noopener" class="sb-back">Launch NovaOS &#8599;</a>
+  </div>
+  <span class="sb-label">Overview</span>
+  <a href="#overview"   class="sb-link">What is NovaOS</a>
+  <a href="#quickstart" class="sb-link">Quick Start</a>
+  <a href="#shortcuts"  class="sb-link">Keyboard Shortcuts</a>
+  <div class="sb-gap"></div>
+  <span class="sb-label">Desktop</span>
+  <a href="#boot"    class="sb-link">Boot Sequence</a>
+  <a href="#desktop" class="sb-link">Desktop &amp; Icons</a>
+  <a href="#menubar" class="sb-link">Menu Bar</a>
+  <a href="#control" class="sb-link">Control Strip</a>
+  <div class="sb-gap"></div>
+  <span class="sb-label">Core APIs</span>
+  <a href="#windows"    class="sb-link">Window Manager</a>
+  <a href="#filesystem" class="sb-link">Virtual Filesystem</a>
+  <a href="#apps"       class="sb-link">App Framework</a>
+  <a href="#events"     class="sb-link">Event System</a>
+  <a href="#ui"         class="sb-link">UI &amp; Toast</a>
+  <a href="#prefs"      class="sb-link">Preferences</a>
+  <div class="sb-gap"></div>
+  <span class="sb-label">Built-in Apps</span>
+  <a href="#builtin" class="sb-link">Notes / Paint / Profiler</a>
+  <div class="sb-gap"></div>
+  <span class="sb-label">Build &amp; Deploy</span>
+  <a href="#build"  class="sb-link">Build for Production</a>
+  <a href="#mobile" class="sb-link">Mobile Shell</a>
+</aside>
+<main class="content">
+  <a href="index.html" class="back-nav">&#8592; Back to Docs</a>
+  <div class="page-hd">
+    <span class="page-stamp">Bonus Disc &middot; System Software</span>
+    <h1>Nova<span>OS</span> Shell</h1>
+    <p class="lead">A Mac&nbsp;OS&nbsp;9-inspired fantasy operating system that runs entirely in your browser. Full window manager, virtual filesystem, app framework, and a boot sequence that makes you feel like it&rsquo;s 1999.</p>
+    <div class="badges">
+      <span class="bdg">React 18</span><span class="bdg">TypeScript 5</span><span class="bdg">Zustand 4</span>
+      <span class="bdg">IndexedDB</span><span class="bdg">Vite 5</span><span class="bdg">176 KB &middot; 56 KB gz</span>
+    </div>
+  </div>
+
+  <section class="doc-sec" id="overview">
+    <h2>&#128187; What is NovaOS</h2>
+    <p>NovaOS is a fully functional retro operating system that ships alongside the Nova64 console. It draws inspiration from Mac&nbsp;OS&nbsp;9&rsquo;s Platinum theme, PS1 system menus, and early-2000s dark desktop aesthetics.</p>
+    <p>It runs entirely in the browser with no server or install required. Backed by <strong>IndexedDB</strong> for file persistence, <strong>React&nbsp;18 + Zustand</strong> for UI state, and a clean <strong>TypeScript</strong> API that any nova64 cart can call via the global <code>novaContext</code> object.</p>
+    <h3>Core Features</h3>
+    <ul>
+      <li>Draggable, resizable windows with Mac OS 9-style chrome (close, zoom, windowshade)</li>
+      <li>Virtual POSIX-like filesystem with IndexedDB persistence across page reloads</li>
+      <li>App framework with mount/unmount lifecycle and menu bar integration</li>
+      <li>Pub/sub event bus for OS, apps, and cart code to communicate</li>
+      <li>Control strip with volume, brightness, scanlines, FPS counter, and custom widgets</li>
+      <li>Crystal desktop background with right-click wallpaper switching, solid colors, custom image URLs, and visual-only sandboxed HTML iframe backgrounds</li>
+      <li>Modal alert dialogs with icon variants and auto-dismissing toast notifications</li>
+      <li>Persistent user preferences that survive browser restarts</li>
+      <li>Mobile-optimised shell variant in <code>os9-shellMobile/</code></li>
+    </ul>
+    <h3>Technology Stack</h3>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>UI</td><td><span class="sig">React 18</span></td><td>Component-based window &amp; desktop rendering</td></tr>
+        <tr><td>Types</td><td><span class="sig">TypeScript 5 (strict)</span></td><td>Zero type errors, full public interfaces</td></tr>
+        <tr><td>State</td><td><span class="sig">Zustand 4</span></td><td>Separate stores: windows, apps, menus, ui, system</td></tr>
+        <tr><td>Storage</td><td><span class="sig">IndexedDB &mdash; idb-keyval</span></td><td>Filesystem &amp; preference persistence</td></tr>
+        <tr><td>Build</td><td><span class="sig">Vite 5</span></td><td>HMR dev server, optimised production bundle</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="doc-sec" id="quickstart">
+    <h2>&#9889; Quick Start</h2>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><div class="step-b"><h4>Install dependencies</h4><p>Move into the shell folder and run <code>pnpm install</code>.</p></div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-b"><h4>Start the dev server</h4><p>Vite serves NovaOS at <code>http://localhost:3000</code> with hot-module reload.</p></div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-b"><h4>Watch the boot sequence</h4><p>Crystal splash &rarr; extension icons load &rarr; desktop fades in with icons and menu bar.</p></div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-b"><h4>Access the live API</h4><p>Press <code>F12</code> and call <code>await novaContext.launchApp('com.nova64.notes')</code> in the console.</p></div></div>
+    </div>
+<pre>cd os9-shell
+pnpm install
+pnpm dev          # &rarr; http://localhost:3000 (HMR)
+
+# Production build
+pnpm build        # output: os9-shell/dist/
+pnpm preview      # serve dist/ on http://localhost:4173</pre>
+    <div class="callout tip"><strong>Pro tip:</strong> Keep the browser console open. The global <code>novaContext</code> object is your live handle to every API &mdash; all methods in this document can be called directly from DevTools during development.</div>
+  </section>
+
+  <section class="doc-sec" id="boot">
+    <h2>&#128268; Boot Sequence</h2>
+    <p>NovaOS boots through a scripted sequence mirroring classic Mac OS 9 startup:</p>
+    <ul>
+      <li><strong>Crystal splash screen</strong> &mdash; Nova64 welcome panel over the deep-blue crystal wallpaper</li>
+      <li><strong>Extension progress</strong> &mdash; icon badges light up as shell capabilities load</li>
+      <li><strong>Desktop reveal</strong> &mdash; fades into the persisted background with Trash, disk icons, and app aliases visible</li>
+      <li><strong>Menu bar activates</strong> &mdash; clock starts ticking, app menus become interactive</li>
+      <li><strong>Control strip slides in</strong> &mdash; bottom-right panel collapses in from the viewport edge</li>
+    </ul>
+    <p>Full boot takes ~3&ndash;4 seconds. On subsequent loads, IndexedDB restores all filesystem contents, window positions, and preferences exactly as they were left.</p>
+  </section>
+
+  <section class="doc-sec" id="backgrounds">
+    <h2>&#127912; Desktop Backgrounds</h2>
+    <p>NovaOS ships with a calm deep-blue crystal wallpaper as the default desktop and includes additional built-in backgrounds in <code>os9-shell/public/wallpapers/</code>. It can also render visual-only sandboxed HTML iframe backgrounds behind desktop icons.</p>
+    <ul>
+      <li><strong>Desktop context menu</strong> &mdash; right-click the desktop and choose <strong>Desktop Background</strong> to switch presets, set an image URL, or choose a visual HTML iframe URL.</li>
+      <li><strong>Appearance app</strong> &mdash; preview built-in wallpapers, apply a solid color, enter a remote image URL, or enter a visual HTML iframe URL.</li>
+      <li><strong>Visual only</strong> &mdash; HTML backgrounds cannot receive clicks or act like desktop widgets. They may only receive passive desktop signals such as mouse location.</li>
+      <li><strong>HTML example</strong> &mdash; the built-in option includes <code>plasma-drift.html</code>, a pleasing plasma background that reacts to mouse location.</li>
+      <li><strong>Persistence</strong> &mdash; selected background settings are stored in <code>localStorage</code> under <code>nova64-desktop-background</code>.</li>
+      <li><strong>Build output</strong> &mdash; <code>pnpm osBuild</code> copies the compiled shell and wallpaper assets into <code>public/os9-shell/</code>.</li>
+    </ul>
+  </section>
+
+  <section class="doc-sec" id="desktop">
+    <h2>&#127968; Desktop &amp; Icons</h2>
+    <p>The desktop is an icon-based canvas layer above the wallpaper. Icons support:</p>
+    <ul>
+      <li><strong>Click</strong> &mdash; select icon (border highlight)</li>
+      <li><strong>Double-click</strong> &mdash; open associated app</li>
+      <li><strong>Aliases</strong> &mdash; created programmatically via <code>ctx.createAlias()</code></li>
+    </ul>
+    <p>Special icons present at first boot: <strong>Trash</strong> (bottom-right) and <strong>Hard Disk</strong> (top-right, represents the virtual root volume).</p>
+  </section>
+
+  <section class="doc-sec" id="menubar">
+    <h2>&#128203; Menu Bar</h2>
+    <p>A persistent top bar at <code>z-index: 1000</code>. Three regions:</p>
+    <ul>
+      <li><strong>Nova menu (&#8984;)</strong> &mdash; About, Sleep, Restart, Shut Down stubs</li>
+      <li><strong>App menus</strong> &mdash; the foreground app&rsquo;s <code>menus</code> array is injected here; clicking away dismisses</li>
+      <li><strong>Status widgets</strong> &mdash; real-time clock, network icon, and battery icon</li>
+    </ul>
+    <p>Apps declare entries through the <code>menus</code> field on the <code>Nova64App</code> interface &mdash; see <a href="#apps">App Framework</a>.</p>
+  </section>
+
+  <section class="doc-sec" id="control">
+    <h2>&#9881;&#65039; Control Strip</h2>
+    <p>A collapsible panel anchored to the bottom-right. Click the arrow tab to roll it in/out.</p>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Widget</th><th>Function</th></tr></thead>
+      <tbody>
+        <tr><td class="m">Volume</td><td>Slider &mdash; adjusts system volume preference</td></tr>
+        <tr><td class="m">Brightness</td><td>Slider &mdash; CSS filter brightness on desktop layer (functional)</td></tr>
+        <tr><td class="m">Scanlines</td><td>Toggle &mdash; enables/disables the CRT scanline overlay</td></tr>
+        <tr><td class="m">FPS Counter</td><td>Toggle &mdash; shows live FPS readout top-right</td></tr>
+        <tr><td class="m">Collapse tab</td><td>Rolls the strip to a single indicator</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Register a custom widget</h3>
+<pre>novaContext.registerControlStrip({
+  id:      'com.myapp.widget',
+  icon:    '&#127918;',
+  label:   'My Widget',
+  onClick: () =&gt; novaContext.toast('Widget activated!'),
+});
+
+// Widget with live DOM render function
+novaContext.registerControlStrip({
+  id:     'com.myapp.clock',
+  icon:   '&#9201;&#65039;',
+  label:  'Clock',
+  render: container =&gt; {
+    const el = document.createElement('span');
+    el.style.cssText = 'font-family:monospace;font-size:12px;color:#0f0';
+    container.appendChild(el);
+    let s = 0;
+    setInterval(() =&gt; {
+      const mm = String(Math.floor(s / 60)).padStart(2, '0');
+      const ss = String(s++ % 60).padStart(2, '0');
+      el.textContent = mm + ':' + ss;
+    }, 1000);
+  },
+});</pre>
+  </section>
+
+  <section class="doc-sec" id="windows">
+    <h2>&#129695; Window Manager</h2>
+    <p>All window state lives in the Zustand <em>windows store</em>. <code>novaContext</code> exposes it through three imperative methods.</p>
+    <h3>User interactions</h3>
+    <ul>
+      <li><strong>Drag title bar</strong> &mdash; moves window, constrained to viewport</li>
+      <li><strong>Drag bottom-right corner</strong> &mdash; resizes window freely</li>
+      <li><strong>Close box (left button)</strong> &mdash; destroys window, triggers <code>app.unmount()</code></li>
+      <li><strong>Zoom box (right button)</strong> &mdash; maximises or restores previous size</li>
+      <li><strong>Double-click title bar</strong> &mdash; windowshade: collapses to title bar; double-click again to restore</li>
+      <li><strong>Click inside window</strong> &mdash; brings to front (z-order update)</li>
+    </ul>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="m">createWindow</td><td><span class="sig">Partial&lt;WindowState&gt;</span></td><td><span class="ret">string</span></td><td>Create a window. Returns the window ID.</td></tr>
+        <tr><td class="m">closeWindow</td><td><span class="sig">windowId: string</span></td><td><span class="ret">void</span></td><td>Close &amp; destroy a window (calls app.unmount).</td></tr>
+        <tr><td class="m">focusWindow</td><td><span class="sig">windowId: string</span></td><td><span class="ret">void</span></td><td>Bring a window to the top of the z-stack.</td></tr>
+      </tbody>
+    </table></div>
+<pre>const id = novaContext.createWindow({
+  title: 'My Window', x: 200, y: 120, width: 500, height: 360,
+  content: '&lt;div style="padding:20px"&gt;&lt;h2&gt;Hello NovaOS!&lt;/h2&gt;&lt;/div&gt;',
+});
+novaContext.focusWindow(id);
+novaContext.closeWindow(id);</pre>
+    <h3 class="v">WindowState interface</h3>
+<pre>interface WindowState {
+  id:        string;
+  title:     string;
+  x:         number;    // desktop left offset (px)
+  y:         number;    // desktop top offset (px)
+  width:     number;
+  height:    number;
+  zIndex:    number;    // managed by OS automatically
+  active:    boolean;
+  shaded:    boolean;   // windowshade collapsed
+  maximized: boolean;
+  content:   string;    // inner HTML (apps inject via mount())
+  appId:     string | null;
+}</pre>
+  </section>
+
+  <section class="doc-sec" id="filesystem">
+    <h2>&#128193; Virtual Filesystem</h2>
+    <p>A POSIX-like VFS backed by <strong>IndexedDB</strong> via <code>idb-keyval</code>. All operations are <code>async</code>. Pre-seeded on first boot: <code>/System</code>, <code>/Applications</code>, <code>/Users/Player/{Desktop,Documents,Pictures,Library/Preferences}</code>, <code>/Trash</code>.</p>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Method</th><th>Signature</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="m">read</td><td><span class="sig">(path) &rarr; Promise&lt;string|ArrayBuffer&gt;</span></td><td>Read a file. String for text, ArrayBuffer for binary.</td></tr>
+        <tr><td class="m">write</td><td><span class="sig">(path, data) &rarr; Promise&lt;void&gt;</span></td><td>Write string or ArrayBuffer. Parent dirs auto-created.</td></tr>
+        <tr><td class="m">mkdir</td><td><span class="sig">(path) &rarr; Promise&lt;void&gt;</span></td><td>Create directory tree recursively (like <code>mkdir -p</code>).</td></tr>
+        <tr><td class="m">rm</td><td><span class="sig">(path, opts?) &rarr; Promise&lt;void&gt;</span></td><td>Delete file or dir. Pass <code>{ recursive: true }</code> for trees.</td></tr>
+        <tr><td class="m">stat</td><td><span class="sig">(path) &rarr; Promise&lt;FileStat&gt;</span></td><td>Returns: path, type, size, created, modified.</td></tr>
+        <tr><td class="m">readdir</td><td><span class="sig">(path) &rarr; Promise&lt;string[]&gt;</span></td><td>List filenames in a directory.</td></tr>
+        <tr><td class="m">exists</td><td><span class="sig">(path) &rarr; Promise&lt;boolean&gt;</span></td><td>Check whether a path exists.</td></tr>
+        <tr><td class="m">createAlias</td><td><span class="sig">(target, alias) &rarr; Promise&lt;void&gt;</span></td><td>Create a symbolic link: alias &rarr; target.</td></tr>
+        <tr><td class="m">resolveAlias</td><td><span class="sig">(path) &rarr; Promise&lt;string&gt;</span></td><td>Resolve an alias path to its real target.</td></tr>
+      </tbody>
+    </table></div>
+<pre>const ctx = window.novaContext;
+
+await ctx.write('/Users/Player/Documents/hello.txt', 'Hello, NovaOS!');
+const txt = await ctx.read('/Users/Player/Documents/hello.txt');  // &rarr; "Hello, NovaOS!"
+
+const files = await ctx.readdir('/Users/Player/Documents');       // &rarr; ["hello.txt"]
+const info  = await ctx.stat('/Users/Player/Documents/hello.txt');
+// &rarr; { path, type: 'file', size: 14, created: Date, modified: Date }
+
+await ctx.createAlias('/Applications', '/Users/Player/Desktop/Apps');
+await ctx.resolveAlias('/Users/Player/Desktop/Apps'); // &rarr; '/Applications'
+
+await ctx.rm('/Users/Player/Documents/hello.txt');
+await ctx.rm('/Users/Player/Projects', { recursive: true });</pre>
+    <div class="callout"><strong>Persistence:</strong> Data lives in IndexedDB under <code>nova64-fs</code>. Clearing site data in browser settings will wipe the virtual filesystem.</div>
+  </section>
+
+  <section class="doc-sec" id="apps">
+    <h2>&#128640; App Framework</h2>
+    <p>Register any object implementing <code>Nova64App</code>. Registered apps can be launched to open windows with full menu bar integration and lifecycle callbacks.</p>
+    <h3 class="v">Nova64App interface</h3>
+<pre>interface Nova64App {
+  id:      string;   // reverse-DNS, e.g. 'com.yourname.appname'
+  name:    string;   // display name shown in menu bar &amp; window title
+  icon:    string;   // emoji or image URL for desktop icon
+  menus?:  AppMenu[];
+  mount(el: HTMLElement, ctx: NovaContext): void | Promise&lt;void&gt;;
+  unmount(): void;
+  onEvent?(evt: NovaEvent): void;
+}</pre>
+<pre>const myApp = {
+  id: 'com.example.hello', name: 'Hello App', icon: '&#128075;',
+  menus: [{
+    label: 'File',
+    submenu: [
+      { id: 'new',  label: 'New',  accelerator: '&#8984;N' },
+      { id: 'save', label: 'Save', accelerator: '&#8984;S' },
+    ],
+  }],
+  mount(el, ctx) {
+    el.innerHTML = '&lt;div style="padding:24px;text-align:center"&gt;&#128075; Hello!&lt;/div&gt;';
+    el.querySelector('div').addEventListener('click', () =&gt; ctx.toast('Hi!'));
+  },
+  unmount() {},
+};
+
+novaContext.registerApp(myApp);
+await novaContext.launchApp('com.example.hello');
+
+const running = novaContext.getRunningApps();
+novaContext.quitApp('com.example.hello');</pre>
+    <div class="callout tip"><strong>App IDs</strong> are unique. Calling <code>launchApp()</code> with an already-running ID focuses the existing window rather than opening a duplicate.</div>
+  </section>
+
+  <section class="doc-sec" id="events">
+    <h2>&#128225; Event System</h2>
+    <p>A lightweight pub/sub bus. Any component, app, or cart code can subscribe to and emit events using a string <code>type</code>.</p>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Event type</th><th>Payload</th><th>When fired</th></tr></thead>
+      <tbody>
+        <tr><td class="m">app:registered</td><td><span class="sig">{ appId }</span></td><td>App registered with OS</td></tr>
+        <tr><td class="m">app:launched</td><td><span class="sig">{ appId }</span></td><td>App window opens</td></tr>
+        <tr><td class="m">app:quit</td><td><span class="sig">{ appId }</span></td><td>App window closes</td></tr>
+        <tr><td class="m">fs:changed</td><td><span class="sig">{ path, op }</span></td><td>Any filesystem write or delete</td></tr>
+        <tr><td class="m">window:created</td><td><span class="sig">{ windowId }</span></td><td><code>createWindow()</code> returns</td></tr>
+        <tr><td class="m">window:closed</td><td><span class="sig">{ windowId }</span></td><td>Window is destroyed</td></tr>
+        <tr><td class="m">window:focused</td><td><span class="sig">{ windowId }</span></td><td>Window brought to front</td></tr>
+      </tbody>
+    </table></div>
+<pre>// Subscribe &mdash; returns unsubscribe fn
+const off = novaContext.on('app:launched', evt =&gt; {
+  console.log('App launched:', evt.payload.appId);
+});
+off(); // unsubscribe
+
+// Wildcard &mdash; all events
+novaContext.on('*', evt =&gt; console.log(evt.type, evt.payload));
+
+// Emit a custom event
+novaContext.emit({ type: 'game:score', payload: { score: 9999 }, timestamp: Date.now() });
+novaContext.on('game:score', ({ payload }) =&gt; updateScoreboard(payload.score));</pre>
+  </section>
+
+  <section class="doc-sec" id="ui">
+    <h2>&#128172; UI &amp; Toast</h2>
+    <h3>Alert dialogs</h3>
+    <p><code>ctx.alert()</code> opens a modal and resolves with the label of the button clicked.</p>
+<pre>// Info
+await ctx.alert({ title: 'File Saved', message: 'Saved to Documents.', buttons: ['OK'] });
+
+// Destructive confirmation
+const choice = await ctx.alert({
+  title: 'Delete file?', message: 'This cannot be undone.',
+  buttons: ['Cancel', 'Delete'], icon: 'warning',
+});
+if (choice === 'Delete') { /* proceed */ }
+
+// Error
+await ctx.alert({ title: 'Read Error', message: 'Disk may be damaged.', buttons: ['OK'], icon: 'error' });</pre>
+    <h3>Toast</h3>
+<pre>ctx.toast('File saved!');          // auto-dismisses after ~3 s
+ctx.toast('3 new messages');
+ctx.toast('Connection restored');</pre>
+  </section>
+
+  <section class="doc-sec" id="prefs">
+    <h2>&#128190; Preferences</h2>
+    <p>JSON-serialisable values stored at <code>/Users/Player/Library/Preferences/</code> via the VFS. Both methods are <code>async</code>.</p>
+    <div class="tw"><table class="tbl">
+      <thead><tr><th>Method</th><th>Signature</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="m">getPref</td><td><span class="sig">(key: string) &rarr; Promise&lt;any&gt;</span></td><td>Read a preference. Returns <code>undefined</code> if not set.</td></tr>
+        <tr><td class="m">setPref</td><td><span class="sig">(key, value) &rarr; Promise&lt;void&gt;</span></td><td>Write a preference (JSON-serialisable values only).</td></tr>
+      </tbody>
+    </table></div>
+<pre>const vol = await ctx.getPref('volume');
+await ctx.setPref('volume',     0.5);
+await ctx.setPref('scanlines',  false);
+await ctx.setPref('brightness', 0.9);
+
+// Namespace app keys to avoid collisions
+await ctx.setPref('com.example.myapp.theme',    'dark');
+await ctx.setPref('com.example.myapp.fontSize', 14);</pre>
+  </section>
+
+  <section class="doc-sec" id="shortcuts">
+    <h2>&#9000;&#65039; Keyboard Shortcuts</h2>
+    <div class="scut-grid">
+      <div class="scut"><span class="desc">Focus menu bar</span><kbd>F10</kbd></div>
+      <div class="scut"><span class="desc">App switcher</span><kbd>&#8984; Tab</kbd></div>
+      <div class="scut"><span class="desc">Close focused window</span><kbd>&#8984; W</kbd></div>
+      <div class="scut"><span class="desc">Dismiss menu / dialog</span><kbd>Esc</kbd></div>
+      <div class="scut"><span class="desc">Windowshade toggle</span><kbd>dbl-click title</kbd></div>
+      <div class="scut"><span class="desc">Quit active app</span><kbd>&#8984; Q</kbd></div>
+      <div class="scut"><span class="desc">New (in active app)</span><kbd>&#8984; N</kbd></div>
+      <div class="scut"><span class="desc">Save (in active app)</span><kbd>&#8984; S</kbd></div>
+      <div class="scut"><span class="desc">Cut / Copy / Paste</span><kbd>&#8984; X / C / V</kbd></div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="builtin">
+    <h2>&#128230; Built-in Applications</h2>
+    <p>Three apps ship with NovaOS. Launch from the browser console or future desktop double-click:</p>
+    <div class="app-cards">
+      <div class="app-card">
+        <span class="ap-ic">&#128221;</span>
+        <h4>Notes <code>com.nova64.notes</code></h4>
+        <p>Plain-text editor. Auto-saves to <code>/Users/Player/Documents/Notes.txt</code>. File menu with Save and Clear actions.</p>
+      </div>
+      <div class="app-card">
+        <span class="ap-ic">&#127912;</span>
+        <h4>Paint <code>com.nova64.paint</code></h4>
+        <p>Canvas drawing app. Colour picker, three brush sizes, eraser, and Clear Canvas. Classic Mac OS palette layout.</p>
+      </div>
+      <div class="app-card">
+        <span class="ap-ic">&#128202;</span>
+        <h4>System Profiler <code>com.nova64.profiler</code></h4>
+        <p>Live browser info: user agent, platform, screen resolution, CPU cores, available JS heap memory.</p>
+      </div>
+    </div>
+<pre>await novaContext.launchApp('com.nova64.notes');
+await novaContext.launchApp('com.nova64.paint');
+await novaContext.launchApp('com.nova64.profiler');</pre>
+  </section>
+
+  <section class="doc-sec" id="build">
+    <h2>&#127959;&#65039; Build &amp; Deploy</h2>
+    <p>Standard Vite app. Output to <code>os9-shell/dist/</code> &mdash; deploy to any CDN or static host.</p>
+<pre>cd os9-shell
+pnpm dev      # HMR &rarr; http://localhost:3000
+pnpm build    # output: os9-shell/dist/
+pnpm preview  # serve dist/ on http://localhost:4173</pre>
+    <h3>Source tree</h3>
+<pre>os9-shell/
+&#x251C;&#x2500;&#x2500; src/
+&#x2502;   &#x251C;&#x2500;&#x2500; apps/        # Notes, Paint, System Profiler
+&#x2502;   &#x251C;&#x2500;&#x2500; components/  # Window, MenuBar, Desktop, ControlStrip, ...
+&#x2502;   &#x251C;&#x2500;&#x2500; os/          # filesystem, event bus, Zustand stores, context
+&#x2502;   &#x251C;&#x2500;&#x2500; theme/       # Platinum CSS design tokens
+&#x2502;   &#x251C;&#x2500;&#x2500; types/       # TypeScript interfaces &amp; enums
+&#x2502;   &#x2514;&#x2500;&#x2500; main.tsx     # React root
+&#x251C;&#x2500;&#x2500; public/
+&#x251C;&#x2500;&#x2500; dist/            # Production build output
+&#x2514;&#x2500;&#x2500; vite.config.ts</pre>
+  </section>
+
+  <section class="doc-sec" id="mobile">
+    <h2>&#128241; Mobile Shell</h2>
+    <p>Touch-optimised variant in <code>os9-shellMobile/</code>. Same tech stack and APIs, but menu-based navigation suited to small screens &mdash; no draggable desktop.</p>
+<pre>cd os9-shellMobile
+pnpm install && pnpm dev    # http://localhost:3000
+pnpm build                  # os9-shellMobile/dist/</pre>
+    <div class="callout warn"><strong>Beta:</strong> Core filesystem and app APIs are stable; navigation chrome and touch gestures are still iterating.</div>
+  </section>
+
+  <div class="pg-foot">
+    <p>Nova64 Fantasy Console &copy; 2026 &middot; MIT License</p>
+    <p>
+      <a href="index.html">&#8592; All Docs</a> &nbsp;&middot;&nbsp;
+      <a href="../os9-shell/index.html" target="_blank" rel="noopener">Launch NovaOS &#8599;</a> &nbsp;&middot;&nbsp;
+      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">GitHub &#8599;</a>
+    </p>
+  </div>
+</main>
+</div>
+<script>
+(function(){
+  var links=Array.from(document.querySelectorAll('.sb-link[href^="#"]'));
+  var ids=links.map(function(l){return l.getAttribute('href').slice(1)});
+  function update(){
+    var active=ids[0];
+    for(var i=0;i<ids.length;i++){
+      var el=document.getElementById(ids[i]);
+      if(el&&el.getBoundingClientRect().top<=80)active=ids[i];
+    }
+    links.forEach(function(l){
+      l.classList.toggle('active',l.getAttribute('href')==='#'+active);
+    });
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

@@ -5,29 +5,46 @@
 // ============================================
 // GAME CONFIGURATION
 // ============================================
+const { circle, line, print, rect, rgba8 } = nova64.draw;
+const { createCube, createSphere, destroyMesh, setPosition, setRotation, setScale } = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setLightColor, setLightDirection } = nova64.light;
+const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
+const { btn, isKeyDown, isKeyPressed } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  createCooldownSet,
+  createShake,
+  getShakeOffset,
+  triggerShake,
+  updateCooldowns,
+  updateShake,
+  useCooldown,
+} = nova64.util;
+
 const CONFIG = {
   // Player ship
   SHIP_SPEED: 25,
   SHIP_TURN_SPEED: 2.5,
   SHIP_BOOST_SPEED: 45,
   SHIP_STRAFE_SPEED: 15,
-  
+
   // Combat
   LASER_SPEED: 80,
   LASER_COOLDOWN: 0.15,
   MISSILE_SPEED: 40,
   MISSILE_COOLDOWN: 1.5,
   MISSILE_TURN_RATE: 3,
-  
+
   // Enemies
   ENEMY_SPAWN_DISTANCE: 150,
   ENEMY_SPEED: 20,
   ENEMY_HEALTH: 3,
-  
+
   // Asteroids
   ASTEROID_COUNT: 50,
   ASTEROID_SPAWN_RANGE: 200,
-  
+
   // Visuals
   COCKPIT_OVERLAY: true,
   CROSSHAIR: true,
@@ -37,19 +54,23 @@ const CONFIG = {
 // ============================================
 // GAME STATE
 // ============================================
-let gameState = 'start'; // 'start', 'playing', 'paused', 'gameover'
+let gameState = 'start'; // 'start', 'playing', 'paused', 'gameover', 'waveclear'
 let gameTime = 0;
 let score = 0;
 let kills = 0;
 let wave = 1;
+let waveClearTimer = 0;
+let bossAlive = false;
+let pickups = [];
+let totalWaveEnemies = 0;
 
 // Player ship state
 let player = {
   pos: { x: 0, y: 0, z: 0 },
   vel: { x: 0, y: 0, z: 0 },
-  pitch: 0,  // Up/down rotation
-  yaw: 0,    // Left/right rotation
-  roll: 0,   // Barrel roll rotation
+  pitch: 0, // Up/down rotation
+  yaw: 0, // Left/right rotation
+  roll: 0, // Barrel roll rotation
   health: 100,
   maxHealth: 100,
   shields: 100,
@@ -80,6 +101,8 @@ let explosions = [];
 let stars = [];
 let cockpitMesh = null;
 let crosshairMesh = null;
+let shake;
+let cooldowns;
 
 // ============================================
 // INITIALIZATION
@@ -91,7 +114,7 @@ export async function init() {
   score = 0;
   kills = 0;
   wave = 1;
-  
+
   // Reset player
   player = {
     pos: { x: 0, y: 0, z: 0 },
@@ -111,47 +134,58 @@ export async function init() {
     missileCooldown: 0,
     targetLocked: null,
   };
-  
+
   // Reset camera
   camera = {
     pos: { x: 0, y: 0, z: 0 },
     pitch: 0,
     yaw: 0,
     roll: 0,
-    shake: 0,
   };
-  
+
+  shake = createShake({ decay: 3 });
+  cooldowns = createCooldownSet({ laser: CONFIG.LASER_COOLDOWN, missile: CONFIG.MISSILE_COOLDOWN });
+
   // Clear arrays
   asteroids = [];
   enemies = [];
   projectiles = [];
   explosions = [];
   stars = [];
-  
+  pickups = [];
+  bossAlive = false;
+  totalWaveEnemies = 0;
+  waveClearTimer = 0;
+
   // Create starfield
   createStarfield();
-  
+
   // Create asteroid field
   createAsteroidField();
-  
+
   // Create cockpit overlay
   if (CONFIG.COCKPIT_OVERLAY) {
     createCockpit();
   }
-  
+
   // Create crosshair
   if (CONFIG.CROSSHAIR) {
     createCrosshair();
   }
-  
+
   // Spawn initial enemies
   spawnWave(wave);
-  
+
   // Setup lighting
   setAmbientLight(0x333333);
   setLightColor(0xffffff);
   setLightDirection(0.5, -0.5, 0.5);
-  
+
+  // Post-processing: cinematic space look
+  enableBloom(0.8, 0.4, 0.45);
+  enableFXAA();
+  enableVignette(1.3, 0.9);
+
   // Setup camera
   updateCamera(0);
 }
@@ -165,15 +199,15 @@ function createStarfield() {
     const distance = 400 + Math.random() * 400;
     const angle1 = Math.random() * Math.PI * 2;
     const angle2 = (Math.random() - 0.5) * Math.PI;
-    
+
     const star = {
       x: Math.cos(angle1) * Math.cos(angle2) * distance,
       y: Math.sin(angle2) * distance,
       z: Math.sin(angle1) * Math.cos(angle2) * distance,
       brightness: 0.3 + Math.random() * 0.7,
-      mesh: createSphere(0.3 + Math.random() * 0.5, 0xffffff, [0, 0, 0])
+      mesh: createSphere(0.3 + Math.random() * 0.5, 0xffffff, [0, 0, 0]),
     };
-    
+
     setPosition(star.mesh, star.x, star.y, star.z);
     stars.push(star);
   }
@@ -191,7 +225,7 @@ function spawnAsteroid() {
   const x = (Math.random() - 0.5) * range * 2;
   const y = (Math.random() - 0.5) * range;
   const z = (Math.random() - 0.5) * range * 2;
-  
+
   const asteroid = {
     pos: { x, y, z },
     vel: {
@@ -213,7 +247,7 @@ function spawnAsteroid() {
     health: Math.ceil(size / 2),
     mesh: createCube(size, 0x666666, [x, y, z]),
   };
-  
+
   asteroids.push(asteroid);
 }
 
@@ -222,19 +256,19 @@ function createCockpit() {
   // Left frame
   const leftFrame = createCube(0.5, 0x333333, [-8, 0, -5]);
   setScale(leftFrame, 0.2, 8, 0.2);
-  
+
   // Right frame
   const rightFrame = createCube(0.5, 0x333333, [8, 0, -5]);
   setScale(rightFrame, 0.2, 8, 0.2);
-  
+
   // Top frame
   const topFrame = createCube(0.5, 0x333333, [0, 6, -5]);
   setScale(topFrame, 16, 0.2, 0.2);
-  
+
   // Bottom frame (with HUD console)
   const bottomFrame = createCube(0.5, 0x222222, [0, -5, -5]);
   setScale(bottomFrame, 16, 1.5, 0.2);
-  
+
   cockpitMesh = { leftFrame, rightFrame, topFrame, bottomFrame };
 }
 
@@ -242,74 +276,143 @@ function createCrosshair() {
   // Simple crosshair in center of view
   const size = 0.3;
   const distance = 15;
-  
+
   // Horizontal line
   const horizontal = createCube(size, 0x00ff00, [0, 0, -distance]);
   setScale(horizontal, 2, 0.05, 0.05);
-  
+
   // Vertical line
   const vertical = createCube(size, 0x00ff00, [0, 0, -distance]);
   setScale(vertical, 0.05, 2, 0.05);
-  
+
   // Center dot
   const center = createSphere(0.05, 0xff0000, [0, 0, -distance]);
-  
+
   crosshairMesh = { horizontal, vertical, center };
 }
 
 function spawnWave(waveNum) {
-  const enemyCount = 3 + waveNum * 2;
-  
-  for (let i = 0; i < enemyCount; i++) {
-    setTimeout(() => spawnEnemy(), i * 1000);
+  const baseCount = 3 + waveNum * 2;
+  let types = [];
+
+  // Boss wave every 5 waves
+  if (waveNum % 5 === 0) {
+    types.push('boss');
+    bossAlive = true;
+  }
+
+  for (let i = 0; i < baseCount; i++) {
+    let type = 'fighter';
+    if (waveNum >= 3 && Math.random() < 0.3) type = 'bomber';
+    if (waveNum >= 5 && Math.random() < 0.2) type = 'ace';
+    types.push(type);
+  }
+
+  totalWaveEnemies = types.length;
+  for (let i = 0; i < types.length; i++) {
+    const t = types[i];
+    setTimeout(() => spawnEnemy(t), i * 800);
   }
 }
 
-function spawnEnemy() {
+function spawnEnemy(type) {
   const distance = CONFIG.ENEMY_SPAWN_DISTANCE;
   const angle = Math.random() * Math.PI * 2;
-  
+  let hp, spd, color, size, score_val;
+
+  switch (type) {
+    case 'bomber':
+      hp = 6 + wave;
+      spd = 12;
+      color = 0xff8800;
+      size = 4;
+      score_val = 250;
+      break;
+    case 'ace':
+      hp = 4 + wave;
+      spd = 30;
+      color = 0x00ccff;
+      size = 2.5;
+      score_val = 400;
+      break;
+    case 'boss':
+      hp = 30 + wave * 5;
+      spd = 10;
+      color = 0xffcc00;
+      size = 8;
+      score_val = 2000;
+      break;
+    default: // fighter
+      hp = CONFIG.ENEMY_HEALTH + Math.floor(wave / 3);
+      spd = CONFIG.ENEMY_SPEED;
+      color = 0xff3333;
+      size = 2;
+      score_val = 100;
+      break;
+  }
+
+  const body = createCube(size, color, [0, 0, 0], {
+    material: 'emissive',
+    color,
+    intensity: type === 'boss' ? 2.5 : 1.5,
+  });
+  setScale(
+    body,
+    type === 'boss' ? 1.5 : 1.5,
+    type === 'boss' ? 0.6 : 0.5,
+    type === 'boss' ? 1.5 : 1.5
+  );
+
   const enemy = {
     pos: {
-      x: Math.cos(angle) * distance,
-      y: (Math.random() - 0.5) * 50,
-      z: Math.sin(angle) * distance,
+      x: player.pos.x + Math.cos(angle) * distance,
+      y: player.pos.y + (Math.random() - 0.5) * 50,
+      z: player.pos.z + Math.sin(angle) * distance,
     },
     vel: { x: 0, y: 0, z: 0 },
     yaw: 0,
     pitch: 0,
-    health: CONFIG.ENEMY_HEALTH,
-    maxHealth: CONFIG.ENEMY_HEALTH,
-    shootCooldown: 0,
+    health: hp,
+    maxHealth: hp,
+    shootCooldown: Math.random() * 2,
     aiState: 'approach',
-    mesh: createEnemyShip(),
+    mesh: body,
+    type,
+    speed: spd,
+    size,
+    score_val,
   };
-  
-  enemies.push(enemy);
-}
 
-function createEnemyShip() {
-  // Simple enemy ship - red diamond shape
-  const body = createCube(2, 0xff3333, [0, 0, 0]);
-  setScale(body, 3, 1, 3);
-  
-  return body;
+  enemies.push(enemy);
 }
 
 // ============================================
 // UPDATE LOOP
 // ============================================
 export function update() {
-  const dt = 1/60;
-  
+  const dt = 1 / 60;
+
   if (gameState === 'start') {
-    // Check for start input - FIXED: Use isKeyDown instead of isKeyPressed
-    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ')) {
+    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
       gameState = 'playing';
     }
     return;
   }
-  
+
+  // Wave clear transition
+  if (gameState === 'waveclear') {
+    waveClearTimer -= dt;
+    updateCamera(dt);
+    updateExplosions(dt);
+    updatePickups(dt);
+    if (waveClearTimer <= 0) {
+      wave++;
+      gameState = 'playing';
+      spawnWave(wave);
+    }
+    return;
+  }
+
   if (gameState === 'paused') {
     // Check for unpause
     if (isKeyPressed('Escape')) {
@@ -317,13 +420,13 @@ export function update() {
     }
     return;
   }
-  
+
   if (gameState === 'gameover') return;
-  
+
   if (gameState !== 'playing') return;
-  
+
   gameTime += dt;
-  
+
   // Update game
   updateInput(dt);
   updatePlayer(dt);
@@ -333,7 +436,7 @@ export function update() {
   updateExplosions(dt);
   updateCamera(dt);
   updateTargeting();
-  
+
   // Regenerate shields and energy
   if (player.shields < player.maxShields) {
     player.shields = Math.min(player.maxShields, player.shields + 5 * dt);
@@ -341,21 +444,26 @@ export function update() {
   if (player.energy < player.maxEnergy) {
     player.energy = Math.min(player.maxEnergy, player.energy + 20 * dt);
   }
-  
+
   // Cooldowns
-  if (player.laserCooldown > 0) player.laserCooldown -= dt;
-  if (player.missileCooldown > 0) player.missileCooldown -= dt;
-  
+  updateCooldowns(cooldowns, dt);
+
+  // Update pickups
+  updatePickups(dt);
+
   // Check for wave completion
-  if (enemies.length === 0) {
-    wave++;
+  if (enemies.length === 0 && gameState === 'playing') {
+    gameState = 'waveclear';
+    waveClearTimer = 3.0;
     score += 1000 * wave;
-    spawnWave(wave);
+    player.missiles = Math.min(player.missiles + 3, 20);
+    sfx('powerup');
   }
-  
+
   // Check game over
   if (player.health <= 0) {
     gameState = 'gameover';
+    sfx('death');
   }
 }
 
@@ -365,9 +473,9 @@ export function update() {
 function updateInput(dt) {
   const turnSpeed = CONFIG.SHIP_TURN_SPEED * dt;
   const speed = player.boosting ? CONFIG.SHIP_BOOST_SPEED : CONFIG.SHIP_SPEED;
-  
+
   // Mouse control for pitch/yaw (optional - for now keyboard)
-  
+
   // Pitch (up/down) - W/S or Arrow Up/Down
   if (isKeyDown('KeyW') || isKeyDown('ArrowUp')) {
     player.pitch -= turnSpeed;
@@ -375,7 +483,7 @@ function updateInput(dt) {
   if (isKeyDown('KeyS') || isKeyDown('ArrowDown')) {
     player.pitch += turnSpeed;
   }
-  
+
   // Yaw (left/right) - A/D or Arrow Left/Right
   if (isKeyDown('KeyA') || isKeyDown('ArrowLeft')) {
     player.yaw -= turnSpeed;
@@ -387,56 +495,60 @@ function updateInput(dt) {
     // Return to level
     player.roll *= 0.9;
   }
-  
+
   // Boost - Shift
   player.boosting = isKeyDown('ShiftLeft') || isKeyDown('ShiftRight');
-  
+
   // Strafe - Q/E
   const strafeSpeed = CONFIG.SHIP_STRAFE_SPEED * dt;
   if (isKeyDown('KeyQ')) {
-    player.vel.x -= Math.cos(player.yaw + Math.PI/2) * strafeSpeed;
-    player.vel.z -= Math.sin(player.yaw + Math.PI/2) * strafeSpeed;
+    player.vel.x -= Math.cos(player.yaw + Math.PI / 2) * strafeSpeed;
+    player.vel.z -= Math.sin(player.yaw + Math.PI / 2) * strafeSpeed;
   }
   if (isKeyDown('KeyE')) {
-    player.vel.x += Math.cos(player.yaw + Math.PI/2) * strafeSpeed;
-    player.vel.z += Math.sin(player.yaw + Math.PI/2) * strafeSpeed;
+    player.vel.x += Math.cos(player.yaw + Math.PI / 2) * strafeSpeed;
+    player.vel.z += Math.sin(player.yaw + Math.PI / 2) * strafeSpeed;
   }
-  
+
   // Fire lasers - Space or Left Click
-  if ((isKeyDown('Space') || isKeyDown(' ')) && player.laserCooldown <= 0 && player.energy >= 5) {
+  if (
+    (isKeyDown('Space') || isKeyDown(' ')) &&
+    useCooldown(cooldowns.laser) &&
+    player.energy >= 5
+  ) {
     fireLasers();
-    player.laserCooldown = CONFIG.LASER_COOLDOWN;
     player.energy -= 5;
+    sfx('laser');
   }
-  
+
   // Fire missile - M or Right Click
-  if (isKeyPressed('KeyM') && player.missileCooldown <= 0 && player.missiles > 0) {
+  if (isKeyPressed('KeyM') && useCooldown(cooldowns.missile) && player.missiles > 0) {
     fireMissile();
-    player.missileCooldown = CONFIG.MISSILE_COOLDOWN;
     player.missiles--;
+    sfx('explosion');
   }
-  
+
   // Target lock - T
   if (isKeyPressed('KeyT')) {
     lockTarget();
   }
-  
+
   // Pause - Escape
   if (isKeyPressed('Escape')) {
     gameState = 'paused';
   }
-  
+
   // Apply movement in direction ship is facing
   const forward = {
     x: Math.sin(player.yaw) * Math.cos(player.pitch),
     y: Math.sin(player.pitch),
     z: -Math.cos(player.yaw) * Math.cos(player.pitch),
   };
-  
+
   player.vel.x += forward.x * speed * dt;
   player.vel.y += forward.y * speed * dt;
   player.vel.z += forward.z * speed * dt;
-  
+
   // Apply drag
   player.vel.x *= 0.98;
   player.vel.y *= 0.98;
@@ -451,10 +563,10 @@ function updatePlayer(dt) {
   player.pos.x += player.vel.x * dt;
   player.pos.y += player.vel.y * dt;
   player.pos.z += player.vel.z * dt;
-  
+
   // Clamp pitch to prevent over-rotation
-  player.pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, player.pitch));
-  
+  player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.pitch));
+
   // Wrap yaw
   if (player.yaw > Math.PI) player.yaw -= Math.PI * 2;
   if (player.yaw < -Math.PI) player.yaw += Math.PI * 2;
@@ -470,40 +582,44 @@ function fireLasers() {
     y: Math.sin(player.pitch),
     z: -Math.cos(player.yaw) * Math.cos(player.pitch),
   };
-  
+
   const right = {
     x: Math.cos(player.yaw),
     y: 0,
     z: Math.sin(player.yaw),
   };
-  
+
   // Left laser
   createLaser(
     player.pos.x - right.x * 2,
     player.pos.y - right.y * 2,
     player.pos.z - right.z * 2,
-    forward.x, forward.y, forward.z,
+    forward.x,
+    forward.y,
+    forward.z,
     'player'
   );
-  
+
   // Right laser
   createLaser(
     player.pos.x + right.x * 2,
     player.pos.y + right.y * 2,
     player.pos.z + right.z * 2,
-    forward.x, forward.y, forward.z,
+    forward.x,
+    forward.y,
+    forward.z,
     'player'
   );
-  
+
   // Camera shake
-  camera.shake = 0.1;
+  triggerShake(shake, 0.1);
 }
 
 function createLaser(x, y, z, dx, dy, dz, owner) {
   const color = owner === 'player' ? 0x00ff00 : 0xff0000;
   const mesh = createCube(0.3, color, [x, y, z]);
   setScale(mesh, 0.2, 0.2, 2);
-  
+
   const projectile = {
     pos: { x, y, z },
     vel: {
@@ -516,7 +632,7 @@ function createLaser(x, y, z, dx, dy, dz, owner) {
     life: 3,
     mesh,
   };
-  
+
   projectiles.push(projectile);
 }
 
@@ -526,14 +642,10 @@ function fireMissile() {
     y: Math.sin(player.pitch),
     z: -Math.cos(player.yaw) * Math.cos(player.pitch),
   };
-  
-  const mesh = createCube(0.5, 0xffff00, [
-    player.pos.x,
-    player.pos.y,
-    player.pos.z,
-  ]);
+
+  const mesh = createCube(0.5, 0xffff00, [player.pos.x, player.pos.y, player.pos.z]);
   setScale(mesh, 0.3, 0.3, 1.5);
-  
+
   const missile = {
     pos: { ...player.pos },
     vel: {
@@ -548,7 +660,7 @@ function fireMissile() {
     target: player.targetLocked,
     isMissile: true,
   };
-  
+
   projectiles.push(missile);
 }
 
@@ -556,30 +668,31 @@ function lockTarget() {
   // Find closest enemy in front of player
   let closest = null;
   let minDist = 100;
-  
+
   const forward = {
     x: Math.sin(player.yaw) * Math.cos(player.pitch),
     y: Math.sin(player.pitch),
     z: -Math.cos(player.yaw) * Math.cos(player.pitch),
   };
-  
+
   enemies.forEach(enemy => {
     const toEnemy = {
       x: enemy.pos.x - player.pos.x,
       y: enemy.pos.y - player.pos.y,
       z: enemy.pos.z - player.pos.z,
     };
-    
-    const dist = Math.sqrt(toEnemy.x**2 + toEnemy.y**2 + toEnemy.z**2);
-    const len = Math.sqrt(forward.x**2 + forward.y**2 + forward.z**2);
-    const dot = (toEnemy.x * forward.x + toEnemy.y * forward.y + toEnemy.z * forward.z) / (dist * len);
-    
+
+    const dist = Math.sqrt(toEnemy.x ** 2 + toEnemy.y ** 2 + toEnemy.z ** 2);
+    const len = Math.sqrt(forward.x ** 2 + forward.y ** 2 + forward.z ** 2);
+    const dot =
+      (toEnemy.x * forward.x + toEnemy.y * forward.y + toEnemy.z * forward.z) / (dist * len);
+
     if (dot > 0.9 && dist < minDist) {
       closest = enemy;
       minDist = dist;
     }
   });
-  
+
   player.targetLocked = closest;
 }
 
@@ -595,65 +708,167 @@ function updateTargeting() {
 // ============================================
 function updateEnemies(dt) {
   enemies.forEach(enemy => {
-    // Simple AI - approach and circle player
     const toPlayer = {
       x: player.pos.x - enemy.pos.x,
       y: player.pos.y - enemy.pos.y,
       z: player.pos.z - enemy.pos.z,
     };
-    
-    const dist = Math.sqrt(toPlayer.x**2 + toPlayer.y**2 + toPlayer.z**2);
-    
-    if (dist > 80) {
-      // Approach
-      enemy.vel.x = (toPlayer.x / dist) * CONFIG.ENEMY_SPEED * dt;
-      enemy.vel.y = (toPlayer.y / dist) * CONFIG.ENEMY_SPEED * dt;
-      enemy.vel.z = (toPlayer.z / dist) * CONFIG.ENEMY_SPEED * dt;
-    } else if (dist > 30) {
-      // Circle
-      const perpendicular = {
-        x: -toPlayer.z,
-        y: 0,
-        z: toPlayer.x,
-      };
-      const perpLen = Math.sqrt(perpendicular.x**2 + perpendicular.z**2);
-      
-      enemy.vel.x = (perpendicular.x / perpLen) * CONFIG.ENEMY_SPEED * dt;
-      enemy.vel.z = (perpendicular.z / perpLen) * CONFIG.ENEMY_SPEED * dt;
+
+    const dist = Math.sqrt(toPlayer.x ** 2 + toPlayer.y ** 2 + toPlayer.z ** 2);
+    const spd = enemy.speed * dt;
+
+    // Type-specific AI
+    if (enemy.type === 'ace') {
+      // Ace: fast evasive strafing
+      if (dist > 60) {
+        enemy.vel.x = (toPlayer.x / dist) * spd;
+        enemy.vel.y = (toPlayer.y / dist) * spd;
+        enemy.vel.z = (toPlayer.z / dist) * spd;
+      } else {
+        const perpendicular = { x: -toPlayer.z, y: 0, z: toPlayer.x };
+        const perpLen = Math.sqrt(perpendicular.x ** 2 + perpendicular.z ** 2) || 1;
+        let weave = Math.sin(gameTime * 3 + enemies.indexOf(enemy)) * 0.5;
+        enemy.vel.x = (perpendicular.x / perpLen) * spd + weave * spd * 0.3;
+        enemy.vel.z = (perpendicular.z / perpLen) * spd + weave * spd * 0.3;
+        enemy.vel.y = Math.sin(gameTime * 2) * spd * 0.2;
+      }
+    } else if (enemy.type === 'bomber') {
+      // Bomber: slow steady approach, stays at range
+      if (dist > 50) {
+        enemy.vel.x = (toPlayer.x / dist) * spd;
+        enemy.vel.y = (toPlayer.y / dist) * spd;
+        enemy.vel.z = (toPlayer.z / dist) * spd;
+      } else {
+        enemy.vel.x *= 0.95;
+        enemy.vel.y *= 0.95;
+        enemy.vel.z *= 0.95;
+      }
+    } else if (enemy.type === 'boss') {
+      // Boss: circles slowly, always faces player
+      if (dist > 40) {
+        enemy.vel.x = (toPlayer.x / dist) * spd;
+        enemy.vel.y = (toPlayer.y / dist) * spd;
+        enemy.vel.z = (toPlayer.z / dist) * spd;
+      } else {
+        const perpendicular = { x: -toPlayer.z, y: 0, z: toPlayer.x };
+        const perpLen = Math.sqrt(perpendicular.x ** 2 + perpendicular.z ** 2) || 1;
+        enemy.vel.x = (perpendicular.x / perpLen) * spd;
+        enemy.vel.z = (perpendicular.z / perpLen) * spd;
+      }
     } else {
-      // Retreat
-      enemy.vel.x = -(toPlayer.x / dist) * CONFIG.ENEMY_SPEED * dt;
-      enemy.vel.y = -(toPlayer.y / dist) * CONFIG.ENEMY_SPEED * dt;
-      enemy.vel.z = -(toPlayer.z / dist) * CONFIG.ENEMY_SPEED * dt;
+      // Fighter: default approach/circle/retreat
+      if (dist > 80) {
+        enemy.vel.x = (toPlayer.x / dist) * spd;
+        enemy.vel.y = (toPlayer.y / dist) * spd;
+        enemy.vel.z = (toPlayer.z / dist) * spd;
+      } else if (dist > 30) {
+        const perpendicular = { x: -toPlayer.z, y: 0, z: toPlayer.x };
+        const perpLen = Math.sqrt(perpendicular.x ** 2 + perpendicular.z ** 2) || 1;
+        enemy.vel.x = (perpendicular.x / perpLen) * spd;
+        enemy.vel.z = (perpendicular.z / perpLen) * spd;
+      } else {
+        enemy.vel.x = -(toPlayer.x / dist) * spd;
+        enemy.vel.y = -(toPlayer.y / dist) * spd;
+        enemy.vel.z = -(toPlayer.z / dist) * spd;
+      }
     }
-    
-    // Update position
+
     enemy.pos.x += enemy.vel.x;
     enemy.pos.y += enemy.vel.y;
     enemy.pos.z += enemy.vel.z;
-    
-    // Update mesh
+
     setPosition(enemy.mesh, enemy.pos.x, enemy.pos.y, enemy.pos.z);
-    
-    // Shoot at player
+
+    // Shoot at player - different fire rates per type
     enemy.shootCooldown -= dt;
-    if (enemy.shootCooldown <= 0 && dist < 100) {
+    let fireRate =
+      enemy.type === 'boss'
+        ? 1.0
+        : enemy.type === 'ace'
+          ? 1.5
+          : enemy.type === 'bomber'
+            ? 2.5
+            : 2 + Math.random();
+    if (enemy.shootCooldown <= 0 && dist < 120) {
       enemyShoot(enemy, toPlayer, dist);
-      enemy.shootCooldown = 2 + Math.random();
+      enemy.shootCooldown = fireRate;
     }
   });
 }
 
 function enemyShoot(enemy, toPlayer, dist) {
-  createLaser(
-    enemy.pos.x,
-    enemy.pos.y,
-    enemy.pos.z,
-    toPlayer.x / dist,
-    toPlayer.y / dist,
-    toPlayer.z / dist,
-    'enemy'
-  );
+  if (enemy.type === 'boss') {
+    // Boss fires spread of 3
+    for (let a = -0.1; a <= 0.1; a += 0.1) {
+      let dx = toPlayer.x / dist + a;
+      let dy = toPlayer.y / dist;
+      let dz = toPlayer.z / dist + a;
+      createLaser(enemy.pos.x, enemy.pos.y, enemy.pos.z, dx, dy, dz, 'enemy');
+    }
+  } else {
+    createLaser(
+      enemy.pos.x,
+      enemy.pos.y,
+      enemy.pos.z,
+      toPlayer.x / dist,
+      toPlayer.y / dist,
+      toPlayer.z / dist,
+      'enemy'
+    );
+  }
+}
+
+function spawnPickup(x, y, z) {
+  let r = Math.random();
+  let type, color;
+  if (r < 0.4) {
+    type = 'missile';
+    color = 0xffff00;
+  } else if (r < 0.7) {
+    type = 'shield';
+    color = 0x0088ff;
+  } else {
+    type = 'energy';
+    color = 0x00ff88;
+  }
+
+  let mesh = createSphere(1.5, color, [x, y, z], { material: 'emissive', color, intensity: 3 });
+  pickups.push({ pos: { x, y, z }, mesh, type, life: 15 });
+}
+
+function updatePickups(dt) {
+  for (let i = pickups.length - 1; i >= 0; i--) {
+    let p = pickups[i];
+    p.life -= dt;
+    // Spin pickup
+    setRotation(p.mesh, 0, gameTime * 2, 0);
+    let py = p.pos.y + Math.sin(gameTime * 3 + i) * 0.5;
+    setPosition(p.mesh, p.pos.x, py, p.pos.z);
+
+    // Check player proximity
+    let dist = Math.sqrt(
+      (p.pos.x - player.pos.x) ** 2 + (p.pos.y - player.pos.y) ** 2 + (p.pos.z - player.pos.z) ** 2
+    );
+    if (dist < 8) {
+      if (p.type === 'missile') {
+        player.missiles = Math.min(player.missiles + 3, 20);
+        sfx('coin');
+      } else if (p.type === 'shield') {
+        player.shields = Math.min(player.maxShields, player.shields + 30);
+        sfx('powerup');
+      } else if (p.type === 'energy') {
+        player.energy = Math.min(player.maxEnergy, player.energy + 40);
+        sfx('powerup');
+      }
+      destroyMesh(p.mesh);
+      pickups.splice(i, 1);
+      continue;
+    }
+    if (p.life <= 0) {
+      destroyMesh(p.mesh);
+      pickups.splice(i, 1);
+    }
+  }
 }
 
 // ============================================
@@ -662,7 +877,7 @@ function enemyShoot(enemy, toPlayer, dist) {
 function updateProjectiles(dt) {
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const proj = projectiles[i];
-    
+
     // Missile homing
     if (proj.isMissile && proj.target && enemies.includes(proj.target)) {
       const toTarget = {
@@ -670,22 +885,22 @@ function updateProjectiles(dt) {
         y: proj.target.pos.y - proj.pos.y,
         z: proj.target.pos.z - proj.pos.z,
       };
-      
-      const dist = Math.sqrt(toTarget.x**2 + toTarget.y**2 + toTarget.z**2);
+
+      const dist = Math.sqrt(toTarget.x ** 2 + toTarget.y ** 2 + toTarget.z ** 2);
       const turnRate = CONFIG.MISSILE_TURN_RATE * dt;
-      
+
       proj.vel.x += (toTarget.x / dist) * turnRate;
       proj.vel.y += (toTarget.y / dist) * turnRate;
       proj.vel.z += (toTarget.z / dist) * turnRate;
     }
-    
+
     // Update position
     proj.pos.x += proj.vel.x * dt;
     proj.pos.y += proj.vel.y * dt;
     proj.pos.z += proj.vel.z * dt;
-    
+
     setPosition(proj.mesh, proj.pos.x, proj.pos.y, proj.pos.z);
-    
+
     // Lifetime
     proj.life -= dt;
     if (proj.life <= 0) {
@@ -693,42 +908,50 @@ function updateProjectiles(dt) {
       projectiles.splice(i, 1);
       continue;
     }
-    
+
     // Check collisions
     let hit = false;
-    
+
     // Hit enemies
     if (proj.owner === 'player') {
       enemies.forEach((enemy, ei) => {
         const dist = Math.sqrt(
-          (proj.pos.x - enemy.pos.x)**2 +
-          (proj.pos.y - enemy.pos.y)**2 +
-          (proj.pos.z - enemy.pos.z)**2
+          (proj.pos.x - enemy.pos.x) ** 2 +
+            (proj.pos.y - enemy.pos.y) ** 2 +
+            (proj.pos.z - enemy.pos.z) ** 2
         );
-        
-        if (dist < 3) {
+
+        if (dist < enemy.size + 1) {
           enemy.health -= proj.damage;
           hit = true;
-          
+          sfx('hit');
+
           if (enemy.health <= 0) {
-            createExplosion(enemy.pos.x, enemy.pos.y, enemy.pos.z, 5);
+            let expSize = enemy.type === 'boss' ? 12 : enemy.type === 'bomber' ? 7 : 5;
+            createExplosion(enemy.pos.x, enemy.pos.y, enemy.pos.z, expSize);
             destroyMesh(enemy.mesh);
             enemies.splice(ei, 1);
-            score += 100;
+            score += enemy.score_val;
             kills++;
+            sfx('explosion');
+            if (enemy.type === 'boss') bossAlive = false;
+            // Drop pickup (40% chance, 80% for boss)
+            if (Math.random() < (enemy.type === 'boss' ? 0.8 : 0.4)) {
+              spawnPickup(enemy.pos.x, enemy.pos.y, enemy.pos.z);
+            }
           }
         }
       });
     }
-    
+
     // Hit player
     if (proj.owner === 'enemy') {
       const dist = Math.sqrt(
-        (proj.pos.x - player.pos.x)**2 +
-        (proj.pos.y - player.pos.y)**2 +
-        (proj.pos.z - player.pos.z)**2
+        (proj.pos.x - player.pos.x) ** 2 +
+          (proj.pos.y - player.pos.y) ** 2 +
+          (proj.pos.z - player.pos.z) ** 2
       );
-      
+
       if (dist < 3) {
         if (player.shields > 0) {
           player.shields -= proj.damage * 10;
@@ -740,34 +963,35 @@ function updateProjectiles(dt) {
           player.health -= proj.damage * 10;
         }
         hit = true;
-        camera.shake = 0.3;
+        triggerShake(shake, 0.3);
+        sfx('hit');
       }
     }
-    
+
     // Hit asteroids
     asteroids.forEach((asteroid, ai) => {
       const dist = Math.sqrt(
-        (proj.pos.x - asteroid.pos.x)**2 +
-        (proj.pos.y - asteroid.pos.y)**2 +
-        (proj.pos.z - asteroid.pos.z)**2
+        (proj.pos.x - asteroid.pos.x) ** 2 +
+          (proj.pos.y - asteroid.pos.y) ** 2 +
+          (proj.pos.z - asteroid.pos.z) ** 2
       );
-      
+
       if (dist < asteroid.size) {
         asteroid.health -= proj.damage;
         hit = true;
-        
+
         if (asteroid.health <= 0) {
           createExplosion(asteroid.pos.x, asteroid.pos.y, asteroid.pos.z, asteroid.size);
           destroyMesh(asteroid.mesh);
           asteroids.splice(ai, 1);
           score += 10;
-          
+
           // Respawn asteroid elsewhere
           setTimeout(() => spawnAsteroid(), 5000);
         }
       }
     });
-    
+
     if (hit) {
       destroyMesh(proj.mesh);
       projectiles.splice(i, 1);
@@ -784,12 +1008,12 @@ function updateAsteroids(dt) {
     asteroid.pos.x += asteroid.vel.x * dt;
     asteroid.pos.y += asteroid.vel.y * dt;
     asteroid.pos.z += asteroid.vel.z * dt;
-    
+
     // Update rotation
     asteroid.rotation.x += asteroid.rotationSpeed.x * dt;
     asteroid.rotation.y += asteroid.rotationSpeed.y * dt;
     asteroid.rotation.z += asteroid.rotationSpeed.z * dt;
-    
+
     // Wrap around play area
     const range = CONFIG.ASTEROID_SPAWN_RANGE;
     if (Math.abs(asteroid.pos.x - player.pos.x) > range) {
@@ -798,7 +1022,7 @@ function updateAsteroids(dt) {
     if (Math.abs(asteroid.pos.z - player.pos.z) > range) {
       asteroid.pos.z = player.pos.z + (Math.random() - 0.5) * range;
     }
-    
+
     // Update mesh
     setPosition(asteroid.mesh, asteroid.pos.x, asteroid.pos.y, asteroid.pos.z);
     setRotation(asteroid.mesh, asteroid.rotation.x, asteroid.rotation.y, asteroid.rotation.z);
@@ -827,17 +1051,17 @@ function createExplosion(x, y, z, size) {
 function updateExplosions(dt) {
   for (let i = explosions.length - 1; i >= 0; i--) {
     const exp = explosions[i];
-    
+
     exp.pos.x += exp.vel.x * dt;
     exp.pos.y += exp.vel.y * dt;
     exp.pos.z += exp.vel.z * dt;
-    
+
     setPosition(exp.mesh, exp.pos.x, exp.pos.y, exp.pos.z);
-    
+
     exp.life -= dt;
     const scale = exp.life;
     setScale(exp.mesh, scale, scale, scale);
-    
+
     if (exp.life <= 0) {
       destroyMesh(exp.mesh);
       explosions.splice(i, 1);
@@ -853,25 +1077,24 @@ function updateCamera(dt) {
   camera.pos.x = player.pos.x;
   camera.pos.y = player.pos.y;
   camera.pos.z = player.pos.z;
-  
+
   camera.pitch = player.pitch;
   camera.yaw = player.yaw;
   camera.roll = player.roll;
-  
+
   // Camera shake
-  if (camera.shake > 0) {
-    camera.shake -= dt * 3;
-    camera.pos.x += (Math.random() - 0.5) * camera.shake;
-    camera.pos.y += (Math.random() - 0.5) * camera.shake;
-  }
-  
+  updateShake(shake, dt);
+  const [shakeX, shakeY] = getShakeOffset(shake);
+  camera.pos.x += shakeX;
+  camera.pos.y += shakeY;
+
   // Calculate look direction
   const forward = {
     x: Math.sin(camera.yaw) * Math.cos(camera.pitch),
     y: Math.sin(camera.pitch),
     z: -Math.cos(camera.yaw) * Math.cos(camera.pitch),
   };
-  
+
   // Set camera
   setCameraPosition(camera.pos.x, camera.pos.y, camera.pos.z);
   setCameraTarget(
@@ -879,21 +1102,24 @@ function updateCamera(dt) {
     camera.pos.y + forward.y * 100,
     camera.pos.z + forward.z * 100
   );
-  
+
   // Update cockpit elements to follow camera
   if (crosshairMesh) {
     const dist = 15;
-    setPosition(crosshairMesh.horizontal, 
+    setPosition(
+      crosshairMesh.horizontal,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
       camera.pos.z + forward.z * dist
     );
-    setPosition(crosshairMesh.vertical,
+    setPosition(
+      crosshairMesh.vertical,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
       camera.pos.z + forward.z * dist
     );
-    setPosition(crosshairMesh.center,
+    setPosition(
+      crosshairMesh.center,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
       camera.pos.z + forward.z * dist
@@ -909,9 +1135,14 @@ export function draw() {
     drawStartScreen();
     return;
   }
-  
+
   if (gameState === 'playing') {
     drawHUD();
+  } else if (gameState === 'waveclear') {
+    drawHUD();
+    rect(120, 100, 400, 60, rgba8(0, 0, 0, 200), true);
+    print(`WAVE ${wave} CLEAR!`, 230, 110, rgba8(0, 255, 100, 255));
+    print(`+${1000 * wave} BONUS  +3 MISSILES`, 190, 135, rgba8(255, 200, 0, 255));
   } else if (gameState === 'paused') {
     drawHUD();
     drawPauseScreen();
@@ -923,27 +1154,27 @@ export function draw() {
 function drawStartScreen() {
   // Background
   rect(0, 0, 640, 360, rgba8(0, 0, 0, 200), true);
-  
+
   // Title
   print('WING COMMANDER', 200, 80, rgba8(255, 255, 0, 255));
   print('SPACE COMBAT', 220, 110, rgba8(200, 200, 200, 255));
-  
+
   // Instructions
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('PRESS SPACE OR ENTER TO START', 170, 160, rgba8(255, 255, 255, Math.floor(pulse * 255)));
-  
+  print('PRESS SPACE / TAP TO START', 190, 160, rgba8(255, 255, 255, Math.floor(pulse * 255)));
+
   // Controls
   rect(120, 200, 400, 140, rgba8(20, 20, 40, 220), true);
   rect(120, 200, 400, 140, rgba8(100, 100, 255, 180), false);
-  
+
   print('CONTROLS:', 270, 215, rgba8(255, 255, 100, 255));
-  
+
   print('W/S or Arrows = Pitch Up/Down', 140, 240, rgba8(200, 200, 200, 255));
   print('A/D or Arrows = Yaw Left/Right', 140, 260, rgba8(200, 200, 200, 255));
   print('Q/E = Strafe Left/Right', 140, 280, rgba8(200, 200, 200, 255));
   print('SPACE = Fire Lasers', 140, 300, rgba8(200, 200, 200, 255));
   print('M = Fire Missile', 140, 320, rgba8(200, 200, 200, 255));
-  
+
   print('SHIFT = Boost', 370, 260, rgba8(200, 200, 200, 255));
   print('T = Target Lock', 370, 280, rgba8(200, 200, 200, 255));
   print('ESC = Pause', 370, 300, rgba8(200, 200, 200, 255));
@@ -953,52 +1184,91 @@ function drawHUD() {
   // Top HUD bar
   rect(0, 0, 640, 40, rgba8(0, 0, 0, 180), true);
   rect(0, 0, 640, 1, rgba8(0, 255, 255, 255), true);
-  
+
   // Score and stats
   print(`SCORE: ${score.toString().padStart(8, '0')}`, 10, 10, rgba8(0, 255, 255, 255));
   print(`KILLS: ${kills}`, 10, 25, rgba8(255, 100, 100, 255));
-  
+
   print(`WAVE: ${wave}`, 250, 10, rgba8(255, 255, 0, 255));
   print(`ENEMIES: ${enemies.length}`, 250, 25, rgba8(255, 100, 100, 255));
-  
+
+  // Boss health bar
+  if (bossAlive) {
+    let boss = enemies.find(e => e.type === 'boss');
+    if (boss) {
+      print('BOSS', 220, 45, rgba8(255, 204, 0, 255));
+      rect(260, 43, 120, 10, rgba8(50, 50, 0, 255), true);
+      rect(
+        260,
+        43,
+        Math.floor((boss.health / boss.maxHealth) * 120),
+        10,
+        rgba8(255, 204, 0, 255),
+        true
+      );
+      rect(260, 43, 120, 10, rgba8(255, 204, 0, 100), false);
+    }
+  }
+
   // Health bar
   print('HULL:', 400, 10, rgba8(255, 255, 255, 255));
   rect(445, 8, 100, 10, rgba8(50, 0, 0, 255), true);
-  rect(445, 8, Math.floor((player.health / player.maxHealth) * 100), 10, rgba8(255, 0, 0, 255), true);
+  rect(
+    445,
+    8,
+    Math.floor((player.health / player.maxHealth) * 100),
+    10,
+    rgba8(255, 0, 0, 255),
+    true
+  );
   rect(445, 8, 100, 10, rgba8(255, 0, 0, 100), false);
-  
+
   // Shield bar
   print('SHIELDS:', 400, 25, rgba8(255, 255, 255, 255));
   rect(465, 23, 80, 10, rgba8(0, 0, 50, 255), true);
-  rect(465, 23, Math.floor((player.shields / player.maxShields) * 80), 10, rgba8(0, 100, 255, 255), true);
+  rect(
+    465,
+    23,
+    Math.floor((player.shields / player.maxShields) * 80),
+    10,
+    rgba8(0, 100, 255, 255),
+    true
+  );
   rect(465, 23, 80, 10, rgba8(0, 100, 255, 100), false);
-  
+
   // Bottom HUD
   rect(0, 320, 640, 40, rgba8(0, 0, 0, 180), true);
   rect(0, 359, 640, 1, rgba8(0, 255, 255, 255), true);
-  
+
   // Energy
   print('ENERGY:', 10, 330, rgba8(255, 255, 255, 255));
   rect(70, 328, 100, 10, rgba8(50, 50, 0, 255), true);
-  rect(70, 328, Math.floor((player.energy / player.maxEnergy) * 100), 10, rgba8(0, 255, 0, 255), true);
-  
+  rect(
+    70,
+    328,
+    Math.floor((player.energy / player.maxEnergy) * 100),
+    10,
+    rgba8(0, 255, 0, 255),
+    true
+  );
+
   // Missiles
   print(`MISSILES: ${player.missiles}`, 10, 345, rgba8(255, 255, 0, 255));
-  
+
   // Speed indicator
-  const speed = Math.sqrt(player.vel.x**2 + player.vel.y**2 + player.vel.z**2);
+  const speed = Math.sqrt(player.vel.x ** 2 + player.vel.y ** 2 + player.vel.z ** 2);
   print(`SPEED: ${Math.floor(speed)}`, 250, 330, rgba8(200, 200, 200, 255));
-  
+
   // Target lock indicator
   if (player.targetLocked) {
     print('TARGET LOCKED', 250, 345, rgba8(255, 0, 0, 255));
   }
-  
+
   // Boost indicator
   if (player.boosting) {
     print('BOOST', 450, 330, rgba8(255, 100, 0, 255));
   }
-  
+
   // Radar (simple)
   drawRadar();
 }
@@ -1007,27 +1277,51 @@ function drawRadar() {
   const radarX = 560;
   const radarY = 290;
   const radarSize = 60;
-  
+
   // Radar background
-  rect(radarX - radarSize/2, radarY - radarSize/2, radarSize, radarSize, rgba8(0, 20, 0, 180), true);
-  rect(radarX - radarSize/2, radarY - radarSize/2, radarSize, radarSize, rgba8(0, 255, 0, 100), false);
-  
+  rect(
+    radarX - radarSize / 2,
+    radarY - radarSize / 2,
+    radarSize,
+    radarSize,
+    rgba8(0, 20, 0, 180),
+    true
+  );
+  rect(
+    radarX - radarSize / 2,
+    radarY - radarSize / 2,
+    radarSize,
+    radarSize,
+    rgba8(0, 255, 0, 100),
+    false
+  );
+
   // Center (player)
   rect(radarX - 2, radarY - 2, 4, 4, rgba8(0, 255, 255, 255), true);
-  
+
   // Enemies on radar
   enemies.forEach(enemy => {
     const dx = enemy.pos.x - player.pos.x;
     const dz = enemy.pos.z - player.pos.z;
-    const dist = Math.sqrt(dx**2 + dz**2);
-    
+    const dist = Math.sqrt(dx ** 2 + dz ** 2);
+
     if (dist < CONFIG.RADAR_RANGE) {
-      const scale = (radarSize / 2) / CONFIG.RADAR_RANGE;
+      const scale = radarSize / 2 / CONFIG.RADAR_RANGE;
       const x = radarX + dx * scale;
       const y = radarY + dz * scale;
-      
-      const color = enemy === player.targetLocked ? rgba8(255, 0, 0, 255) : rgba8(255, 100, 100, 255);
-      rect(Math.floor(x) - 1, Math.floor(y) - 1, 2, 2, color, true);
+
+      let dotSize = enemy.type === 'boss' ? 4 : 2;
+      const color =
+        enemy === player.targetLocked
+          ? rgba8(255, 0, 0, 255)
+          : enemy.type === 'boss'
+            ? rgba8(255, 204, 0, 255)
+            : enemy.type === 'ace'
+              ? rgba8(0, 204, 255, 255)
+              : enemy.type === 'bomber'
+                ? rgba8(255, 136, 0, 255)
+                : rgba8(255, 100, 100, 255);
+      rect(Math.floor(x) - dotSize / 2, Math.floor(y) - dotSize / 2, dotSize, dotSize, color, true);
     }
   });
 }
@@ -1040,16 +1334,16 @@ function drawPauseScreen() {
 
 function drawGameOver() {
   rect(0, 0, 640, 360, rgba8(0, 0, 0, 200), true);
-  
+
   print('GAME OVER', 250, 120, rgba8(255, 50, 50, 255));
   print(`FINAL SCORE: ${score}`, 240, 160, rgba8(255, 255, 0, 255));
   print(`KILLS: ${kills}`, 280, 190, rgba8(255, 100, 100, 255));
   print(`WAVE REACHED: ${wave}`, 250, 220, rgba8(200, 200, 200, 255));
-  
+
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('Press SPACE or ENTER to restart', 200, 270, rgba8(255, 255, 255, Math.floor(pulse * 255)));
-  
-  if (isKeyDown('KeyR') || isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ')) {
+  print('Press SPACE / Tap to restart', 205, 270, rgba8(255, 255, 255, Math.floor(pulse * 255)));
+
+  if (isKeyDown('KeyR') || isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
     init();
   }
 }

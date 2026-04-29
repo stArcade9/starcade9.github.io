@@ -215,6 +215,15 @@
             margin: 5px 0;
         }
     </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
     <div class="container">
@@ -222,17 +231,21 @@
         
         <header>
             <h1>🎨 GPU Systems</h1>
-            <p class="subtitle">Low-level rendering backends (Canvas2D, WebGL2, Three.js)</p>
+            <p class="subtitle">Low-level rendering backends (Three.js, Babylon.js, WebGL2, Canvas2D)</p>
         </header>
 
         
       <section>
         <h2>📋 Overview</h2>
-        <p>Nova64 uses multiple GPU backends to provide flexible rendering options: Three.js for 3D, WebGL2 for advanced effects, and Canvas2D as a fallback.</p>
+        <p>Nova64 uses multiple GPU backends to provide flexible rendering options: Three.js as the primary 3D path, Babylon.js as the secondary parity backend, WebGL2 for lower-level rendering paths, and Canvas2D as a compatibility fallback.</p>
         
         <div class="note">
           <div class="note-title">💡 GPU Backends</div>
-          <ul><li><strong>Three.js (Primary)</strong> - Full 3D acceleration for 3D scenes</li><li><strong>WebGL2</strong> - Custom shaders and effects</li><li><strong>Canvas2D (Fallback)</strong> - Software rendering for compatibility</li></ul>
+          <ul><li><strong>Three.js (Primary)</strong> - Full 3D acceleration for stable cart rendering</li><li><strong>Babylon.js (Parity)</strong> - Secondary backend with compatibility shims, WAD visual parity guardrails, and backend-native voxel routing</li><li><strong>WebGL2</strong> - Custom shaders and lower-level effects</li><li><strong>Canvas2D (Fallback)</strong> - Software rendering for compatibility</li></ul>
+        </div>
+        <div class="note">
+          <div class="note-title">Backend Runtime Notes</div>
+          <p>See <a href="BACKEND_RUNTIME.md">BACKEND_RUNTIME.md</a> for the backend surface contract, Babylon compatibility layer, WAD mesh-proxy material assignment fix, vignette guard, voxel routing notes, and focused Playwright validation commands. Experimental NOA adapter notes live in <a href="BABYLON_NOA_INTEGRATION.md">BABYLON_NOA_INTEGRATION.md</a>.</p>
         </div>
       
         

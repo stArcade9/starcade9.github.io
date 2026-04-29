@@ -1,0 +1,47 @@
+{
+  "name": "Hello 3D",
+  "description": "HELLO 3D WORLD - Simple Nintendo 64/PlayStation style 3D demo",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "HELLO 3D WORLD",
+      "ui.startDemo": "▶ START DEMO",
+      "ui.info": "ℹ INFO"
+    },
+    "locales": {
+      "es": {
+        "game.title": "HOLA MUNDO 3D",
+        "ui.startDemo": "▶ INICIAR DEMO",
+        "ui.info": "ℹ INFO"
+      }
+    }
+  },
+  "defaults": {
+    "clearColor": "#1a0030",
+    "fog": {
+      "color": "#202040",
+      "near": 20,
+      "far": 100
+    },
+    "effects": {
+      "pixelation": {
+        "enabled": true,
+        "size": 1
+      },
+      "dithering": true
+    },
+    "camera": {
+      "position": [0, 5, 15],
+      "fov": 60
+    },
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "freeCamera": false
+      }
+    }
+  }
+}

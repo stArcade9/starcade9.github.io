@@ -1,0 +1,48 @@
+{
+  "name": "UI Demo",
+  "description": "Nova64 UI System Demo — First Class Interface",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "NOVA64 UI SYSTEM",
+      "panel.playerStats": "Player Stats",
+      "panel.controlPanel": "Control Panel",
+      "panel.buttonShowcase": "Button Showcase",
+      "stat.health": "HEALTH",
+      "stat.mana": "MANA",
+      "stat.experience": "EXPERIENCE",
+      "btn.primary": "PRIMARY",
+      "btn.success": "SUCCESS",
+      "btn.warning": "WARNING",
+      "btn.danger": "DANGER",
+      "ui.statusActive": "STATUS: ACTIVE"
+    },
+    "locales": {
+      "es": {
+        "game.title": "SISTEMA UI NOVA64",
+        "panel.playerStats": "Estadísticas del Jugador",
+        "panel.controlPanel": "Panel de Control",
+        "panel.buttonShowcase": "Muestra de Botones",
+        "stat.health": "SALUD",
+        "stat.mana": "MANÁ",
+        "stat.experience": "EXPERIENCIA",
+        "btn.primary": "PRIMARIO",
+        "btn.success": "ÉXITO",
+        "btn.warning": "ALERTA",
+        "btn.danger": "PELIGRO",
+        "ui.statusActive": "ESTADO: ACTIVO"
+      }
+    }
+  },
+  "defaults": {
+    "cheats": {
+      "enabled": false,
+      "items": {
+        "maxStats": false
+      }
+    }
+  }
+}

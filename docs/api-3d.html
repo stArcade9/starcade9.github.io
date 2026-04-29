@@ -215,6 +215,15 @@
             margin: 5px 0;
         }
     </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
     <div class="container">
@@ -232,7 +241,7 @@
         
         <div class="note">
           <div class="note-title">💡 Key Features</div>
-          <ul><li><strong>Mesh Management</strong> - ID-based system for creating and destroying 3D objects</li><li><strong>Primitive Shapes</strong> - Cubes, spheres, planes with N64-style materials</li><li><strong>Material System</strong> - PBR materials with color, texture, and metalness</li><li><strong>Model Loading</strong> - GLB/GLTF model support with async loading</li><li><strong>Lighting</strong> - Directional, point, and ambient lights with shadows</li></ul>
+          <ul><li><strong>Mesh Management</strong> – ID-based system for creating and destroying 3D objects</li><li><strong>Primitives</strong> – Cube, sphere, plane, cylinder, cone, capsule, torus</li><li><strong>Material System</strong> – PBR materials with metalness, roughness, and environment map reflections</li><li><strong>Transforms</strong> – setPosition, setRotation, setScale, rotateMesh, getPosition</li><li><strong>Model Loading</strong> – GLB/GLTF model support with async loading</li><li><strong>Lighting</strong> – Directional, point, and ambient lights with fog</li></ul>
         </div>
       
         
@@ -370,7 +379,78 @@
           </div>
         
         </div>
-      
+
+        <div class="function">
+          <div class="function-sig">createCylinder(radiusTop, radiusBottom, height, color, position, options?)</div>
+          <p>Creates a cylinder (or truncated cone when radii differ).</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">radiusTop</span> <span class="param-type">number</span> – Top face radius</div>
+            <div class="param"><span class="param-name">radiusBottom</span> <span class="param-type">number</span> – Bottom face radius (set equal to <code>radiusTop</code> for a true cylinder)</div>
+            <div class="param"><span class="param-name">height</span> <span class="param-type">number</span> – Cylinder height</div>
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Colour</div>
+            <div class="param"><span class="param-name">position</span> <span class="param-type">array [x,y,z]</span> – World position</div>
+            <div class="param"><span class="param-name">options</span> <span class="param-type">object</span> – Material options</div>
+          </div>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> – Mesh ID</div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const pillar = createCylinder(0.5, 0.5, 4, 0x888888, [3, 2, 0]);
+const barrel = createCylinder(0.6, 0.8, 1.2, 0x8B4513, [0, 0.6, 5]);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">createCone(radius, height, color, position, options?)</div>
+          <p>Creates a cone — useful for projectiles, trees, directional indicators, and hat shapes.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">radius</span> <span class="param-type">number</span> – Base radius</div>
+            <div class="param"><span class="param-name">height</span> <span class="param-type">number</span> – Cone height</div>
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Colour</div>
+            <div class="param"><span class="param-name">position</span> <span class="param-type">array [x,y,z]</span> – World position</div>
+            <div class="param"><span class="param-name">options</span> <span class="param-type">object</span> – Material options</div>
+          </div>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> – Mesh ID</div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const tree = createCone(1.5, 4, 0x228b22, [0, 2, -5]);
+const bullet = createCone(0.1, 0.4, 0xffff00, [px, py, pz]);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">createCapsule(radius, height, color, position, options?)</div>
+          <p>Creates a capsule (cylinder capped with hemispheres) — ideal for humanoid character bodies and rounded obstacles.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">radius</span> <span class="param-type">number</span> – Hemisphere radius</div>
+            <div class="param"><span class="param-name">height</span> <span class="param-type">number</span> – Total capsule height (including caps)</div>
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Colour</div>
+            <div class="param"><span class="param-name">position</span> <span class="param-type">array [x,y,z]</span> – World position</div>
+            <div class="param"><span class="param-name">options</span> <span class="param-type">object</span> – Material options</div>
+          </div>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> – Mesh ID</div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const player = createCapsule(0.4, 1.8, 0x4488ff, [0, 0.9, 0]);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">createTorus(radius, tube, color, position, options?)</div>
+          <p>Creates a torus (donut shape) — good for rings, portals, halos, and pickup items.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">radius</span> <span class="param-type">number</span> – Distance from the torus centre to the tube centre</div>
+            <div class="param"><span class="param-name">tube</span> <span class="param-type">number</span> – Tube radius</div>
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Colour</div>
+            <div class="param"><span class="param-name">position</span> <span class="param-type">array [x,y,z]</span> – World position</div>
+            <div class="param"><span class="param-name">options</span> <span class="param-type">object</span> – Material options</div>
+          </div>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> – Mesh ID</div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const ring = createTorus(2, 0.3, 0xffd700, [0, 5, 0]); // golden ring portal</code></pre>
+          </div>
+        </div>
+
       </section>
     
       <section>
@@ -406,8 +486,8 @@ mesh.rotation.y += 0.01;</code></pre>
         </div>
       
         <div class="function">
-          <div class="function-sig">destroyMesh(meshId)</div>
-          <p>Removes a mesh and frees its resources.</p>
+          <div class="function-sig">destroyMesh(meshId) &nbsp;·&nbsp; removeMesh(meshId)</div>
+          <p>Removes a mesh from the scene and frees its GPU resources. Both names are identical — either works.</p>
           
           <div class="param-list">
             
@@ -426,11 +506,92 @@ mesh.rotation.y += 0.01;</code></pre>
           
           <div class="example">
             <div class="example-title">Example:</div>
-            <pre><code>destroyMesh(cubeId); // Clean up</code></pre>
+            <pre><code>destroyMesh(cubeId); // or removeMesh(cubeId) — both are identical</code></pre>
           </div>
         
         </div>
+
+        <div class="function">
+          <div class="function-sig">setMeshVisible(meshId, visible)</div>
+          <p>Shows or hides a mesh without removing it from the scene.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Mesh ID</div>
+            <div class="param"><span class="param-name">visible</span> <span class="param-type">boolean</span> – <code>true</code> to show, <code>false</code> to hide</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setMeshVisible(ghostId, false); // hide without destroying
+setMeshVisible(ghostId, true);  // show again</code></pre>
+          </div>
+        </div>
       
+      </section>
+
+      <section>
+        <h2>🔄 Transforms</h2>
+
+        <div class="function">
+          <div class="function-sig">setPosition(meshId, x, y, z)</div>
+          <p>Moves a mesh to an absolute world position.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Mesh ID</div>
+            <div class="param"><span class="param-name">x, y, z</span> <span class="param-type">number</span> – World coordinates</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setPosition(enemyMesh, enemy.x, enemy.y, enemy.z);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">setRotation(meshId, rx, ry, rz)</div>
+          <p>Sets the absolute rotation of a mesh (Euler angles in radians).</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Mesh ID</div>
+            <div class="param"><span class="param-name">rx, ry, rz</span> <span class="param-type">number</span> – Rotation angles in radians</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setRotation(wheelId, 0, 0, Math.PI / 2);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">rotateMesh(meshId, dx, dy, dz)</div>
+          <p>Adds to the current rotation of a mesh each frame — ideal for spin animations.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Mesh ID</div>
+            <div class="param"><span class="param-name">dx, dy, dz</span> <span class="param-type">number</span> – Rotation delta in radians (typically <code>dt * speed</code>)</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>// In update(dt):
+rotateMesh(orbId, 0, dt * 1.5, 0); // spin around Y axis</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">setScale(meshId, sx, sy, sz)</div>
+          <p>Scales a mesh along each axis.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Mesh ID</div>
+            <div class="param"><span class="param-name">sx, sy, sz</span> <span class="param-type">number</span> – Scale factors</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setScale(hitboxId, 2, 0.5, 2); // flatten and widen</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">getPosition(meshId)</div>
+          <p>Returns the current world position of a mesh.</p>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">[x, y, z]</span></div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const [x, y, z] = getPosition(bulletMesh);</code></pre>
+          </div>
+        </div>
       </section>
     
       <section>
@@ -478,81 +639,120 @@ mesh.rotation.y += 0.01;</code></pre>
     
       <section>
         <h2>💡 Lighting</h2>
-        
-        
-        
+
         <div class="function">
-          <div class="function-sig">addDirectionalLight(color, intensity, position)</div>
-          <p>Adds a directional light (like the sun).</p>
-          
+          <div class="function-sig">setLightDirection(x, y, z)</div>
+          <p>Sets the direction of the scene's main directional light (like the sun). The vector points <em>toward</em> the light source.</p>
           <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">color</span> 
-                <span class="param-type">hex number</span> - Light color
-              </div>
-            
-              <div class="param">
-                <span class="param-name">intensity</span> 
-                <span class="param-type">number</span> - Light strength (0-1)
-              </div>
-            
-              <div class="param">
-                <span class="param-name">position</span> 
-                <span class="param-type">array [x, y, z]</span> - Light direction
-              </div>
-            
+            <div class="param"><span class="param-name">x, y, z</span> <span class="param-type">number</span> – Light direction vector</div>
           </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">THREE.Light</span> - Light object
-          </div>
-        
-          
           <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>addDirectionalLight(0xffffff, 1.0, [10, 20, 5]);</code></pre>
+            <div class="example-title">Example</div>
+            <pre><code>setLightDirection(-0.5, -1, -0.3); // angled overhead sun</code></pre>
           </div>
-        
         </div>
-      
+
         <div class="function">
-          <div class="function-sig">addAmbientLight(color, intensity)</div>
-          <p>Adds ambient light (overall scene brightness).</p>
-          
+          <div class="function-sig">setLightColor(color)</div>
+          <p>Sets the colour of the main directional light.</p>
           <div class="param-list">
-            
-              <div class="param">
-                <span class="param-name">color</span> 
-                <span class="param-type">hex number</span> - Light color
-              </div>
-            
-              <div class="param">
-                <span class="param-name">intensity</span> 
-                <span class="param-type">number</span> - Light strength
-              </div>
-            
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Light colour</div>
           </div>
-        
-          
-          <div class="return-info">
-            <strong>Returns:</strong> <span class="param-type">THREE.Light</span> - Light object
-          </div>
-        
-          
           <div class="example">
-            <div class="example-title">Example:</div>
-            <pre><code>addAmbientLight(0x404040, 0.5);</code></pre>
+            <div class="example-title">Example</div>
+            <pre><code>setLightColor(0xffffdd); // warm daylight
+setLightColor(0x4444aa); // cool moonlight</code></pre>
           </div>
-        
         </div>
-      
+
+        <div class="function">
+          <div class="function-sig">setAmbientLight(color, intensity?)</div>
+          <p>Sets the overall scene ambient lighting — fills in shadows and ensures dark areas are still visible.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Ambient colour</div>
+            <div class="param"><span class="param-name">intensity</span> <span class="param-type">number</span> – Strength (default: 1.0)</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setAmbientLight(0x404060, 0.8); // cool, slightly dim fill light</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">createPointLight(color, intensity, distance, x, y, z)</div>
+          <p>Creates a positional point light that casts light in all directions from a specific world position — flames, lamps, explosions.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Light colour</div>
+            <div class="param"><span class="param-name">intensity</span> <span class="param-type">number</span> – Brightness</div>
+            <div class="param"><span class="param-name">distance</span> <span class="param-type">number</span> – Max range (0 = unlimited)</div>
+            <div class="param"><span class="param-name">x, y, z</span> <span class="param-type">number</span> – World position</div>
+          </div>
+          <div class="return-info"><strong>Returns:</strong> <span class="param-type">number</span> – Light ID (pass to <code>setPointLightPosition</code>, <code>removeLight</code>)</div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>const torchLight = createPointLight(0xff8800, 2, 15, torchX, torchY, torchZ);
+// Later, move it:
+setPointLightPosition(torchLight, newX, newY, newZ);
+// Remove:
+removeLight(torchLight);</code></pre>
+          </div>
+        </div>
+
+        <div class="function">
+          <div class="function-sig">setFog(color, near, far)</div>
+          <p>Enables distance fog, fading objects to <code>color</code> between <code>near</code> and <code>far</code> world units.</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">color</span> <span class="param-type">hex number</span> – Fog colour (usually matches your skybox)</div>
+            <div class="param"><span class="param-name">near</span> <span class="param-type">number</span> – Distance at which fog starts</div>
+            <div class="param"><span class="param-name">far</span> <span class="param-type">number</span> – Distance at which objects are fully invisible</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example</div>
+            <pre><code>setFog(0x202040, 30, 80);  // atmospheric night fog
+clearFog();                // remove fog entirely</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>🔮 PBR Materials</h2>
+        <p>Physically Based Rendering properties can be applied to any mesh after creation to achieve metallic, rough, or reflective looks.</p>
+
+        <div class="function">
+          <div class="function-sig">setPBRProperties(meshId, options)</div>
+          <p>Applies PBR material properties to an existing mesh. Works best when an image skybox is set (provides IBL reflections).</p>
+          <div class="param-list">
+            <div class="param"><span class="param-name">meshId</span> <span class="param-type">number</span> – Target mesh ID</div>
+            <div class="param"><span class="param-name">options.metalness</span> <span class="param-type">number</span> – 0 = dielectric, 1 = fully metallic</div>
+            <div class="param"><span class="param-name">options.roughness</span> <span class="param-type">number</span> – 0 = mirror smooth, 1 = fully matte</div>
+            <div class="param"><span class="param-name">options.envMapIntensity</span> <span class="param-type">number</span> – Strength of environment reflections (default: 1.0)</div>
+            <div class="param"><span class="param-name">options.color</span> <span class="param-type">hex number</span> – Override material colour</div>
+          </div>
+          <div class="example">
+            <div class="example-title">Example — PBR material grid</div>
+            <pre><code>// Mirror-like chrome ball
+const chrome = createSphere(1, 0xffffff, [0, 1, 0]);
+setPBRProperties(chrome, { metalness: 1.0, roughness: 0.0 });
+
+// Brushed metal
+const brushed = createSphere(1, 0xaaaaaa, [3, 1, 0]);
+setPBRProperties(brushed, { metalness: 1.0, roughness: 0.5 });
+
+// Matte rubber
+const rubber = createSphere(1, 0x222222, [6, 1, 0]);
+setPBRProperties(rubber, { metalness: 0.0, roughness: 1.0 });</code></pre>
+          </div>
+        </div>
+
+        <div class="note">
+          <div class="note-title">💡 Getting the best results</div>
+          <p>Call <code>createImageSkybox()</code> in your <code>init()</code> before adding PBR meshes. The skybox is used as an environment map — metallic and smooth surfaces will reflect it realistically.</p>
+        </div>
       </section>
     
 
         <footer>
-            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <p>Nova64 Fantasy Console © 2026 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
         </footer>
     </div>
 </body>
