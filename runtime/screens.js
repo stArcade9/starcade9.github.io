@@ -116,42 +116,47 @@ export class ScreenManager {
     const to = this.screens.get(toName);
     const t = Math.max(0, Math.min(1, progress));
     const e = t * t * (3 - 2 * t); // smoothstep
-    const SW = typeof globalThis.screenWidth === 'function' ? globalThis.screenWidth() : 640;
-    const SH = typeof globalThis.screenHeight === 'function' ? globalThis.screenHeight() : 360;
+    const draw = globalThis.nova64?.draw ?? globalThis;
+    const sw = typeof draw.screenWidth === 'function' ? draw.screenWidth : null;
+    const sh = typeof draw.screenHeight === 'function' ? draw.screenHeight : null;
+    const rect = typeof draw.rect === 'function' ? draw.rect : null;
+    const rgba8 = typeof draw.rgba8 === 'function' ? draw.rgba8 : null;
+    const setCamera = typeof draw.setCamera === 'function' ? draw.setCamera : null;
+    const SW = sw ? sw() : 640;
+    const SH = sh ? sh() : 360;
 
     if (type === 'fade') {
       // Cross-fade via black
       const midBlack = t < 0.5 ? Math.round(e * 510) : 0;
       if (t < 0.5) {
         if (from && typeof from.draw === 'function') from.draw();
-        if (midBlack > 0 && typeof globalThis.rect === 'function')
-          globalThis.rect(0, 0, SW, SH, globalThis.rgba8(0, 0, 0, Math.min(255, midBlack)), true);
+        if (midBlack > 0 && rect && rgba8)
+          rect(0, 0, SW, SH, rgba8(0, 0, 0, Math.min(255, midBlack)), true);
       } else {
         if (to && typeof to.draw === 'function') to.draw();
         const fadeIn = Math.round((1 - e) * 510);
-        if (fadeIn > 0 && typeof globalThis.rect === 'function')
-          globalThis.rect(0, 0, SW, SH, globalThis.rgba8(0, 0, 0, Math.min(255, fadeIn)), true);
+        if (fadeIn > 0 && rect && rgba8)
+          rect(0, 0, SW, SH, rgba8(0, 0, 0, Math.min(255, fadeIn)), true);
       }
     } else if (type === 'slide-left' || type === 'slide-right') {
       const dir = type === 'slide-left' ? -1 : 1;
       const off = Math.round(e * SW);
-      const setC = typeof globalThis.setCamera === 'function' ? globalThis.setCamera : null;
       if (from && typeof from.draw === 'function') {
-        if (setC) setC(dir * off, 0);
+        if (setCamera) setCamera(dir * off, 0);
         from.draw();
       }
       if (to && typeof to.draw === 'function') {
-        if (setC) setC(dir * off - dir * SW, 0);
+        if (setCamera) setCamera(dir * off - dir * SW, 0);
         to.draw();
       }
-      if (setC) setC(0, 0);
+      if (setCamera) setCamera(0, 0);
     } else if (type === 'wipe') {
       if (to && typeof to.draw === 'function') to.draw();
       if (from && typeof from.draw === 'function') {
         const wipeX = Math.round(e * SW);
-        if (typeof globalThis.setCamera === 'function') globalThis.setCamera(wipeX, 0);
+        if (setCamera) setCamera(wipeX, 0);
         from.draw();
-        if (typeof globalThis.setCamera === 'function') globalThis.setCamera(0, 0);
+        if (setCamera) setCamera(0, 0);
       }
     } else {
       if (to && typeof to.draw === 'function') to.draw();

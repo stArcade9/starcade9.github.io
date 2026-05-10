@@ -126,6 +126,82 @@ export function effectsApi(gpu) {
   const camera = gpu.getCamera();
   const renderer = gpu.getRenderer();
 
+  // Check if this is Babylon.js backend - if so, delegate to gpu's built-in effects
+  // Babylon.js Engine has 'scenes' array and 'getRenderingCanvas' method
+  // Three.js WebGLRenderer has 'domElement' property
+  const isBabylon =
+    !renderer ||
+    renderer.scenes !== undefined ||
+    typeof renderer.getRenderingCanvas === 'function' ||
+    renderer.constructor?.name === 'Engine' ||
+    renderer.constructor?.name?.includes?.('Engine') ||
+    !renderer.domElement;
+
+  if (isBabylon) {
+    // Babylon backend has its own effects implementation in effects.js
+    // Return a wrapper that delegates to the gpu's effect functions
+    return {
+      exposeTo(target) {
+        // These will be provided by gpu.exposeTo() from GpuBabylon's effects module
+        // We just ensure they're available in the target namespace
+        const babylonEffects = [
+          'enableBloom',
+          'disableBloom',
+          'setBloomStrength',
+          'setBloomRadius',
+          'setBloomThreshold',
+          'enableFXAA',
+          'disableFXAA',
+          'enableChromaticAberration',
+          'disableChromaticAberration',
+          'enableVignette',
+          'disableVignette',
+          'enableGlitch',
+          'disableGlitch',
+          'setGlitchIntensity',
+          'enableRetroEffects',
+          'disableRetroEffects',
+          'isEffectsEnabled',
+          'enableSharpen',
+          'disableSharpen',
+          'enableGrain',
+          'disableGrain',
+          // Custom shader materials (needed by Wizardry, etc.)
+          'createShaderMaterial',
+          'updateShaderUniform',
+        ];
+
+        // Only copy functions that exist on gpu and aren't already on target
+        for (const key of babylonEffects) {
+          if (typeof gpu[key] === 'function' && !(key in target)) {
+            target[key] = gpu[key].bind(gpu);
+          }
+        }
+
+        // Provide a no-op renderEffects for compatibility
+        if (!target.renderEffects) {
+          target.renderEffects = () => {
+            // Babylon handles effects in its own render loop
+          };
+        }
+      },
+
+      // Babylon handles effect updates via gpu.updateEffects() called in its render loop
+      update(deltaTime) {
+        if (typeof gpu.updateEffects === 'function') {
+          gpu.updateEffects(deltaTime);
+        }
+      },
+
+      // Babylon handles rendering via its own scene.render()
+      render() {
+        // No-op: Babylon effects are applied in the DefaultRenderingPipeline
+      },
+    };
+  }
+
+  // === THREE.JS POST-PROCESSING IMPLEMENTATION ===
+
   // Post-processing composer
   let composer = null;
   let renderPass = null;
@@ -158,6 +234,12 @@ export function effectsApi(gpu) {
   // === BLOOM EFFECTS ===
   function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6) {
     initPostProcessing();
+
+    // Return early if post-processing not supported (e.g., Babylon.js backend)
+    if (!composer) {
+      logger.warn('⚠️ Bloom effect not available with current backend');
+      return false;
+    }
 
     if (bloomPass) {
       composer.removePass(bloomPass);
@@ -204,6 +286,12 @@ export function effectsApi(gpu) {
   function enableFXAA() {
     initPostProcessing();
 
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ FXAA not available with current backend');
+      return false;
+    }
+
     if (fxaaPass) return;
 
     fxaaPass = new ShaderPass(FXAAShader);
@@ -212,6 +300,7 @@ export function effectsApi(gpu) {
     fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
 
     composer.addPass(fxaaPass);
+    return true;
   }
 
   function disableFXAA() {
@@ -224,13 +313,21 @@ export function effectsApi(gpu) {
   // === CHROMATIC ABERRATION ===
   function enableChromaticAberration(amount = 0.002) {
     initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Chromatic aberration not available with current backend');
+      return false;
+    }
+
     if (chromaticAberrationPass) {
       chromaticAberrationPass.uniforms['amount'].value = amount;
-      return;
+      return true;
     }
     chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
     chromaticAberrationPass.uniforms['amount'].value = amount;
     composer.addPass(chromaticAberrationPass);
+    return true;
   }
 
   function disableChromaticAberration() {
@@ -243,15 +340,23 @@ export function effectsApi(gpu) {
   // === VIGNETTE ===
   function enableVignette(darkness = 1.0, offset = 0.9) {
     initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Vignette effect not available with current backend');
+      return false;
+    }
+
     if (vignettePass) {
       vignettePass.uniforms['darkness'].value = darkness;
       vignettePass.uniforms['offset'].value = offset;
-      return;
+      return true;
     }
     vignettePass = new ShaderPass(VignetteShader);
     vignettePass.uniforms['darkness'].value = darkness;
     vignettePass.uniforms['offset'].value = offset;
     composer.addPass(vignettePass);
+    return true;
   }
 
   function disableVignette() {
@@ -264,13 +369,21 @@ export function effectsApi(gpu) {
   // === GLITCH EFFECT ===
   function enableGlitch(intensity = 0.5) {
     initPostProcessing();
+
+    // Return early if post-processing not supported
+    if (!composer) {
+      logger.warn('⚠️ Glitch effect not available with current backend');
+      return false;
+    }
+
     if (glitchPass) {
       glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
-      return;
+      return true;
     }
     glitchPass = new ShaderPass(GlitchShader);
     glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
     composer.addPass(glitchPass);
+    return true;
   }
 
   function disableGlitch() {
@@ -535,8 +648,25 @@ export function effectsApi(gpu) {
     `,
   };
 
+  // Detect if running on Babylon.js backend
+  function isBabylonBackend() {
+    return (
+      !renderer || renderer.scenes || renderer.constructor.name === 'Engine' || !renderer.domElement
+    );
+  }
+
   // Create material with custom shader
   function createShaderMaterial(shaderName, customUniforms = {}) {
+    // Delegate to Babylon.js backend if applicable
+    if (isBabylonBackend()) {
+      // The Babylon backend exposes createShaderMaterial on the gpu object
+      if (typeof gpu.createShaderMaterial === 'function') {
+        return gpu.createShaderMaterial(shaderName, customUniforms);
+      }
+      logger.warn(`Shader material '${shaderName}' not available with Babylon.js backend`);
+      return null;
+    }
+
     let shader;
 
     switch (shaderName) {
@@ -581,6 +711,14 @@ export function effectsApi(gpu) {
 
   // Update shader uniforms
   function updateShaderUniform(shaderId, uniformName, value) {
+    // Delegate to Babylon.js backend if applicable
+    if (isBabylonBackend()) {
+      if (typeof gpu.updateShaderUniform === 'function') {
+        return gpu.updateShaderUniform(shaderId, uniformName, value);
+      }
+      return false;
+    }
+
     const material = customShaders.get(shaderId);
     if (material && material.uniforms[uniformName]) {
       material.uniforms[uniformName].value = value;
@@ -618,14 +756,16 @@ export function effectsApi(gpu) {
   function enableRetroEffects(opts = {}) {
     // Pixelation — delegated to gpu (api-3d)
     const pixelFactor = opts.pixelation !== undefined ? opts.pixelation : 1;
-    if (pixelFactor !== false && typeof globalThis.enablePixelation === 'function') {
-      globalThis.enablePixelation(pixelFactor);
+    const enablePixelation = globalThis.enablePixelation ?? globalThis.nova64?.fx?.enablePixelation;
+    if (pixelFactor !== false && typeof enablePixelation === 'function') {
+      enablePixelation(pixelFactor);
     }
 
     // Dithering — delegated to gpu (api-3d)
     const dither = opts.dithering !== undefined ? opts.dithering : true;
-    if (dither !== false && typeof globalThis.enableDithering === 'function') {
-      globalThis.enableDithering(dither);
+    const enableDithering = globalThis.enableDithering ?? globalThis.nova64?.fx?.enableDithering;
+    if (dither !== false && typeof enableDithering === 'function') {
+      enableDithering(dither);
     }
 
     // Bloom
@@ -667,7 +807,11 @@ export function effectsApi(gpu) {
     disableVignette();
     disableChromaticAberration();
     if (typeof globalThis.enablePixelation === 'function') globalThis.enablePixelation(0);
+    else if (typeof globalThis.nova64?.fx?.enablePixelation === 'function')
+      globalThis.nova64.fx.enablePixelation(0);
     if (typeof globalThis.enableDithering === 'function') globalThis.enableDithering(false);
+    else if (typeof globalThis.nova64?.fx?.enableDithering === 'function')
+      globalThis.nova64.fx.enableDithering(false);
   }
 
   // === RENDERING ===
@@ -708,6 +852,12 @@ export function effectsApi(gpu) {
         enableGlitch: enableGlitch,
         disableGlitch: disableGlitch,
         setGlitchIntensity: setGlitchIntensity,
+
+        // Glow layer — Babylon-specific. On Three.js, UnrealBloom already
+        // handles emissive glow well, so this is a graceful no-op that returns
+        // false so carts can branch on the result if they care.
+        enableGlow: () => false,
+        disableGlow: () => {},
 
         // Convenience
         enableRetroEffects: enableRetroEffects,

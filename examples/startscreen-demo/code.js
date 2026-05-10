@@ -3,6 +3,13 @@
 // Shows: full-screen backgrounds, title text, animated star decorations, nav buttons,
 //        panel modals, SVG path decorations, and mouse-interactive menu navigation.
 
+const { circle, line, rect } = nova64.draw;
+const { createTorus, getMesh } = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog } = nova64.light;
+const { Screen, grid, parseCanvasUI, renderCanvasUI, updateCanvasUI } = nova64.ui;
+const { arc, color } = nova64.util;
+
 const MAIN_MENU_XML = `<ui>
   <!-- ── Full-screen dark sky gradient ── -->
   <rect x="0" y="0" width="100%" height="100%" fill="#050515" />
@@ -131,19 +138,19 @@ const handlers = {
 };
 
 export function init() {
-  mainUI = parseCanvasUI(MAIN_MENU_XML);
-  optionsUI = parseCanvasUI(OPTIONS_PANEL_XML);
-  creditsUI = parseCanvasUI(CREDITS_PANEL_XML);
+  mainUI = nova64.ui.parseCanvasUI(MAIN_MENU_XML);
+  optionsUI = nova64.ui.parseCanvasUI(OPTIONS_PANEL_XML);
+  creditsUI = nova64.ui.parseCanvasUI(CREDITS_PANEL_XML);
 
   // Minimal 3D background — just a dark void with a rotating ring
-  setFog(0x020008, 5, 30);
-  setAmbientLight(0x112233, 0.5);
-  setCameraPosition(0, 0, 8);
-  setCameraTarget(0, 0, 0);
+  nova64.light.setFog(0x020008, 5, 30);
+  nova64.light.setAmbientLight(0x112233, 0.5);
+  nova64.camera.setCameraPosition(0, 0, 8);
+  nova64.camera.setCameraTarget(0, 0, 0);
 
   // Decorative ring geometry
-  const ring = createTorus(4, 0.08, 0x3344aa);
-  const ringMesh = getMesh(ring);
+  const ring = nova64.scene.createTorus(4, 0.08, 0x3344aa);
+  const ringMesh = nova64.scene.getMesh(ring);
   if (ringMesh) ringMesh.userData._ring = true;
 }
 
@@ -153,27 +160,27 @@ export function update(dt) {
   // Rotate the 3D ring in the background
   const mesh = globalThis.scene?.children?.find?.(c => c.userData._ring);
   // Update all active UIs
-  if (activeScreen === 'main') updateCanvasUI(mainUI, dt);
-  if (activeScreen === 'options') updateCanvasUI(optionsUI, dt);
-  if (activeScreen === 'credits') updateCanvasUI(creditsUI, dt);
+  if (activeScreen === 'main') nova64.ui.updateCanvasUI(mainUI, dt);
+  if (activeScreen === 'options') nova64.ui.updateCanvasUI(optionsUI, dt);
+  if (activeScreen === 'credits') nova64.ui.updateCanvasUI(creditsUI, dt);
 }
 
 export function draw() {
   if (activeScreen === 'playing') {
     // Placeholder — in a real game you'd loadCart to the game here
-    renderCanvasUI(mainUI, buildMainData(), handlers);
+    nova64.ui.renderCanvasUI(mainUI, buildMainData(), handlers);
     return;
   }
 
   if (activeScreen === 'main') {
-    renderCanvasUI(mainUI, buildMainData(), handlers);
+    nova64.ui.renderCanvasUI(mainUI, buildMainData(), handlers);
   } else if (activeScreen === 'options') {
     // Render main behind options as a dim backdrop
-    renderCanvasUI(mainUI, buildMainData(), {});
-    renderCanvasUI(optionsUI, {}, handlers);
+    nova64.ui.renderCanvasUI(mainUI, buildMainData(), {});
+    nova64.ui.renderCanvasUI(optionsUI, {}, handlers);
   } else if (activeScreen === 'credits') {
-    renderCanvasUI(mainUI, buildMainData(), {});
-    renderCanvasUI(creditsUI, {}, handlers);
+    nova64.ui.renderCanvasUI(mainUI, buildMainData(), {});
+    nova64.ui.renderCanvasUI(creditsUI, {}, handlers);
   }
 }
 

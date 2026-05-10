@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plasma Drift Background</title>
+    <style>
+      :root {
+        --mx: 50%;
+        --my: 50%;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        background: #030814;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: -18%;
+        pointer-events: none;
+      }
+
+      body::before {
+        background:
+          radial-gradient(circle at var(--mx) var(--my), rgba(172, 252, 255, 0.46), transparent 18%),
+          radial-gradient(circle at 22% 28%, rgba(58, 202, 255, 0.32), transparent 28%),
+          radial-gradient(circle at 76% 34%, rgba(43, 118, 255, 0.28), transparent 30%),
+          radial-gradient(circle at 46% 78%, rgba(102, 255, 213, 0.2), transparent 30%),
+          linear-gradient(145deg, #020713 0%, #0b2a55 44%, #071934 72%, #020713 100%);
+        filter: saturate(1.22);
+        animation: plasmaPulse 16s ease-in-out infinite;
+      }
+
+      body::after {
+        background:
+          conic-gradient(from 90deg at 48% 52%, transparent 0deg, rgba(180, 246, 255, 0.12) 54deg, transparent 118deg, rgba(36, 180, 255, 0.12) 190deg, transparent 270deg),
+          linear-gradient(132deg, transparent 0 28%, rgba(198, 244, 255, 0.1) 28% 29%, transparent 29% 62%, rgba(72, 178, 255, 0.08) 62% 63%, transparent 63%),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 6px);
+        mix-blend-mode: screen;
+        opacity: 0.72;
+        animation: crystalDrift 24s ease-in-out infinite;
+      }
+
+      .label {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(560px, calc(100vw - 120px));
+        padding: 28px 32px;
+        border: 1px solid rgba(190, 242, 255, 0.2);
+        border-radius: 22px;
+        color: rgba(239, 252, 255, 0.82);
+        font: 700 clamp(28px, 6vw, 64px) Inter, ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0;
+        text-align: center;
+        text-shadow: 0 0 28px rgba(120, 228, 255, 0.48);
+        background: rgba(2, 14, 32, 0.24);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(14px);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .label span {
+        display: block;
+        margin-top: 8px;
+        color: rgba(218, 246, 255, 0.58);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      @keyframes plasmaPulse {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        50% {
+          transform: translate3d(2%, -2%, 0) scale(1.04);
+        }
+      }
+
+      @keyframes crystalDrift {
+        0%,
+        100% {
+          transform: translate3d(-1%, 1%, 0) rotate(0deg);
+        }
+        50% {
+          transform: translate3d(2%, -2%, 0) rotate(4deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="label">Plasma Drift<span>visual-only desktop background</span></div>
+    <script>
+      window.addEventListener("message", (event) => {
+        if (!event.data || event.data.type !== "nova64-desktop-pointer") return;
+        const width = Math.max(1, event.data.width || window.innerWidth);
+        const height = Math.max(1, event.data.height || window.innerHeight);
+        const x = Math.max(0, Math.min(100, (event.data.x / width) * 100));
+        const y = Math.max(0, Math.min(100, (event.data.y / height) * 100));
+        document.documentElement.style.setProperty("--mx", `${x}%`);
+        document.documentElement.style.setProperty("--my", `${y}%`);
+      });
+    </script>
+  </body>
+</html>

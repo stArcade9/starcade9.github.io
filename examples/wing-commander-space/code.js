@@ -2,6 +2,25 @@
 // Asteroid field combat with cockpit view like Wing Commander
 // VERSION: v001-INITIAL
 
+const { print, printCentered, rect, rgba8 } = nova64.draw;
+const { createCube, createSphere, destroyMesh, setPosition, setRotation, setScale } = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setLightColor, setLightDirection } = nova64.light;
+const { enableBloom, enableChromaticAberration, enableFXAA, enableVignette } = nova64.fx;
+const { isKeyDown, isKeyPressed } = nova64.input;
+const { sfx } = nova64.audio;
+const { createButton, drawAllButtons, updateAllButtons } = nova64.ui;
+const {
+  cooldownReady,
+  createCooldownSet,
+  createShake,
+  getShakeOffset,
+  triggerShake,
+  updateCooldowns,
+  updateShake,
+  useCooldown,
+} = nova64.util;
+
 console.log('🚀 Wing Commander Space Combat Loading...');
 
 // Helper function for 3D vectors
@@ -112,8 +131,11 @@ export async function init() {
     missileCount: 20,
   };
 
-  shake = createShake({ decay: 3 });
-  cooldowns = createCooldownSet({ laser: CONFIG.LASER_COOLDOWN, missile: CONFIG.MISSILE_COOLDOWN });
+  shake = nova64.util.createShake({ decay: 3 });
+  cooldowns = nova64.util.createCooldownSet({
+    laser: CONFIG.LASER_COOLDOWN,
+    missile: CONFIG.MISSILE_COOLDOWN,
+  });
 
   // Reset wave state
   wave = 0;
@@ -154,21 +176,24 @@ export async function init() {
 
 function setupCamera() {
   // First person view from cockpit
-  setCameraPosition(0, 0, 0);
-  setCameraTarget(0, 0, -10);
-  setCameraFOV(CONFIG.CAMERA_FOV);
+  nova64.camera.setCameraPosition(0, 0, 0);
+  nova64.camera.setCameraTarget(0, 0, -10);
+  nova64.camera.setCameraFOV(CONFIG.CAMERA_FOV);
 }
 
 function setupLighting() {
   // Space lighting - dim ambient with directional sun
-  setAmbientLight(0x222244);
-  setLightColor(0xffffee);
-  setLightDirection(0.3, -0.5, -0.8);
+  nova64.light.setAmbientLight(0x222244);
+  nova64.light.setLightColor(0xffffee);
+  nova64.light.setLightDirection(0.3, -0.5, -0.8);
   // Post-processing for cinematic cockpit feel
-  enableBloom(0.8, 0.4, 0.45); // Engine glow & weapon flash
-  enableFXAA(); // Smooth starfield
-  enableVignette(1.8, 0.85); // Cockpit-style dark border
-  enableChromaticAberration(0.0015); // Subtle lens dispersion
+  nova64.fx.enableBloom(0.8, 0.4, 0.45); // Engine glow & weapon flash
+  nova64.fx.enableFXAA(); // Smooth starfield
+  nova64.fx.enableVignette(1.8, 0.85); // Cockpit-style dark border
+  nova64.fx.enableChromaticAberration(0.0015); // Subtle lens dispersion
+  // Babylon flourish: GlowLayer pushes emissive ship hulls / lasers into a
+  // separate blurred buffer for cheap volumetric glow. No-op on Three.js.
+  nova64.fx.enableGlow?.(1.0, 32);
 }
 
 function createStarField() {
@@ -186,7 +211,7 @@ function createStarField() {
     const color = brightness > 0.8 ? 0xffffee : 0xaabbff;
 
     const star = {
-      mesh: createSphere(0.3, color, [x, y, z]),
+      mesh: nova64.scene.createSphere(0.3, color, [x, y, z]),
       pos: vec3(x, y, z),
       brightness: brightness,
     };
@@ -199,7 +224,7 @@ function createStartScreenUI() {
 
   // Start button with working keyboard fallback
   uiButtons.push(
-    createButton(
+    nova64.ui.createButton(
       200,
       200,
       240,
@@ -210,9 +235,9 @@ function createStartScreenUI() {
         startGame();
       },
       {
-        normalColor: rgba8(255, 100, 0, 255),
-        hoverColor: rgba8(255, 140, 40, 255),
-        pressedColor: rgba8(200, 60, 0, 255),
+        normalColor: nova64.draw.rgba8(255, 100, 0, 255),
+        hoverColor: nova64.draw.rgba8(255, 140, 40, 255),
+        pressedColor: nova64.draw.rgba8(200, 60, 0, 255),
       }
     )
   );
@@ -278,7 +303,7 @@ function spawnAsteroid() {
   const color = colors[Math.floor(Math.random() * colors.length)];
 
   const asteroid = {
-    mesh: createCube(size, color, [x, y, z]),
+    mesh: nova64.scene.createCube(size, color, [x, y, z]),
     pos: vec3(x, y, z),
     vel: vec3((Math.random() - 0.5) * speed, (Math.random() - 0.5) * speed, speed * 1.5),
     rot: vec3(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5),
@@ -286,7 +311,7 @@ function spawnAsteroid() {
     health: Math.floor(size * 2),
   };
 
-  setScale(asteroid.mesh, size, size, size);
+  nova64.scene.setScale(asteroid.mesh, size, size, size);
   asteroids.push(asteroid);
 }
 
@@ -345,14 +370,14 @@ function spawnEnemy(type) {
   const z = -dist;
 
   const s = cfg.size;
-  const body = createCube(s, cfg.color, [x, y, z]);
-  setScale(body, s, s * 0.5, s * 1.5);
+  const body = nova64.scene.createCube(s, cfg.color, [x, y, z]);
+  nova64.scene.setScale(body, s, s * 0.5, s * 1.5);
 
-  const wing1 = createCube(s * 2, cfg.wingColor, [x - s, y, z]);
-  setScale(wing1, s * 2, 0.2, s * 0.75);
+  const wing1 = nova64.scene.createCube(s * 2, cfg.wingColor, [x - s, y, z]);
+  nova64.scene.setScale(wing1, s * 2, 0.2, s * 0.75);
 
-  const wing2 = createCube(s * 2, cfg.wingColor, [x + s, y, z]);
-  setScale(wing2, s * 2, 0.2, s * 0.75);
+  const wing2 = nova64.scene.createCube(s * 2, cfg.wingColor, [x + s, y, z]);
+  nova64.scene.setScale(wing2, s * 2, 0.2, s * 0.75);
 
   // Scale HP with wave
   const hpScale = type === 'boss' ? cfg.hp + wave * 20 : cfg.hp + Math.floor(wave / 2) * 5;
@@ -376,30 +401,30 @@ function spawnEnemy(type) {
 }
 
 function firePlayerLaser() {
-  if (!useCooldown(cooldowns.laser)) return;
+  if (!nova64.util.useCooldown(cooldowns.laser)) return;
 
   // Fire two lasers from wing positions
   for (let i = -1; i <= 1; i += 2) {
     const laser = {
-      mesh: createCube(0.2, 0x00ff00, [i * 1.5, -0.5, -2]),
+      mesh: nova64.scene.createCube(0.2, 0x00ff00, [i * 1.5, -0.5, -2]),
       pos: vec3(player.pos.x + i * 1.5, player.pos.y - 0.5, player.pos.z - 2),
       vel: vec3(0, 0, -CONFIG.LASER_SPEED),
       life: 3,
       damage: 10,
     };
-    setScale(laser.mesh, 0.2, 0.2, 2);
+    nova64.scene.setScale(laser.mesh, 0.2, 0.2, 2);
     playerLasers.push(laser);
   }
 
   player.energy -= 2;
-  sfx('laser');
+  nova64.audio.sfx('laser');
 }
 
 function fireMissile() {
-  if (player.missileCount <= 0 || !useCooldown(cooldowns.missile)) return;
+  if (player.missileCount <= 0 || !nova64.util.useCooldown(cooldowns.missile)) return;
 
   const missile = {
-    mesh: createCube(0.3, 0xffaa00, [0, 0, -2]),
+    mesh: nova64.scene.createCube(0.3, 0xffaa00, [0, 0, -2]),
     pos: vec3(player.pos.x, player.pos.y, player.pos.z - 2),
     vel: vec3(0, 0, -CONFIG.MISSILE_SPEED),
     rot: vec3(0, 0, 0),
@@ -408,11 +433,11 @@ function fireMissile() {
     target: null,
     trail: [],
   };
-  setScale(missile.mesh, 0.3, 0.3, 1);
+  nova64.scene.setScale(missile.mesh, 0.3, 0.3, 1);
   missiles.push(missile);
 
   player.missileCount--;
-  sfx('explosion');
+  nova64.audio.sfx('explosion');
 }
 
 // ============================================
@@ -437,7 +462,7 @@ export function update() {
     updateMissiles(dt);
     updatePickups(dt);
     updateExplosions(dt);
-    updateParticles(dt);
+    _local_updateParticles(dt);
     updateCamera(dt);
     checkCollisions(dt);
 
@@ -452,7 +477,7 @@ export function update() {
       waveClearTimer = 3.0;
       score += wave * 500;
       player.missileCount = Math.min(20, player.missileCount + 3);
-      sfx('powerup');
+      nova64.audio.sfx('powerup');
     }
   }
 
@@ -460,7 +485,7 @@ export function update() {
     gameTime += dt;
     waveClearTimer -= dt;
     updateExplosions(dt);
-    updateParticles(dt);
+    _local_updateParticles(dt);
     updatePickups(dt);
     updateCamera(dt);
     if (waveClearTimer <= 0) {
@@ -474,10 +499,14 @@ function updateStartScreen(dt) {
   gameTime += dt;
 
   // Update buttons
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 
   // KEYBOARD FALLBACK - Use isKeyDown for reliable detection
-  if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ')) {
+  if (
+    nova64.input.isKeyDown('Enter') ||
+    nova64.input.isKeyDown('Space') ||
+    nova64.input.isKeyDown(' ')
+  ) {
     console.log('⌨️ Keyboard start detected!');
     startGame();
   }
@@ -485,30 +514,34 @@ function updateStartScreen(dt) {
 
 function updateInput(dt) {
   // Ship rotation with arrow keys (pitch and yaw)
-  if (isKeyDown('ArrowUp')) {
+  if (nova64.input.isKeyDown('ArrowUp')) {
     player.rot.x -= CONFIG.SHIP_TURN_SPEED * dt;
   }
-  if (isKeyDown('ArrowDown')) {
+  if (nova64.input.isKeyDown('ArrowDown')) {
     player.rot.x += CONFIG.SHIP_TURN_SPEED * dt;
   }
-  if (isKeyDown('ArrowLeft')) {
+  if (nova64.input.isKeyDown('ArrowLeft')) {
     player.rot.y += CONFIG.SHIP_TURN_SPEED * dt;
   }
-  if (isKeyDown('ArrowRight')) {
+  if (nova64.input.isKeyDown('ArrowRight')) {
     player.rot.y -= CONFIG.SHIP_TURN_SPEED * dt;
   }
 
   // Roll with Q/E
-  if (isKeyDown('KeyQ')) {
+  if (nova64.input.isKeyDown('KeyQ')) {
     player.rot.z += CONFIG.SHIP_TURN_SPEED * dt;
   }
-  if (isKeyDown('KeyE')) {
+  if (nova64.input.isKeyDown('KeyE')) {
     player.rot.z -= CONFIG.SHIP_TURN_SPEED * dt;
   }
 
   // Speed control with W/S
-  const speedMultiplier = isKeyDown('KeyW') ? 1 : isKeyDown('KeyS') ? -0.5 : 0.5;
-  player.boosting = isKeyDown('ShiftLeft') || isKeyDown('ShiftRight');
+  const speedMultiplier = nova64.input.isKeyDown('KeyW')
+    ? 1
+    : nova64.input.isKeyDown('KeyS')
+      ? -0.5
+      : 0.5;
+  player.boosting = nova64.input.isKeyDown('ShiftLeft') || nova64.input.isKeyDown('ShiftRight');
 
   const finalSpeed =
     CONFIG.SHIP_SPEED * speedMultiplier * (player.boosting ? CONFIG.SHIP_BOOST_MULTIPLIER : 1);
@@ -525,16 +558,16 @@ function updateInput(dt) {
   player.vel.z = forward.z * finalSpeed;
 
   // Weapons
-  if (isKeyDown('KeyZ') || isKeyDown('Space')) {
+  if (nova64.input.isKeyDown('KeyZ') || nova64.input.isKeyDown('Space')) {
     firePlayerLaser();
   }
 
-  if (isKeyPressed('KeyX')) {
+  if (nova64.input.isKeyPressed('KeyX')) {
     fireMissile();
   }
 
   // Cooldowns
-  updateCooldowns(cooldowns, dt);
+  nova64.util.updateCooldowns(cooldowns, dt);
 
   // Energy regeneration
   if (player.energy < 100 && !player.boosting) {
@@ -580,12 +613,12 @@ function updateAsteroids(dt) {
     asteroid.rot.y += 0.3 * dt;
     asteroid.rot.z += 0.2 * dt;
 
-    setPosition(asteroid.mesh, asteroid.pos.x, asteroid.pos.y, asteroid.pos.z);
-    setRotation(asteroid.mesh, asteroid.rot.x, asteroid.rot.y, asteroid.rot.z);
+    nova64.scene.setPosition(asteroid.mesh, asteroid.pos.x, asteroid.pos.y, asteroid.pos.z);
+    nova64.scene.setRotation(asteroid.mesh, asteroid.rot.x, asteroid.rot.y, asteroid.rot.z);
 
     // Remove if too far behind
     if (asteroid.pos.z > 50 || asteroid.health <= 0) {
-      destroyMesh(asteroid.mesh);
+      nova64.scene.destroyMesh(asteroid.mesh);
       asteroids.splice(i, 1);
 
       if (asteroid.health <= 0) {
@@ -647,13 +680,13 @@ function updateEnemies(dt) {
     enemy.pos.z += enemy.vel.z * dt;
 
     // Update meshes
-    setPosition(enemy.body, enemy.pos.x, enemy.pos.y, enemy.pos.z);
-    setRotation(enemy.body, enemy.rot.x, enemy.rot.y, enemy.rot.z);
+    nova64.scene.setPosition(enemy.body, enemy.pos.x, enemy.pos.y, enemy.pos.z);
+    nova64.scene.setRotation(enemy.body, enemy.rot.x, enemy.rot.y, enemy.rot.z);
 
     enemy.wings.forEach((wing, idx) => {
       const offset = idx === 0 ? -2 : 2;
-      setPosition(wing, enemy.pos.x + offset, enemy.pos.y, enemy.pos.z);
-      setRotation(wing, enemy.rot.x, enemy.rot.y, enemy.rot.z);
+      nova64.scene.setPosition(wing, enemy.pos.x + offset, enemy.pos.y, enemy.pos.z);
+      nova64.scene.setRotation(wing, enemy.rot.x, enemy.rot.y, enemy.rot.z);
     });
 
     // Fire at player
@@ -672,8 +705,8 @@ function updateEnemies(dt) {
 
     // Remove if too far or dead
     if (enemy.pos.z > 60 || enemy.health <= 0) {
-      destroyMesh(enemy.body);
-      enemy.wings.forEach(w => destroyMesh(w));
+      nova64.scene.destroyMesh(enemy.body);
+      enemy.wings.forEach(w => nova64.scene.destroyMesh(w));
 
       if (enemy.health <= 0) {
         const size = enemy.type === 'boss' ? 6 : 3;
@@ -686,7 +719,7 @@ function updateEnemies(dt) {
         score += (ENEMY_TYPES[enemy.type] || ENEMY_TYPES.fighter).score;
         kills++;
         waveEnemiesRemaining--;
-        sfx('explosion');
+        nova64.audio.sfx('explosion');
         // Drop pickup
         const dropChance =
           enemy.type === 'boss'
@@ -709,7 +742,7 @@ function updateEnemies(dt) {
 
 function fireEnemyLaser(enemy, xOffset, damage) {
   const laser = {
-    mesh: createCube(0.15, enemy.type === 'boss' ? 0xffaa00 : 0xff0000, [
+    mesh: nova64.scene.createCube(0.15, enemy.type === 'boss' ? 0xffaa00 : 0xff0000, [
       enemy.pos.x + (xOffset || 0),
       enemy.pos.y,
       enemy.pos.z,
@@ -719,7 +752,7 @@ function fireEnemyLaser(enemy, xOffset, damage) {
     life: 2,
     damage: damage || 5,
   };
-  setScale(laser.mesh, 0.15, 0.15, 1.5);
+  nova64.scene.setScale(laser.mesh, 0.15, 0.15, 1.5);
   enemyLasers.push(laser);
 }
 
@@ -729,7 +762,7 @@ function spawnPickup(pos) {
   const type = types[Math.floor(Math.random() * types.length)];
   const colors = { missile: 0xffaa00, health: 0x00ff00, shield: 0x0088ff, energy: 0xff00ff };
   const pickup = {
-    mesh: createCube(1, colors[type], [pos.x, pos.y, pos.z]),
+    mesh: nova64.scene.createCube(1, colors[type], [pos.x, pos.y, pos.z]),
     pos: vec3(pos.x, pos.y, pos.z),
     type: type,
     life: 12,
@@ -747,8 +780,8 @@ function updatePickups(dt) {
     p.pos.x -= player.vel.x * dt;
     p.pos.y -= player.vel.y * dt;
     p.pos.z -= player.vel.z * dt;
-    setPosition(p.mesh, p.pos.x, p.pos.y, p.pos.z);
-    setRotation(p.mesh, 0, p.rotY, 0);
+    nova64.scene.setPosition(p.mesh, p.pos.x, p.pos.y, p.pos.z);
+    nova64.scene.setRotation(p.mesh, 0, p.rotY, 0);
 
     // Collect
     const dist = Math.sqrt(p.pos.x * p.pos.x + p.pos.y * p.pos.y + p.pos.z * p.pos.z);
@@ -767,14 +800,14 @@ function updatePickups(dt) {
           player.energy = Math.min(100, player.energy + 40);
           break;
       }
-      sfx(p.type === 'missile' ? 'coin' : 'powerup');
-      destroyMesh(p.mesh);
+      nova64.audio.sfx(p.type === 'missile' ? 'coin' : 'powerup');
+      nova64.scene.destroyMesh(p.mesh);
       pickups.splice(i, 1);
       continue;
     }
 
     if (p.life <= 0 || p.pos.z > 50) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       pickups.splice(i, 1);
     }
   }
@@ -795,10 +828,10 @@ function updateLasers(dt) {
 
     laser.life -= dt;
 
-    setPosition(laser.mesh, laser.pos.x, laser.pos.y, laser.pos.z);
+    nova64.scene.setPosition(laser.mesh, laser.pos.x, laser.pos.y, laser.pos.z);
 
     if (laser.life <= 0) {
-      destroyMesh(laser.mesh);
+      nova64.scene.destroyMesh(laser.mesh);
       playerLasers.splice(i, 1);
     }
   }
@@ -815,10 +848,10 @@ function updateLasers(dt) {
     laser.pos.z += laser.vel.z * dt;
     laser.life -= dt;
 
-    setPosition(laser.mesh, laser.pos.x, laser.pos.y, laser.pos.z);
+    nova64.scene.setPosition(laser.mesh, laser.pos.x, laser.pos.y, laser.pos.z);
 
     if (laser.life <= 0 || laser.pos.z > 10) {
-      destroyMesh(laser.mesh);
+      nova64.scene.destroyMesh(laser.mesh);
       enemyLasers.splice(i, 1);
     }
   }
@@ -859,7 +892,7 @@ function updateMissiles(dt) {
 
     missile.life -= dt;
 
-    setPosition(missile.mesh, missile.pos.x, missile.pos.y, missile.pos.z);
+    nova64.scene.setPosition(missile.mesh, missile.pos.x, missile.pos.y, missile.pos.z);
 
     // Trail particles
     if (Math.random() < 0.5) {
@@ -867,7 +900,7 @@ function updateMissiles(dt) {
     }
 
     if (missile.life <= 0) {
-      destroyMesh(missile.mesh);
+      nova64.scene.destroyMesh(missile.mesh);
       missiles.splice(i, 1);
     }
   }
@@ -885,20 +918,20 @@ function updateExplosions(dt) {
     explosion.pos.y -= player.vel.y * dt;
     explosion.pos.z -= player.vel.z * dt;
 
-    setPosition(explosion.mesh, explosion.pos.x, explosion.pos.y, explosion.pos.z);
-    setScale(explosion.mesh, explosion.scale, explosion.scale, explosion.scale);
+    nova64.scene.setPosition(explosion.mesh, explosion.pos.x, explosion.pos.y, explosion.pos.z);
+    nova64.scene.setScale(explosion.mesh, explosion.scale, explosion.scale, explosion.scale);
 
     // Fade out
     const alpha = Math.max(0, explosion.life / 0.5);
 
     if (explosion.life <= 0) {
-      destroyMesh(explosion.mesh);
+      nova64.scene.destroyMesh(explosion.mesh);
       explosions.splice(i, 1);
     }
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const particle = particles[i];
 
@@ -913,13 +946,13 @@ function updateParticles(dt) {
     particle.pos.y += particle.vel.y * dt;
     particle.pos.z += particle.vel.z * dt;
 
-    setPosition(particle.mesh, particle.pos.x, particle.pos.y, particle.pos.z);
+    nova64.scene.setPosition(particle.mesh, particle.pos.x, particle.pos.y, particle.pos.z);
 
     const scale = particle.life / particle.maxLife;
-    setScale(particle.mesh, scale, scale, scale);
+    nova64.scene.setScale(particle.mesh, scale, scale, scale);
 
     if (particle.life <= 0) {
-      destroyMesh(particle.mesh);
+      nova64.scene.destroyMesh(particle.mesh);
       particles.splice(i, 1);
     }
   }
@@ -927,11 +960,11 @@ function updateParticles(dt) {
 
 function updateCamera(dt) {
   // First person camera - apply rotation but stay at origin
-  updateShake(shake, dt);
-  const [shakeX, shakeY] = getShakeOffset(shake);
+  nova64.util.updateShake(shake, dt);
+  const [shakeX, shakeY] = nova64.util.getShakeOffset(shake);
 
   // Set camera position with shake
-  setCameraPosition(shakeX, shakeY, 0);
+  nova64.camera.setCameraPosition(shakeX, shakeY, 0);
 
   // Look direction based on ship rotation
   const lookDist = 10;
@@ -939,7 +972,7 @@ function updateCamera(dt) {
   const lookY = Math.sin(player.rot.x) * lookDist;
   const lookZ = -Math.cos(player.rot.y) * Math.cos(player.rot.x) * lookDist;
 
-  setCameraTarget(lookX, lookY, lookZ);
+  nova64.camera.setCameraTarget(lookX, lookY, lookZ);
 
   // Apply roll by rotating camera
   // Note: setCameraRotation might not be available, this is visual only
@@ -956,12 +989,12 @@ function checkCollisions(dt) {
 
       if (dist < asteroid.size) {
         asteroid.health -= laser.damage;
-        destroyMesh(laser.mesh);
+        nova64.scene.destroyMesh(laser.mesh);
         playerLasers.splice(i, 1);
-        sfx('hit');
+        nova64.audio.sfx('hit');
 
         createParticle(laser.pos, 0xffaa00, 0.3);
-        triggerShake(shake, 0.2);
+        nova64.util.triggerShake(shake, 0.2);
         break;
       }
     }
@@ -977,12 +1010,12 @@ function checkCollisions(dt) {
 
       if (dist < 3) {
         enemy.health -= laser.damage;
-        destroyMesh(laser.mesh);
+        nova64.scene.destroyMesh(laser.mesh);
         playerLasers.splice(i, 1);
-        sfx('hit');
+        nova64.audio.sfx('hit');
 
         createParticle(laser.pos, 0xff0000, 0.3);
-        triggerShake(shake, 0.3);
+        nova64.util.triggerShake(shake, 0.3);
         break;
       }
     }
@@ -999,10 +1032,10 @@ function checkCollisions(dt) {
       if (dist < 4) {
         enemy.health -= missile.damage;
         createExplosion(missile.pos, 2);
-        destroyMesh(missile.mesh);
+        nova64.scene.destroyMesh(missile.mesh);
         missiles.splice(i, 1);
 
-        triggerShake(shake, 0.8);
+        nova64.util.triggerShake(shake, 0.8);
         break;
       }
     }
@@ -1021,11 +1054,11 @@ function checkCollisions(dt) {
       } else {
         player.health -= laser.damage;
       }
-      sfx('hit');
+      nova64.audio.sfx('hit');
 
-      destroyMesh(laser.mesh);
+      nova64.scene.destroyMesh(laser.mesh);
       enemyLasers.splice(i, 1);
-      triggerShake(shake, 0.5);
+      nova64.util.triggerShake(shake, 0.5);
     }
   }
 
@@ -1044,19 +1077,19 @@ function checkCollisions(dt) {
       } else {
         player.health -= 20;
       }
-      sfx('hit');
+      nova64.audio.sfx('hit');
 
       createExplosion(asteroid.pos, asteroid.size);
-      destroyMesh(asteroid.mesh);
+      nova64.scene.destroyMesh(asteroid.mesh);
       asteroids.splice(i, 1);
-      triggerShake(shake, 1.0);
+      nova64.util.triggerShake(shake, 1.0);
     }
   }
 
   // Check game over
   if (player.health <= 0) {
     gameState = 'gameover';
-    sfx('death');
+    nova64.audio.sfx('death');
   }
 }
 
@@ -1072,7 +1105,7 @@ function distance(p1, p2) {
 
 function createExplosion(pos, size) {
   const explosion = {
-    mesh: createSphere(size, 0xff6600, [pos.x, pos.y, pos.z]),
+    mesh: nova64.scene.createSphere(size, 0xff6600, [pos.x, pos.y, pos.z]),
     pos: vec3(pos.x, pos.y, pos.z),
     scale: size,
     life: 0.5,
@@ -1087,7 +1120,7 @@ function createExplosion(pos, size) {
 
 function createParticle(pos, color, life) {
   const particle = {
-    mesh: createSphere(0.2, color, [pos.x, pos.y, pos.z]),
+    mesh: nova64.scene.createSphere(0.2, color, [pos.x, pos.y, pos.z]),
     pos: vec3(pos.x, pos.y, pos.z),
     vel: vec3((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10),
     life: life,
@@ -1107,14 +1140,25 @@ export function draw() {
 
   if (gameState === 'playing' || gameState === 'waveclear') {
     drawHUD();
-    drawCrosshair();
+    _local_drawCrosshair();
   }
 
   if (gameState === 'waveclear') {
     const alpha = Math.floor(Math.min(1, waveClearTimer) * 255);
-    printCentered(`WAVE ${wave} CLEAR!`, 320, 140, rgba8(0, 255, 100, alpha), 2);
-    printCentered(`+${wave * 500} BONUS`, 320, 170, rgba8(255, 255, 0, alpha));
-    printCentered('+3 MISSILES', 320, 195, rgba8(255, 180, 0, alpha));
+    nova64.draw.printCentered(
+      `WAVE ${wave} CLEAR!`,
+      320,
+      140,
+      nova64.draw.rgba8(0, 255, 100, alpha),
+      2
+    );
+    nova64.draw.printCentered(
+      `+${wave * 500} BONUS`,
+      320,
+      170,
+      nova64.draw.rgba8(255, 255, 0, alpha)
+    );
+    nova64.draw.printCentered('+3 MISSILES', 320, 195, nova64.draw.rgba8(255, 180, 0, alpha));
   }
 
   if (gameState === 'gameover') {
@@ -1124,88 +1168,117 @@ export function draw() {
 
 function drawStartScreen() {
   // Space background
-  rect(0, 0, 640, 360, rgba8(0, 0, 20, 255), true);
+  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 20, 255), true);
 
   // Title
-  print('WING COMMANDER', 180, 80, rgba8(255, 200, 0, 255));
-  print('SPACE COMBAT', 200, 110, rgba8(0, 200, 255, 255));
+  nova64.draw.print('WING COMMANDER', 180, 80, nova64.draw.rgba8(255, 200, 0, 255));
+  nova64.draw.print('SPACE COMBAT', 200, 110, nova64.draw.rgba8(0, 200, 255, 255));
 
   // Pulsing start prompt
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('PRESS ENTER OR SPACE TO START', 170, 150, rgba8(255, 255, 100, Math.floor(pulse * 255)));
+  nova64.draw.print(
+    'PRESS ENTER OR SPACE TO START',
+    170,
+    150,
+    nova64.draw.rgba8(255, 255, 100, Math.floor(pulse * 255))
+  );
 
   // Controls
-  rect(150, 180, 340, 150, rgba8(10, 10, 40, 220), true);
-  rect(150, 180, 340, 150, rgba8(100, 100, 255, 180), false);
+  nova64.draw.rect(150, 180, 340, 150, nova64.draw.rgba8(10, 10, 40, 220), true);
+  nova64.draw.rect(150, 180, 340, 150, nova64.draw.rgba8(100, 100, 255, 180), false);
 
-  print('CONTROLS:', 260, 195, rgba8(255, 255, 255, 255));
-  print('ARROWS - Pitch/Yaw', 180, 220, rgba8(200, 200, 255, 255));
-  print('Q/E - Roll', 180, 240, rgba8(200, 200, 255, 255));
-  print('W/S - Speed Up/Down', 180, 260, rgba8(200, 200, 255, 255));
-  print('Z/SPACE - Fire Lasers', 180, 280, rgba8(200, 200, 255, 255));
-  print('X - Fire Missile', 180, 300, rgba8(200, 200, 255, 255));
-  print('SHIFT - Boost', 180, 320, rgba8(200, 200, 255, 255));
+  nova64.draw.print('CONTROLS:', 260, 195, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.print('ARROWS - Pitch/Yaw', 180, 220, nova64.draw.rgba8(200, 200, 255, 255));
+  nova64.draw.print('Q/E - Roll', 180, 240, nova64.draw.rgba8(200, 200, 255, 255));
+  nova64.draw.print('W/S - Speed Up/Down', 180, 260, nova64.draw.rgba8(200, 200, 255, 255));
+  nova64.draw.print('Z/SPACE - Fire Lasers', 180, 280, nova64.draw.rgba8(200, 200, 255, 255));
+  nova64.draw.print('X - Fire Missile', 180, 300, nova64.draw.rgba8(200, 200, 255, 255));
+  nova64.draw.print('SHIFT - Boost', 180, 320, nova64.draw.rgba8(200, 200, 255, 255));
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 
 function drawHUD() {
   // HUD background panel
-  rect(10, 10, 300, 100, rgba8(0, 0, 0, 180), true);
-  rect(10, 10, 300, 100, rgba8(0, 255, 255, 100), false);
+  nova64.draw.rect(10, 10, 300, 100, nova64.draw.rgba8(0, 0, 0, 180), true);
+  nova64.draw.rect(10, 10, 300, 100, nova64.draw.rgba8(0, 255, 255, 100), false);
 
   // Stats
-  print(`SCORE: ${score}`, 20, 25, rgba8(255, 255, 0, 255));
-  print(`WAVE: ${wave}  KILLS: ${kills}`, 20, 45, rgba8(255, 100, 100, 255));
+  nova64.draw.print(`SCORE: ${score}`, 20, 25, nova64.draw.rgba8(255, 255, 0, 255));
+  nova64.draw.print(
+    `WAVE: ${wave}  KILLS: ${kills}`,
+    20,
+    45,
+    nova64.draw.rgba8(255, 100, 100, 255)
+  );
 
   // Health bar
-  print('HULL:', 20, 65, rgba8(255, 255, 255, 255));
-  rect(70, 63, 100, 12, rgba8(50, 0, 0, 255), true);
-  rect(70, 63, Math.floor(player.health), 12, rgba8(255, 0, 0, 255), true);
-  rect(70, 63, 100, 12, rgba8(255, 0, 0, 100), false);
+  nova64.draw.print('HULL:', 20, 65, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.rect(70, 63, 100, 12, nova64.draw.rgba8(50, 0, 0, 255), true);
+  nova64.draw.rect(70, 63, Math.floor(player.health), 12, nova64.draw.rgba8(255, 0, 0, 255), true);
+  nova64.draw.rect(70, 63, 100, 12, nova64.draw.rgba8(255, 0, 0, 100), false);
 
   // Shield bar
-  print('SHIELD:', 20, 85, rgba8(255, 255, 255, 255));
-  rect(85, 83, 100, 12, rgba8(0, 20, 50, 255), true);
-  rect(85, 83, Math.floor(player.shield), 12, rgba8(0, 150, 255, 255), true);
-  rect(85, 83, 100, 12, rgba8(0, 150, 255, 100), false);
+  nova64.draw.print('SHIELD:', 20, 85, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.rect(85, 83, 100, 12, nova64.draw.rgba8(0, 20, 50, 255), true);
+  nova64.draw.rect(
+    85,
+    83,
+    Math.floor(player.shield),
+    12,
+    nova64.draw.rgba8(0, 150, 255, 255),
+    true
+  );
+  nova64.draw.rect(85, 83, 100, 12, nova64.draw.rgba8(0, 150, 255, 100), false);
 
   // Energy bar (top right)
-  rect(530, 10, 100, 25, rgba8(0, 0, 0, 180), true);
-  print('ENERGY', 540, 18, rgba8(255, 255, 255, 255));
-  rect(535, 28, 95, 5, rgba8(0, 50, 0, 255), true);
-  rect(535, 28, Math.floor(player.energy * 0.95), 5, rgba8(0, 255, 0, 255), true);
+  nova64.draw.rect(530, 10, 100, 25, nova64.draw.rgba8(0, 0, 0, 180), true);
+  nova64.draw.print('ENERGY', 540, 18, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.rect(535, 28, 95, 5, nova64.draw.rgba8(0, 50, 0, 255), true);
+  nova64.draw.rect(
+    535,
+    28,
+    Math.floor(player.energy * 0.95),
+    5,
+    nova64.draw.rgba8(0, 255, 0, 255),
+    true
+  );
 
   // Weapon status
-  rect(330, 10, 180, 50, rgba8(0, 0, 0, 180), true);
-  print('WEAPONS', 370, 20, rgba8(255, 255, 255, 255));
+  nova64.draw.rect(330, 10, 180, 50, nova64.draw.rgba8(0, 0, 0, 180), true);
+  nova64.draw.print('WEAPONS', 370, 20, nova64.draw.rgba8(255, 255, 255, 255));
 
-  const laserColor = !cooldownReady(cooldowns.laser)
-    ? rgba8(100, 100, 100, 255)
-    : rgba8(0, 255, 0, 255);
-  print(`LASER: READY`, 340, 35, laserColor);
+  const laserColor = !nova64.util.cooldownReady(cooldowns.laser)
+    ? nova64.draw.rgba8(100, 100, 100, 255)
+    : nova64.draw.rgba8(0, 255, 0, 255);
+  nova64.draw.print(`LASER: READY`, 340, 35, laserColor);
 
-  const missileColor = !cooldownReady(cooldowns.missile)
-    ? rgba8(100, 100, 100, 255)
-    : rgba8(255, 150, 0, 255);
-  print(`MISSILE: ${player.missileCount}`, 340, 50, missileColor);
+  const missileColor = !nova64.util.cooldownReady(cooldowns.missile)
+    ? nova64.draw.rgba8(100, 100, 100, 255)
+    : nova64.draw.rgba8(255, 150, 0, 255);
+  nova64.draw.print(`MISSILE: ${player.missileCount}`, 340, 50, missileColor);
 
   // Speed indicator
   const speed = Math.sqrt(
     player.vel.x * player.vel.x + player.vel.y * player.vel.y + player.vel.z * player.vel.z
   );
-  print(`SPEED: ${Math.floor(speed)}`, 530, 45, rgba8(200, 200, 255, 255));
+  nova64.draw.print(`SPEED: ${Math.floor(speed)}`, 530, 45, nova64.draw.rgba8(200, 200, 255, 255));
 
   // Target info (bottom center)
   if (enemies.length > 0) {
     const target = enemies[0];
     const targetDist = distance(vec3(0, 0, 0), target.pos);
 
-    rect(220, 320, 200, 30, rgba8(0, 0, 0, 180), true);
-    rect(220, 320, 200, 30, rgba8(255, 0, 0, 100), false);
+    nova64.draw.rect(220, 320, 200, 30, nova64.draw.rgba8(0, 0, 0, 180), true);
+    nova64.draw.rect(220, 320, 200, 30, nova64.draw.rgba8(255, 0, 0, 100), false);
     const typeLabel = (target.type || 'fighter').toUpperCase();
-    print(`${typeLabel}: ${Math.floor(targetDist)}m`, 240, 330, rgba8(255, 0, 0, 255));
+    nova64.draw.print(
+      `${typeLabel}: ${Math.floor(targetDist)}m`,
+      240,
+      330,
+      nova64.draw.rgba8(255, 0, 0, 255)
+    );
   }
 
   // Boss health bar
@@ -1214,11 +1287,18 @@ function drawHUD() {
     if (boss) {
       const bw = 300;
       const bx = (640 - bw) / 2;
-      print('BOSS', bx, 118, rgba8(255, 50, 50, 255));
-      rect(bx + 40, 116, bw - 40, 12, rgba8(80, 0, 0, 255), true);
+      nova64.draw.print('BOSS', bx, 118, nova64.draw.rgba8(255, 50, 50, 255));
+      nova64.draw.rect(bx + 40, 116, bw - 40, 12, nova64.draw.rgba8(80, 0, 0, 255), true);
       const hp = Math.max(0, boss.health / boss.maxHealth);
-      rect(bx + 40, 116, Math.floor(hp * (bw - 40)), 12, rgba8(255, 0, 0, 255), true);
-      rect(bx + 40, 116, bw - 40, 12, rgba8(200, 100, 100), false);
+      nova64.draw.rect(
+        bx + 40,
+        116,
+        Math.floor(hp * (bw - 40)),
+        12,
+        nova64.draw.rgba8(255, 0, 0, 255),
+        true
+      );
+      nova64.draw.rect(bx + 40, 116, bw - 40, 12, nova64.draw.rgba8(200, 100, 100), false);
     }
   }
 
@@ -1233,53 +1313,72 @@ function drawHUD() {
     if (wt < 2) {
       const alpha = Math.floor(Math.min(1, 2 - wt) * 255);
       const warnText = bossActive ? 'WARNING: BOSS INCOMING!' : `WAVE ${wave}`;
-      printCentered(warnText, 320, 180, rgba8(255, 100, 0, alpha), 2);
+      nova64.draw.printCentered(warnText, 320, 180, nova64.draw.rgba8(255, 100, 0, alpha), 2);
     }
   }
 }
 
-function drawCrosshair() {
+function _local_drawCrosshair() {
   const cx = 320;
   const cy = 180;
   const size = 15;
 
   // Center dot
-  rect(cx - 2, cy - 2, 4, 4, rgba8(0, 255, 0, 255), true);
+  nova64.draw.rect(cx - 2, cy - 2, 4, 4, nova64.draw.rgba8(0, 255, 0, 255), true);
 
   // Cross lines
-  rect(cx - size, cy - 1, size - 5, 2, rgba8(0, 255, 0, 200), true);
-  rect(cx + 5, cy - 1, size - 5, 2, rgba8(0, 255, 0, 200), true);
-  rect(cx - 1, cy - size, 2, size - 5, rgba8(0, 255, 0, 200), true);
-  rect(cx - 1, cy + 5, 2, size - 5, rgba8(0, 255, 0, 200), true);
+  nova64.draw.rect(cx - size, cy - 1, size - 5, 2, nova64.draw.rgba8(0, 255, 0, 200), true);
+  nova64.draw.rect(cx + 5, cy - 1, size - 5, 2, nova64.draw.rgba8(0, 255, 0, 200), true);
+  nova64.draw.rect(cx - 1, cy - size, 2, size - 5, nova64.draw.rgba8(0, 255, 0, 200), true);
+  nova64.draw.rect(cx - 1, cy + 5, 2, size - 5, nova64.draw.rgba8(0, 255, 0, 200), true);
 
   // Corner brackets
   const bracket = 30;
   // Top left
-  rect(cx - bracket, cy - bracket, 10, 2, rgba8(0, 255, 0, 150), true);
-  rect(cx - bracket, cy - bracket, 2, 10, rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx - bracket, cy - bracket, 10, 2, nova64.draw.rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx - bracket, cy - bracket, 2, 10, nova64.draw.rgba8(0, 255, 0, 150), true);
   // Top right
-  rect(cx + bracket - 10, cy - bracket, 10, 2, rgba8(0, 255, 0, 150), true);
-  rect(cx + bracket - 2, cy - bracket, 2, 10, rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx + bracket - 10, cy - bracket, 10, 2, nova64.draw.rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx + bracket - 2, cy - bracket, 2, 10, nova64.draw.rgba8(0, 255, 0, 150), true);
   // Bottom left
-  rect(cx - bracket, cy + bracket - 2, 10, 2, rgba8(0, 255, 0, 150), true);
-  rect(cx - bracket, cy + bracket - 10, 2, 10, rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx - bracket, cy + bracket - 2, 10, 2, nova64.draw.rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(cx - bracket, cy + bracket - 10, 2, 10, nova64.draw.rgba8(0, 255, 0, 150), true);
   // Bottom right
-  rect(cx + bracket - 10, cy + bracket - 2, 10, 2, rgba8(0, 255, 0, 150), true);
-  rect(cx + bracket - 2, cy + bracket - 10, 2, 10, rgba8(0, 255, 0, 150), true);
+  nova64.draw.rect(
+    cx + bracket - 10,
+    cy + bracket - 2,
+    10,
+    2,
+    nova64.draw.rgba8(0, 255, 0, 150),
+    true
+  );
+  nova64.draw.rect(
+    cx + bracket - 2,
+    cy + bracket - 10,
+    2,
+    10,
+    nova64.draw.rgba8(0, 255, 0, 150),
+    true
+  );
 }
 
 function drawGameOver() {
-  rect(0, 0, 640, 360, rgba8(20, 0, 0, 230), true);
+  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(20, 0, 0, 230), true);
 
-  print('MISSION FAILED', 220, 120, rgba8(255, 50, 50, 255));
-  print(`FINAL SCORE: ${score}`, 230, 160, rgba8(255, 255, 255, 255));
-  print(`ENEMIES DESTROYED: ${kills}`, 210, 190, rgba8(255, 255, 255, 255));
-  print(`WAVES SURVIVED: ${wave}`, 220, 210, rgba8(200, 200, 255, 255));
+  nova64.draw.print('MISSION FAILED', 220, 120, nova64.draw.rgba8(255, 50, 50, 255));
+  nova64.draw.print(`FINAL SCORE: ${score}`, 230, 160, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.print(`ENEMIES DESTROYED: ${kills}`, 210, 190, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.print(`WAVES SURVIVED: ${wave}`, 220, 210, nova64.draw.rgba8(200, 200, 255, 255));
 
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  print('PRESS ENTER TO RESTART', 210, 240, rgba8(255, 255, 100, Math.floor(pulse * 255)));
+  nova64.draw.print(
+    'PRESS ENTER TO RESTART',
+    210,
+    240,
+    nova64.draw.rgba8(255, 255, 100, Math.floor(pulse * 255))
+  );
 
-  if (isKeyDown('Enter') || isKeyDown('Space')) {
+  if (nova64.input.isKeyDown('Enter') || nova64.input.isKeyDown('Space')) {
     init();
   }
 }

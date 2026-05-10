@@ -3,6 +3,34 @@
 // Power-ups, moving platforms, 4 enemy types, double jump, checkpoints
 
 // ── Constants ────────────────────────────────────────────────
+const { drawGlowText, print, printCentered, rect, rectfill, rgba8 } = nova64.draw;
+const {
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  destroyMesh,
+  rotateMesh,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const { enableBloom, enableFXAA } = nova64.fx;
+const { btn, key, keyp } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  createHitState,
+  createShake,
+  isInvulnerable,
+  isVisible,
+  triggerHit,
+  triggerShake,
+  updateHitState,
+  updateShake,
+} = nova64.util;
+
 const C = {
   sky: 0x44aaff,
   grass: 0x228811,
@@ -72,38 +100,38 @@ let g = {
 
 // ── Initialization ─────────────────────────────────────────
 export function init() {
-  setCameraFOV(60);
-  setCameraPosition(0, 12, 18);
-  setCameraTarget(0, 2, -5);
+  nova64.camera.setCameraFOV(60);
+  nova64.camera.setCameraPosition(0, 12, 18);
+  nova64.camera.setCameraTarget(0, 2, -5);
 
-  setAmbientLight(0xffffff, 0.75);
-  setLightDirection(1, 2, 1);
-  setLightColor(0xffffff);
+  nova64.light.setAmbientLight(0xffffff, 0.75);
+  nova64.light.setLightDirection(1, 2, 1);
+  nova64.light.setLightColor(0xffffff);
 
-  setFog(C.sky, 60, 180);
-  enableBloom(0.4, 0.5, 0.4);
-  enableFXAA();
+  nova64.light.setFog(C.sky, 60, 180);
+  nova64.fx.enableBloom(0.4, 0.5, 0.4);
+  nova64.fx.enableFXAA();
 
-  shake = createShake({ decay: 0.88, maxMag: 6 });
-  playerHit = createHitState({ invulnDuration: 1.5, blinkRate: 47 });
+  shake = nova64.util.createShake({ decay: 0.88, maxMag: 6 });
+  playerHit = nova64.util.createHitState({ invulnDuration: 1.5, blinkRate: 47 });
 
   resetGame();
 }
 
 function resetGame() {
   // Destroy old meshes
-  for (const m of g.worldMeshes) destroyMesh(m);
-  for (const p of g.platforms) if (p.mesh) destroyMesh(p.mesh);
-  for (const mp of g.movingPlatforms) if (mp.mesh) destroyMesh(mp.mesh);
-  for (const c of g.coinsList) if (c.mesh) destroyMesh(c.mesh);
-  for (const e of g.enemies) e.meshes.forEach(m => destroyMesh(m));
-  for (const part of g.particles) if (part.mesh) destroyMesh(part.mesh);
-  for (const pu of g.powerups) if (pu.mesh) destroyMesh(pu.mesh);
-  for (const cp of g.checkpoints) if (cp.mesh) destroyMesh(cp.mesh);
-  for (const h of g.hazards) if (h.mesh) destroyMesh(h.mesh);
+  for (const m of g.worldMeshes) nova64.scene.destroyMesh(m);
+  for (const p of g.platforms) if (p.mesh) nova64.scene.destroyMesh(p.mesh);
+  for (const mp of g.movingPlatforms) if (mp.mesh) nova64.scene.destroyMesh(mp.mesh);
+  for (const c of g.coinsList) if (c.mesh) nova64.scene.destroyMesh(c.mesh);
+  for (const e of g.enemies) e.meshes.forEach(m => nova64.scene.destroyMesh(m));
+  for (const part of g.particles) if (part.mesh) nova64.scene.destroyMesh(part.mesh);
+  for (const pu of g.powerups) if (pu.mesh) nova64.scene.destroyMesh(pu.mesh);
+  for (const cp of g.checkpoints) if (cp.mesh) nova64.scene.destroyMesh(cp.mesh);
+  for (const h of g.hazards) if (h.mesh) nova64.scene.destroyMesh(h.mesh);
   if (g.p.meshGroup)
     g.p.meshGroup.forEach(part => {
-      if (part.m) destroyMesh(part.m);
+      if (part.m) nova64.scene.destroyMesh(part.m);
     });
 
   g.score = 0;
@@ -149,12 +177,12 @@ function resetGame() {
 // ── World Building ─────────────────────────────────────────
 function buildWorld() {
   // Water plane
-  const water = createPlane(500, 500, C.water, [0, -8, 0], {
+  const water = nova64.scene.createPlane(500, 500, C.water, [0, -8, 0], {
     material: 'standard',
     transparent: true,
     opacity: 0.5,
   });
-  rotateMesh(water, -Math.PI / 2, 0, 0);
+  nova64.scene.rotateMesh(water, -Math.PI / 2, 0, 0);
   g.worldMeshes.push(water);
 
   buildGrassland();
@@ -339,22 +367,25 @@ function buildIceMountain() {
 
 // ── Level Helpers ──────────────────────────────────────────
 function addPlatform(x, y, z, sx, sy, sz, color, isBrick = false, isTrampoline = false) {
-  const mesh = createCube(1, color, [x, y, z], {
+  const mesh = nova64.scene.createCube(1, color, [x, y, z], {
     material: 'standard',
     roughness: isBrick ? 0.9 : isTrampoline ? 0.3 : 0.6,
   });
-  setScale(mesh, sx, sy, sz);
+  nova64.scene.setScale(mesh, sx, sy, sz);
   g.platforms.push({ mesh, x, y, z, sx, sy, sz, isBrick, isTrampoline, destroyed: false });
 }
 
 function addMovingPlatform(x, y, z, sx, sy, sz, color, axis, range, speed) {
-  const mesh = createCube(1, color, [x, y, z], { material: 'standard', roughness: 0.5 });
-  setScale(mesh, sx, sy, sz);
-  const glow = createCube(1, 0xffff88, [x, y + sy / 2 + 0.1, z], {
+  const mesh = nova64.scene.createCube(1, color, [x, y, z], {
+    material: 'standard',
+    roughness: 0.5,
+  });
+  nova64.scene.setScale(mesh, sx, sy, sz);
+  const glow = nova64.scene.createCube(1, 0xffff88, [x, y + sy / 2 + 0.1, z], {
     material: 'emissive',
     emissive: 0xffff88,
   });
-  setScale(glow, sx * 0.8, 0.1, sz * 0.8);
+  nova64.scene.setScale(glow, sx * 0.8, 0.1, sz * 0.8);
   g.worldMeshes.push(glow);
   g.movingPlatforms.push({
     mesh,
@@ -374,54 +405,61 @@ function addMovingPlatform(x, y, z, sx, sy, sz, color, axis, range, speed) {
 }
 
 function addHazard(x, y, z, sx, sy, sz, color, damage) {
-  const mesh = createCube(1, color, [x, y, z], { material: 'emissive', emissive: color });
-  setScale(mesh, sx, sy, sz);
+  const mesh = nova64.scene.createCube(1, color, [x, y, z], {
+    material: 'emissive',
+    emissive: color,
+  });
+  nova64.scene.setScale(mesh, sx, sy, sz);
   g.hazards.push({ mesh, x, y, z, sx, sy, sz, damage });
 }
 
 function addCheckpoint(x, y, z) {
-  const pole = createCylinder(0.15, 0.15, 3, 0x888888, [x, y + 1.5, z], { material: 'standard' });
+  const pole = nova64.scene.createCylinder(0.15, 0.15, 3, 0x888888, [x, y + 1.5, z], {
+    material: 'standard',
+  });
   g.worldMeshes.push(pole);
-  const flag = createCube(1, 0xff4444, [x + 0.6, y + 2.5, z], {
+  const flag = nova64.scene.createCube(1, 0xff4444, [x + 0.6, y + 2.5, z], {
     material: 'emissive',
     emissive: 0xff4444,
   });
-  setScale(flag, 1.2, 0.6, 0.1);
+  nova64.scene.setScale(flag, 1.2, 0.6, 0.1);
   g.checkpoints.push({ mesh: flag, x, y, z, active: false });
 }
 
 function addTree(x, y, z, snowy = false) {
-  const trunk = createCylinder(0.3, 0.3, 3, 0x664422, [x, y + 1.5, z], {
+  const trunk = nova64.scene.createCylinder(0.3, 0.3, 3, 0x664422, [x, y + 1.5, z], {
     material: 'standard',
     roughness: 0.9,
   });
   g.worldMeshes.push(trunk);
-  const leaves = createSphere(1.5, snowy ? 0xaaccbb : 0x228833, [x, y + 4, z], 8, {
+  const leaves = nova64.scene.createSphere(1.5, snowy ? 0xaaccbb : 0x228833, [x, y + 4, z], 8, {
     material: 'standard',
     roughness: 0.8,
   });
   g.worldMeshes.push(leaves);
   if (snowy) {
-    const snowCap = createSphere(1.6, 0xeeeeff, [x, y + 4.5, z], 8, { material: 'standard' });
-    setScale(snowCap, 1, 0.4, 1);
+    const snowCap = nova64.scene.createSphere(1.6, 0xeeeeff, [x, y + 4.5, z], 8, {
+      material: 'standard',
+    });
+    nova64.scene.setScale(snowCap, 1, 0.4, 1);
     g.worldMeshes.push(snowCap);
   }
 }
 
 // ── Coins & Powerups ───────────────────────────────────────
 function spawnCoin(x, y, z) {
-  const mesh = createSphere(0.8, C.coin, [x, y, z], 12, {
+  const mesh = nova64.scene.createSphere(0.8, C.coin, [x, y, z], 12, {
     material: 'metallic',
     metalness: 0.8,
     roughness: 0.2,
   });
-  setScale(mesh, 1, 1, 0.2);
+  nova64.scene.setScale(mesh, 1, 1, 0.2);
   g.coinsList.push({ mesh, x, y, z, t: Math.random() * 10, collected: false });
 }
 
 function spawnPowerup(x, y, z, type) {
   let color = type === 'star' ? C.star : type === 'mushroom' ? C.mushroom : C.speedShoe;
-  const mesh = createSphere(0.6, color, [x, y + 0.5, z], 12, {
+  const mesh = nova64.scene.createSphere(0.6, color, [x, y + 0.5, z], 12, {
     material: 'emissive',
     emissive: color,
   });
@@ -430,10 +468,16 @@ function spawnPowerup(x, y, z, type) {
 
 // ── Enemies ────────────────────────────────────────────────
 function spawnGoomba(x, y, z) {
-  const body = createSphere(1.0, C.goomba, [x, y + 0.6, z], 8, { material: 'standard' });
-  setScale(body, 1, 0.7, 1);
-  const eyeL = createCube(0.2, 0x000000, [x - 0.3, y + 0.9, z + 0.8], { material: 'standard' });
-  const eyeR = createCube(0.2, 0x000000, [x + 0.3, y + 0.9, z + 0.8], { material: 'standard' });
+  const body = nova64.scene.createSphere(1.0, C.goomba, [x, y + 0.6, z], 8, {
+    material: 'standard',
+  });
+  nova64.scene.setScale(body, 1, 0.7, 1);
+  const eyeL = nova64.scene.createCube(0.2, 0x000000, [x - 0.3, y + 0.9, z + 0.8], {
+    material: 'standard',
+  });
+  const eyeR = nova64.scene.createCube(0.2, 0x000000, [x + 0.3, y + 0.9, z + 0.8], {
+    material: 'standard',
+  });
   g.enemies.push({
     meshes: [body, eyeL, eyeR],
     type: 'goomba',
@@ -449,11 +493,13 @@ function spawnGoomba(x, y, z) {
 }
 
 function spawnKoopa(x, y, z) {
-  const shell = createSphere(0.8, C.koopa, [x, y + 0.5, z], 8, {
+  const shell = nova64.scene.createSphere(0.8, C.koopa, [x, y + 0.5, z], 8, {
     material: 'standard',
     roughness: 0.3,
   });
-  const head = createSphere(0.4, 0xffcc66, [x, y + 1.2, z + 0.5], 8, { material: 'standard' });
+  const head = nova64.scene.createSphere(0.4, 0xffcc66, [x, y + 1.2, z + 0.5], 8, {
+    material: 'standard',
+  });
   g.enemies.push({
     meshes: [shell, head],
     type: 'koopa',
@@ -469,14 +515,18 @@ function spawnKoopa(x, y, z) {
 }
 
 function spawnFlyGuy(x, y, z) {
-  const body = createSphere(0.7, C.flyGuy, [x, y, z], 8, {
+  const body = nova64.scene.createSphere(0.7, C.flyGuy, [x, y, z], 8, {
     material: 'emissive',
     emissive: C.flyGuy,
   });
-  const wingL = createCube(0.1, 0xffffff, [x - 0.8, y + 0.2, z], { material: 'standard' });
-  setScale(wingL, 8, 1, 3);
-  const wingR = createCube(0.1, 0xffffff, [x + 0.8, y + 0.2, z], { material: 'standard' });
-  setScale(wingR, 8, 1, 3);
+  const wingL = nova64.scene.createCube(0.1, 0xffffff, [x - 0.8, y + 0.2, z], {
+    material: 'standard',
+  });
+  nova64.scene.setScale(wingL, 8, 1, 3);
+  const wingR = nova64.scene.createCube(0.1, 0xffffff, [x + 0.8, y + 0.2, z], {
+    material: 'standard',
+  });
+  nova64.scene.setScale(wingR, 8, 1, 3);
   g.enemies.push({
     meshes: [body, wingL, wingR],
     type: 'flyguy',
@@ -494,29 +544,29 @@ function spawnFlyGuy(x, y, z) {
 }
 
 function spawnChomp(x, y, z) {
-  const body = createSphere(2.0, C.chomp, [x, y + 2, z], 12, {
+  const body = nova64.scene.createSphere(2.0, C.chomp, [x, y + 2, z], 12, {
     material: 'metallic',
     metalness: 0.7,
     roughness: 0.3,
   });
-  const eyeL = createSphere(0.4, 0xffffff, [x - 0.7, y + 3, z + 1.5], 8, {
+  const eyeL = nova64.scene.createSphere(0.4, 0xffffff, [x - 0.7, y + 3, z + 1.5], 8, {
     material: 'emissive',
     emissive: 0xffffff,
   });
-  const eyeR = createSphere(0.4, 0xffffff, [x + 0.7, y + 3, z + 1.5], 8, {
+  const eyeR = nova64.scene.createSphere(0.4, 0xffffff, [x + 0.7, y + 3, z + 1.5], 8, {
     material: 'emissive',
     emissive: 0xffffff,
   });
-  const pupilL = createSphere(0.2, 0xff0000, [x - 0.7, y + 3, z + 1.8], 8, {
+  const pupilL = nova64.scene.createSphere(0.2, 0xff0000, [x - 0.7, y + 3, z + 1.8], 8, {
     material: 'emissive',
     emissive: 0xff0000,
   });
-  const pupilR = createSphere(0.2, 0xff0000, [x + 0.7, y + 3, z + 1.8], 8, {
+  const pupilR = nova64.scene.createSphere(0.2, 0xff0000, [x + 0.7, y + 3, z + 1.8], 8, {
     material: 'emissive',
     emissive: 0xff0000,
   });
   // Chain
-  const chain = createCylinder(0.15, 0.15, 4, 0x444444, [x, y, z], {
+  const chain = nova64.scene.createCylinder(0.15, 0.15, 4, 0x444444, [x, y, z], {
     material: 'metallic',
     metalness: 0.9,
   });
@@ -537,13 +587,20 @@ function spawnChomp(x, y, z) {
 
 // ── Plumber Build ──────────────────────────────────────────
 function buildPlumber() {
-  const body = createCube(1.2, C.plumberBody, [0, 0, 0], { material: 'standard', roughness: 0.8 });
-  setScale(body, 1, 1.2, 1);
-  const head = createSphere(0.8, C.plumberFace, [0, 1.2, 0], 12, { material: 'standard' });
-  const hat = createSphere(0.82, C.plumberHat, [0, 1.5, 0], 12, { material: 'standard' });
-  setScale(hat, 1, 0.5, 1);
-  const brim = createCube(1, C.plumberHat, [0, 1.4, 0.5], { material: 'standard' });
-  setScale(brim, 1.2, 0.1, 0.6);
+  const body = nova64.scene.createCube(1.2, C.plumberBody, [0, 0, 0], {
+    material: 'standard',
+    roughness: 0.8,
+  });
+  nova64.scene.setScale(body, 1, 1.2, 1);
+  const head = nova64.scene.createSphere(0.8, C.plumberFace, [0, 1.2, 0], 12, {
+    material: 'standard',
+  });
+  const hat = nova64.scene.createSphere(0.82, C.plumberHat, [0, 1.5, 0], 12, {
+    material: 'standard',
+  });
+  nova64.scene.setScale(hat, 1, 0.5, 1);
+  const brim = nova64.scene.createCube(1, C.plumberHat, [0, 1.4, 0.5], { material: 'standard' });
+  nova64.scene.setScale(brim, 1.2, 0.1, 0.6);
 
   g.p.meshGroup = [
     { m: body, ox: 0, oy: 0.6, oz: 0 },
@@ -555,7 +612,10 @@ function buildPlumber() {
 
 function createFX(cx, cy, cz, color, count = 10, speed = 10) {
   for (let i = 0; i < count; i++) {
-    const mesh = createCube(0.4, color, [cx, cy, cz], { material: 'emissive', emissive: color });
+    const mesh = nova64.scene.createCube(0.4, color, [cx, cy, cz], {
+      material: 'emissive',
+      emissive: color,
+    });
     const a = Math.random() * Math.PI * 2;
     const a2 = Math.random() * Math.PI - Math.PI / 2;
     g.particles.push({
@@ -574,15 +634,20 @@ function createFX(cx, cy, cz, color, count = 10, speed = 10) {
 // ── Game Loop ──────────────────────────────────────────────
 export function update(dt) {
   t += dt;
-  updateShake(shake, dt);
+  nova64.util.updateShake(shake, dt);
 
   if (gameState !== 'playing') {
     if (inputLock > 0) inputLock -= dt;
-    if (gameState === 'start' && inputLock <= 0 && (keyp('Space') || keyp('Enter'))) startGame();
+    if (
+      gameState === 'start' &&
+      inputLock <= 0 &&
+      (nova64.input.keyp('Space') || nova64.input.keyp('Enter'))
+    )
+      startGame();
     if (
       (gameState === 'gameover' || gameState === 'win') &&
       inputLock <= 0 &&
-      (keyp('Space') || keyp('Enter'))
+      (nova64.input.keyp('Space') || nova64.input.keyp('Enter'))
     ) {
       resetGame();
       gameState = 'playing';
@@ -591,7 +656,7 @@ export function update(dt) {
   }
 
   const p = g.p;
-  updateHitState(playerHit, dt);
+  nova64.util.updateHitState(playerHit, dt);
 
   // Power-up timers
   if (g.starTimer > 0) g.starTimer -= dt;
@@ -608,7 +673,7 @@ export function update(dt) {
   updateEnemies(dt);
   updatePowerups(dt);
   updateCheckpoints();
-  updateParticles(dt);
+  _local_updateParticles(dt);
 
   // Zone detection for atmosphere
   const zoneNow = getZone(p.z);
@@ -620,8 +685,8 @@ export function update(dt) {
   // Camera
   const sx = shake.offsetX || 0;
   const sy = shake.offsetY || 0;
-  setCameraPosition(p.x + sx * 0.03, p.y + 6 + sy * 0.03, p.z + 12);
-  setCameraTarget(p.x, p.y + 1, p.z - 4);
+  nova64.camera.setCameraPosition(p.x + sx * 0.03, p.y + 6 + sy * 0.03, p.z + 12);
+  nova64.camera.setCameraTarget(p.x, p.y + 1, p.z - 4);
 }
 
 function getZone(z) {
@@ -632,14 +697,14 @@ function getZone(z) {
 
 function updateAtmosphere(zone) {
   if (zone === 0) {
-    setFog(0x44aaff, 60, 180);
-    setAmbientLight(0xffffff, 0.75);
+    nova64.light.setFog(0x44aaff, 60, 180);
+    nova64.light.setAmbientLight(0xffffff, 0.75);
   } else if (zone === 1) {
-    setFog(0xddaa66, 50, 150);
-    setAmbientLight(0xffeedd, 0.85);
+    nova64.light.setFog(0xddaa66, 50, 150);
+    nova64.light.setAmbientLight(0xffeedd, 0.85);
   } else {
-    setFog(0x889fbb, 40, 130);
-    setAmbientLight(0xccddff, 0.6);
+    nova64.light.setFog(0x889fbb, 40, 130);
+    nova64.light.setAmbientLight(0xccddff, 0.6);
   }
 }
 
@@ -648,10 +713,10 @@ function handlePlayerInput(dt) {
   let ax = 0,
     az = 0;
 
-  if (key('ArrowLeft') || key('KeyA') || btn(0)) ax = -1;
-  if (key('ArrowRight') || key('KeyD') || btn(1)) ax = 1;
-  if (key('ArrowUp') || key('KeyW') || btn(2)) az = -1;
-  if (key('ArrowDown') || key('KeyS') || btn(3)) az = 1;
+  if (nova64.input.key('ArrowLeft') || nova64.input.key('KeyA') || nova64.input.btn(0)) ax = -1;
+  if (nova64.input.key('ArrowRight') || nova64.input.key('KeyD') || nova64.input.btn(1)) ax = 1;
+  if (nova64.input.key('ArrowUp') || nova64.input.key('KeyW') || nova64.input.btn(2)) az = -1;
+  if (nova64.input.key('ArrowDown') || nova64.input.key('KeyS') || nova64.input.btn(3)) az = 1;
 
   const speedMult = g.speedTimer > 0 ? 1.6 : 1.0;
   const moveSpd = 32 * speedMult;
@@ -670,12 +735,16 @@ function handlePlayerInput(dt) {
 
   // Jump / double jump — floaty Mario-style arcs
   const maxJumps = g.hasDoubleJump ? 2 : 1;
-  if ((keyp('Space') || keyp('KeyZ')) && p.jumpsLeft > 0 && p.jumpTimer <= 0) {
+  if (
+    (nova64.input.keyp('Space') || nova64.input.keyp('KeyZ')) &&
+    p.jumpsLeft > 0 &&
+    p.jumpTimer <= 0
+  ) {
     p.vy = p.jumpsLeft === maxJumps ? 18 : 14;
     p.isGrounded = false;
     p.jumpsLeft--;
     p.jumpTimer = 0.12;
-    sfx('jump');
+    nova64.audio.sfx('jump');
     createFX(p.x, p.y, p.z, 0xffffff, 5, 2);
   }
   if (p.jumpTimer > 0) p.jumpTimer -= dt;
@@ -687,16 +756,16 @@ function updateMovingPlatforms(dt) {
     const offset = Math.sin(mp.t) * mp.range;
     if (mp.axis === 'x') {
       mp.x = mp.origin + offset;
-      setPosition(mp.mesh, mp.x, mp.y, mp.z);
-      setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
+      nova64.scene.setPosition(mp.mesh, mp.x, mp.y, mp.z);
+      nova64.scene.setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
     } else if (mp.axis === 'z') {
       mp.z = mp.origin + offset;
-      setPosition(mp.mesh, mp.x, mp.y, mp.z);
-      setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
+      nova64.scene.setPosition(mp.mesh, mp.x, mp.y, mp.z);
+      nova64.scene.setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
     } else {
       mp.y = mp.origin + offset;
-      setPosition(mp.mesh, mp.x, mp.y, mp.z);
-      setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
+      nova64.scene.setPosition(mp.mesh, mp.x, mp.y, mp.z);
+      nova64.scene.setPosition(mp.glow, mp.x, mp.y + mp.sy / 2 + 0.1, mp.z);
     }
   }
 }
@@ -742,7 +811,7 @@ function handleCollisions(axis) {
             p.vy = 25;
             p.isGrounded = false;
             p.jumpsLeft = g.hasDoubleJump ? 2 : 1;
-            sfx('jump');
+            nova64.audio.sfx('jump');
             createFX(p.x, p.y, p.z, 0xff88ff, 8, 4);
           }
         } else if (p.vy > 0) {
@@ -751,8 +820,8 @@ function handleCollisions(axis) {
           if (plat.isBrick) {
             createFX(plat.x, plat.y, plat.z, C.brick, 15, 10);
             g.score += 50;
-            sfx('explosion');
-            destroyMesh(plat.mesh);
+            nova64.audio.sfx('explosion');
+            nova64.scene.destroyMesh(plat.mesh);
             plat.destroyed = true;
           }
         }
@@ -813,7 +882,7 @@ function updatePlayerMeshes() {
 
   p.meshGroup.forEach(part => {
     if (!visible) {
-      setPosition(part.m, 0, -100, 0);
+      nova64.scene.setPosition(part.m, 0, -100, 0);
       return;
     }
     const rx = part.ox * cr + part.oz * sr;
@@ -821,8 +890,8 @@ function updatePlayerMeshes() {
     let animY = 0;
     if (p.isGrounded && (Math.abs(p.vx) > 1 || Math.abs(p.vz) > 1))
       animY = Math.abs(Math.sin(t * 15)) * 0.2;
-    setPosition(part.m, p.x + rx, p.y + part.oy + animY, p.z + rz);
-    setRotation(part.m, 0, p.rotY, 0);
+    nova64.scene.setPosition(part.m, p.x + rx, p.y + part.oy + animY, p.z + rz);
+    nova64.scene.setRotation(part.m, 0, p.rotY, 0);
   });
 }
 
@@ -832,8 +901,8 @@ function updateCoins(dt) {
     if (c.collected) continue;
     c.t += dt;
     c.y += Math.sin(c.t * 5) * 0.005;
-    setPosition(c.mesh, c.x, c.y, c.z);
-    setRotation(c.mesh, 0, c.t * 3, 0);
+    nova64.scene.setPosition(c.mesh, c.x, c.y, c.z);
+    nova64.scene.setRotation(c.mesh, 0, c.t * 3, 0);
 
     const dx = c.x - g.p.x,
       dy = c.y - (g.p.y + 1),
@@ -842,14 +911,14 @@ function updateCoins(dt) {
       g.score += 100;
       g.coins++;
       createFX(c.x, c.y, c.z, C.coin, 8, 8);
-      sfx('coin');
-      destroyMesh(c.mesh);
+      nova64.audio.sfx('coin');
+      nova64.scene.destroyMesh(c.mesh);
       c.collected = true;
 
       if (g.coins >= g.totalCoins) {
         gameState = 'win';
         inputLock = 1.5;
-        sfx('powerup');
+        nova64.audio.sfx('powerup');
       }
     }
   }
@@ -860,16 +929,16 @@ function updatePowerups(dt) {
     if (pu.collected) continue;
     pu.t += dt;
     const bob = Math.sin(pu.t * 4) * 0.3;
-    setPosition(pu.mesh, pu.x, pu.y + bob, pu.z);
-    setRotation(pu.mesh, 0, pu.t * 2, 0);
+    nova64.scene.setPosition(pu.mesh, pu.x, pu.y + bob, pu.z);
+    nova64.scene.setRotation(pu.mesh, 0, pu.t * 2, 0);
 
     const dx = pu.x - g.p.x,
       dy = pu.y + bob - (g.p.y + 1),
       dz = pu.z - g.p.z;
     if (dx * dx + dy * dy + dz * dz < 3) {
       pu.collected = true;
-      destroyMesh(pu.mesh);
-      sfx('powerup');
+      nova64.scene.destroyMesh(pu.mesh);
+      nova64.audio.sfx('powerup');
       createFX(
         pu.x,
         pu.y,
@@ -883,7 +952,7 @@ function updatePowerups(dt) {
         g.health = Math.min(g.health + 1, g.maxHealth);
       } else if (pu.type === 'star') {
         g.starTimer = 8;
-        triggerShake(shake, 3);
+        nova64.util.triggerShake(shake, 3);
       } else if (pu.type === 'speedShoe') {
         g.speedTimer = 12;
         g.hasDoubleJump = true;
@@ -900,15 +969,15 @@ function updateCheckpoints() {
     if (dx * dx + dz * dz < 9 && Math.abs(g.p.y - cp.y) < 4) {
       cp.active = true;
       g.checkpoint = { x: cp.x, y: cp.y + 2, z: cp.z };
-      sfx('powerup');
+      nova64.audio.sfx('powerup');
       createFX(cp.x, cp.y + 2, cp.z, 0x44ff44, 12, 6);
       // Turn flag green
-      destroyMesh(cp.mesh);
-      cp.mesh = createCube(1, 0x44ff44, [cp.x + 0.6, cp.y + 2.5, cp.z], {
+      nova64.scene.destroyMesh(cp.mesh);
+      cp.mesh = nova64.scene.createCube(1, 0x44ff44, [cp.x + 0.6, cp.y + 2.5, cp.z], {
         material: 'emissive',
         emissive: 0x44ff44,
       });
-      setScale(cp.mesh, 1.2, 0.6, 0.1);
+      nova64.scene.setScale(cp.mesh, 1.2, 0.6, 0.1);
     }
   }
 }
@@ -925,34 +994,34 @@ function updateEnemies(dt) {
       if (Math.abs(e.x - e.startX) > e.patrolRange) e.vx *= -1;
       const bobY = Math.sin(t * 10 + i) * 0.01;
       e.y += bobY;
-      e.meshes[0] && setPosition(e.meshes[0], e.x, e.y + 0.6, e.z);
+      e.meshes[0] && nova64.scene.setPosition(e.meshes[0], e.x, e.y + 0.6, e.z);
       if (e.type === 'goomba') {
-        e.meshes[1] && setPosition(e.meshes[1], e.x - 0.3, e.y + 0.9, e.z + 0.8);
-        e.meshes[2] && setPosition(e.meshes[2], e.x + 0.3, e.y + 0.9, e.z + 0.8);
+        e.meshes[1] && nova64.scene.setPosition(e.meshes[1], e.x - 0.3, e.y + 0.9, e.z + 0.8);
+        e.meshes[2] && nova64.scene.setPosition(e.meshes[2], e.x + 0.3, e.y + 0.9, e.z + 0.8);
       } else {
-        e.meshes[1] && setPosition(e.meshes[1], e.x, e.y + 1.2, e.z + 0.5);
+        e.meshes[1] && nova64.scene.setPosition(e.meshes[1], e.x, e.y + 1.2, e.z + 0.5);
       }
     } else if (e.type === 'flyguy') {
       e.orbAngle += dt * 2;
       e.x = e.startX + Math.cos(e.orbAngle) * e.patrolRange;
       e.z = e.startZ + Math.sin(e.orbAngle) * e.patrolRange * 0.5;
       const fy = e.startY + Math.sin(t * 3 + i) * 1.5;
-      e.meshes[0] && setPosition(e.meshes[0], e.x, fy, e.z);
+      e.meshes[0] && nova64.scene.setPosition(e.meshes[0], e.x, fy, e.z);
       const wingFlap = Math.sin(t * 20) * 0.3;
-      e.meshes[1] && setPosition(e.meshes[1], e.x - 0.8, fy + 0.2 + wingFlap, e.z);
-      e.meshes[2] && setPosition(e.meshes[2], e.x + 0.8, fy + 0.2 - wingFlap, e.z);
+      e.meshes[1] && nova64.scene.setPosition(e.meshes[1], e.x - 0.8, fy + 0.2 + wingFlap, e.z);
+      e.meshes[2] && nova64.scene.setPosition(e.meshes[2], e.x + 0.8, fy + 0.2 - wingFlap, e.z);
       e.y = fy - 0.6;
     } else if (e.type === 'chomp') {
       e.orbAngle += dt * 1.5;
       e.x = e.startX + Math.cos(e.orbAngle) * 4;
       e.z = e.startZ + Math.sin(e.orbAngle) * 4;
       const bounce = Math.abs(Math.sin(t * 5)) * 1.5;
-      e.meshes[0] && setPosition(e.meshes[0], e.x, e.y + 2 + bounce, e.z);
-      e.meshes[1] && setPosition(e.meshes[1], e.x - 0.7, e.y + 3 + bounce, e.z + 1.5);
-      e.meshes[2] && setPosition(e.meshes[2], e.x + 0.7, e.y + 3 + bounce, e.z + 1.5);
-      e.meshes[3] && setPosition(e.meshes[3], e.x - 0.7, e.y + 3 + bounce, e.z + 1.8);
-      e.meshes[4] && setPosition(e.meshes[4], e.x + 0.7, e.y + 3 + bounce, e.z + 1.8);
-      e.meshes[5] && setPosition(e.meshes[5], e.x, e.y + 1, e.z);
+      e.meshes[0] && nova64.scene.setPosition(e.meshes[0], e.x, e.y + 2 + bounce, e.z);
+      e.meshes[1] && nova64.scene.setPosition(e.meshes[1], e.x - 0.7, e.y + 3 + bounce, e.z + 1.5);
+      e.meshes[2] && nova64.scene.setPosition(e.meshes[2], e.x + 0.7, e.y + 3 + bounce, e.z + 1.5);
+      e.meshes[3] && nova64.scene.setPosition(e.meshes[3], e.x - 0.7, e.y + 3 + bounce, e.z + 1.8);
+      e.meshes[4] && nova64.scene.setPosition(e.meshes[4], e.x + 0.7, e.y + 3 + bounce, e.z + 1.8);
+      e.meshes[5] && nova64.scene.setPosition(e.meshes[5], e.x, e.y + 1, e.z);
     }
 
     // Collision with player
@@ -968,8 +1037,8 @@ function updateEnemies(dt) {
         // Stomp!
         e.hp--;
         p.vy = 14;
-        triggerShake(shake, e.type === 'chomp' ? 5 : 2);
-        sfx('hit');
+        nova64.util.triggerShake(shake, e.type === 'chomp' ? 5 : 2);
+        nova64.audio.sfx('hit');
         g.score += e.type === 'chomp' ? 500 : 200;
 
         if (e.hp <= 0) {
@@ -988,8 +1057,8 @@ function updateEnemies(dt) {
             20,
             12
           );
-          sfx('explosion');
-          e.meshes.forEach(m => destroyMesh(m));
+          nova64.audio.sfx('explosion');
+          e.meshes.forEach(m => nova64.scene.destroyMesh(m));
           g.enemies.splice(i, 1);
           if (e.type === 'chomp') {
             g.score += 1000;
@@ -998,15 +1067,15 @@ function updateEnemies(dt) {
         } else {
           createFX(e.x, e.y + 1, e.z, 0xffaa44, 8, 6);
         }
-      } else if (!isInvulnerable(playerHit) && g.starTimer <= 0) {
+      } else if (!nova64.util.isInvulnerable(playerHit) && g.starTimer <= 0) {
         takeDamage();
       } else if (g.starTimer > 0) {
         // Star power kills on touch
         e.alive = false;
         e.hp = 0;
         createFX(e.x, e.y + 1, e.z, C.star, 20, 12);
-        sfx('explosion');
-        e.meshes.forEach(m => destroyMesh(m));
+        nova64.audio.sfx('explosion');
+        e.meshes.forEach(m => nova64.scene.destroyMesh(m));
         g.enemies.splice(i, 1);
         g.score += 300;
       }
@@ -1015,17 +1084,17 @@ function updateEnemies(dt) {
 }
 
 function takeDamage() {
-  if (!triggerHit(playerHit)) return;
+  if (!nova64.util.triggerHit(playerHit)) return;
   g.health--;
   g.p.vy = 10;
-  triggerShake(shake, 4);
-  sfx('hit');
+  nova64.util.triggerShake(shake, 4);
+  nova64.audio.sfx('hit');
   createFX(g.p.x, g.p.y + 1, g.p.z, C.plumberFace, 15);
   if (g.health <= 0) {
     gameState = 'gameover';
     inputLock = 1.5;
-    g.p.meshGroup.forEach(part => setPosition(part.m, 0, -100, 0));
-    sfx('explosion');
+    g.p.meshGroup.forEach(part => nova64.scene.setPosition(part.m, 0, -100, 0));
+    nova64.audio.sfx('explosion');
   }
 }
 
@@ -1041,7 +1110,7 @@ function respawnPlayer() {
   g.p.vz = 0;
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = g.particles.length - 1; i >= 0; i--) {
     const p = g.particles[i];
     p.x += p.vx * dt;
@@ -1050,10 +1119,10 @@ function updateParticles(dt) {
     p.vy -= 15 * dt;
     p.life -= dt;
     const a = Math.max(0.01, p.life);
-    setScale(p.mesh, a, a, a);
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setScale(p.mesh, a, a, a);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
     if (p.life <= 0) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       g.particles.splice(i, 1);
     }
   }
@@ -1078,108 +1147,188 @@ export function draw() {
 
 function drawHUD() {
   // Coin counter
-  rectfill(14, 10, 110, 22, rgba8(0, 0, 0, 140));
-  print(`COINS ${g.coins}/${g.totalCoins}`, 20, 14, rgba8(255, 220, 50, 255));
+  nova64.draw.rectfill(14, 10, 110, 22, nova64.draw.rgba8(0, 0, 0, 140));
+  nova64.draw.print(
+    `COINS ${g.coins}/${g.totalCoins}`,
+    20,
+    14,
+    nova64.draw.rgba8(255, 220, 50, 255)
+  );
 
   // Score
-  rectfill(500, 10, 130, 22, rgba8(0, 0, 0, 140));
-  print(`SCORE ${String(g.score).padStart(6, '0')}`, 506, 14, rgba8(255, 255, 255, 255));
+  nova64.draw.rectfill(500, 10, 130, 22, nova64.draw.rgba8(0, 0, 0, 140));
+  nova64.draw.print(
+    `SCORE ${String(g.score).padStart(6, '0')}`,
+    506,
+    14,
+    nova64.draw.rgba8(255, 255, 255, 255)
+  );
 
   // Health hearts
   for (let i = 0; i < g.maxHealth; i++) {
-    const color = i < g.health ? rgba8(255, 50, 50, 255) : rgba8(60, 60, 60, 150);
-    rectfill(20 + i * 24, 38, 18, 16, color);
-    rect(20 + i * 24, 38, 18, 16, rgba8(255, 255, 255, 100), false);
+    const color =
+      i < g.health ? nova64.draw.rgba8(255, 50, 50, 255) : nova64.draw.rgba8(60, 60, 60, 150);
+    nova64.draw.rectfill(20 + i * 24, 38, 18, 16, color);
+    nova64.draw.rect(20 + i * 24, 38, 18, 16, nova64.draw.rgba8(255, 255, 255, 100), false);
   }
 
   // Zone name
   const zoneNames = ['GRASSLAND', 'DESERT RUINS', 'ICE MOUNTAIN'];
   const zone = getZone(g.p.z);
-  print(zoneNames[zone], 280, 348, rgba8(200, 200, 200, 160));
+  nova64.draw.print(zoneNames[zone], 280, 348, nova64.draw.rgba8(200, 200, 200, 160));
 
   // Power-up indicators
   if (g.starTimer > 0) {
     const flash = Math.sin(t * 10) > 0;
-    rectfill(270, 10, 100, 18, flash ? rgba8(255, 255, 0, 180) : rgba8(200, 150, 0, 180));
-    print(`STAR ${Math.ceil(g.starTimer)}s`, 280, 12, rgba8(0, 0, 0, 255));
+    nova64.draw.rectfill(
+      270,
+      10,
+      100,
+      18,
+      flash ? nova64.draw.rgba8(255, 255, 0, 180) : nova64.draw.rgba8(200, 150, 0, 180)
+    );
+    nova64.draw.print(`STAR ${Math.ceil(g.starTimer)}s`, 280, 12, nova64.draw.rgba8(0, 0, 0, 255));
   }
   if (g.speedTimer > 0) {
-    rectfill(270, 30, 100, 18, rgba8(50, 200, 255, 160));
-    print(`SPEED ${Math.ceil(g.speedTimer)}s`, 276, 32, rgba8(0, 0, 0, 255));
+    nova64.draw.rectfill(270, 30, 100, 18, nova64.draw.rgba8(50, 200, 255, 160));
+    nova64.draw.print(
+      `SPEED ${Math.ceil(g.speedTimer)}s`,
+      276,
+      32,
+      nova64.draw.rgba8(0, 0, 0, 255)
+    );
   }
   if (g.hasDoubleJump) {
-    print('2x JUMP', 560, 38, rgba8(100, 220, 255, 200));
+    nova64.draw.print('2x JUMP', 560, 38, nova64.draw.rgba8(100, 220, 255, 200));
   }
 }
 
 function drawStartScreen() {
-  rectfill(0, 0, 640, 360, rgba8(0, 0, 0, 180));
-  drawGlowText(
+  nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 0, 180));
+  nova64.draw.drawGlowText(
     'SUPER PLUMBER',
     165,
     45 + Math.sin(t * 3) * 5,
-    rgba8(255, 50, 50),
-    rgba8(150, 0, 0)
+    nova64.draw.rgba8(255, 50, 50),
+    nova64.draw.rgba8(150, 0, 0)
   );
-  printCentered('NOVA 64', 320, 95 + Math.sin(t * 3) * 5, rgba8(255, 200, 0));
+  nova64.draw.printCentered(
+    'NOVA 64',
+    320,
+    95 + Math.sin(t * 3) * 5,
+    nova64.draw.rgba8(255, 200, 0)
+  );
 
-  rectfill(140, 130, 360, 120, rgba8(10, 20, 50, 220));
-  rect(140, 130, 360, 120, rgba8(100, 150, 255, 200), false);
+  nova64.draw.rectfill(140, 130, 360, 120, nova64.draw.rgba8(10, 20, 50, 220));
+  nova64.draw.rect(140, 130, 360, 120, nova64.draw.rgba8(100, 150, 255, 200), false);
 
-  printCentered('3 ZONES: Grassland  Desert  Ice', 320, 140, rgba8(200, 200, 255));
-  printCentered('WASD / Arrows = Move', 320, 162, rgba8(200, 200, 200));
-  printCentered('SPACE = Jump (collect Speed Shoes for 2x)', 320, 178, rgba8(200, 200, 200));
-  printCentered('Stomp enemies! Collect ALL coins to win!', 320, 194, rgba8(255, 255, 100));
-  printCentered('Power-ups: Star, Mushroom, Speed Shoes', 320, 214, rgba8(100, 255, 150));
-  printCentered('Touch checkpoints to save your position!', 320, 230, rgba8(255, 180, 100));
+  nova64.draw.printCentered(
+    '3 ZONES: Grassland  Desert  Ice',
+    320,
+    140,
+    nova64.draw.rgba8(200, 200, 255)
+  );
+  nova64.draw.printCentered('WASD / Arrows = Move', 320, 162, nova64.draw.rgba8(200, 200, 200));
+  nova64.draw.printCentered(
+    'SPACE = Jump (collect Speed Shoes for 2x)',
+    320,
+    178,
+    nova64.draw.rgba8(200, 200, 200)
+  );
+  nova64.draw.printCentered(
+    'Stomp enemies! Collect ALL coins to win!',
+    320,
+    194,
+    nova64.draw.rgba8(255, 255, 100)
+  );
+  nova64.draw.printCentered(
+    'Power-ups: Star, Mushroom, Speed Shoes',
+    320,
+    214,
+    nova64.draw.rgba8(100, 255, 150)
+  );
+  nova64.draw.printCentered(
+    'Touch checkpoints to save your position!',
+    320,
+    230,
+    nova64.draw.rgba8(255, 180, 100)
+  );
 
   const pulse = Math.sin(t * 3) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'PRESS SPACE TO PLAY',
     320,
     290,
-    rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
+    nova64.draw.rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
   );
 }
 
 function drawGameOver() {
-  rectfill(0, 0, 640, 360, rgba8(40, 0, 0, 220));
-  drawGlowText('GAME OVER', 220, 80, rgba8(255, 50, 50), rgba8(150, 0, 0));
-  printCentered(
+  nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(40, 0, 0, 220));
+  nova64.draw.drawGlowText(
+    'GAME OVER',
+    220,
+    80,
+    nova64.draw.rgba8(255, 50, 50),
+    nova64.draw.rgba8(150, 0, 0)
+  );
+  nova64.draw.printCentered(
     `Score: ${g.score}  |  Coins: ${g.coins}/${g.totalCoins}`,
     320,
     150,
-    rgba8(200, 200, 200)
+    nova64.draw.rgba8(200, 200, 200)
   );
   const zoneNames = ['Grassland', 'Desert Ruins', 'Ice Mountain'];
-  printCentered(`Reached: ${zoneNames[getZone(g.p.z)]}`, 320, 175, rgba8(180, 180, 200));
+  nova64.draw.printCentered(
+    `Reached: ${zoneNames[getZone(g.p.z)]}`,
+    320,
+    175,
+    nova64.draw.rgba8(180, 180, 200)
+  );
   const pulse = Math.sin(t * 2) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'PRESS SPACE TO TRY AGAIN',
     320,
     240,
-    rgba8(200, 150, 150, Math.floor(120 + pulse * 135))
+    nova64.draw.rgba8(200, 150, 150, Math.floor(120 + pulse * 135))
   );
 }
 
 function drawWinScreen() {
-  rectfill(0, 0, 640, 360, rgba8(0, 20, 0, 200));
-  drawGlowText('COURSE CLEAR!', 180, 60, rgba8(50, 255, 100), rgba8(0, 100, 0));
-  printCentered(`FINAL SCORE: ${g.score}`, 320, 130, rgba8(255, 220, 50));
-  printCentered(`ALL ${g.totalCoins} COINS COLLECTED!`, 320, 160, rgba8(255, 255, 100));
+  nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(0, 20, 0, 200));
+  nova64.draw.drawGlowText(
+    'COURSE CLEAR!',
+    180,
+    60,
+    nova64.draw.rgba8(50, 255, 100),
+    nova64.draw.rgba8(0, 100, 0)
+  );
+  nova64.draw.printCentered(`FINAL SCORE: ${g.score}`, 320, 130, nova64.draw.rgba8(255, 220, 50));
+  nova64.draw.printCentered(
+    `ALL ${g.totalCoins} COINS COLLECTED!`,
+    320,
+    160,
+    nova64.draw.rgba8(255, 255, 100)
+  );
   const rating =
     g.score > 15000 ? 'S RANK!' : g.score > 10000 ? 'A RANK' : g.score > 5000 ? 'B RANK' : 'C RANK';
-  drawGlowText(rating, 260, 200, rgba8(255, 215, 0), rgba8(180, 140, 0));
+  nova64.draw.drawGlowText(
+    rating,
+    260,
+    200,
+    nova64.draw.rgba8(255, 215, 0),
+    nova64.draw.rgba8(180, 140, 0)
+  );
   const pulse = Math.sin(t * 2) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'PRESS SPACE TO PLAY AGAIN',
     320,
     280,
-    rgba8(200, 255, 200, Math.floor(120 + pulse * 135))
+    nova64.draw.rgba8(200, 255, 200, Math.floor(120 + pulse * 135))
   );
 }
 
 function startGame() {
   gameState = 'playing';
-  sfx('confirm');
+  nova64.audio.sfx('confirm');
 }

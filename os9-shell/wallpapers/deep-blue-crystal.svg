@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#051225"/>
+      <stop offset="0.42" stop-color="#10345f"/>
+      <stop offset="0.68" stop-color="#0b2648"/>
+      <stop offset="1" stop-color="#030a17"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="28%" cy="22%" r="56%">
+      <stop offset="0" stop-color="#6fc9ff" stop-opacity="0.34"/>
+      <stop offset="0.55" stop-color="#285f96" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#071328" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="72%" cy="72%" r="48%">
+      <stop offset="0" stop-color="#8adfff" stop-opacity="0.22"/>
+      <stop offset="0.54" stop-color="#1e7ebe" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#071328" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c8f2ff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#58bbff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#001225" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="soft">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#glowA)"/>
+  <rect width="1600" height="1000" fill="url(#glowB)"/>
+  <g opacity="0.82">
+    <polygon points="70,0 470,0 260,350" fill="url(#facet)"/>
+    <polygon points="470,0 780,120 260,350" fill="#63c7ff" opacity="0.06"/>
+    <polygon points="780,120 1130,0 940,420" fill="#c8f2ff" opacity="0.08"/>
+    <polygon points="1130,0 1600,0 1390,390" fill="#2379bd" opacity="0.1"/>
+    <polygon points="0,410 260,350 170,770" fill="#76d9ff" opacity="0.09"/>
+    <polygon points="260,350 780,120 650,720" fill="#ffffff" opacity="0.045"/>
+    <polygon points="650,720 780,120 940,420" fill="#58bbff" opacity="0.08"/>
+    <polygon points="940,420 1390,390 1180,1000" fill="#a9efff" opacity="0.07"/>
+    <polygon points="1390,390 1600,260 1600,1000 1180,1000" fill="#0b68a8" opacity="0.12"/>
+    <polygon points="170,770 650,720 410,1000 0,1000" fill="#105083" opacity="0.15"/>
+    <polygon points="410,1000 650,720 1180,1000" fill="#3aa7e0" opacity="0.06"/>
+  </g>
+  <g fill="none" stroke="#9eeaff" stroke-opacity="0.16" stroke-width="2">
+    <path d="M260 350 650 720 940 420 1390 390"/>
+    <path d="M470 0 260 350 170 770"/>
+    <path d="M780 120 650 720 1180 1000"/>
+    <path d="M1130 0 940 420"/>
+  </g>
+  <g filter="url(#soft)" opacity="0.42">
+    <ellipse cx="460" cy="245" rx="220" ry="66" fill="#69d6ff"/>
+    <ellipse cx="1120" cy="520" rx="300" ry="82" fill="#3ab5ff"/>
+  </g>
+</svg>

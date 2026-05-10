@@ -22,6 +22,7 @@ const _builtinCheats = {
 
 // ── Schema defaults ─────────────────────────────────────────────
 const SCHEMA_DEFAULTS = {
+  clearColor: 0x0a0a0f, // Background clear color (default dark blue-black)
   sky: {
     type: 'none', // 'none' | 'solid' | 'gradient' | 'space' | 'images'
     color: 0x000000,
@@ -108,78 +109,84 @@ function applyEnv(config) {
   if (!config) return;
   _applied = config;
 
+  // Clear Color
+  const setClearColor = globalThis.setClearColor ?? globalThis.nova64?.scene?.setClearColor;
+  if (config.clearColor != null && typeof setClearColor === 'function') {
+    setClearColor(parseColor(config.clearColor));
+  }
+
   // Sky
   const sky = config.sky;
   if (sky) {
-    if (typeof globalThis.clearSkybox === 'function') globalThis.clearSkybox();
+    const ns = globalThis.nova64;
+    ns?.light?.clearSkybox?.();
     switch (sky.type) {
       case 'solid':
-        if (typeof globalThis.createSolidSkybox === 'function')
-          globalThis.createSolidSkybox(parseColor(sky.color));
+        ns?.light?.createSolidSkybox?.(parseColor(sky.color));
         break;
       case 'gradient':
-        if (typeof globalThis.createGradientSkybox === 'function')
-          globalThis.createGradientSkybox(parseColor(sky.topColor), parseColor(sky.bottomColor));
+        ns?.light?.createGradientSkybox?.(parseColor(sky.topColor), parseColor(sky.bottomColor));
         break;
       case 'space':
-        if (typeof globalThis.createSpaceSkybox === 'function')
-          globalThis.createSpaceSkybox(sky.spaceOptions || {});
+        ns?.light?.createSpaceSkybox?.(sky.spaceOptions || {});
         break;
       case 'images':
-        if (sky.images && typeof globalThis.createImageSkybox === 'function')
-          globalThis.createImageSkybox(sky.images);
+        if (sky.images) ns?.light?.createImageSkybox?.(sky.images);
         break;
       // 'none' — leave cleared
     }
-    if (sky.autoAnimate && typeof globalThis.enableSkyboxAutoAnimate === 'function') {
-      globalThis.enableSkyboxAutoAnimate(sky.animateSpeed ?? 1);
+    if (sky.autoAnimate) {
+      ns?.light?.enableSkyboxAutoAnimate?.(sky.animateSpeed ?? 1);
     }
   }
 
   // Fog
   const fog = config.fog;
   if (fog) {
+    const ns = globalThis.nova64;
     if (fog.enabled === false) {
-      if (typeof globalThis.clearFog === 'function') globalThis.clearFog();
-    } else if (typeof globalThis.setFog === 'function') {
-      globalThis.setFog(parseColor(fog.color), fog.near ?? 50, fog.far ?? 200);
+      ns?.light?.clearFog?.();
+    } else {
+      ns?.light?.setFog?.(parseColor(fog.color), fog.near ?? 50, fog.far ?? 200);
     }
   }
 
   // Camera
   const cam = config.camera;
   if (cam) {
-    if (cam.position && typeof globalThis.setCameraPosition === 'function') {
+    const ns = globalThis.nova64;
+    if (cam.position) {
       const p = cam.position;
-      globalThis.setCameraPosition(p[0] ?? 0, p[1] ?? 5, p[2] ?? 10);
+      ns?.camera?.setCameraPosition?.(p[0] ?? 0, p[1] ?? 5, p[2] ?? 10);
     }
-    if (cam.target && typeof globalThis.setCameraTarget === 'function') {
+    if (cam.target) {
       const t = cam.target;
-      globalThis.setCameraTarget(t[0] ?? 0, t[1] ?? 0, t[2] ?? 0);
+      ns?.camera?.setCameraTarget?.(t[0] ?? 0, t[1] ?? 0, t[2] ?? 0);
     }
-    if (cam.fov != null && typeof globalThis.setCameraFOV === 'function') {
-      globalThis.setCameraFOV(cam.fov);
+    if (cam.fov != null) {
+      ns?.camera?.setCameraFOV?.(cam.fov);
     }
   }
 
   // Lighting
   const light = config.lighting;
   if (light) {
-    if (light.ambient != null && typeof globalThis.setAmbientLight === 'function') {
-      globalThis.setAmbientLight(parseColor(light.ambient));
+    const ns = globalThis.nova64;
+    if (light.ambient != null) {
+      ns?.light?.setAmbientLight?.(parseColor(light.ambient));
     }
-    if (light.directional && typeof globalThis.setDirectionalLight === 'function') {
+    if (light.directional) {
       const d = light.directional;
-      globalThis.setDirectionalLight(
+      ns?.light?.setDirectionalLight?.(
         d.direction || [1, 2, 1],
         parseColor(d.color ?? 0xffffff),
         d.intensity ?? 1
       );
     }
-    if (light.points && typeof globalThis.createPointLight === 'function') {
+    if (light.points) {
       for (const pt of light.points) {
         const pos = pt.position || [0, 0, 0];
-        globalThis.createPointLight(
+        ns?.light?.createPointLight?.(
           parseColor(pt.color ?? 0xffffff),
           pt.intensity ?? 2,
           pt.distance ?? 20,
@@ -194,35 +201,36 @@ function applyEnv(config) {
   // Effects
   const fx = config.effects;
   if (fx) {
-    if (fx.bloom && typeof globalThis.enableBloom === 'function') {
+    const ns = globalThis.nova64;
+    if (fx.bloom) {
       const b = typeof fx.bloom === 'object' ? fx.bloom : {};
-      globalThis.enableBloom(b.strength, b.radius, b.threshold);
+      ns?.fx?.enableBloom?.(b.strength, b.radius, b.threshold);
     }
-    if (fx.vignette && typeof globalThis.enableVignette === 'function') {
+    if (fx.vignette) {
       const v = typeof fx.vignette === 'object' ? fx.vignette : {};
-      globalThis.enableVignette(v.darkness, v.offset);
+      ns?.fx?.enableVignette?.(v.darkness, v.offset);
     }
-    if (fx.chromaticAberration && typeof globalThis.enableChromaticAberration === 'function') {
+    if (fx.chromaticAberration) {
       const ca = typeof fx.chromaticAberration === 'object' ? fx.chromaticAberration : {};
-      globalThis.enableChromaticAberration(ca.amount);
+      ns?.fx?.enableChromaticAberration?.(ca.amount);
     }
-    if (fx.glitch && typeof globalThis.enableGlitch === 'function') {
+    if (fx.glitch) {
       const gl = typeof fx.glitch === 'object' ? fx.glitch : {};
-      globalThis.enableGlitch(gl.intensity);
+      ns?.fx?.enableGlitch?.(gl.intensity);
     }
-    if (fx.fxaa && typeof globalThis.enableFXAA === 'function') globalThis.enableFXAA();
-    if (fx.n64Mode && typeof globalThis.enableN64Mode === 'function') globalThis.enableN64Mode();
-    if (fx.psxMode && typeof globalThis.enablePSXMode === 'function') globalThis.enablePSXMode();
-    if (fx.lowPolyMode && typeof globalThis.enableLowPolyMode === 'function')
-      globalThis.enableLowPolyMode();
+    if (fx.fxaa) ns?.fx?.enableFXAA?.();
+    if (fx.n64Mode) ns?.fx?.enableN64Mode?.();
+    if (fx.psxMode) ns?.fx?.enablePSXMode?.();
+    if (fx.lowPolyMode) ns?.fx?.enableLowPolyMode?.();
   }
 
   // Voxel
   const vox = config.voxel;
-  if (vox && typeof globalThis.configureVoxelWorld === 'function') {
-    globalThis.configureVoxelWorld(vox);
-    if (vox.textures != null && typeof globalThis.enableVoxelTextures === 'function') {
-      globalThis.enableVoxelTextures(!!vox.textures);
+  if (vox) {
+    const ns = globalThis.nova64;
+    ns?.voxel?.configureVoxelWorld?.(vox);
+    if (vox.textures != null) {
+      ns?.voxel?.enableVoxelTextures?.(!!vox.textures);
     }
   }
 
@@ -378,11 +386,15 @@ function renderOverlay() {
   const manifestEl = _overlayEl.querySelector('#nova64-manifest-info');
   let mhtml = '';
 
+  const data = globalThis.nova64?.data ?? {};
+  const pickFn = name => globalThis[name] ?? data[name];
+
   // i18n info
-  if (typeof globalThis.getLocale === 'function') {
-    const locale = globalThis.getLocale();
-    const locales =
-      typeof globalThis.getAvailableLocales === 'function' ? globalThis.getAvailableLocales() : [];
+  const getLocale = pickFn('getLocale');
+  if (typeof getLocale === 'function') {
+    const locale = getLocale();
+    const getAvailableLocales = pickFn('getAvailableLocales');
+    const locales = typeof getAvailableLocales === 'function' ? getAvailableLocales() : [];
     mhtml += '<h3 style="color:#0f0;font-size:20px;margin:0 0 12px">🌐 i18n</h3>';
     mhtml += `<div style="margin:4px 0">Locale: <span style="color:#ff0">${locale}</span></div>`;
     if (locales.length > 1) {
@@ -400,8 +412,9 @@ function renderOverlay() {
   }
 
   // Entity summary
-  if (typeof globalThis.getEnemies === 'function') {
-    const enemies = globalThis.getEnemies();
+  const getEnemies = pickFn('getEnemies');
+  if (typeof getEnemies === 'function') {
+    const enemies = getEnemies();
     const eCount = Object.keys(enemies).length;
     if (eCount > 0) {
       mhtml += '<h3 style="color:#0f0;font-size:20px;margin:12px 0 8px">👾 ENTITIES</h3>';
@@ -410,7 +423,8 @@ function renderOverlay() {
         mhtml += `<div style="margin:2px 0;color:#888;font-size:13px">  ${id}: ${e.name || id} (hp=${e.hp ?? '?'} atk=${e.atk ?? '?'} tier=${e.tier ?? '?'})</div>`;
       }
     }
-    const bosses = typeof globalThis.getBosses === 'function' ? globalThis.getBosses() : {};
+    const getBosses = pickFn('getBosses');
+    const bosses = typeof getBosses === 'function' ? getBosses() : {};
     const bCount = Object.keys(bosses).length;
     if (bCount > 0) {
       mhtml += `<div style="margin:4px 0">Bosses: <span style="color:#ff0">${bCount}</span></div>`;
@@ -418,7 +432,8 @@ function renderOverlay() {
         mhtml += `<div style="margin:2px 0;color:#888;font-size:13px">  ${id}: ${b.name || id} (hp=${b.hp ?? '?'})</div>`;
       }
     }
-    const npcs = typeof globalThis.getNPCs === 'function' ? globalThis.getNPCs() : {};
+    const getNPCs = pickFn('getNPCs');
+    const npcs = typeof getNPCs === 'function' ? getNPCs() : {};
     const nCount = Object.keys(npcs).length;
     if (nCount > 0) {
       mhtml += `<div style="margin:4px 0">NPCs: <span style="color:#ff0">${nCount}</span></div>`;
@@ -426,8 +441,9 @@ function renderOverlay() {
   }
 
   // Item summary
-  if (typeof globalThis.getItems === 'function') {
-    const items = globalThis.getItems();
+  const getItems = pickFn('getItems');
+  if (typeof getItems === 'function') {
+    const items = getItems();
     const iCount = Object.keys(items).length;
     if (iCount > 0) {
       mhtml += '<h3 style="color:#0f0;font-size:20px;margin:12px 0 8px">🎒 ITEMS</h3>';
@@ -439,8 +455,9 @@ function renderOverlay() {
   }
 
   // Asset status
-  if (typeof globalThis.getAssetStatus === 'function') {
-    const status = globalThis.getAssetStatus();
+  const getAssetStatus = pickFn('getAssetStatus');
+  if (typeof getAssetStatus === 'function') {
+    const status = getAssetStatus();
     if (status.total > 0) {
       mhtml += '<h3 style="color:#0f0;font-size:20px;margin:12px 0 8px">📂 ASSETS</h3>';
       mhtml += `<div style="margin:4px 0">Loaded: <span style="color:#ff0">${status.loaded}/${status.total} (${status.percent}%)</span></div>`;
@@ -453,8 +470,9 @@ function renderOverlay() {
   }
 
   // Meta
-  if (typeof globalThis.getMeta === 'function') {
-    const meta = globalThis.getMeta();
+  const getMetaFn = pickFn('getMeta');
+  if (typeof getMetaFn === 'function') {
+    const meta = getMetaFn();
     if (meta) {
       mhtml += '<h3 style="color:#0f0;font-size:20px;margin:12px 0 8px">📋 CART META</h3>';
       if (meta.name)
@@ -485,7 +503,8 @@ function renderOverlay() {
   for (const btn of _overlayEl.querySelectorAll('[data-locale]')) {
     btn.onclick = () => {
       const loc = btn.getAttribute('data-locale');
-      if (typeof globalThis.setLocale === 'function') globalThis.setLocale(loc);
+      const setLocale = globalThis.setLocale ?? globalThis.nova64?.data?.setLocale;
+      if (typeof setLocale === 'function') setLocale(loc);
       renderOverlay();
     };
   }

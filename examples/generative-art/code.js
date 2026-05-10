@@ -2,6 +2,37 @@
 // 14 interactive Processing-style sketches. Press LEFT/RIGHT to switch.
 // All rendering happens in draw() (framebuffer is cleared between update & draw).
 
+const {
+  circle,
+  cls,
+  drawGlowTextCentered,
+  drawPanel,
+  drawRadialGradient,
+  drawRect,
+  line,
+  print,
+  printCentered,
+  pset,
+  rgba8,
+} = nova64.draw;
+const { createSolidSkybox } = nova64.light;
+const { btnp, keyp } = nova64.input;
+const { Screen } = nova64.ui;
+const {
+  arc,
+  bezier,
+  color,
+  ellipse,
+  flowField,
+  hsb,
+  noise,
+  noiseSeed,
+  popMatrix,
+  pushMatrix,
+  rotate,
+  translate,
+} = nova64.util;
+
 let currentSketch = 0;
 const SKETCH_COUNT = 14;
 const sketchNames = [
@@ -32,15 +63,20 @@ const W = 640;
 const H = 360;
 
 export function init() {
-  createSolidSkybox(0x000000);
-  noiseSeed(42);
+  nova64.light.createSolidSkybox(0x000000);
+  nova64.util.noiseSeed(42);
   _initSketch(currentSketch);
 }
 
 // ─── UPDATE: state/logic only, NO drawing ─────────────────────────────────
 export function update(dt) {
   if (!started) {
-    if (btnp(4) || btnp(5) || keyp('Space') || keyp('Enter')) {
+    if (
+      nova64.input.btnp(4) ||
+      nova64.input.btnp(5) ||
+      nova64.input.keyp('Space') ||
+      nova64.input.keyp('Enter')
+    ) {
       started = true;
     }
     return;
@@ -50,12 +86,12 @@ export function update(dt) {
   switchCooldown -= dt;
 
   // Switch sketches
-  if ((keyp('ArrowRight') || btnp(1)) && switchCooldown <= 0) {
+  if ((nova64.input.keyp('ArrowRight') || nova64.input.btnp(1)) && switchCooldown <= 0) {
     currentSketch = (currentSketch + 1) % SKETCH_COUNT;
     _initSketch(currentSketch);
     switchCooldown = 0.3;
   }
-  if ((keyp('ArrowLeft') || btnp(0)) && switchCooldown <= 0) {
+  if ((nova64.input.keyp('ArrowLeft') || nova64.input.btnp(0)) && switchCooldown <= 0) {
     currentSketch = (currentSketch - 1 + SKETCH_COUNT) % SKETCH_COUNT;
     _initSketch(currentSketch);
     switchCooldown = 0.3;
@@ -152,7 +188,7 @@ export function draw() {
 
 // ─── Start Screen ─────────────────────────────────────────────────────────
 function _drawStartScreen() {
-  cls(rgba8(10, 8, 20));
+  nova64.draw.cls(nova64.draw.rgba8(10, 8, 20));
 
   // Animated background circles
   const t = performance.now() / 1000;
@@ -162,48 +198,81 @@ function _drawStartScreen() {
     const x = W / 2 + Math.cos(angle) * r;
     const y = H / 2 + Math.sin(angle) * r;
     const hue = (i * 30 + t * 40) % 360;
-    ellipse(x, y, 8 + Math.sin(t + i) * 4, 8 + Math.cos(t + i) * 4, hsb(hue, 0.8, 0.6, 80), true);
+    nova64.util.ellipse(
+      x,
+      y,
+      8 + Math.sin(t + i) * 4,
+      8 + Math.cos(t + i) * 4,
+      nova64.util.hsb(hue, 0.8, 0.6, 80),
+      true
+    );
   }
 
-  drawGlowTextCentered(
+  nova64.draw.drawGlowTextCentered(
     'GENERATIVE ART STUDIO',
     W / 2,
     80,
-    rgba8(255, 200, 255),
-    rgba8(180, 80, 220)
+    nova64.draw.rgba8(255, 200, 255),
+    nova64.draw.rgba8(180, 80, 220)
   );
-  drawGlowTextCentered('N O V A 6 4', W / 2, 120, rgba8(100, 200, 255), rgba8(40, 100, 180));
+  nova64.draw.drawGlowTextCentered(
+    'N O V A 6 4',
+    W / 2,
+    120,
+    nova64.draw.rgba8(100, 200, 255),
+    nova64.draw.rgba8(40, 100, 180)
+  );
 
-  printCentered('14 interactive Processing-style sketches', W / 2, 170, rgba8(180, 180, 200));
-  printCentered(
+  nova64.draw.printCentered(
+    '14 interactive Processing-style sketches',
+    W / 2,
+    170,
+    nova64.draw.rgba8(180, 180, 200)
+  );
+  nova64.draw.printCentered(
     'Flow Fields / Perlin / Galaxies / Particles / Waves',
     W / 2,
     195,
-    rgba8(140, 160, 200)
+    nova64.draw.rgba8(140, 160, 200)
   );
-  printCentered(
+  nova64.draw.printCentered(
     'Fractals / Voronoi / Mandelbrot / Cloth / Attractors',
     W / 2,
     215,
-    rgba8(140, 160, 200)
+    nova64.draw.rgba8(140, 160, 200)
   );
 
   const pulse = Math.sin(t * 3) * 0.3 + 0.7;
   const a = Math.floor(pulse * 255);
-  printCentered('PRESS SPACE TO BEGIN', W / 2, 280, rgba8(255, 255, 255, a));
-  printCentered('LEFT / RIGHT to switch sketches', W / 2, 305, rgba8(120, 120, 150));
+  nova64.draw.printCentered(
+    'PRESS SPACE TO BEGIN',
+    W / 2,
+    280,
+    nova64.draw.rgba8(255, 255, 255, a)
+  );
+  nova64.draw.printCentered(
+    'LEFT / RIGHT to switch sketches',
+    W / 2,
+    305,
+    nova64.draw.rgba8(120, 120, 150)
+  );
 }
 
 // ─── HUD ──────────────────────────────────────────────────────────────────
 function _drawHUD() {
   const name = sketchNames[currentSketch];
-  drawPanel(8, 4, 200, 28, {
-    bgColor: rgba8(0, 0, 0, 140),
-    borderLight: rgba8(80, 80, 120, 100),
-    borderDark: rgba8(40, 40, 60, 100),
+  nova64.draw.drawPanel(8, 4, 200, 28, {
+    bgColor: nova64.draw.rgba8(0, 0, 0, 140),
+    borderLight: nova64.draw.rgba8(80, 80, 120, 100),
+    borderDark: nova64.draw.rgba8(40, 40, 60, 100),
   });
-  print(`${currentSketch + 1}/${SKETCH_COUNT}  ${name}`, 16, 12, rgba8(200, 200, 255));
-  print('[< >] SWITCH', W - 130, H - 18, rgba8(120, 120, 150));
+  nova64.draw.print(
+    `${currentSketch + 1}/${SKETCH_COUNT}  ${name}`,
+    16,
+    12,
+    nova64.draw.rgba8(200, 200, 255)
+  );
+  nova64.draw.print('[< >] SWITCH', W - 130, H - 18, nova64.draw.rgba8(120, 120, 150));
 }
 
 // ─── Sketch init ──────────────────────────────────────────────────────────
@@ -274,7 +343,7 @@ function _initFlowField() {
 }
 
 function _updateFlowField(dt) {
-  field = flowField(FLOW_COLS, FLOW_ROWS, 0.08, time * 0.15);
+  field = nova64.util.flowField(FLOW_COLS, FLOW_ROWS, 0.08, time * 0.15);
 
   for (const p of particles) {
     const col = Math.floor(p.x / FLOW_CELL);
@@ -303,15 +372,15 @@ function _updateFlowField(dt) {
 }
 
 function _drawFlowField() {
-  cls(rgba8(5, 3, 12));
+  nova64.draw.cls(nova64.draw.rgba8(5, 3, 12));
 
   for (const p of particles) {
     const trail = p.trail;
     for (let j = 1; j < trail.length; j++) {
       const t = j / trail.length;
       const alpha = Math.floor(t * 200);
-      const c = hsb(p.hue, 0.85, 0.9, Math.max(15, alpha));
-      line(
+      const c = nova64.util.hsb(p.hue, 0.85, 0.9, Math.max(15, alpha));
+      nova64.draw.line(
         Math.round(trail[j - 1].x),
         Math.round(trail[j - 1].y),
         Math.round(trail[j].x),
@@ -322,8 +391,8 @@ function _drawFlowField() {
     // Head
     if (trail.length > 0) {
       const last = trail[trail.length - 1];
-      const c = hsb(p.hue, 0.9, 1.0, 255);
-      line(Math.round(last.x), Math.round(last.y), Math.round(p.x), Math.round(p.y), c);
+      const c = nova64.util.hsb(p.hue, 0.9, 1.0, 255);
+      nova64.draw.line(Math.round(last.x), Math.round(last.y), Math.round(p.x), Math.round(p.y), c);
     }
   }
 }
@@ -343,7 +412,7 @@ function _updatePerlinLandscape(dt) {
 }
 
 function _drawPerlinLandscape() {
-  cls(rgba8(8, 6, 18));
+  nova64.draw.cls(nova64.draw.rgba8(8, 6, 18));
 
   const layers = [
     { scale: 0.005, amp: 60, base: 240, color1: [30, 20, 60], color2: [60, 30, 90], speed: 0.2 },
@@ -353,18 +422,22 @@ function _drawPerlinLandscape() {
   ];
 
   // Stars
-  noiseSeed(7);
+  nova64.util.noiseSeed(7);
   for (let i = 0; i < 80; i++) {
-    const sx = (noise(i * 100) * W * 1.5) % W;
-    const sy = noise(i * 200) * 180;
-    const brightness = 100 + Math.floor(noise(i * 300 + time * 0.5) * 155);
-    pset(Math.round(sx), Math.round(sy), rgba8(brightness, brightness, brightness + 40));
+    const sx = (nova64.util.noise(i * 100) * W * 1.5) % W;
+    const sy = nova64.util.noise(i * 200) * 180;
+    const brightness = 100 + Math.floor(nova64.util.noise(i * 300 + time * 0.5) * 155);
+    nova64.draw.pset(
+      Math.round(sx),
+      Math.round(sy),
+      nova64.draw.rgba8(brightness, brightness, brightness + 40)
+    );
   }
-  noiseSeed(42);
+  nova64.util.noiseSeed(42);
 
   // Moon
-  ellipse(500, 60, 25, 25, rgba8(240, 230, 200, 180), true);
-  ellipse(506, 57, 22, 22, rgba8(8, 6, 18), true);
+  nova64.util.ellipse(500, 60, 25, 25, nova64.draw.rgba8(240, 230, 200, 180), true);
+  nova64.util.ellipse(506, 57, 22, 22, nova64.draw.rgba8(8, 6, 18), true);
 
   // Mountain layers
   for (let layerIdx = 0; layerIdx < layers.length; layerIdx++) {
@@ -372,7 +445,7 @@ function _drawPerlinLandscape() {
     const off = landscapeOffset * L.speed;
 
     for (let x = 0; x < W; x++) {
-      const n = noise((x + off) * L.scale, layerIdx * 100);
+      const n = nova64.util.noise((x + off) * L.scale, layerIdx * 100);
       const h = L.base - n * L.amp;
 
       for (let y = Math.floor(h); y < H; y++) {
@@ -380,7 +453,7 @@ function _drawPerlinLandscape() {
         const r = L.color1[0] + (L.color2[0] - L.color1[0]) * t;
         const g = L.color1[1] + (L.color2[1] - L.color1[1]) * t;
         const b = L.color1[2] + (L.color2[2] - L.color1[2]) * t;
-        pset(x, y, rgba8(r, g, b));
+        nova64.draw.pset(x, y, nova64.draw.rgba8(r, g, b));
       }
     }
   }
@@ -390,7 +463,7 @@ function _drawPerlinLandscape() {
     for (let y = H - 30; y < H; y++) {
       const wave = Math.sin(x * 0.05 + time * 2) * 3;
       const alpha = 80 - (y - (H - 30)) * 2;
-      if (alpha > 0) pset(x, y, rgba8(20, 40, 80, alpha));
+      if (alpha > 0) nova64.draw.pset(x, y, nova64.draw.rgba8(20, 40, 80, alpha));
     }
   }
 }
@@ -426,15 +499,27 @@ function _initSpiralGalaxy() {
 }
 
 function _drawSpiralGalaxy() {
-  cls(rgba8(4, 2, 10));
+  nova64.draw.cls(nova64.draw.rgba8(4, 2, 10));
 
   const cx = W / 2,
     cy = H / 2;
   const rotSpeed = time * 0.15;
 
   // Core glow
-  drawRadialGradient(cx, cy, 30, rgba8(255, 220, 180, 60), rgba8(255, 220, 180, 0));
-  drawRadialGradient(cx, cy, 12, rgba8(255, 240, 220, 120), rgba8(255, 200, 150, 0));
+  nova64.draw.drawRadialGradient(
+    cx,
+    cy,
+    30,
+    nova64.draw.rgba8(255, 220, 180, 60),
+    nova64.draw.rgba8(255, 220, 180, 0)
+  );
+  nova64.draw.drawRadialGradient(
+    cx,
+    cy,
+    12,
+    nova64.draw.rgba8(255, 240, 220, 120),
+    nova64.draw.rgba8(255, 200, 150, 0)
+  );
 
   for (const star of galaxyStars) {
     const angle = star.angle + rotSpeed;
@@ -444,14 +529,14 @@ function _drawSpiralGalaxy() {
 
     const alpha = Math.floor(star.brightness * 255 * (1 - star.dist / 200));
     if (alpha < 10) continue;
-    const c = hsb(star.hue, 0.6, star.brightness, Math.min(255, alpha));
+    const c = nova64.util.hsb(star.hue, 0.6, star.brightness, Math.min(255, alpha));
 
     if (star.size > 1) {
-      pset(Math.round(x), Math.round(y), c);
-      pset(Math.round(x + 1), Math.round(y), c);
-      pset(Math.round(x), Math.round(y + 1), c);
+      nova64.draw.pset(Math.round(x), Math.round(y), c);
+      nova64.draw.pset(Math.round(x + 1), Math.round(y), c);
+      nova64.draw.pset(Math.round(x), Math.round(y + 1), c);
     } else {
-      pset(Math.round(x), Math.round(y), c);
+      nova64.draw.pset(Math.round(x), Math.round(y), c);
     }
   }
 
@@ -462,7 +547,13 @@ function _drawSpiralGalaxy() {
     const nx = cx + Math.cos(na) * nd;
     const ny = cy + Math.sin(na) * nd * 0.55;
     const hue = (200 + i * 60 + time * 10) % 360;
-    drawRadialGradient(nx, ny, 25, hsb(hue, 0.7, 0.4, 25), hsb(hue, 0.3, 0.1, 0));
+    nova64.draw.drawRadialGradient(
+      nx,
+      ny,
+      25,
+      nova64.util.hsb(hue, 0.7, 0.4, 25),
+      nova64.util.hsb(hue, 0.3, 0.1, 0)
+    );
   }
 }
 
@@ -542,35 +633,48 @@ function _updateParticleGarden(dt) {
 }
 
 function _drawParticleGarden() {
-  cls(rgba8(5, 8, 5));
+  nova64.draw.cls(nova64.draw.rgba8(5, 8, 5));
 
   for (const p of particles) {
     const t = p.life / p.maxLife;
     const alpha = Math.floor(t * 220);
     const brightness = 0.5 + t * 0.5;
-    const c = hsb(p.hue, 0.8, brightness, Math.max(10, alpha));
-    pset(Math.round(p.x), Math.round(p.y), c);
+    const c = nova64.util.hsb(p.hue, 0.8, brightness, Math.max(10, alpha));
+    nova64.draw.pset(Math.round(p.x), Math.round(p.y), c);
 
     if (t > 0.7) {
-      pset(
+      nova64.draw.pset(
         Math.round(p.x + 1),
         Math.round(p.y),
-        hsb(p.hue, 0.5, brightness, Math.floor(alpha * 0.3))
+        nova64.util.hsb(p.hue, 0.5, brightness, Math.floor(alpha * 0.3))
       );
-      pset(
+      nova64.draw.pset(
         Math.round(p.x - 1),
         Math.round(p.y),
-        hsb(p.hue, 0.5, brightness, Math.floor(alpha * 0.3))
+        nova64.util.hsb(p.hue, 0.5, brightness, Math.floor(alpha * 0.3))
       );
     }
   }
 
   // Emitter markers
   for (const em of emitters) {
-    ellipse(Math.round(em.x), Math.round(em.y), 4, 4, hsb(em.hue, 0.6, 0.4, 100), true);
+    nova64.util.ellipse(
+      Math.round(em.x),
+      Math.round(em.y),
+      4,
+      4,
+      nova64.util.hsb(em.hue, 0.6, 0.4, 100),
+      true
+    );
   }
 
-  line(0, Math.floor(H * 0.75), W, Math.floor(H * 0.75), rgba8(30, 50, 30, 100));
+  nova64.draw.line(
+    0,
+    Math.floor(H * 0.75),
+    W,
+    Math.floor(H * 0.75),
+    nova64.draw.rgba8(30, 50, 30, 100)
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -578,7 +682,7 @@ function _drawParticleGarden() {
 // ════════════════════════════════════════════════════════════════════════════
 
 function _drawWaveInterference() {
-  cls(rgba8(0, 0, 0));
+  nova64.draw.cls(nova64.draw.rgba8(0, 0, 0));
 
   const sources = [
     { x: W * 0.3, y: H * 0.4, freq: 0.04, phase: time * 3 },
@@ -600,18 +704,32 @@ function _drawWaveInterference() {
 
       const hue = val * 270;
       const brightness = 0.3 + val * 0.6;
-      const c = hsb(hue, 0.9, brightness);
+      const c = nova64.util.hsb(hue, 0.9, brightness);
 
-      pset(x, y, c);
-      pset(x + 1, y, c);
-      pset(x, y + 1, c);
-      pset(x + 1, y + 1, c);
+      nova64.draw.pset(x, y, c);
+      nova64.draw.pset(x + 1, y, c);
+      nova64.draw.pset(x, y + 1, c);
+      nova64.draw.pset(x + 1, y + 1, c);
     }
   }
 
   for (const src of sources) {
-    ellipse(Math.round(src.x), Math.round(src.y), 4, 4, rgba8(255, 255, 255, 200), true);
-    ellipse(Math.round(src.x), Math.round(src.y), 8, 8, rgba8(255, 255, 255, 80), false);
+    nova64.util.ellipse(
+      Math.round(src.x),
+      Math.round(src.y),
+      4,
+      4,
+      nova64.draw.rgba8(255, 255, 255, 200),
+      true
+    );
+    nova64.util.ellipse(
+      Math.round(src.x),
+      Math.round(src.y),
+      8,
+      8,
+      nova64.draw.rgba8(255, 255, 255, 80),
+      false
+    );
   }
 }
 
@@ -637,7 +755,7 @@ function _initNeonGeometry() {
 }
 
 function _drawNeonGeometry() {
-  cls(rgba8(4, 2, 8));
+  nova64.draw.cls(nova64.draw.rgba8(4, 2, 8));
 
   // Connecting lines first (behind shapes)
   for (let i = 0; i < geoShapes.length; i++) {
@@ -647,12 +765,12 @@ function _drawNeonGeometry() {
       const d = Math.sqrt((a.cx - b.cx) ** 2 + (a.cy - b.cy) ** 2);
       if (d < 200) {
         const alpha = Math.floor((1 - d / 200) * 40);
-        line(
+        nova64.draw.line(
           Math.round(a.cx),
           Math.round(a.cy),
           Math.round(b.cx),
           Math.round(b.cy),
-          rgba8(100, 80, 160, alpha)
+          nova64.draw.rgba8(100, 80, 160, alpha)
         );
       }
     }
@@ -662,21 +780,21 @@ function _drawNeonGeometry() {
     const pulsing = 0.6 + Math.sin(time * shape.pulseSpeed) * 0.4;
     const s = shape.size * pulsing;
     const hue = (shape.hue + time * 20) % 360;
-    const c = hsb(hue, 0.9, 0.9, 200);
-    const glow = hsb(hue, 0.6, 0.5, 60);
+    const c = nova64.util.hsb(hue, 0.9, 0.9, 200);
+    const glow = nova64.util.hsb(hue, 0.6, 0.5, 60);
 
-    pushMatrix();
-    translate(shape.cx, shape.cy);
-    rotate(time * shape.rotSpeed);
+    nova64.util.pushMatrix();
+    nova64.util.translate(shape.cx, shape.cy);
+    nova64.util.rotate(time * shape.rotSpeed);
 
     switch (shape.type) {
       case 'ellipse':
-        ellipse(0, 0, s, s * 0.6, glow, true);
-        ellipse(0, 0, s, s * 0.6, c, false);
+        nova64.util.ellipse(0, 0, s, s * 0.6, glow, true);
+        nova64.util.ellipse(0, 0, s, s * 0.6, c, false);
         break;
       case 'bezier':
-        bezier(-s, 0, -s * 0.5, -s, s * 0.5, s, s, 0, c, 40);
-        bezier(-s, 0, -s * 0.5, s, s * 0.5, -s, s, 0, glow, 40);
+        nova64.util.bezier(-s, 0, -s * 0.5, -s, s * 0.5, s, s, 0, c, 40);
+        nova64.util.bezier(-s, 0, -s * 0.5, s, s * 0.5, -s, s, 0, glow, 40);
         break;
       case 'spiral':
         for (let i = 0; i < 200; i++) {
@@ -685,17 +803,22 @@ function _drawNeonGeometry() {
           const r = t * s;
           const px = Math.cos(a) * r;
           const py = Math.sin(a) * r;
-          const sc = hsb((hue + t * 120) % 360, 0.9, 0.8, Math.floor(200 * (1 - t * 0.5)));
-          pset(Math.round(px), Math.round(py), sc);
+          const sc = nova64.util.hsb(
+            (hue + t * 120) % 360,
+            0.9,
+            0.8,
+            Math.floor(200 * (1 - t * 0.5))
+          );
+          nova64.draw.pset(Math.round(px), Math.round(py), sc);
         }
         break;
       case 'arc':
-        arc(0, 0, s, s * 0.7, time, time + Math.PI * 1.5, c, false);
-        arc(0, 0, s * 0.6, s * 0.4, -time, -time + Math.PI, glow, false);
+        nova64.util.arc(0, 0, s, s * 0.7, time, time + Math.PI * 1.5, c, false);
+        nova64.util.arc(0, 0, s * 0.6, s * 0.4, -time, -time + Math.PI, glow, false);
         break;
     }
 
-    popMatrix();
+    nova64.util.popMatrix();
   }
 }
 
@@ -768,7 +891,7 @@ function _updateReactionDiffusion(_dt) {
 }
 
 function _drawReactionDiffusion() {
-  cls(rgba8(5, 5, 15));
+  nova64.draw.cls(nova64.draw.rgba8(5, 5, 15));
   for (let y = 0; y < RD_H; y++) {
     for (let x = 0; x < RD_W; x++) {
       const b = rdGridB[y * RD_W + x];
@@ -777,7 +900,13 @@ function _drawReactionDiffusion() {
         const r = Math.floor(20 + v * 50);
         const g = Math.floor(80 + v * 175);
         const bl = Math.floor(120 + v * 135);
-        drawRect(x * RD_SCALE, y * RD_SCALE, RD_SCALE, RD_SCALE, rgba8(r, g, bl));
+        nova64.draw.drawRect(
+          x * RD_SCALE,
+          y * RD_SCALE,
+          RD_SCALE,
+          RD_SCALE,
+          nova64.draw.rgba8(r, g, bl)
+        );
       }
     }
   }
@@ -825,28 +954,54 @@ function _updateFractalTree(dt) {
 
 function _drawFractalTree() {
   const seasonColors = [
-    [rgba8(60, 140, 60), rgba8(100, 200, 80), rgba8(255, 180, 200)], // spring
-    [rgba8(30, 120, 30), rgba8(50, 180, 50), rgba8(80, 200, 60)], // summer
-    [rgba8(180, 100, 30), rgba8(220, 160, 40), rgba8(200, 60, 30)], // autumn
-    [rgba8(140, 140, 160), rgba8(180, 180, 200), rgba8(220, 220, 240)], // winter
+    [
+      nova64.draw.rgba8(60, 140, 60),
+      nova64.draw.rgba8(100, 200, 80),
+      nova64.draw.rgba8(255, 180, 200),
+    ], // spring
+    [
+      nova64.draw.rgba8(30, 120, 30),
+      nova64.draw.rgba8(50, 180, 50),
+      nova64.draw.rgba8(80, 200, 60),
+    ], // summer
+    [
+      nova64.draw.rgba8(180, 100, 30),
+      nova64.draw.rgba8(220, 160, 40),
+      nova64.draw.rgba8(200, 60, 30),
+    ], // autumn
+    [
+      nova64.draw.rgba8(140, 140, 160),
+      nova64.draw.rgba8(180, 180, 200),
+      nova64.draw.rgba8(220, 220, 240),
+    ], // winter
   ];
   const sc = seasonColors[treeSeason];
-  cls(rgba8(15, 10, 25));
+  nova64.draw.cls(nova64.draw.rgba8(15, 10, 25));
 
   for (const b of treeBranches) {
     const windOffset = treeWind * (8 - b.depth) * 3;
     const x2 = b.x2 + windOffset;
     const thickness = Math.max(1, b.depth - 1);
     if (b.isLeaf) {
-      circle(Math.round(x2), Math.round(b.y2), 2 + Math.sin(time + b.angle * 5) * 1, sc[1]);
+      nova64.draw.circle(
+        Math.round(x2),
+        Math.round(b.y2),
+        2 + Math.sin(time + b.angle * 5) * 1,
+        sc[1]
+      );
       if (treeSeason === 0) {
         // spring blossoms
-        circle(Math.round(x2 + Math.sin(time * 2 + b.angle) * 3), Math.round(b.y2 - 2), 1, sc[2]);
+        nova64.draw.circle(
+          Math.round(x2 + Math.sin(time * 2 + b.angle) * 3),
+          Math.round(b.y2 - 2),
+          1,
+          sc[2]
+        );
       }
     } else {
-      const c = b.depth > 4 ? rgba8(80, 50, 30) : sc[0];
+      const c = b.depth > 4 ? nova64.draw.rgba8(80, 50, 30) : sc[0];
       for (let t = 0; t < thickness; t++) {
-        line(
+        nova64.draw.line(
           Math.round(b.x1 + windOffset * 0.5 + t * 0.3),
           Math.round(b.y1),
           Math.round(x2 + t * 0.3),
@@ -858,9 +1013,9 @@ function _drawFractalTree() {
   }
 
   // Ground
-  drawRect(0, H - 20, W, 20, rgba8(40, 30, 20));
+  nova64.draw.drawRect(0, H - 20, W, 20, nova64.draw.rgba8(40, 30, 20));
   const seasonName = ['Spring', 'Summer', 'Autumn', 'Winter'][treeSeason];
-  print(seasonName, W - 80, H - 35, rgba8(180, 180, 200));
+  nova64.draw.print(seasonName, W - 80, H - 35, nova64.draw.rgba8(180, 180, 200));
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -898,7 +1053,7 @@ function _updateVoronoi(dt) {
 }
 
 function _drawVoronoi() {
-  cls(rgba8(10, 10, 20));
+  nova64.draw.cls(nova64.draw.rgba8(10, 10, 20));
   const rw = Math.ceil(W / VOR_SCALE),
     rh = Math.ceil(H / VOR_SCALE);
   for (let py = 0; py < rh; py++) {
@@ -921,17 +1076,23 @@ function _drawVoronoi() {
       const edge = Math.sqrt(minD2) - Math.sqrt(minD);
       const s = voronoiSeeds[minI];
       if (edge < 3) {
-        drawRect(px * VOR_SCALE, py * VOR_SCALE, VOR_SCALE, VOR_SCALE, rgba8(20, 15, 10));
+        nova64.draw.drawRect(
+          px * VOR_SCALE,
+          py * VOR_SCALE,
+          VOR_SCALE,
+          VOR_SCALE,
+          nova64.draw.rgba8(20, 15, 10)
+        );
       } else {
         const bright = 0.5 + 0.5 * Math.min(1, edge / 30);
-        const c = hsb(s.hue, 0.7, bright);
-        drawRect(px * VOR_SCALE, py * VOR_SCALE, VOR_SCALE, VOR_SCALE, c);
+        const c = nova64.util.hsb(s.hue, 0.7, bright);
+        nova64.draw.drawRect(px * VOR_SCALE, py * VOR_SCALE, VOR_SCALE, VOR_SCALE, c);
       }
     }
   }
   // Draw seed points
   for (const s of voronoiSeeds) {
-    circle(Math.round(s.x), Math.round(s.y), 2, rgba8(255, 255, 255, 150));
+    nova64.draw.circle(Math.round(s.x), Math.round(s.y), 2, nova64.draw.rgba8(255, 255, 255, 150));
   }
 }
 
@@ -968,13 +1129,13 @@ function _drawMandelbrot() {
         // Smooth coloring
         const smooth = iter - Math.log2(Math.log2(x * x + y * y));
         const hue = (smooth * 8 + time * 30) % 360;
-        const c = hsb(hue, 0.85, 0.5 + 0.5 * Math.sin(smooth * 0.3));
-        drawRect(px * MB_SCALE, py * MB_SCALE, MB_SCALE, MB_SCALE, c);
+        const c = nova64.util.hsb(hue, 0.85, 0.5 + 0.5 * Math.sin(smooth * 0.3));
+        nova64.draw.drawRect(px * MB_SCALE, py * MB_SCALE, MB_SCALE, MB_SCALE, c);
       }
     }
   }
   // Zoom indicator
-  print('Zoom: ' + zoom.toFixed(1) + 'x', 10, H - 30, rgba8(200, 200, 200));
+  nova64.draw.print('Zoom: ' + zoom.toFixed(1) + 'x', 10, H - 30, nova64.draw.rgba8(200, 200, 200));
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1054,7 +1215,7 @@ function _updateParticleCloth(dt) {
 }
 
 function _drawParticleCloth() {
-  cls(rgba8(10, 15, 30));
+  nova64.draw.cls(nova64.draw.rgba8(10, 15, 30));
   // Draw links as colored lines
   for (const l of clothLinks) {
     const a = clothNodes[l.a],
@@ -1062,12 +1223,13 @@ function _drawParticleCloth() {
     const stress =
       Math.abs(Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2) - CLOTH_REST) / CLOTH_REST;
     const hue = Math.min(1, stress * 3) * 60;
-    const c = hsb(200 - hue, 0.7, 0.8);
-    line(Math.round(a.x), Math.round(a.y), Math.round(b.x), Math.round(b.y), c);
+    const c = nova64.util.hsb(200 - hue, 0.7, 0.8);
+    nova64.draw.line(Math.round(a.x), Math.round(a.y), Math.round(b.x), Math.round(b.y), c);
   }
   // Draw pin points
   for (const n of clothNodes) {
-    if (n.pinned) circle(Math.round(n.x), Math.round(n.y), 3, rgba8(255, 100, 100));
+    if (n.pinned)
+      nova64.draw.circle(Math.round(n.x), Math.round(n.y), 3, nova64.draw.rgba8(255, 100, 100));
   }
 }
 
@@ -1106,7 +1268,7 @@ function _updateStrangeAttractors(dt) {
 }
 
 function _drawStrangeAttractors() {
-  cls(rgba8(5, 5, 15));
+  nova64.draw.cls(nova64.draw.rgba8(5, 5, 15));
   const rotAngle = time * 0.2;
   const cosR = Math.cos(rotAngle),
     sinR = Math.sin(rotAngle);
@@ -1125,11 +1287,16 @@ function _drawStrangeAttractors() {
     const alpha = i / attractorTrail.length;
     const speed = Math.min(1, p1.speed / 40);
     const hue = (speed * 180 + 200) % 360;
-    const c = hsb(hue, 0.8, 0.4 + alpha * 0.6, Math.floor(alpha * 255));
-    line(Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1), c);
+    const c = nova64.util.hsb(hue, 0.8, 0.4 + alpha * 0.6, Math.floor(alpha * 255));
+    nova64.draw.line(Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1), c);
   }
-  print('Lorenz Attractor', 10, H - 30, rgba8(150, 150, 180));
-  print('Points: ' + attractorTrail.length, 10, H - 18, rgba8(100, 100, 130));
+  nova64.draw.print('Lorenz Attractor', 10, H - 30, nova64.draw.rgba8(150, 150, 180));
+  nova64.draw.print(
+    'Points: ' + attractorTrail.length,
+    10,
+    H - 18,
+    nova64.draw.rgba8(100, 100, 130)
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1191,17 +1358,17 @@ function _updateCirclePacking(_dt) {
 }
 
 function _drawCirclePacking() {
-  cls(rgba8(8, 8, 18));
+  nova64.draw.cls(nova64.draw.rgba8(8, 8, 18));
   for (const c of cpCircles) {
     const bright = c.growing ? 0.8 : 0.5;
-    const fill = hsb(c.hue, 0.6, bright * 0.3);
-    const stroke = hsb(c.hue, 0.7, bright);
+    const fill = nova64.util.hsb(c.hue, 0.6, bright * 0.3);
+    const stroke = nova64.util.hsb(c.hue, 0.7, bright);
     // Fill
-    circle(Math.round(c.x), Math.round(c.y), Math.round(c.r), fill, true);
+    nova64.draw.circle(Math.round(c.x), Math.round(c.y), Math.round(c.r), fill, true);
     // Outline
-    circle(Math.round(c.x), Math.round(c.y), Math.round(c.r), stroke, false);
+    nova64.draw.circle(Math.round(c.x), Math.round(c.y), Math.round(c.r), stroke, false);
   }
-  print('Circles: ' + cpCircles.length, 10, H - 18, rgba8(150, 150, 180));
+  nova64.draw.print('Circles: ' + cpCircles.length, 10, H - 18, nova64.draw.rgba8(150, 150, 180));
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1252,8 +1419,8 @@ function _drawPixelSorting() {
   for (let y = 0; y < PS_H; y++) {
     for (let x = 0; x < PS_W; x++) {
       const p = px[y][x];
-      const c = hsb(p.hue, p.sat, p.bright);
-      drawRect(x * PS_S, y * PS_S, PS_S, PS_S, c);
+      const c = nova64.util.hsb(p.hue, p.sat, p.bright);
+      nova64.draw.drawRect(x * PS_S, y * PS_S, PS_S, PS_S, c);
     }
   }
 }

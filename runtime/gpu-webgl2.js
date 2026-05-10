@@ -70,6 +70,9 @@ export class GpuWebGL2 {
     this.w = w;
     this.h = h;
 
+    // Clear color (default dark blue-black)
+    this.clearColor = { r: 0.039, g: 0.039, b: 0.059, a: 1.0 }; // 0x0a0a0f
+
     // Programs
     this.progFSQ = this._makeProgram(VERT_FSQ, FRAG_TONEMAP);
     this.progSPR = this._makeProgram(VERT_SPR, FRAG_SPR);
@@ -135,7 +138,7 @@ export class GpuWebGL2 {
   beginFrame() {
     const gl = this.gl;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(this.clearColor.r, this.clearColor.g, this.clearColor.b, this.clearColor.a);
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
@@ -280,6 +283,15 @@ export class GpuWebGL2 {
   }
   supportsSpriteBatch() {
     return true;
+  }
+
+  // Set the background clear color
+  setClearColor(color) {
+    // Convert hex color to RGBA floats
+    const r = ((color >> 16) & 0xff) / 255;
+    const g = ((color >> 8) & 0xff) / 255;
+    const b = (color & 0xff) / 255;
+    this.clearColor = { r, g, b, a: 1.0 };
   }
 
   updateTextureForImage(img) {

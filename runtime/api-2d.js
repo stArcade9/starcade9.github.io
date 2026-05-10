@@ -442,9 +442,10 @@ export function api2d(gpu) {
 
   // ── Text helpers ─────────────────────────────────────────────────────────────
 
-  // We reach into the gpu's exposed stdApi print via globalThis
+  // Use the grouped namespace's draw.print (NOT globalThis.print, which is window.print).
   function _print(text, x, y, color, scale) {
-    if (typeof globalThis.print === 'function') globalThis.print(text, x, y, color, scale);
+    const fn = globalThis.nova64?.draw?.print;
+    if (typeof fn === 'function') fn(text, x, y, color, scale);
   }
 
   function measureText(text, scale = 1) {
@@ -1018,9 +1019,11 @@ export function api2d(gpu) {
     const texts = system.getTexts();
     for (const t of texts) {
       const alpha = Math.min(255, Math.floor((t.timer / t.maxTimer) * 255));
-      const r = (t.color >> 16) & 0xff;
-      const g = (t.color >> 8) & 0xff;
-      const b = t.color & 0xff;
+      // Convert BigInt to Number if needed (some carts may pass BigInt colors)
+      const color = typeof t.color === 'bigint' ? Number(t.color) : (t.color ?? 0xffffff);
+      const r = (color >> 16) & 0xff;
+      const g = (color >> 8) & 0xff;
+      const b = color & 0xff;
       _print(t.text, (t.x + offsetX) | 0, (t.y + offsetY) | 0, rgba8(r, g, b, alpha), t.scale);
     }
   }
@@ -1036,9 +1039,11 @@ export function api2d(gpu) {
     for (const t of texts) {
       const [sx, sy] = projectFn(t.x, t.y, t.z ?? 0);
       const alpha = Math.min(255, Math.floor((t.timer / t.maxTimer) * 255));
-      const r = (t.color >> 16) & 0xff;
-      const g = (t.color >> 8) & 0xff;
-      const b = t.color & 0xff;
+      // Convert BigInt to Number if needed (some carts may pass BigInt colors)
+      const color = typeof t.color === 'bigint' ? Number(t.color) : (t.color ?? 0xffffff);
+      const r = (color >> 16) & 0xff;
+      const g = (color >> 8) & 0xff;
+      const b = color & 0xff;
       _print(t.text, sx | 0, sy | 0, rgba8(r, g, b, alpha), t.scale);
     }
   }

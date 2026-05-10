@@ -252,20 +252,17 @@ export class DebugPanel {
     grid.appendChild(this._el('span', { text: 'Pos', css: 'color:#888;' }));
     grid.appendChild(
       this._numInput(p.x, v => {
-        if (typeof globalThis.setCameraPosition === 'function')
-          globalThis.setCameraPosition(v, p.y, p.z);
+        globalThis.nova64?.camera?.setCameraPosition?.(v, p.y, p.z);
       })
     );
     grid.appendChild(
       this._numInput(p.y, v => {
-        if (typeof globalThis.setCameraPosition === 'function')
-          globalThis.setCameraPosition(p.x, v, p.z);
+        globalThis.nova64?.camera?.setCameraPosition?.(p.x, v, p.z);
       })
     );
     grid.appendChild(
       this._numInput(p.z, v => {
-        if (typeof globalThis.setCameraPosition === 'function')
-          globalThis.setCameraPosition(p.x, p.y, v);
+        globalThis.nova64?.camera?.setCameraPosition?.(p.x, p.y, v);
       })
     );
 
@@ -273,27 +270,24 @@ export class DebugPanel {
       grid.appendChild(this._el('span', { text: 'Tgt', css: 'color:#888;' }));
       grid.appendChild(
         this._numInput(t.x, v => {
-          if (typeof globalThis.setCameraTarget === 'function')
-            globalThis.setCameraTarget(v, t.y, t.z);
+          globalThis.nova64?.camera?.setCameraTarget?.(v, t.y, t.z);
         })
       );
       grid.appendChild(
         this._numInput(t.y, v => {
-          if (typeof globalThis.setCameraTarget === 'function')
-            globalThis.setCameraTarget(t.x, v, t.z);
+          globalThis.nova64?.camera?.setCameraTarget?.(t.x, v, t.z);
         })
       );
       grid.appendChild(
         this._numInput(t.z, v => {
-          if (typeof globalThis.setCameraTarget === 'function')
-            globalThis.setCameraTarget(t.x, t.y, v);
+          globalThis.nova64?.camera?.setCameraTarget?.(t.x, t.y, v);
         })
       );
     }
 
     grid.appendChild(this._el('span', { text: 'FOV', css: 'color:#888;' }));
     const fovInput = this._numInput(cam.fov, v => {
-      if (typeof globalThis.setCameraFOV === 'function') globalThis.setCameraFOV(v);
+      globalThis.nova64?.camera?.setCameraFOV?.(v);
     });
     fovInput.style.gridColumn = 'span 3';
     grid.appendChild(fovInput);
@@ -718,6 +712,23 @@ export class DebugPanel {
       error: console.error.bind(console),
     };
     const self = this;
+    const formatArg = value => {
+      if (typeof value === 'bigint') return `${value.toString()}n`;
+      if (typeof value !== 'object' || value === null) return String(value);
+      const seen = new WeakSet();
+      try {
+        return JSON.stringify(value, (_key, nested) => {
+          if (typeof nested === 'bigint') return `${nested.toString()}n`;
+          if (typeof nested === 'object' && nested !== null) {
+            if (seen.has(nested)) return '[Circular]';
+            seen.add(nested);
+          }
+          return nested;
+        });
+      } catch {
+        return String(value);
+      }
+    };
 
     const capture = (level, origFn) =>
       function (...args) {
@@ -726,7 +737,7 @@ export class DebugPanel {
         if (typeof args[0] === 'string' && args[0].includes('[Nova64 Debug]')) return;
         self._logHistory.push({
           level,
-          text: args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '),
+          text: args.map(formatArg).join(' '),
           ts: Date.now(),
         });
         if (self._logHistory.length > self._maxLogs) self._logHistory.shift();

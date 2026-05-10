@@ -247,16 +247,16 @@ function _buildCommonMethods(state, isNova) {
       state.done = true;
       if (isNova) _activeTweens.delete(this);
       // Use globalThis to unregister from hype without importing hype.js
-      globalThis.hypeUnregister?.(this);
+      (globalThis.hypeUnregister ?? globalThis.nova64?.tween?.hypeUnregister)?.(this);
       return this;
     },
 
     register() {
-      globalThis.hypeRegister?.(this);
+      (globalThis.hypeRegister ?? globalThis.nova64?.tween?.hypeRegister)?.(this);
       return this;
     },
     unregister() {
-      globalThis.hypeUnregister?.(this);
+      (globalThis.hypeUnregister ?? globalThis.nova64?.tween?.hypeUnregister)?.(this);
       return this;
     },
   };
@@ -453,7 +453,7 @@ function _createHypeTween(opts) {
   };
 
   const tw = _buildCommonMethods(state, false);
-  if (opts.autoReg) globalThis.hypeRegister?.(tw);
+  if (opts.autoReg) (globalThis.hypeRegister ?? globalThis.nova64?.tween?.hypeRegister)?.(tw);
   return tw;
 }
 

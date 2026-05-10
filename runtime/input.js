@@ -39,7 +39,8 @@ class Input {
   constructor() {
     this.keys = new Map();
     this.prev = new Map();
-    this.mouse = { x: 0, y: 0, down: false, prevDown: false };
+    this.justPressedKeys = new Set();
+    this.mouse = { x: 0, y: 0, down: false, prevDown: false, pressed: false };
     this.uiCallbacks = { setMousePosition: null, setMouseButton: null };
 
     // Gamepad state
@@ -50,44 +51,73 @@ class Input {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', e => {
-        this.keys.set(e.code, true);
+        this.setKeyState(e.code, true);
       });
       window.addEventListener('keyup', e => {
-        this.keys.set(e.code, false);
+        this.setKeyState(e.code, false);
       });
       window.addEventListener('blur', () => {
         this.keys.clear();
-      });
-
-      // Mouse event listeners
-      window.addEventListener('mousemove', e => {
-        const canvas = document.querySelector('canvas');
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect();
-          // Scale mouse position to Nova64's 640x360 resolution
-          this.mouse.x = Math.floor(((e.clientX - rect.left) / rect.width) * 640);
-          this.mouse.y = Math.floor(((e.clientY - rect.top) / rect.height) * 360);
-
-          // Update UI system if connected
-          if (this.uiCallbacks.setMousePosition) {
-            this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
-          }
-        }
-      });
-
-      window.addEventListener('mousedown', _e => {
-        this.mouse.down = true;
-        if (this.uiCallbacks.setMouseButton) {
-          this.uiCallbacks.setMouseButton(true);
-        }
-      });
-
-      window.addEventListener('mouseup', _e => {
+        this.justPressedKeys.clear();
         this.mouse.down = false;
-        if (this.uiCallbacks.setMouseButton) {
-          this.uiCallbacks.setMouseButton(false);
-        }
+        this.mouse.pressed = false;
       });
+
+      if (typeof window.PointerEvent === 'function') {
+        // Capture pointer events before renderer-level handlers can swallow them.
+        window.addEventListener(
+          'pointermove',
+          e => {
+            if (e.pointerType === 'touch') return;
+            this.updateMousePosition(e.clientX, e.clientY);
+          },
+          true
+        );
+
+        window.addEventListener(
+          'pointerdown',
+          e => {
+            if (e.pointerType === 'touch') return;
+            this.updateMousePosition(e.clientX, e.clientY);
+            this.setMouseDown(true);
+          },
+          true
+        );
+
+        window.addEventListener(
+          'pointerup',
+          e => {
+            if (e.pointerType === 'touch') return;
+            this.updateMousePosition(e.clientX, e.clientY);
+            this.setMouseDown(false);
+          },
+          true
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          e => {
+            if (e.pointerType === 'touch') return;
+            this.setMouseDown(false);
+          },
+          true
+        );
+      } else {
+        // Mouse event listeners for older browsers without PointerEvent support.
+        window.addEventListener('mousemove', e => {
+          this.updateMousePosition(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousedown', e => {
+          this.updateMousePosition(e.clientX, e.clientY);
+          this.setMouseDown(true);
+        });
+
+        window.addEventListener('mouseup', e => {
+          this.updateMousePosition(e.clientX, e.clientY);
+          this.setMouseDown(false);
+        });
+      }
 
       // Touch event listeners — map touch to mouse state + Space key for canvas taps
       this._touchActive = false;
@@ -100,21 +130,12 @@ class Input {
         e.preventDefault();
 
         const touch = e.changedTouches[0];
-        const rect = canvas.getBoundingClientRect();
-        this.mouse.x = Math.floor(((touch.clientX - rect.left) / rect.width) * 640);
-        this.mouse.y = Math.floor(((touch.clientY - rect.top) / rect.height) * 360);
-        this.mouse.down = true;
+        this.updateMousePosition(touch.clientX, touch.clientY);
+        this.setMouseDown(true);
         this._touchActive = true;
 
-        if (this.uiCallbacks.setMousePosition) {
-          this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
-        }
-        if (this.uiCallbacks.setMouseButton) {
-          this.uiCallbacks.setMouseButton(true);
-        }
-
         // Tap on canvas also triggers Space key so "press space to start" works on mobile
-        this.keys.set('Space', true);
+        this.setKeyState('Space', true);
       };
 
       const handleTouchMove = e => {
@@ -124,27 +145,17 @@ class Input {
         e.preventDefault();
 
         const touch = e.changedTouches[0];
-        const rect = canvas.getBoundingClientRect();
-        this.mouse.x = Math.floor(((touch.clientX - rect.left) / rect.width) * 640);
-        this.mouse.y = Math.floor(((touch.clientY - rect.top) / rect.height) * 360);
-
-        if (this.uiCallbacks.setMousePosition) {
-          this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
-        }
+        this.updateMousePosition(touch.clientX, touch.clientY);
       };
 
       const handleTouchEnd = e => {
         if (!this._touchActive) return;
         e.preventDefault();
-        this.mouse.down = false;
+        this.setMouseDown(false);
         this._touchActive = false;
 
-        if (this.uiCallbacks.setMouseButton) {
-          this.uiCallbacks.setMouseButton(false);
-        }
-
         // Release the synthetic Space key
-        this.keys.set('Space', false);
+        this.setKeyState('Space', false);
       };
 
       window.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -161,6 +172,36 @@ class Input {
         this.gamepadButtons.clear();
         this.gamepadPrev.clear();
       });
+    }
+  }
+
+  setKeyState(code, down) {
+    if (down && !this.keys.get(code)) {
+      this.justPressedKeys.add(code);
+    }
+    this.keys.set(code, down);
+  }
+
+  updateMousePosition(clientX, clientY) {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    this.mouse.x = Math.floor(((clientX - rect.left) / rect.width) * 640);
+    this.mouse.y = Math.floor(((clientY - rect.top) / rect.height) * 360);
+
+    if (this.uiCallbacks.setMousePosition) {
+      this.uiCallbacks.setMousePosition(this.mouse.x, this.mouse.y);
+    }
+  }
+
+  setMouseDown(down) {
+    if (down && !this.mouse.down) {
+      this.mouse.pressed = true;
+    }
+    this.mouse.down = down;
+
+    if (this.uiCallbacks.setMouseButton) {
+      this.uiCallbacks.setMouseButton(down);
     }
   }
 
@@ -196,9 +237,35 @@ class Input {
     this.uiCallbacks.setMousePosition = setMousePosition;
     this.uiCallbacks.setMouseButton = setMouseButton;
   }
+  reset() {
+    this.keys.clear();
+    this.prev.clear();
+    this.justPressedKeys.clear();
+    this.mouse.x = 0;
+    this.mouse.y = 0;
+    this.mouse.down = false;
+    this.mouse.prevDown = false;
+    this.mouse.pressed = false;
+    this.gamepadButtons.clear();
+    this.gamepadPrev.clear();
+    this.gamepadAxes.leftX = 0;
+    this.gamepadAxes.leftY = 0;
+    this.gamepadAxes.rightX = 0;
+    this.gamepadAxes.rightY = 0;
+    this._touchActive = false;
+
+    if (this.uiCallbacks.setMousePosition) {
+      this.uiCallbacks.setMousePosition(0, 0);
+    }
+    if (this.uiCallbacks.setMouseButton) {
+      this.uiCallbacks.setMouseButton(false);
+    }
+  }
   step() {
     this.prev = new Map(this.keys);
     this.mouse.prevDown = this.mouse.down;
+    this.mouse.pressed = false;
+    this.justPressedKeys.clear();
     this.gamepadPrev = new Map(this.gamepadButtons);
     this.pollGamepad(); // Poll gamepad state every frame
   }
@@ -208,7 +275,8 @@ class Input {
   }
   btnp(i) {
     const code = KEYMAP[i | 0] || '';
-    const keyPressed = !!this.keys.get(code) && !this.prev.get(code);
+    const keyPressed =
+      this.justPressedKeys.has(code) || (!!this.keys.get(code) && !this.prev.get(code));
     const gamepadPressed = !!this.gamepadButtons.get(i | 0) && !this.gamepadPrev.get(i | 0);
     return keyPressed || gamepadPressed;
   }
@@ -216,7 +284,7 @@ class Input {
     return !!this.keys.get(code);
   } // Direct key code checking — is currently held
   keyp(code) {
-    return !!this.keys.get(code) && !this.prev.get(code);
+    return this.justPressedKeys.has(code) || (!!this.keys.get(code) && !this.prev.get(code));
   } // just-pressed this frame
 
   // Gamepad-specific functions
@@ -247,7 +315,9 @@ class Input {
     if (keyCode.length === 1) {
       keyCode = 'Key' + keyCode.toUpperCase();
     }
-    return !!this.keys.get(keyCode) && !this.prev.get(keyCode);
+    return (
+      this.justPressedKeys.has(keyCode) || (!!this.keys.get(keyCode) && !this.prev.get(keyCode))
+    );
   }
 }
 
@@ -267,7 +337,7 @@ export function inputApi() {
         mouseX: () => input.mouse.x,
         mouseY: () => input.mouse.y,
         mouseDown: () => input.mouse.down,
-        mousePressed: () => input.mouse.down && !input.mouse.prevDown,
+        mousePressed: () => input.mouse.pressed || (input.mouse.down && !input.mouse.prevDown),
         // Gamepad functions
         gamepadAxis: axisName => input.getGamepadAxis(axisName),
         gamepadConnected: () => input.isGamepadConnected(),
@@ -283,6 +353,9 @@ export function inputApi() {
     },
     connectUI(setMousePosition, setMouseButton) {
       input.connectUI(setMousePosition, setMouseButton);
+    },
+    reset() {
+      input.reset();
     },
   };
 }

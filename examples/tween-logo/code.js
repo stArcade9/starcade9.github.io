@@ -2,6 +2,10 @@
 // Shows: createTween (nova-style on stage nodes), easeInOutBack stagger,
 //        easeOutElastic, chain tweens with onComplete, screen flash
 
+const { cls, line, print, printCentered, pset, rectfill, screenHeight, screenWidth } = nova64.draw;
+const { Screen, addChild, createContainer, createGraphicsNode, drawStage, grid } = nova64.ui;
+const { createTween, updateTweens } = nova64.tween;
+
 let W = 640,
   H = 360;
 
@@ -16,15 +20,15 @@ let phase = 0; // 0=in, 1=idle, 2=out
 let phaseTimer = 0;
 
 export function init() {
-  W = typeof screenWidth === 'function' ? screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? screenHeight() : 360;
-  root = createContainer();
+  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  root = nova64.ui.createContainer();
 
   const totalW = LETTERS.length * 44;
   const startX = (W - totalW) / 2 + 20;
 
   LETTERS.forEach((ch, i) => {
-    const node = createGraphicsNode((ctx, n) => {
+    const node = nova64.ui.createGraphicsNode((ctx, n) => {
       ctx.save();
       ctx.globalAlpha = n.alpha;
       ctx.translate(n.x, n.y);
@@ -53,7 +57,7 @@ export function init() {
     node.scaleX = 0.1;
     node.scaleY = 0.1;
 
-    addChild(root, node);
+    nova64.ui.addChild(root, node);
     nodes.push(node);
   });
 
@@ -61,7 +65,7 @@ export function init() {
   nodes.forEach((node, i) => {
     setTimeout(
       () => {
-        createTween(node, { alpha: 1, scaleX: 1, scaleY: 1 }, 0.65, {
+        nova64.tween.createTween(node, { alpha: 1, scaleX: 1, scaleY: 1 }, 0.65, {
           ease: 'easeOutElastic',
         });
         if (i === nodes.length - 1) {
@@ -79,7 +83,7 @@ export function init() {
 export function update(dt) {
   time += dt;
   phaseTimer += dt;
-  updateTweens(dt);
+  nova64.tween.updateTweens(dt);
 
   // Decay screen flash
   flashAlpha = Math.max(0, flashAlpha - dt * 3.5);
@@ -90,7 +94,7 @@ export function update(dt) {
     // Fly all letters off-screen then reset
     nodes.forEach((node, i) => {
       setTimeout(() => {
-        createTween(node, { y: -60, alpha: 0 }, 0.45, { ease: 'easeInBack' });
+        nova64.tween.createTween(node, { y: -60, alpha: 0 }, 0.45, { ease: 'easeInBack' });
       }, i * 60);
     });
     setTimeout(
@@ -104,7 +108,7 @@ export function update(dt) {
           node.scaleX = 0.1;
           node.scaleY = 0.1;
           setTimeout(() => {
-            createTween(node, { alpha: 1, y: H / 2 - 20, scaleX: 1, scaleY: 1 }, 0.6, {
+            nova64.tween.createTween(node, { alpha: 1, y: H / 2 - 20, scaleX: 1, scaleY: 1 }, 0.6, {
               ease: 'easeOutElastic',
             });
           }, i * 100);
@@ -116,7 +120,7 @@ export function update(dt) {
 }
 
 export function draw() {
-  cls(0x08080f);
+  nova64.draw.cls(0x08080f);
 
   // Starfield
   for (let i = 0; i < 60; i++) {
@@ -124,19 +128,19 @@ export function draw() {
     const sy = (i * 91 + 3) % H;
     const b = 0.4 + 0.6 * Math.abs(Math.sin(time * 1.8 + i * 0.7));
     const c = Math.floor(b * 200);
-    pset(sx, sy, (c << 16) | (c << 8) | c);
+    nova64.draw.pset(sx, sy, (c << 16) | (c << 8) | c);
   }
 
   // Subtle grid lines
-  for (let x = 0; x < W; x += 32) line(x, 0, x, H, 0x111122);
-  for (let y = 0; y < H; y += 32) line(0, y, W, y, 0x111122);
+  for (let x = 0; x < W; x += 32) nova64.draw.line(x, 0, x, H, 0x111122);
+  for (let y = 0; y < H; y += 32) nova64.draw.line(0, y, W, y, 0x111122);
 
-  drawStage(root);
+  nova64.ui.drawStage(root);
 
   // Screen flash
   if (flashAlpha > 0) {
     const a = Math.floor(flashAlpha * 255);
-    rectfill(0, 0, W, H, (a << 24) | 0xffffff);
+    nova64.draw.rectfill(0, 0, W, H, (a << 24) | 0xffffff);
   }
 
   // Tagline — fades in after reveal
@@ -144,9 +148,9 @@ export function draw() {
   if (tAlpha > 0.5) {
     const ta = Math.floor((tAlpha - 0.5) * 2 * 200);
     const col = (ta << 16) | (ta << 8) | ta;
-    printCentered('ULTIMATE  3D  FANTASY  CONSOLE', H / 2 + 20, col);
+    nova64.draw.printCentered('ULTIMATE  3D  FANTASY  CONSOLE', H / 2 + 20, col);
   }
 
-  print('TWEEN LOGO', 4, 4, 0xffffff);
-  print('Nova-style createTween • easeOutElastic • stagger', 4, H - 12, 0x778899);
+  nova64.draw.print('TWEEN LOGO', 4, 4, 0xffffff);
+  nova64.draw.print('Nova-style createTween • easeOutElastic • stagger', 4, H - 12, 0x778899);
 }

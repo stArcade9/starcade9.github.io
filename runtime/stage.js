@@ -35,8 +35,11 @@ function _baseNode(type) {
     children: [],
   };
   // Tween helpers — delegates to the unified createTween in tween.js via globalThis
-  node.tweenTo = (props, dur, opts = {}) => globalThis.createTween?.(node, props, dur, opts);
-  node.killTweens = () => globalThis.killTweensOf?.(node);
+  node.tweenTo = (props, dur, opts = {}) =>
+    globalThis.createTween?.(node, props, dur, opts) ??
+    globalThis.nova64?.tween?.createTween?.(node, props, dur, opts);
+  node.killTweens = () =>
+    globalThis.killTweensOf?.(node) ?? globalThis.nova64?.tween?.killTweensOf?.(node);
   return node;
 }
 

@@ -318,17 +318,50 @@ export class WADTextureManager {
 }
 
 // Apply wall texture UVs to a mesh geometry for correct tiling
+function getMeshTexture(mesh) {
+  const materials = Array.isArray(mesh?.material) ? mesh.material : [mesh?.material];
+  for (const material of materials) {
+    if (!material) continue;
+    if (material.map) return material.map;
+    if (material.diffuseTexture) return material.diffuseTexture;
+    if (material.albedoTexture) return material.albedoTexture;
+  }
+  return null;
+}
+
+function applyTextureOffsets(texture, ofsU, ofsV) {
+  if (!texture) return;
+  if (texture.offset?.set) {
+    texture.offset.set(ofsU, ofsV);
+  } else {
+    if ('uOffset' in texture) texture.uOffset = ofsU;
+    if ('vOffset' in texture) texture.vOffset = ofsV;
+  }
+  try {
+    engine.invalidateTexture(texture);
+  } catch {
+    // Offset changes are runtime metadata on some backends.
+  }
+}
+
 export function setWallUVs(meshId, wallDoomLen, wallDoomH, texWidth, texHeight, xoff, yoff) {
   const mesh = getMesh(meshId);
-  if (!mesh || !mesh.geometry) return;
+  if (!mesh || !texWidth || !texHeight) return;
 
-  const uvAttr = mesh.geometry.attributes.uv;
-  if (!uvAttr) return;
+  const uvAttr = mesh.geometry?.attributes?.uv ?? mesh.geometry?.getAttribute?.('uv');
 
   const tileU = wallDoomLen / texWidth;
   const tileV = wallDoomH / texHeight;
   const ofsU = (xoff || 0) / texWidth;
   const ofsV = (yoff || 0) / texHeight;
+
+  if (!uvAttr) {
+    const texture = getMeshTexture(mesh);
+    if (!texture) return;
+    engine.setTextureRepeat(texture, tileU, tileV);
+    applyTextureOffsets(texture, ofsU, ofsV);
+    return;
+  }
 
   // BoxGeometry face order: +x(0-3), -x(4-7), +y(8-11), -y(12-15), +z(16-19), -z(20-23)
   // Main visible faces are +z (front) and -z (back)

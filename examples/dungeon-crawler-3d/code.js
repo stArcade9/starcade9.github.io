@@ -2,6 +2,48 @@
 // Procedurally generated dungeons with themed floors, boss fights, traps,
 // particle effects, screen shake, and atmospheric lighting.
 
+const {
+  createMinimap,
+  drawFloatingTexts3D,
+  drawGlowText,
+  drawHealthBar,
+  drawMinimap,
+  drawPixelBorder,
+  drawProgressBar,
+  print,
+  printCentered,
+  rect,
+  rectfill,
+  rgba8,
+} = nova64.draw;
+const {
+  createCapsule,
+  createCone,
+  createCube,
+  createCylinder,
+  createSphere,
+  destroyMesh,
+  rotateMesh,
+  setPosition,
+  setScale,
+} = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { createPointLight, setAmbientLight, setFog, setLightColor, setLightDirection } =
+  nova64.light;
+const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
+const { btnp, key, keyp } = nova64.input;
+const { sfx } = nova64.audio;
+const { Screen } = nova64.ui;
+const {
+  createCooldown,
+  createFloatingTextSystem,
+  createShake,
+  triggerShake,
+  updateCooldown,
+  updateShake,
+  useCooldown,
+} = nova64.util;
+
 const TILE_SIZE = 2;
 const MAP_W = 30;
 const MAP_H = 30;
@@ -222,54 +264,57 @@ function createEnemyMesh(e) {
   const opts = { material: 'emissive', emissive: e.color };
   switch (e.shape) {
     case 'slime':
-      m = createSphere(0.45, e.color, [wx, 0.45, wz], 8, opts);
-      setScale(m, 1.2, 0.7, 1.2);
+      m = nova64.scene.createSphere(0.45, e.color, [wx, 0.45, wz], 8, opts);
+      nova64.scene.setScale(m, 1.2, 0.7, 1.2);
       break;
     case 'skeleton':
-      m = createCapsule(0.25, 0.9, e.color, [wx, 0.7, wz], opts);
+      m = nova64.scene.createCapsule(0.25, 0.9, e.color, [wx, 0.7, wz], opts);
       break;
     case 'demon':
-      m = createCone(0.4, 1.2, e.color, [wx, 0.6, wz], opts);
+      m = nova64.scene.createCone(0.4, 1.2, e.color, [wx, 0.6, wz], opts);
       break;
     case 'ghost':
-      m = createSphere(0.35, e.color, [wx, 0.8, wz], 8, {
+      m = nova64.scene.createSphere(0.35, e.color, [wx, 0.8, wz], 8, {
         material: 'emissive',
         emissive: e.color,
       });
       break;
     case 'lich':
-      m = createCylinder(0.15, 0.35, 1.2, e.color, [wx, 0.6, wz], opts);
+      m = nova64.scene.createCylinder(0.15, 0.35, 1.2, e.color, [wx, 0.6, wz], opts);
       break;
     case 'dragon':
-      m = createCube(0.9, e.color, [wx, 0.6, wz], opts);
-      setScale(m, 1.2, 0.8, 1.5);
+      m = nova64.scene.createCube(0.9, e.color, [wx, 0.6, wz], opts);
+      nova64.scene.setScale(m, 1.2, 0.8, 1.5);
       break;
     case 'boss':
-      m = createCube(1.2, e.color, [wx, 0.9, wz], { material: 'emissive', emissive: e.color });
-      setScale(m, 1.5, 1.5, 1.5);
+      m = nova64.scene.createCube(1.2, e.color, [wx, 0.9, wz], {
+        material: 'emissive',
+        emissive: e.color,
+      });
+      nova64.scene.setScale(m, 1.5, 1.5, 1.5);
       break;
     default:
-      m = createSphere(0.4, e.color, [wx, 0.5, wz], 8, opts);
+      m = nova64.scene.createSphere(0.4, e.color, [wx, 0.5, wz], 8, opts);
   }
   return m;
 }
 
 // ── Dungeon generation ──────────────────────────────────────────────────────
 function generateDungeon() {
-  for (const m of mapMeshes) destroyMesh(m);
+  for (const m of mapMeshes) nova64.scene.destroyMesh(m);
   mapMeshes = [];
-  for (const [, m] of enemyMeshes) destroyMesh(m);
+  for (const [, m] of enemyMeshes) nova64.scene.destroyMesh(m);
   enemyMeshes.clear();
-  for (const [, m] of itemMeshes) destroyMesh(m);
+  for (const [, m] of itemMeshes) nova64.scene.destroyMesh(m);
   itemMeshes.clear();
-  for (const l of torchLights) destroyMesh(l);
+  for (const l of torchLights) nova64.scene.destroyMesh(l);
   torchLights = [];
   if (heroMesh) {
-    destroyMesh(heroMesh);
+    nova64.scene.destroyMesh(heroMesh);
     heroMesh = null;
   }
   if (heroGlow) {
-    destroyMesh(heroGlow);
+    nova64.scene.destroyMesh(heroGlow);
     heroGlow = null;
   }
 
@@ -457,12 +502,12 @@ function revealAround(cx, cy, radius) {
 function buildMapMeshes() {
   const theme = getTheme();
 
-  setAmbientLight(theme.ambient, 0.12);
-  setLightDirection(0, -1, 0.2);
-  setLightColor(theme.accent);
-  setFog(theme.fog, 4, 20);
-  enableBloom(0.6, 0.3, 0.4);
-  enableVignette(1.2, 0.9);
+  nova64.light.setAmbientLight(theme.ambient, 0.12);
+  nova64.light.setLightDirection(0, -1, 0.2);
+  nova64.light.setLightColor(theme.accent);
+  nova64.light.setFog(theme.fog, 4, 20);
+  nova64.fx.enableBloom(0.6, 0.3, 0.4);
+  nova64.fx.enableVignette(1.2, 0.9);
 
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
@@ -488,19 +533,36 @@ function buildMapMeshes() {
           }
         }
         if (adjacent) {
-          const wallMesh = createCube(TILE_SIZE, theme.wall, [wx, TILE_SIZE * 0.75, wz], {
-            material: 'standard',
-            roughness: 0.9,
-          });
-          setScale(wallMesh, 1, 1.5, 1);
+          const wallMesh = nova64.scene.createCube(
+            TILE_SIZE,
+            theme.wall,
+            [wx, TILE_SIZE * 0.75, wz],
+            {
+              material: 'standard',
+              roughness: 0.9,
+            }
+          );
+          nova64.scene.setScale(wallMesh, 1, 1.5, 1);
           mapMeshes.push(wallMesh);
           if (tile === TILE.TORCH) {
-            const torchMesh = createCube(0.15, theme.torch, [wx, TILE_SIZE * 1.6, wz], {
-              material: 'emissive',
-              emissive: theme.torch,
-            });
+            const torchMesh = nova64.scene.createCube(
+              0.15,
+              theme.torch,
+              [wx, TILE_SIZE * 1.6, wz],
+              {
+                material: 'emissive',
+                emissive: theme.torch,
+              }
+            );
             mapMeshes.push(torchMesh);
-            const light = createPointLight(theme.torch, 1.5, 8, wx, TILE_SIZE * 1.6, wz);
+            const light = nova64.light.createPointLight(
+              theme.torch,
+              1.5,
+              8,
+              wx,
+              TILE_SIZE * 1.6,
+              wz
+            );
             torchLights.push(light);
           }
         }
@@ -510,56 +572,56 @@ function buildMapMeshes() {
         else if (tile === TILE.CHEST) floorColor = 0x886622;
         else if (tile === TILE.DOOR) floorColor = 0x553311;
 
-        const floorMesh = createCube(TILE_SIZE, floorColor, [wx, -0.1, wz], {
+        const floorMesh = nova64.scene.createCube(TILE_SIZE, floorColor, [wx, -0.1, wz], {
           material: 'standard',
           roughness: 1.0,
         });
-        setScale(floorMesh, 1, 0.1, 1);
+        nova64.scene.setScale(floorMesh, 1, 0.1, 1);
         mapMeshes.push(floorMesh);
 
         if (tile === TILE.STAIRS) {
-          const stairGlow = createCylinder(0.15, 0.15, 2.5, 0xffdd44, [wx, 1.25, wz], {
+          const stairGlow = nova64.scene.createCylinder(0.15, 0.15, 2.5, 0xffdd44, [wx, 1.25, wz], {
             material: 'emissive',
             emissive: 0xffdd44,
           });
           mapMeshes.push(stairGlow);
-          const sl = createPointLight(0xffdd44, 2, 8, wx, 2, wz);
+          const sl = nova64.light.createPointLight(0xffdd44, 2, 8, wx, 2, wz);
           torchLights.push(sl);
         }
 
         if (tile === TILE.CHEST) {
-          const chest = createCube(0.7, 0xcc8833, [wx, 0.35, wz], {
+          const chest = nova64.scene.createCube(0.7, 0xcc8833, [wx, 0.35, wz], {
             material: 'standard',
             roughness: 0.5,
           });
-          setScale(chest, 1, 0.7, 0.7);
+          nova64.scene.setScale(chest, 1, 0.7, 0.7);
           mapMeshes.push(chest);
-          const lid = createCube(0.7, 0xffcc44, [wx, 0.6, wz], {
+          const lid = nova64.scene.createCube(0.7, 0xffcc44, [wx, 0.6, wz], {
             material: 'emissive',
             emissive: 0xffcc44,
           });
-          setScale(lid, 1.05, 0.15, 0.75);
+          nova64.scene.setScale(lid, 1.05, 0.15, 0.75);
           mapMeshes.push(lid);
         }
 
         if (tile === TILE.DOOR) {
-          const doorL = createCube(0.2, 0x553311, [wx - 0.7, 0.7, wz], {
+          const doorL = nova64.scene.createCube(0.2, 0x553311, [wx - 0.7, 0.7, wz], {
             material: 'standard',
             roughness: 0.7,
           });
-          setScale(doorL, 1, 7, 1);
+          nova64.scene.setScale(doorL, 1, 7, 1);
           mapMeshes.push(doorL);
-          const doorR = createCube(0.2, 0x553311, [wx + 0.7, 0.7, wz], {
+          const doorR = nova64.scene.createCube(0.2, 0x553311, [wx + 0.7, 0.7, wz], {
             material: 'standard',
             roughness: 0.7,
           });
-          setScale(doorR, 1, 7, 1);
+          nova64.scene.setScale(doorR, 1, 7, 1);
           mapMeshes.push(doorR);
-          const doorTop = createCube(0.2, 0x664422, [wx, 1.5, wz], {
+          const doorTop = nova64.scene.createCube(0.2, 0x664422, [wx, 1.5, wz], {
             material: 'standard',
             roughness: 0.7,
           });
-          setScale(doorTop, 8, 1, 1);
+          nova64.scene.setScale(doorTop, 8, 1, 1);
           mapMeshes.push(doorTop);
         }
       }
@@ -567,11 +629,24 @@ function buildMapMeshes() {
   }
 
   // Hero
-  heroMesh = createCapsule(0.3, 0.8, 0x4488ff, [hero.x * TILE_SIZE, 0.7, hero.y * TILE_SIZE], {
-    material: 'standard',
-    roughness: 0.4,
-  });
-  heroGlow = createPointLight(0x4488ff, 1.0, 6, hero.x * TILE_SIZE, 1.5, hero.y * TILE_SIZE);
+  heroMesh = nova64.scene.createCapsule(
+    0.3,
+    0.8,
+    0x4488ff,
+    [hero.x * TILE_SIZE, 0.7, hero.y * TILE_SIZE],
+    {
+      material: 'standard',
+      roughness: 0.4,
+    }
+  );
+  heroGlow = nova64.light.createPointLight(
+    0x4488ff,
+    1.0,
+    6,
+    hero.x * TILE_SIZE,
+    1.5,
+    hero.y * TILE_SIZE
+  );
   torchLights.push(heroGlow);
 
   for (const e of enemies) enemyMeshes.set(e, createEnemyMesh(e));
@@ -580,14 +655,14 @@ function buildMapMeshes() {
     const color = item.type === 'gold' ? 0xffdd00 : 0xff4488;
     itemMeshes.set(
       item,
-      createSphere(0.2, color, [item.x * TILE_SIZE, 0.3, item.y * TILE_SIZE], 8, {
+      nova64.scene.createSphere(0.2, color, [item.x * TILE_SIZE, 0.3, item.y * TILE_SIZE], 8, {
         material: 'emissive',
         emissive: color,
       })
     );
   }
 
-  minimap = createMinimap({
+  minimap = nova64.draw.createMinimap({
     x: 540,
     y: 10,
     width: 90,
@@ -595,22 +670,22 @@ function buildMapMeshes() {
     shape: 'rect',
     worldW: MAP_W,
     worldH: MAP_H,
-    bgColor: rgba8(0, 0, 0, 200),
-    borderLight: rgba8(100, 100, 140, 255),
-    borderDark: rgba8(40, 40, 60, 255),
+    bgColor: nova64.draw.rgba8(0, 0, 0, 200),
+    borderLight: nova64.draw.rgba8(100, 100, 140, 255),
+    borderDark: nova64.draw.rgba8(40, 40, 60, 255),
     fogOfWar: 5,
     tiles: (tx, ty) => {
       if (!discoveredTiles[ty] || !discoveredTiles[ty][tx]) return null;
       const t = map[ty][tx];
-      if (t === TILE.WALL || t === TILE.TORCH) return rgba8(60, 60, 80);
-      if (t === TILE.STAIRS) return rgba8(255, 255, 100);
-      if (t === TILE.CHEST) return rgba8(200, 150, 50);
-      if (t === TILE.DOOR) return rgba8(100, 70, 30);
-      return rgba8(40, 40, 55);
+      if (t === TILE.WALL || t === TILE.TORCH) return nova64.draw.rgba8(60, 60, 80);
+      if (t === TILE.STAIRS) return nova64.draw.rgba8(255, 255, 100);
+      if (t === TILE.CHEST) return nova64.draw.rgba8(200, 150, 50);
+      if (t === TILE.DOOR) return nova64.draw.rgba8(100, 70, 30);
+      return nova64.draw.rgba8(40, 40, 55);
     },
     tileW: MAP_W,
     tileH: MAP_H,
-    player: { x: hero.x, y: hero.y, color: rgba8(80, 160, 255), blink: true },
+    player: { x: hero.x, y: hero.y, color: nova64.draw.rgba8(80, 160, 255), blink: true },
     entities: [],
   });
 }
@@ -631,7 +706,7 @@ function tryMove(dx, dy) {
     const dmg = rollDmg(hero, enemy);
     enemy.hp -= dmg;
     hero.totalDmg += dmg;
-    triggerShake(shake, enemy.isBoss ? 6 : 3);
+    nova64.util.triggerShake(shake, enemy.isBoss ? 6 : 3);
     screenFlash = 0.12;
     screenFlashColor = [255, 180, 50];
     addMessage(`Hit ${enemy.name} for ${dmg}!`, 0xffaa44);
@@ -640,17 +715,17 @@ function tryMove(dx, dy) {
       duration: 0.8,
       color: 0xff8844,
     });
-    sfx('hit');
+    nova64.audio.sfx('hit');
     if (enemy.hp <= 0) {
       enemy.alive = false;
       hero.xp += enemy.xp;
       hero.kills++;
       addMessage(`${enemy.name} slain! +${enemy.xp}XP`, enemy.isBoss ? 0xffdd44 : 0x44ff44);
       if (enemyMeshes.has(enemy)) {
-        destroyMesh(enemyMeshes.get(enemy));
+        nova64.scene.destroyMesh(enemyMeshes.get(enemy));
         enemyMeshes.delete(enemy);
       }
-      sfx('explosion');
+      nova64.audio.sfx('explosion');
       if (Math.random() < 0.35) {
         const drop = {
           x: nx,
@@ -663,7 +738,7 @@ function tryMove(dx, dy) {
         const color = drop.type === 'gold' ? 0xffdd00 : 0xff4488;
         itemMeshes.set(
           drop,
-          createSphere(0.2, color, [drop.x * TILE_SIZE, 0.3, drop.y * TILE_SIZE], 8, {
+          nova64.scene.createSphere(0.2, color, [drop.x * TILE_SIZE, 0.3, drop.y * TILE_SIZE], 8, {
             material: 'emissive',
             emissive: color,
           })
@@ -677,8 +752,8 @@ function tryMove(dx, dy) {
 
   hero.x = nx;
   hero.y = ny;
-  setPosition(heroMesh, nx * TILE_SIZE, 0.7, ny * TILE_SIZE);
-  setPosition(heroGlow, nx * TILE_SIZE, 1.5, ny * TILE_SIZE);
+  nova64.scene.setPosition(heroMesh, nx * TILE_SIZE, 0.7, ny * TILE_SIZE);
+  nova64.scene.setPosition(heroGlow, nx * TILE_SIZE, 1.5, ny * TILE_SIZE);
   revealAround(nx, ny, 4);
 
   for (const item of items) {
@@ -691,9 +766,9 @@ function tryMove(dx, dy) {
         hero.potions += item.amount;
         addMessage('+1 Potion', 0xff4488);
       }
-      sfx('coin');
+      nova64.audio.sfx('coin');
       if (itemMeshes.has(item)) {
-        destroyMesh(itemMeshes.get(item));
+        nova64.scene.destroyMesh(itemMeshes.get(item));
         itemMeshes.delete(item);
       }
     }
@@ -703,7 +778,7 @@ function tryMove(dx, dy) {
     const loot = Math.floor(Math.random() * 25 * floor) + 10;
     hero.gold += loot;
     addMessage(`Chest! +${loot} gold`, 0xffaa00);
-    sfx('coin');
+    nova64.audio.sfx('coin');
     map[ny][nx] = TILE.FLOOR;
     if (Math.random() < 0.35) {
       hero.weaponBonus++;
@@ -718,7 +793,7 @@ function tryMove(dx, dy) {
       hero.weapon = weapons[Math.min(hero.weaponBonus - 1, weapons.length - 1)];
       hero.atk += 2;
       addMessage(`Found ${hero.weapon}! ATK+2`, 0xff8844);
-      sfx('powerup');
+      nova64.audio.sfx('powerup');
       screenFlash = 0.2;
       screenFlashColor = [255, 200, 50];
     }
@@ -730,8 +805,8 @@ function tryMove(dx, dy) {
     addMessage(`TRAP! -${trapDmg} HP`, 0xff2222);
     screenFlash = 0.15;
     screenFlashColor = [255, 50, 50];
-    triggerShake(shake, 4);
-    sfx('hit');
+    nova64.util.triggerShake(shake, 4);
+    nova64.audio.sfx('hit');
     map[ny][nx] = TILE.FLOOR;
     if (hero.hp <= 0) {
       gameState = 'dead';
@@ -744,7 +819,7 @@ function tryMove(dx, dy) {
     floor++;
     addMessage(`Descending to Floor ${floor}...`, 0x8888ff);
     hero.hp = Math.min(hero.hp + 8, hero.maxHp);
-    sfx('powerup');
+    nova64.audio.sfx('powerup');
     generateDungeon();
     return;
   }
@@ -763,18 +838,18 @@ function enemyTurn() {
       hero.hp -= dmg;
       screenFlash = 0.1;
       screenFlashColor = [255, 50, 50];
-      triggerShake(shake, e.isBoss ? 5 : 2);
+      nova64.util.triggerShake(shake, e.isBoss ? 5 : 2);
       addMessage(`${e.name} hits you for ${dmg}!`, 0xff4444);
       floatingTexts.spawn(`-${dmg}`, hero.x * TILE_SIZE, 2.5, {
         z: hero.y * TILE_SIZE,
         duration: 0.8,
         color: 0xff4444,
       });
-      sfx('hit');
+      nova64.audio.sfx('hit');
       if (hero.hp <= 0) {
         gameState = 'dead';
         addMessage('You have been slain!', 0xff0000);
-        sfx('explosion');
+        nova64.audio.sfx('explosion');
       }
     } else if (dist < 10) {
       let mx = 0,
@@ -796,7 +871,12 @@ function enemyTurn() {
           e.x = enx;
           e.y = eny;
           if (enemyMeshes.has(e))
-            setPosition(enemyMeshes.get(e), e.x * TILE_SIZE, e.isBoss ? 0.9 : 0.5, e.y * TILE_SIZE);
+            nova64.scene.setPosition(
+              enemyMeshes.get(e),
+              e.x * TILE_SIZE,
+              e.isBoss ? 0.9 : 0.5,
+              e.y * TILE_SIZE
+            );
         }
       }
     }
@@ -815,7 +895,7 @@ function checkLevelUp() {
     addMessage(`LEVEL UP! Lv.${hero.level}!`, 0xffff00);
     screenFlash = 0.3;
     screenFlashColor = [255, 255, 100];
-    sfx('powerup');
+    nova64.audio.sfx('powerup');
   }
 }
 
@@ -832,7 +912,7 @@ function usePotion() {
     addMessage(`Healed ${heal} HP!`, 0xff88ff);
     screenFlash = 0.1;
     screenFlashColor = [100, 255, 150];
-    sfx('powerup');
+    nova64.audio.sfx('powerup');
     enemyTurn();
   }
 }
@@ -858,9 +938,9 @@ export function init() {
   };
   floor = 1;
   messages = [];
-  floatingTexts = createFloatingTextSystem();
-  shake = createShake({ decay: 0.85, maxMag: 8 });
-  potionCd = createCooldown(0.5);
+  floatingTexts = nova64.util.createFloatingTextSystem();
+  shake = nova64.util.createShake({ decay: 0.85, maxMag: 8 });
+  potionCd = nova64.util.createCooldown(0.5);
   enemies = [];
   items = [];
   mapMeshes = [];
@@ -868,27 +948,27 @@ export function init() {
   time = 0;
   gameState = 'start';
 
-  enableFXAA();
+  nova64.fx.enableFXAA();
   generateDungeon();
 }
 
 // ── Update ──────────────────────────────────────────────────────────────────
 export function update(dt) {
   time += dt;
-  updateShake(shake, dt);
-  updateCooldown(potionCd, dt);
+  nova64.util.updateShake(shake, dt);
+  nova64.util.updateCooldown(potionCd, dt);
 
   if (gameState === 'start') {
-    if (keyp('Space') || keyp('Enter') || btnp(13)) {
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter') || nova64.input.btnp(13)) {
       gameState = 'playing';
-      sfx('confirm');
+      nova64.audio.sfx('confirm');
     }
     updateCamera(dt);
     return;
   }
 
   if (gameState === 'dead') {
-    if (keyp('Space') || keyp('Enter') || btnp(13)) init();
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter') || nova64.input.btnp(13)) init();
     return;
   }
 
@@ -896,25 +976,42 @@ export function update(dt) {
   if (moveTimer <= 0) {
     let moved = false;
     const held = moveTimer < -0.3;
-    if (keyp('ArrowUp') || keyp('KeyW') || (held && (key('ArrowUp') || key('KeyW')))) {
+    if (
+      nova64.input.keyp('ArrowUp') ||
+      nova64.input.keyp('KeyW') ||
+      (held && (nova64.input.key('ArrowUp') || nova64.input.key('KeyW')))
+    ) {
       tryMove(0, -1);
       moved = true;
-    } else if (keyp('ArrowDown') || keyp('KeyS') || (held && (key('ArrowDown') || key('KeyS')))) {
+    } else if (
+      nova64.input.keyp('ArrowDown') ||
+      nova64.input.keyp('KeyS') ||
+      (held && (nova64.input.key('ArrowDown') || nova64.input.key('KeyS')))
+    ) {
       tryMove(0, 1);
       moved = true;
-    } else if (keyp('ArrowLeft') || keyp('KeyA') || (held && (key('ArrowLeft') || key('KeyA')))) {
+    } else if (
+      nova64.input.keyp('ArrowLeft') ||
+      nova64.input.keyp('KeyA') ||
+      (held && (nova64.input.key('ArrowLeft') || nova64.input.key('KeyA')))
+    ) {
       tryMove(-1, 0);
       moved = true;
-    } else if (keyp('ArrowRight') || keyp('KeyD') || (held && (key('ArrowRight') || key('KeyD')))) {
+    } else if (
+      nova64.input.keyp('ArrowRight') ||
+      nova64.input.keyp('KeyD') ||
+      (held && (nova64.input.key('ArrowRight') || nova64.input.key('KeyD')))
+    ) {
       tryMove(1, 0);
       moved = true;
     }
     if (moved) moveTimer = MOVE_DELAY;
   }
 
-  if ((keyp('KeyP') || keyp('KeyQ')) && useCooldown(potionCd)) usePotion();
+  if ((nova64.input.keyp('KeyP') || nova64.input.keyp('KeyQ')) && nova64.util.useCooldown(potionCd))
+    usePotion();
 
-  if (keyp('Space')) {
+  if (nova64.input.keyp('Space')) {
     enemyTurn();
     addMessage('Waiting...', 0x888899);
   }
@@ -930,14 +1027,19 @@ export function update(dt) {
     const mesh = enemyMeshes.get(e);
     if (mesh) {
       const bob = Math.sin(time * 3 + e.x * 2 + e.y * 3) * 0.12;
-      setPosition(mesh, e.x * TILE_SIZE, (e.isBoss ? 0.9 : 0.5) + bob, e.y * TILE_SIZE);
-      rotateMesh(mesh, 0, dt * (e.isBoss ? 0.5 : 1.5), 0);
+      nova64.scene.setPosition(
+        mesh,
+        e.x * TILE_SIZE,
+        (e.isBoss ? 0.9 : 0.5) + bob,
+        e.y * TILE_SIZE
+      );
+      nova64.scene.rotateMesh(mesh, 0, dt * (e.isBoss ? 0.5 : 1.5), 0);
     }
   }
 
   if (heroMesh) {
     const bob = Math.sin(time * 4) * 0.04;
-    setPosition(heroMesh, hero.x * TILE_SIZE, 0.7 + bob, hero.y * TILE_SIZE);
+    nova64.scene.setPosition(heroMesh, hero.x * TILE_SIZE, 0.7 + bob, hero.y * TILE_SIZE);
   }
 
   if (minimap) {
@@ -948,7 +1050,7 @@ export function update(dt) {
       .map(e => ({
         x: e.x,
         y: e.y,
-        color: e.isBoss ? rgba8(255, 220, 50) : rgba8(255, 60, 60),
+        color: e.isBoss ? nova64.draw.rgba8(255, 220, 50) : nova64.draw.rgba8(255, 60, 60),
         size: e.isBoss ? 3 : 2,
       }));
   }
@@ -963,8 +1065,12 @@ function updateCamera(dt) {
   camCurrent.y += (tz - camCurrent.y) * 0.12;
   const sx = shake.offsetX || 0;
   const sy = shake.offsetY || 0;
-  setCameraPosition(camCurrent.x + 1.5 + sx * 0.05, 14, camCurrent.y + 11 + sy * 0.05);
-  setCameraTarget(camCurrent.x + sx * 0.02, 0, camCurrent.y + sy * 0.02);
+  nova64.camera.setCameraPosition(
+    camCurrent.x + 1.5 + sx * 0.05,
+    14,
+    camCurrent.y + 11 + sy * 0.05
+  );
+  nova64.camera.setCameraTarget(camCurrent.x + sx * 0.02, 0, camCurrent.y + sy * 0.02);
 }
 
 // ── Draw HUD ────────────────────────────────────────────────────────────────
@@ -972,42 +1078,79 @@ export function draw() {
   const theme = getTheme();
 
   if (gameState === 'start') {
-    rectfill(0, 0, 640, 360, rgba8(0, 0, 0, 200));
-    drawGlowText('DUNGEON DELVE', 210, 50, rgba8(255, 200, 100), rgba8(200, 120, 40));
-    printCentered('A Roguelike Adventure', 320, 85, rgba8(180, 170, 160));
-    printCentered(
+    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 0, 200));
+    nova64.draw.drawGlowText(
+      'DUNGEON DELVE',
+      210,
+      50,
+      nova64.draw.rgba8(255, 200, 100),
+      nova64.draw.rgba8(200, 120, 40)
+    );
+    nova64.draw.printCentered('A Roguelike Adventure', 320, 85, nova64.draw.rgba8(180, 170, 160));
+    nova64.draw.printCentered(
       'Descend the dungeon. Slay monsters. Find treasure.',
       320,
       130,
-      rgba8(180, 180, 200)
+      nova64.draw.rgba8(180, 180, 200)
     );
-    printCentered('Permadeath! When you die, you start over.', 320, 150, rgba8(255, 100, 100));
-    rectfill(160, 180, 320, 70, rgba8(20, 20, 30, 200));
-    rect(160, 180, 320, 70, rgba8(100, 100, 150), false);
-    printCentered('WASD / Arrows = Move & Attack', 320, 190, rgba8(160, 160, 200));
-    printCentered('P / Q = Use Potion', 320, 206, rgba8(160, 160, 200));
-    printCentered('SPACE = Wait (skip turn)', 320, 222, rgba8(160, 160, 200));
-    printCentered('Walk into enemies to attack!', 320, 238, rgba8(200, 200, 160));
+    nova64.draw.printCentered(
+      'Permadeath! When you die, you start over.',
+      320,
+      150,
+      nova64.draw.rgba8(255, 100, 100)
+    );
+    nova64.draw.rectfill(160, 180, 320, 70, nova64.draw.rgba8(20, 20, 30, 200));
+    nova64.draw.rect(160, 180, 320, 70, nova64.draw.rgba8(100, 100, 150), false);
+    nova64.draw.printCentered(
+      'WASD / Arrows = Move & Attack',
+      320,
+      190,
+      nova64.draw.rgba8(160, 160, 200)
+    );
+    nova64.draw.printCentered('P / Q = Use Potion', 320, 206, nova64.draw.rgba8(160, 160, 200));
+    nova64.draw.printCentered(
+      'SPACE = Wait (skip turn)',
+      320,
+      222,
+      nova64.draw.rgba8(160, 160, 200)
+    );
+    nova64.draw.printCentered(
+      'Walk into enemies to attack!',
+      320,
+      238,
+      nova64.draw.rgba8(200, 200, 160)
+    );
     const pulse = Math.sin(time * 3) * 0.5 + 0.5;
-    printCentered(
+    nova64.draw.printCentered(
       'TAP / PRESS A TO DELVE',
       320,
       280,
-      rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
+      nova64.draw.rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
     );
     return;
   }
 
   if (gameState === 'dead') {
-    rectfill(0, 0, 640, 360, rgba8(60, 0, 0, 220));
-    drawGlowText('YOU HAVE PERISHED', 185, 60, rgba8(255, 50, 50), rgba8(180, 0, 0));
-    printCentered(
+    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(60, 0, 0, 220));
+    nova64.draw.drawGlowText(
+      'YOU HAVE PERISHED',
+      185,
+      60,
+      nova64.draw.rgba8(255, 50, 50),
+      nova64.draw.rgba8(180, 0, 0)
+    );
+    nova64.draw.printCentered(
       `Floor ${floor}  |  Level ${hero.level}  |  ${hero.kills} Kills  |  ${hero.gold} Gold`,
       320,
       110,
-      rgba8(200, 200, 200)
+      nova64.draw.rgba8(200, 200, 200)
     );
-    printCentered(`Total Damage Dealt: ${hero.totalDmg}`, 320, 130, rgba8(180, 180, 180));
+    nova64.draw.printCentered(
+      `Total Damage Dealt: ${hero.totalDmg}`,
+      320,
+      130,
+      nova64.draw.rgba8(180, 180, 180)
+    );
     const rating =
       hero.kills > 30
         ? 'LEGENDARY'
@@ -1018,13 +1161,19 @@ export function draw() {
             : hero.kills > 5
               ? 'BRAVE'
               : 'NOVICE';
-    drawGlowText(rating, 260, 170, rgba8(255, 215, 0), rgba8(180, 150, 0));
+    nova64.draw.drawGlowText(
+      rating,
+      260,
+      170,
+      nova64.draw.rgba8(255, 215, 0),
+      nova64.draw.rgba8(180, 150, 0)
+    );
     const pulse = Math.sin(time * 2) * 0.5 + 0.5;
-    printCentered(
+    nova64.draw.printCentered(
       'TAP / PRESS A TO TRY AGAIN',
       320,
       240,
-      rgba8(200, 150, 150, Math.floor(120 + pulse * 135))
+      nova64.draw.rgba8(200, 150, 150, Math.floor(120 + pulse * 135))
     );
     return;
   }
@@ -1032,43 +1181,65 @@ export function draw() {
   // Screen flash
   if (screenFlash > 0) {
     const a = Math.floor(screenFlash * 500);
-    rectfill(
+    nova64.draw.rectfill(
       0,
       0,
       640,
       360,
-      rgba8(screenFlashColor[0], screenFlashColor[1], screenFlashColor[2], Math.min(a, 200))
+      nova64.draw.rgba8(
+        screenFlashColor[0],
+        screenFlashColor[1],
+        screenFlashColor[2],
+        Math.min(a, 200)
+      )
     );
   }
 
   // Stats panel
-  rectfill(6, 6, 170, 108, rgba8(10, 10, 18, 220));
-  rect(6, 6, 170, 108, rgba8(80, 80, 120, 200), false);
-  drawPixelBorder(6, 6, 170, 108, rgba8(90, 90, 130), rgba8(30, 30, 50));
-  print(`FLOOR ${floor}  Lv.${hero.level}`, 14, 14, rgba8(255, 200, 100));
-  print(
+  nova64.draw.rectfill(6, 6, 170, 108, nova64.draw.rgba8(10, 10, 18, 220));
+  nova64.draw.rect(6, 6, 170, 108, nova64.draw.rgba8(80, 80, 120, 200), false);
+  nova64.draw.drawPixelBorder(
+    6,
+    6,
+    170,
+    108,
+    nova64.draw.rgba8(90, 90, 130),
+    nova64.draw.rgba8(30, 30, 50)
+  );
+  nova64.draw.print(`FLOOR ${floor}  Lv.${hero.level}`, 14, 14, nova64.draw.rgba8(255, 200, 100));
+  nova64.draw.print(
     `${theme.name}`,
     14,
     26,
-    rgba8((theme.accent >> 16) & 0xff, (theme.accent >> 8) & 0xff, theme.accent & 0xff, 200)
+    nova64.draw.rgba8(
+      (theme.accent >> 16) & 0xff,
+      (theme.accent >> 8) & 0xff,
+      theme.accent & 0xff,
+      200
+    )
   );
-  print('HP', 14, 40, rgba8(220, 220, 220));
-  drawHealthBar(36, 40, 128, 8, hero.hp, hero.maxHp);
-  print(`${hero.hp}/${hero.maxHp}`, 80, 40, rgba8(255, 255, 255));
-  print('XP', 14, 54, rgba8(220, 220, 220));
-  drawProgressBar(
+  nova64.draw.print('HP', 14, 40, nova64.draw.rgba8(220, 220, 220));
+  nova64.draw.drawHealthBar(36, 40, 128, 8, hero.hp, hero.maxHp);
+  nova64.draw.print(`${hero.hp}/${hero.maxHp}`, 80, 40, nova64.draw.rgba8(255, 255, 255));
+  nova64.draw.print('XP', 14, 54, nova64.draw.rgba8(220, 220, 220));
+  nova64.draw.drawProgressBar(
     36,
     54,
     128,
     8,
     hero.xp / hero.xpNext,
-    rgba8(100, 100, 255),
-    rgba8(30, 30, 50),
-    rgba8(80, 80, 150)
+    nova64.draw.rgba8(100, 100, 255),
+    nova64.draw.rgba8(30, 30, 50),
+    nova64.draw.rgba8(80, 80, 150)
   );
-  print(`ATK:${hero.atk}  DEF:${hero.def}`, 14, 68, rgba8(180, 180, 210));
-  print(`${hero.weapon}`, 14, 80, rgba8(255, 180, 100));
-  print(`Gold:${hero.gold}  Pot:${hero.potions}`, 14, 94, rgba8(255, 220, 80));
+  nova64.draw.print(`ATK:${hero.atk}  DEF:${hero.def}`, 14, 68, nova64.draw.rgba8(180, 180, 210));
+  nova64.draw.print(`${hero.weapon}`, 14, 80, nova64.draw.rgba8(255, 180, 100));
+  nova64.draw.print(
+    `Gold:${hero.gold}  Pot:${hero.potions}`,
+    14,
+    94,
+    nova64.draw.rgba8(255, 220, 80)
+  );
 
   // Messages
   for (let i = 0; i < messages.length; i++) {
@@ -1077,12 +1248,18 @@ export function draw() {
     const r = (m.color >> 16) & 0xff,
       g = (m.color >> 8) & 0xff,
       b = m.color & 0xff;
-    rectfill(188, 318 - i * 14, m.text.length * 8 + 8, 13, rgba8(0, 0, 0, Math.floor(alpha * 0.6)));
-    print(m.text, 192, 320 - i * 14, rgba8(r, g, b, alpha));
+    nova64.draw.rectfill(
+      188,
+      318 - i * 14,
+      m.text.length * 8 + 8,
+      13,
+      nova64.draw.rgba8(0, 0, 0, Math.floor(alpha * 0.6))
+    );
+    nova64.draw.print(m.text, 192, 320 - i * 14, nova64.draw.rgba8(r, g, b, alpha));
   }
 
   // Minimap
-  if (minimap) drawMinimap(minimap, time);
+  if (minimap) nova64.draw.drawMinimap(minimap, time);
 
   // Enemy HP bars
   for (const e of enemies) {
@@ -1094,24 +1271,33 @@ export function draw() {
     if (sx < 20 || sx > 620 || sy < 20 || sy > 340) continue;
     const barW = e.isBoss ? 50 : 30;
     const hpPct = e.hp / e.maxHp;
-    rectfill(sx - barW / 2, sy - 14, barW, 4, rgba8(40, 40, 40, 180));
+    nova64.draw.rectfill(sx - barW / 2, sy - 14, barW, 4, nova64.draw.rgba8(40, 40, 40, 180));
     const hpCol =
-      hpPct > 0.5 ? rgba8(50, 200, 50) : hpPct > 0.25 ? rgba8(220, 200, 50) : rgba8(220, 50, 50);
-    rectfill(sx - barW / 2, sy - 14, Math.floor(barW * hpPct), 4, hpCol);
-    print(e.name, sx - e.name.length * 4, sy - 22, rgba8(255, 255, 255, 180));
-    if (e.isBoss) print('BOSS', sx - 16, sy - 30, rgba8(255, 220, 50));
+      hpPct > 0.5
+        ? nova64.draw.rgba8(50, 200, 50)
+        : hpPct > 0.25
+          ? nova64.draw.rgba8(220, 200, 50)
+          : nova64.draw.rgba8(220, 50, 50);
+    nova64.draw.rectfill(sx - barW / 2, sy - 14, Math.floor(barW * hpPct), 4, hpCol);
+    nova64.draw.print(
+      e.name,
+      sx - e.name.length * 4,
+      sy - 22,
+      nova64.draw.rgba8(255, 255, 255, 180)
+    );
+    if (e.isBoss) nova64.draw.print('BOSS', sx - 16, sy - 30, nova64.draw.rgba8(255, 220, 50));
   }
 
-  drawFloatingTexts3D(floatingTexts, (x, y, z) => [
+  nova64.draw.drawFloatingTexts3D(floatingTexts, (x, y, z) => [
     Math.floor(320 + (x - hero.x * TILE_SIZE) * 8),
     Math.floor(180 - y * 6 - (z - hero.y * TILE_SIZE) * 4),
   ]);
 
-  rectfill(0, 348, 400, 12, rgba8(0, 0, 0, 120));
-  print(
+  nova64.draw.rectfill(0, 348, 400, 12, nova64.draw.rgba8(0, 0, 0, 120));
+  nova64.draw.print(
     'WASD=Move  P=Potion  SPACE=Wait  Walk into enemies to attack!',
     8,
     348,
-    rgba8(140, 140, 170, 200)
+    nova64.draw.rgba8(140, 140, 170, 200)
   );
 }

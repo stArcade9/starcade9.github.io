@@ -6,6 +6,39 @@
 //   4) Sacred Geometry — interlocking polyhedra + orbiting halos
 // Controls: 1-4 = scene, SPACE = reset, WASD = orbit, Q/E = zoom
 
+const { drawPanel, print, rgba8 } = nova64.draw;
+const {
+  clearScene,
+  createCube,
+  createCylinder,
+  createSphere,
+  createTorus,
+  removeMesh,
+  rotateMesh,
+  setMeshOpacity,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const {
+  createGradientSkybox,
+  createPointLight,
+  setAmbientLight,
+  setFog,
+  setPointLightColor,
+  setPointLightPosition,
+} = nova64.light;
+const {
+  createParticleSystem,
+  enableBloom,
+  removeParticleSystem,
+  setParticleEmitter,
+  updateParticles,
+} = nova64.fx;
+const { key, keyp } = nova64.input;
+const { rotate } = nova64.util;
+
 const W = 640,
   H = 360;
 let scene = 0;
@@ -22,13 +55,13 @@ const SCENE_NAMES = ['Gyroscope', 'Cosmic Jellyfish', 'Particle Storm', 'Sacred 
 
 export function init() {
   initialized = false;
-  setCameraFOV(65);
+  nova64.camera.setCameraFOV(65);
   buildScene(0);
 }
 
 function clearAll() {
-  for (const id of meshes) removeMesh(id);
-  for (const id of particleSystems) removeParticleSystem(id);
+  for (const id of meshes) nova64.scene.removeMesh(id);
+  for (const id of particleSystems) nova64.fx.removeParticleSystem(id);
   meshes = [];
   lights = [];
   particleSystems = [];
@@ -37,7 +70,7 @@ function clearAll() {
 
 function buildScene(idx) {
   clearAll();
-  clearScene();
+  nova64.scene.clearScene();
   scene = idx;
   if (idx === 0) buildGyroscope();
   else if (idx === 1) buildJellyfish();
@@ -58,10 +91,10 @@ let gyroRings = [];
 let gyroCore;
 
 function buildGyroscope() {
-  setAmbientLight(0x111122, 0.2);
-  setFog(0x050510, 20, 80);
-  enableBloom(2.0, 0.6, 0.2);
-  createGradientSkybox(0x020208, 0x080820, 0x0a0a30);
+  nova64.light.setAmbientLight(0x111122, 0.2);
+  nova64.light.setFog(0x050510, 20, 80);
+  nova64.fx.enableBloom(2.0, 0.6, 0.2);
+  nova64.light.createGradientSkybox(0x020208, 0x080820, 0x0a0a30);
   gyroRings = [];
 
   const axes = [
@@ -100,7 +133,7 @@ function buildGyroscope() {
       }
       const cubeSize = 0.5 + (r === 2 ? 0.3 : 0);
       const color = hslToHex((hues[r] + i * (360 / count)) % 360, 0.8, 0.6);
-      const id = createCube(cubeSize, color, [x, y, z], { material: 'holographic' });
+      const id = nova64.scene.createCube(cubeSize, color, [x, y, z], { material: 'holographic' });
       meshes.push(id);
       ring.ids.push({ id, angle, idx: i, count });
     }
@@ -108,13 +141,13 @@ function buildGyroscope() {
   }
 
   // Central core — pulsing emissive sphere
-  gyroCore = createSphere(1.5, 0xffffff, [0, 0, 0], 16, { material: 'emissive' });
+  gyroCore = nova64.scene.createSphere(1.5, 0xffffff, [0, 0, 0], 16, { material: 'emissive' });
   meshes.push(gyroCore);
 
   // Orbiting accent spheres
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2;
-    const id = createSphere(
+    const id = nova64.scene.createSphere(
       0.25,
       0xff88ff,
       [Math.cos(a) * 14, Math.sin(a * 3) * 2, Math.sin(a) * 14],
@@ -124,9 +157,9 @@ function buildGyroscope() {
     meshes.push(id);
   }
 
-  const pl1 = createPointLight(0x4488ff, 3, 50, [0, 0, 0]);
-  const pl2 = createPointLight(0xff4488, 2, 40, [12, 5, 0]);
-  const pl3 = createPointLight(0x44ff88, 2, 40, [-12, -5, 0]);
+  const pl1 = nova64.light.createPointLight(0x4488ff, 3, 50, [0, 0, 0]);
+  const pl2 = nova64.light.createPointLight(0xff4488, 2, 40, [12, 5, 0]);
+  const pl3 = nova64.light.createPointLight(0x44ff88, 2, 40, [-12, -5, 0]);
   lights.push(pl1, pl2, pl3);
 
   orbitDist = 22;
@@ -173,18 +206,18 @@ function _updateGyroscope(dt) {
         fy = bx * sinA + by * cosA;
       }
 
-      setPosition(cube.id, fx, fy, fz);
+      nova64.scene.setPosition(cube.id, fx, fy, fz);
 
       const pulse = 1 + Math.sin(time * 3 + cube.idx * 0.5) * 0.3;
       const s = (0.5 + (r === 2 ? 0.3 : 0)) * pulse;
-      setScale(cube.id, s, s, s);
-      rotateMesh(cube.id, dt * 2, dt * 3, 0);
+      nova64.scene.setScale(cube.id, s, s, s);
+      nova64.scene.rotateMesh(cube.id, dt * 2, dt * 3, 0);
     }
   }
 
   // Core pulse
   const coreScale = 1.5 + Math.sin(time * 2) * 0.4 + Math.sin(time * 5) * 0.15;
-  setScale(gyroCore, coreScale, coreScale, coreScale);
+  nova64.scene.setScale(gyroCore, coreScale, coreScale, coreScale);
 
   // Orbit accent spheres
   const accentStart = gyroRings.reduce((sum, r) => sum + r.ids.length, 0) + 1;
@@ -193,20 +226,20 @@ function _updateGyroscope(dt) {
     if (idx < meshes.length) {
       const a = (i / 6) * Math.PI * 2 + time * 0.5;
       const wobble = Math.sin(time * 2 + i) * 3;
-      setPosition(meshes[idx], Math.cos(a) * 14, wobble, Math.sin(a) * 14);
+      nova64.scene.setPosition(meshes[idx], Math.cos(a) * 14, wobble, Math.sin(a) * 14);
     }
   }
 
   // Move lights
   if (lights[1])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[1],
       Math.cos(time * 0.7) * 12,
       5 + Math.sin(time) * 3,
       Math.sin(time * 0.7) * 12
     );
   if (lights[2])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[2],
       Math.cos(time * 0.5 + 2) * 12,
       -5 + Math.cos(time * 0.8) * 3,
@@ -227,10 +260,10 @@ let jellyOrgans = [];
 let jellyVeils = [];
 
 function buildJellyfish() {
-  setAmbientLight(0x050515, 0.15);
-  setFog(0x010108, 25, 90);
-  enableBloom(2.5, 0.7, 0.15);
-  createGradientSkybox(0x000004, 0x020210, 0x040420);
+  nova64.light.setAmbientLight(0x050515, 0.15);
+  nova64.light.setFog(0x010108, 25, 90);
+  nova64.fx.enableBloom(2.5, 0.7, 0.15);
+  nova64.light.createGradientSkybox(0x000004, 0x020210, 0x040420);
   jellyBell = [];
   jellyTentacles = [];
   jellyOrgans = [];
@@ -244,16 +277,18 @@ function buildJellyfish() {
     const tube = 0.08 + (1 - t) * 0.12;
     const hue = 260 + t * 40;
     const color = hslToHex(hue, 0.7, 0.5);
-    const id = createTorus(radius, tube, color, [0, y, 0], { material: 'holographic' });
+    const id = nova64.scene.createTorus(radius, tube, color, [0, y, 0], {
+      material: 'holographic',
+    });
     meshes.push(id);
     jellyBell.push({ id, baseY: y, baseRadius: radius, t, phase: i * 0.5 });
   }
 
   // Bell cap — large translucent sphere
-  const cap = createSphere(4, 0x6644cc, [0, 2, 0], 16, { material: 'holographic' });
+  const cap = nova64.scene.createSphere(4, 0x6644cc, [0, 2, 0], 16, { material: 'holographic' });
   meshes.push(cap);
-  setMeshOpacity(cap, 0.25);
-  setScale(cap, 1, 0.6, 1);
+  nova64.scene.setMeshOpacity(cap, 0.25);
+  nova64.scene.setScale(cap, 1, 0.6, 1);
   jellyBell.push({ id: cap, baseY: 2, baseRadius: 4, t: 0.5, phase: 0, isCap: true });
 
   // Inner organs — glowing emissive spheres
@@ -264,9 +299,15 @@ function buildJellyfish() {
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     const orgY = 0.5 + Math.random();
-    const id = createSphere(0.3 + Math.random() * 0.4, organColors[i], [x, orgY, z], 8, {
-      material: 'emissive',
-    });
+    const id = nova64.scene.createSphere(
+      0.3 + Math.random() * 0.4,
+      organColors[i],
+      [x, orgY, z],
+      8,
+      {
+        material: 'emissive',
+      }
+    );
     meshes.push(id);
     jellyOrgans.push({
       id,
@@ -295,7 +336,7 @@ function buildJellyfish() {
       const y = -2 - progress * length;
       const size = 0.25 * (1 - progress * 0.7);
       const color = hslToHex(hue + progress * 30, 0.6, 0.4 + (1 - progress) * 0.3);
-      const id = createSphere(size, color, [x, y, z], 6, { material: 'emissive' });
+      const id = nova64.scene.createSphere(size, color, [x, y, z], 6, { material: 'emissive' });
       meshes.push(id);
       tentacle.push({ id, baseX: x, baseY: y, baseZ: z, progress, phase: t * 0.8 + s * 0.15 });
     }
@@ -308,7 +349,7 @@ function buildJellyfish() {
     const radius = 4 - t * 1.5;
     const y = -2 - t * 3;
     const color = hslToHex(280 + t * 20, 0.5, 0.3);
-    const id = createTorus(radius, 0.03, color, [0, y, 0], { material: 'emissive' });
+    const id = nova64.scene.createTorus(radius, 0.03, color, [0, y, 0], { material: 'emissive' });
     meshes.push(id);
     jellyVeils.push({ id, baseY: y, baseRadius: radius, t, phase: i * 0.7 });
   }
@@ -320,13 +361,13 @@ function buildJellyfish() {
     const z = (Math.random() - 0.5) * 30;
     const size = 0.06 + Math.random() * 0.1;
     const color = hslToHex(200 + Math.random() * 80, 0.5, 0.6);
-    const id = createSphere(size, color, [x, y, z], 4, { material: 'emissive' });
+    const id = nova64.scene.createSphere(size, color, [x, y, z], 4, { material: 'emissive' });
     meshes.push(id);
   }
 
-  const pl1 = createPointLight(0x6644ff, 3, 50, [0, 2, 0]);
-  const pl2 = createPointLight(0xff2288, 2, 40, [0, -5, 0]);
-  const pl3 = createPointLight(0x2244ff, 1.5, 60, [10, 0, 10]);
+  const pl1 = nova64.light.createPointLight(0x6644ff, 3, 50, [0, 2, 0]);
+  const pl2 = nova64.light.createPointLight(0xff2288, 2, 40, [0, -5, 0]);
+  const pl3 = nova64.light.createPointLight(0x2244ff, 1.5, 60, [10, 0, 10]);
   lights.push(pl1, pl2, pl3);
 
   orbitDist = 25;
@@ -342,23 +383,23 @@ function _updateJellyfish(dt) {
     if (ring.isCap) {
       const scaleXZ = 1 - contractAmount * 0.3;
       const scaleY = 0.6 + contractAmount * 0.15;
-      setScale(ring.id, scaleXZ, scaleY, scaleXZ);
-      setPosition(ring.id, 0, ring.baseY + Math.sin(time * 0.4) * 0.5, 0);
+      nova64.scene.setScale(ring.id, scaleXZ, scaleY, scaleXZ);
+      nova64.scene.setPosition(ring.id, 0, ring.baseY + Math.sin(time * 0.4) * 0.5, 0);
     } else {
       const expansion = 1 - contractAmount * (1 - ring.t);
       const wobble = Math.sin(time * 1.5 + ring.phase) * 0.3;
-      setScale(ring.id, expansion, 1, expansion);
-      setPosition(ring.id, 0, ring.baseY + wobble + Math.sin(time * 0.4) * 0.5, 0);
-      rotateMesh(ring.id, 0, dt * (0.1 + ring.t * 0.2), 0);
+      nova64.scene.setScale(ring.id, expansion, 1, expansion);
+      nova64.scene.setPosition(ring.id, 0, ring.baseY + wobble + Math.sin(time * 0.4) * 0.5, 0);
+      nova64.scene.rotateMesh(ring.id, 0, dt * (0.1 + ring.t * 0.2), 0);
     }
   }
 
   // Organs pulse independently
   for (const organ of jellyOrgans) {
     const pulse = 1 + Math.sin(time * organ.speed * 2 + organ.phase) * 0.5;
-    setScale(organ.id, pulse, pulse, pulse);
+    nova64.scene.setScale(organ.id, pulse, pulse, pulse);
     const drift = Math.sin(time * 0.8 + organ.phase) * 0.3;
-    setPosition(
+    nova64.scene.setPosition(
       organ.id,
       organ.baseX + drift,
       organ.baseY + Math.sin(time * 0.4) * 0.5,
@@ -372,7 +413,7 @@ function _updateJellyfish(dt) {
       const waveX = Math.sin(time * 1.5 + seg.phase) * (2 + seg.progress * 4);
       const waveZ = Math.cos(time * 1.2 + seg.phase * 1.3) * (1.5 + seg.progress * 3);
       const gentle = Math.sin(time * 0.4) * 0.5;
-      setPosition(
+      nova64.scene.setPosition(
         seg.id,
         seg.baseX + waveX * seg.progress,
         seg.baseY + gentle + Math.sin(time * 2 + seg.progress * 3) * seg.progress * 0.5,
@@ -385,16 +426,16 @@ function _updateJellyfish(dt) {
   for (const veil of jellyVeils) {
     const drift = Math.sin(time * 0.8 + veil.phase) * 0.5;
     const yOff = Math.sin(time * 0.4) * 0.5;
-    setPosition(veil.id, drift * 0.5, veil.baseY + yOff, drift * 0.3);
+    nova64.scene.setPosition(veil.id, drift * 0.5, veil.baseY + yOff, drift * 0.3);
     const expansion = 1 + Math.sin(time * 1.2 + veil.phase) * 0.1;
-    setScale(veil.id, expansion, 1, expansion);
-    rotateMesh(veil.id, 0, dt * 0.15, 0);
+    nova64.scene.setScale(veil.id, expansion, 1, expansion);
+    nova64.scene.rotateMesh(veil.id, 0, dt * 0.15, 0);
   }
 
   // Internal light follows breathing
   if (lights[0]) {
-    setPointLightColor(lights[0], hslToHex(260 + Math.sin(time) * 20, 0.8, 0.5));
-    setPointLightPosition(lights[0], 0, 2 + Math.sin(time * 0.4) * 0.5, 0);
+    nova64.light.setPointLightColor(lights[0], hslToHex(260 + Math.sin(time) * 20, 0.8, 0.5));
+    nova64.light.setPointLightPosition(lights[0], 0, 2 + Math.sin(time * 0.4) * 0.5, 0);
   }
 }
 
@@ -409,10 +450,10 @@ let stormEmitters = [];
 const ATTRACTOR_COUNT = 4;
 
 function buildParticleStorm() {
-  setAmbientLight(0x0a0a15, 0.15);
-  setFog(0x020205, 30, 100);
-  enableBloom(2.2, 0.8, 0.1);
-  createGradientSkybox(0x000005, 0x050515, 0x0a0a25);
+  nova64.light.setAmbientLight(0x0a0a15, 0.15);
+  nova64.light.setFog(0x020205, 30, 100);
+  nova64.fx.enableBloom(2.2, 0.8, 0.1);
+  nova64.light.createGradientSkybox(0x000005, 0x050515, 0x0a0a25);
   stormAttractors = [];
   stormEmitters = [];
 
@@ -423,11 +464,15 @@ function buildParticleStorm() {
     const dist = 8;
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
-    const id = createSphere(0.8, attractorColors[i], [x, 0, z], 12, { material: 'emissive' });
+    const id = nova64.scene.createSphere(0.8, attractorColors[i], [x, 0, z], 12, {
+      material: 'emissive',
+    });
     meshes.push(id);
 
     // Halo ring around each attractor
-    const haloId = createTorus(1.5, 0.05, attractorColors[i], [x, 0, z], { material: 'emissive' });
+    const haloId = nova64.scene.createTorus(1.5, 0.05, attractorColors[i], [x, 0, z], {
+      material: 'emissive',
+    });
     meshes.push(haloId);
 
     stormAttractors.push({
@@ -441,7 +486,7 @@ function buildParticleStorm() {
   }
 
   // Central vortex core
-  const core = createSphere(0.5, 0xffffff, [0, 0, 0], 12, { material: 'emissive' });
+  const core = nova64.scene.createSphere(0.5, 0xffffff, [0, 0, 0], 12, { material: 'emissive' });
   meshes.push(core);
 
   // Multiple particle systems with different characteristics
@@ -453,7 +498,7 @@ function buildParticleStorm() {
   ];
   for (let i = 0; i < 4; i++) {
     const angle = (i / 4) * Math.PI * 2;
-    const ps = createParticleSystem(300, {
+    const ps = nova64.fx.createParticleSystem(300, {
       shape: 'sphere',
       segments: 4,
       startColor: psColors[i].start,
@@ -482,14 +527,16 @@ function buildParticleStorm() {
   for (let i = 0; i < 8; i++) {
     const y = -6 + i * 1.5;
     const radius = 4 + Math.abs(y) * 0.5;
-    const id = createTorus(radius, 0.02, 0x222244, [0, y, 0], { material: 'emissive' });
+    const id = nova64.scene.createTorus(radius, 0.02, 0x222244, [0, y, 0], {
+      material: 'emissive',
+    });
     meshes.push(id);
-    setMeshOpacity(id, 0.3);
+    nova64.scene.setMeshOpacity(id, 0.3);
   }
 
-  const pl1 = createPointLight(0xffffff, 2, 30, [0, 0, 0]);
-  const pl2 = createPointLight(0xff4488, 3, 50, [10, 5, 0]);
-  const pl3 = createPointLight(0x4488ff, 3, 50, [-10, -5, 0]);
+  const pl1 = nova64.light.createPointLight(0xffffff, 2, 30, [0, 0, 0]);
+  const pl2 = nova64.light.createPointLight(0xff4488, 3, 50, [10, 5, 0]);
+  const pl3 = nova64.light.createPointLight(0x4488ff, 3, 50, [-10, -5, 0]);
   lights.push(pl1, pl2, pl3);
 
   orbitDist = 24;
@@ -503,17 +550,17 @@ function _updateParticleStorm(dt) {
     const wobbleY = Math.sin(time * 1.5 + attr.angle * 2) * 3;
     const x = Math.cos(attr.angle) * attr.dist;
     const z = Math.sin(attr.angle) * attr.dist;
-    setPosition(attr.sphereId, x, wobbleY, z);
-    setPosition(attr.haloId, x, wobbleY, z);
+    nova64.scene.setPosition(attr.sphereId, x, wobbleY, z);
+    nova64.scene.setPosition(attr.haloId, x, wobbleY, z);
 
     // Pulse attractor
     const pulse = 0.8 + Math.sin(time * 3 + attr.angle) * 0.3;
-    setScale(attr.sphereId, pulse, pulse, pulse);
+    nova64.scene.setScale(attr.sphereId, pulse, pulse, pulse);
 
     // Rotate halo
-    rotateMesh(attr.haloId, dt * 2, dt * 3, dt);
+    nova64.scene.rotateMesh(attr.haloId, dt * 2, dt * 3, dt);
     const haloScale = 1.5 + Math.sin(time * 2 + attr.angle) * 0.3;
-    setScale(attr.haloId, haloScale, haloScale, haloScale);
+    nova64.scene.setScale(attr.haloId, haloScale, haloScale, haloScale);
   }
 
   // Move emitters in spiral pattern
@@ -521,7 +568,7 @@ function _updateParticleStorm(dt) {
     em.angle += dt * 0.8;
     const spiralDist = 5 + Math.sin(time * 0.5 + em.idx) * 3;
     const y = Math.sin(time + em.idx * 1.5) * 4;
-    setParticleEmitter(em.id, {
+    nova64.fx.setParticleEmitter(em.id, {
       emitterX: Math.cos(em.angle) * spiralDist,
       emitterY: y,
       emitterZ: Math.sin(em.angle) * spiralDist,
@@ -533,7 +580,7 @@ function _updateParticleStorm(dt) {
   const coreIdx = ATTRACTOR_COUNT * 2;
   if (coreIdx < meshes.length) {
     const coreScale = 0.5 + Math.sin(time * 4) * 0.2 + Math.abs(Math.sin(time * 7)) * 0.15;
-    setScale(meshes[coreIdx], coreScale, coreScale, coreScale);
+    nova64.scene.setScale(meshes[coreIdx], coreScale, coreScale, coreScale);
   }
 
   // Rotate structural rings
@@ -541,22 +588,27 @@ function _updateParticleStorm(dt) {
   for (let i = 0; i < 8; i++) {
     const idx = ringStart + i;
     if (idx < meshes.length) {
-      rotateMesh(meshes[idx], 0, dt * (0.2 + i * 0.05) * (i % 2 === 0 ? 1 : -1), dt * 0.1);
+      nova64.scene.rotateMesh(
+        meshes[idx],
+        0,
+        dt * (0.2 + i * 0.05) * (i % 2 === 0 ? 1 : -1),
+        dt * 0.1
+      );
     }
   }
 
-  updateParticles(dt);
+  nova64.fx.updateParticles(dt);
 
   // Orbiting lights
   if (lights[1])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[1],
       Math.cos(time * 0.4) * 12,
       5 + Math.sin(time * 0.6) * 3,
       Math.sin(time * 0.4) * 12
     );
   if (lights[2])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[2],
       Math.cos(time * 0.3 + 3) * 12,
       -5 + Math.cos(time * 0.5) * 3,
@@ -576,10 +628,10 @@ let sacredHalos = [];
 let sacredCenter = [];
 
 function buildSacredGeometry() {
-  setAmbientLight(0x0f0f1a, 0.2);
-  setFog(0x050510, 25, 80);
-  enableBloom(1.8, 0.5, 0.15);
-  createGradientSkybox(0x030308, 0x0a0a1e, 0x0f0f2a);
+  nova64.light.setAmbientLight(0x0f0f1a, 0.2);
+  nova64.light.setFog(0x050510, 25, 80);
+  nova64.fx.enableBloom(1.8, 0.5, 0.15);
+  nova64.light.createGradientSkybox(0x030308, 0x0a0a1e, 0x0f0f2a);
   sacredVertices = [];
   sacredEdges = [];
   sacredHalos = [];
@@ -608,7 +660,7 @@ function buildSacredGeometry() {
     const [x, y, z] = icoVerts[i];
     const hue = (i / icoVerts.length) * 360;
     const color = hslToHex(hue, 0.7, 0.6);
-    const id = createSphere(0.35, color, [x * scale, y * scale, z * scale], 8, {
+    const id = nova64.scene.createSphere(0.35, color, [x * scale, y * scale, z * scale], 8, {
       material: 'emissive',
     });
     meshes.push(id);
@@ -665,11 +717,13 @@ function buildSacredGeometry() {
     const dy = (vb[1] - va[1]) * scale;
     const dz = (vb[2] - va[2]) * scale;
     const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    const id = createCylinder(0.04, 0.04, len, 0x4466aa, [mx, my, mz], { material: 'emissive' });
+    const id = nova64.scene.createCylinder(0.04, 0.04, len, 0x4466aa, [mx, my, mz], {
+      material: 'emissive',
+    });
     meshes.push(id);
     const ax = Math.atan2(Math.sqrt(dx * dx + dz * dz), dy);
     const ay = Math.atan2(dx, dz);
-    setRotation(id, ax - Math.PI / 2, ay, 0);
+    nova64.scene.setRotation(id, ax - Math.PI / 2, ay, 0);
     sacredEdges.push({ id });
   }
 
@@ -690,7 +744,9 @@ function buildSacredGeometry() {
       const x = Math.cos(angle) * haloRadii[h];
       const z = Math.sin(angle) * haloRadii[h];
       const size = 0.15 + (h === 0 ? 0.1 : 0);
-      const id = createSphere(size, haloColors[h], [x, 0, z], 6, { material: 'holographic' });
+      const id = nova64.scene.createSphere(size, haloColors[h], [x, 0, z], 6, {
+        material: 'holographic',
+      });
       meshes.push(id);
       halo.ids.push({ id, angle, idx: i });
     }
@@ -699,21 +755,25 @@ function buildSacredGeometry() {
 
   // Central seed of life — 7 torus rings
   const seedRadius = 2;
-  const centerId = createTorus(seedRadius, 0.06, 0xffffff, [0, 0, 0], { material: 'holographic' });
+  const centerId = nova64.scene.createTorus(seedRadius, 0.06, 0xffffff, [0, 0, 0], {
+    material: 'holographic',
+  });
   meshes.push(centerId);
   sacredCenter.push({ id: centerId, angle: 0 });
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2;
     const x = Math.cos(a) * seedRadius;
     const z = Math.sin(a) * seedRadius;
-    const id = createTorus(seedRadius, 0.05, 0xccaaff, [x, 0, z], { material: 'holographic' });
+    const id = nova64.scene.createTorus(seedRadius, 0.05, 0xccaaff, [x, 0, z], {
+      material: 'holographic',
+    });
     meshes.push(id);
     sacredCenter.push({ id, angle: a });
   }
 
-  const pl1 = createPointLight(0x8866ff, 3, 50, [0, 0, 0]);
-  const pl2 = createPointLight(0xff6688, 2, 40, [8, 8, 0]);
-  const pl3 = createPointLight(0x66ff88, 2, 40, [-8, -8, 0]);
+  const pl1 = nova64.light.createPointLight(0x8866ff, 3, 50, [0, 0, 0]);
+  const pl2 = nova64.light.createPointLight(0xff6688, 2, 40, [8, 8, 0]);
+  const pl3 = nova64.light.createPointLight(0x66ff88, 2, 40, [-8, -8, 0]);
   lights.push(pl1, pl2, pl3);
 
   orbitDist = 24;
@@ -738,15 +798,15 @@ function _updateSacredGeometry(dt) {
     const ry = y * cosX - rz * sinX;
     const rz2 = y * sinX + rz * cosX;
 
-    setPosition(v.id, rx, ry, rz2);
+    nova64.scene.setPosition(v.id, rx, ry, rz2);
 
     const pulse = 1 + Math.sin(time * 2 + v.phase) * 0.3;
-    setScale(v.id, 0.35 * pulse, 0.35 * pulse, 0.35 * pulse);
+    nova64.scene.setScale(v.id, 0.35 * pulse, 0.35 * pulse, 0.35 * pulse);
   }
 
   // Rotate edges with vertices
   for (const e of sacredEdges) {
-    rotateMesh(e.id, dt * 0.1, dt * 0.15, 0);
+    nova64.scene.rotateMesh(e.id, dt * 0.1, dt * 0.15, 0);
   }
 
   // Orbit halos around different axes
@@ -767,34 +827,34 @@ function _updateSacredGeometry(dt) {
       const ty = y * cosT - z * sinT;
       const tz = y * sinT + z * cosT;
 
-      setPosition(sphere.id, x, ty, tz);
+      nova64.scene.setPosition(sphere.id, x, ty, tz);
 
       const breathe = 0.15 + Math.sin(time * 3 + sphere.idx * 0.2) * 0.05;
-      setScale(sphere.id, breathe * 5, breathe * 5, breathe * 5);
+      nova64.scene.setScale(sphere.id, breathe * 5, breathe * 5, breathe * 5);
     }
   }
 
   // Seed of life — rotate torus rings
   for (const ring of sacredCenter) {
-    rotateMesh(ring.id, dt * 0.3, dt * 0.2, dt * 0.1);
+    nova64.scene.rotateMesh(ring.id, dt * 0.3, dt * 0.2, dt * 0.1);
     const pulse = 1 + Math.sin(time * 1.5 + ring.angle) * 0.1;
-    setScale(ring.id, pulse, pulse, pulse);
+    nova64.scene.setScale(ring.id, pulse, pulse, pulse);
   }
 
   // Dynamic lights
   if (lights[0]) {
     const lColor = hslToHex((time * 20) % 360, 0.6, 0.5);
-    setPointLightColor(lights[0], lColor);
+    nova64.light.setPointLightColor(lights[0], lColor);
   }
   if (lights[1])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[1],
       Math.cos(time * 0.3) * 10,
       8 + Math.sin(time * 0.5) * 4,
       Math.sin(time * 0.3) * 10
     );
   if (lights[2])
-    setPointLightPosition(
+    nova64.light.setPointLightPosition(
       lights[2],
       Math.cos(time * 0.25 + 3) * 10,
       -8 + Math.cos(time * 0.4) * 4,
@@ -853,17 +913,17 @@ export function update(dt) {
 
   // Scene switching
   for (let i = 1; i <= 4; i++) {
-    if (keyp('Digit' + i)) buildScene(i - 1);
+    if (nova64.input.keyp('Digit' + i)) buildScene(i - 1);
   }
-  if (keyp('Space')) buildScene(scene);
+  if (nova64.input.keyp('Space')) buildScene(scene);
 
   // Camera orbit
-  if (key('KeyA') || key('ArrowLeft')) orbitAngle -= dt * 1.8;
-  if (key('KeyD') || key('ArrowRight')) orbitAngle += dt * 1.8;
-  if (key('KeyW') || key('ArrowUp')) orbitY += dt * 5;
-  if (key('KeyS') || key('ArrowDown')) orbitY -= dt * 5;
-  if (key('KeyQ')) orbitDist = Math.max(8, orbitDist - dt * 10);
-  if (key('KeyE')) orbitDist = Math.min(50, orbitDist + dt * 10);
+  if (nova64.input.key('KeyA') || nova64.input.key('ArrowLeft')) orbitAngle -= dt * 1.8;
+  if (nova64.input.key('KeyD') || nova64.input.key('ArrowRight')) orbitAngle += dt * 1.8;
+  if (nova64.input.key('KeyW') || nova64.input.key('ArrowUp')) orbitY += dt * 5;
+  if (nova64.input.key('KeyS') || nova64.input.key('ArrowDown')) orbitY -= dt * 5;
+  if (nova64.input.key('KeyQ')) orbitDist = Math.max(8, orbitDist - dt * 10);
+  if (nova64.input.key('KeyE')) orbitDist = Math.min(50, orbitDist + dt * 10);
   orbitY = Math.max(-10, Math.min(25, orbitY));
 
   // Auto-rotate
@@ -871,8 +931,8 @@ export function update(dt) {
 
   const cx = Math.cos(orbitAngle) * orbitDist;
   const cz = Math.sin(orbitAngle) * orbitDist;
-  setCameraPosition(cx, orbitY, cz);
-  setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraPosition(cx, orbitY, cz);
+  nova64.camera.setCameraTarget(0, 0, 0);
 
   // Scene-specific updates
   if (scene === 0) _updateGyroscope(dt);
@@ -887,12 +947,17 @@ export function update(dt) {
 
 export function draw() {
   const name = SCENE_NAMES[scene];
-  drawPanel(8, 4, 260, 28, {
-    bgColor: rgba8(0, 0, 0, 160),
-    borderLight: rgba8(80, 80, 140, 120),
-    borderDark: rgba8(40, 40, 80, 120),
+  nova64.draw.drawPanel(8, 4, 260, 28, {
+    bgColor: nova64.draw.rgba8(0, 0, 0, 160),
+    borderLight: nova64.draw.rgba8(80, 80, 140, 120),
+    borderDark: nova64.draw.rgba8(40, 40, 80, 120),
   });
-  print(`${scene + 1}/4  ${name}`, 16, 12, rgba8(220, 200, 255));
-  print('[1-4] SCENE  [SPACE] RESET  [WASD] ORBIT  [Q/E] ZOOM', 10, H - 18, rgba8(100, 100, 150));
-  print('CREATIVE CODING 3D', W - 170, 12, rgba8(140, 100, 200));
+  nova64.draw.print(`${scene + 1}/4  ${name}`, 16, 12, nova64.draw.rgba8(220, 200, 255));
+  nova64.draw.print(
+    '[1-4] SCENE  [SPACE] RESET  [WASD] ORBIT  [Q/E] ZOOM',
+    10,
+    H - 18,
+    nova64.draw.rgba8(100, 100, 150)
+  );
+  nova64.draw.print('CREATIVE CODING 3D', W - 170, 12, nova64.draw.rgba8(140, 100, 200));
 }

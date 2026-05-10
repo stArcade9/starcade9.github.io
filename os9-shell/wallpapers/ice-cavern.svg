@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#04111d"/>
+      <stop offset="0.45" stop-color="#14506f"/>
+      <stop offset="1" stop-color="#092033"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="18%" r="58%">
+      <stop offset="0" stop-color="#c8f7ff" stop-opacity="0.28"/>
+      <stop offset="0.45" stop-color="#5fc5f2" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#062033" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#light)"/>
+  <g opacity="0.78">
+    <polygon points="0,0 340,0 160,1000 0,1000" fill="#0b3352" opacity="0.55"/>
+    <polygon points="340,0 620,0 480,1000 160,1000" fill="#93e7ff" opacity="0.08"/>
+    <polygon points="620,0 870,0 730,1000 480,1000" fill="#ffffff" opacity="0.05"/>
+    <polygon points="870,0 1160,0 1010,1000 730,1000" fill="#4fc4ff" opacity="0.09"/>
+    <polygon points="1160,0 1600,0 1600,1000 1010,1000" fill="#061827" opacity="0.5"/>
+  </g>
+  <g fill="none" stroke="#bff5ff" stroke-opacity="0.18" stroke-width="2">
+    <path d="M340 0 160 1000"/>
+    <path d="M620 0 480 1000"/>
+    <path d="M870 0 730 1000"/>
+    <path d="M1160 0 1010 1000"/>
+    <path d="M0 690 C360 610 530 740 830 655 S1280 520 1600 615"/>
+  </g>
+  <g opacity="0.18">
+    <circle cx="310" cy="240" r="150" fill="#77dfff"/>
+    <circle cx="1240" cy="410" r="210" fill="#5cc8ff"/>
+  </g>
+</svg>

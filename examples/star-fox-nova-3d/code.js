@@ -2,6 +2,65 @@
 // Ultimate 3D Edition with Holographic Materials, Barrel Rolls, and Cinematic Lighting
 
 // ── State ──────────────────────────────────────────────
+const {
+  cls,
+  drawGlowTextCentered,
+  drawGradient,
+  drawNoise,
+  drawPanel,
+  drawRadialGradient,
+  drawScanlines,
+  drawStarburst,
+  drawWave,
+  line,
+  rect,
+  rgba8,
+} = nova64.draw;
+const {
+  createCube,
+  createInstancedMesh,
+  createSphere,
+  createTorus,
+  destroyMesh,
+  finalizeInstances,
+  rotateMesh,
+  setInstanceTransform,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { createSpaceSkybox, setAmbientLight, setFog, setLightColor, setLightDirection } =
+  nova64.light;
+const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
+const { btn, btnp, isKeyPressed, key } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  centerX,
+  clearButtons,
+  createButton,
+  createPanel,
+  drawAllButtons,
+  drawText,
+  drawTextShadow,
+  grid,
+  setFont,
+  setTextAlign,
+  uiColors,
+  updateAllButtons,
+} = nova64.ui;
+const {
+  color,
+  createCooldown,
+  createHitState,
+  isInvulnerable,
+  rotate,
+  triggerHit,
+  updateCooldown,
+  updateHitState,
+  useCooldown,
+} = nova64.util;
+
 let gameState = 'start'; // 'start' | 'playing' | 'gameover'
 let gameTime = 0;
 let inputLockout = 0.6;
@@ -74,32 +133,37 @@ export async function init() {
   console.log('🚀 STAR FOX NOVA 64 (Ultimate) — Loading...');
 
   // Camera — dynamic lag behind player
-  setCameraPosition(0, 12, 22);
-  setCameraTarget(0, 4, -30);
-  setCameraFOV(75);
+  nova64.camera.setCameraPosition(0, 12, 22);
+  nova64.camera.setCameraTarget(0, 4, -30);
+  nova64.camera.setCameraFOV(75);
 
   // Lighting — dramatic space lighting
-  setAmbientLight(0x111122, 1.2);
-  setLightDirection(-0.5, -1, -0.5);
-  setLightColor(0xffffff);
+  nova64.light.setAmbientLight(0x111122, 1.2);
+  nova64.light.setLightDirection(-0.5, -1, -0.5);
+  nova64.light.setLightColor(0xffffff);
 
   // Deep space fog
-  setFog(0x020308, 50, 300);
+  nova64.light.setFog(0x020308, 50, 300);
 
   if (typeof createSpaceSkybox === 'function') {
-    createSpaceSkybox({ starCount: 3000, starSize: 2.5, nebulae: true, nebulaColor: 0x1a0044 });
+    nova64.light.createSpaceSkybox({
+      starCount: 3000,
+      starSize: 2.5,
+      nebulae: true,
+      nebulaColor: 0x1a0044,
+    });
   }
 
   // Post-processing — cinematic space feel
-  enableBloom(1.2, 0.4, 0.4); // Intense bloom for lasers/engines
-  if (typeof enableFXAA === 'function') enableFXAA();
-  if (typeof enableVignette === 'function') enableVignette(1.2, 0.92);
+  nova64.fx.enableBloom(1.2, 0.4, 0.4); // Intense bloom for lasers/engines
+  if (typeof enableFXAA === 'function') nova64.fx.enableFXAA();
+  if (typeof enableVignette === 'function') nova64.fx.enableVignette(1.2, 0.92);
 
   // Build world
   createGridFloor();
   createArwing();
-  playerHit = createHitState({ invulnDuration: 1.0, blinkRate: 30 });
-  weaponCD = createCooldown(0.1);
+  playerHit = nova64.util.createHitState({ invulnDuration: 1.0, blinkRate: 30 });
+  weaponCD = nova64.util.createCooldown(0.1);
   for (let i = 0; i < 25; i++) spawnAsteroid(true);
 
   // Start screen
@@ -120,13 +184,13 @@ function createGridFloor() {
 
   // 700 planes → 2 instanced meshes (350 each)
   const halfCount = (cols * rows) / 2;
-  gridInstanceA = createInstancedMesh('plane', halfCount, 0x050a14, {
+  gridInstanceA = nova64.scene.createInstancedMesh('plane', halfCount, 0x050a14, {
     width: size,
     height: size,
     material: 'standard',
     roughness: 0.8,
   });
-  gridInstanceB = createInstancedMesh('plane', halfCount, 0x081020, {
+  gridInstanceB = nova64.scene.createInstancedMesh('plane', halfCount, 0x081020, {
     width: size,
     height: size,
     material: 'standard',
@@ -141,18 +205,18 @@ function createGridFloor() {
       const x = startX + c * size + size / 2;
       const z = 15 - r * size - size / 2;
       if (alt) {
-        setInstanceTransform(gridInstanceA, idxA, x, -4, z, -Math.PI / 2, 0, 0);
+        nova64.scene.setInstanceTransform(gridInstanceA, idxA, x, -4, z, -Math.PI / 2, 0, 0);
         game.gridPlanes.push({ instanceId: gridInstanceA, index: idxA, x, z });
         idxA++;
       } else {
-        setInstanceTransform(gridInstanceB, idxB, x, -4, z, -Math.PI / 2, 0, 0);
+        nova64.scene.setInstanceTransform(gridInstanceB, idxB, x, -4, z, -Math.PI / 2, 0, 0);
         game.gridPlanes.push({ instanceId: gridInstanceB, index: idxB, x, z });
         idxB++;
       }
     }
   }
-  finalizeInstances(gridInstanceA);
-  finalizeInstances(gridInstanceB);
+  nova64.scene.finalizeInstances(gridInstanceA);
+  nova64.scene.finalizeInstances(gridInstanceB);
 }
 
 function createArwing() {
@@ -162,51 +226,53 @@ function createArwing() {
     pz = p.z;
 
   // Fuselage (Metallic)
-  p.meshes.body = createCube(1.8, C.shipBody, [px, py, pz], {
+  p.meshes.body = nova64.scene.createCube(1.8, C.shipBody, [px, py, pz], {
     material: 'metallic',
     metalness: 0.9,
     roughness: 0.2,
   });
-  setScale(p.meshes.body, 0.8, 0.5, 2.5);
+  nova64.scene.setScale(p.meshes.body, 0.8, 0.5, 2.5);
 
   // Cockpit canopy (Glass/Holographic)
-  p.meshes.cockpit = createSphere(0.5, C.shipCockpit, [px, py + 0.4, pz + 0.8], 12, {
+  p.meshes.cockpit = nova64.scene.createSphere(0.5, C.shipCockpit, [px, py + 0.4, pz + 0.8], 12, {
     material: 'holographic',
     transparent: true,
     opacity: 0.8,
     emissive: 0x0044aa,
   });
-  setScale(p.meshes.cockpit, 0.8, 0.6, 1.2);
+  nova64.scene.setScale(p.meshes.cockpit, 0.8, 0.6, 1.2);
 
   // Wings (Metallic Blue)
-  p.meshes.wingL = createCube(1, C.shipWing, [px - 2.2, py - 0.1, pz - 0.3], {
+  p.meshes.wingL = nova64.scene.createCube(1, C.shipWing, [px - 2.2, py - 0.1, pz - 0.3], {
     material: 'metallic',
     metalness: 0.8,
   });
-  setScale(p.meshes.wingL, 2.8, 0.1, 1.8);
+  nova64.scene.setScale(p.meshes.wingL, 2.8, 0.1, 1.8);
 
-  p.meshes.wingR = createCube(1, C.shipWing, [px + 2.2, py - 0.1, pz - 0.3], {
+  p.meshes.wingR = nova64.scene.createCube(1, C.shipWing, [px + 2.2, py - 0.1, pz - 0.3], {
     material: 'metallic',
     metalness: 0.8,
   });
-  setScale(p.meshes.wingR, 2.8, 0.1, 1.8);
+  nova64.scene.setScale(p.meshes.wingR, 2.8, 0.1, 1.8);
 
   // Engine glow pods (Emissive)
-  p.meshes.engineL = createCube(0.4, C.shipEngine, [px - 1.2, py - 0.15, pz - 2.0], {
+  p.meshes.engineL = nova64.scene.createCube(0.4, C.shipEngine, [px - 1.2, py - 0.15, pz - 2.0], {
     material: 'emissive',
     emissive: C.shipEngine,
   });
-  setScale(p.meshes.engineL, 0.8, 0.6, 1.0);
+  nova64.scene.setScale(p.meshes.engineL, 0.8, 0.6, 1.0);
 
-  p.meshes.engineR = createCube(0.4, C.shipEngine, [px + 1.2, py - 0.15, pz - 2.0], {
+  p.meshes.engineR = nova64.scene.createCube(0.4, C.shipEngine, [px + 1.2, py - 0.15, pz - 2.0], {
     material: 'emissive',
     emissive: C.shipEngine,
   });
-  setScale(p.meshes.engineR, 0.8, 0.6, 1.0);
+  nova64.scene.setScale(p.meshes.engineR, 0.8, 0.6, 1.0);
 
   // Tail fin
-  p.meshes.tail = createCube(0.3, C.shipWing, [px, py + 0.8, pz - 1.8], { material: 'metallic' });
-  setScale(p.meshes.tail, 0.15, 1.4, 1.2);
+  p.meshes.tail = nova64.scene.createCube(0.3, C.shipWing, [px, py + 0.8, pz - 1.8], {
+    material: 'metallic',
+  });
+  nova64.scene.setScale(p.meshes.tail, 0.15, 1.4, 1.2);
 }
 
 function spawnAsteroid(randomZ = false) {
@@ -216,7 +282,10 @@ function spawnAsteroid(randomZ = false) {
   const z = randomZ ? 10 - Math.random() * 250 : -250 - Math.random() * 50;
   const sz = 1.5 + Math.random() * 4;
 
-  const mesh = createSphere(sz, C.asteroid, [x, y, z], 6, { material: 'standard', roughness: 0.9 });
+  const mesh = nova64.scene.createSphere(sz, C.asteroid, [x, y, z], 6, {
+    material: 'standard',
+    roughness: 0.9,
+  });
   game.asteroids.push({
     mesh,
     x,
@@ -234,15 +303,18 @@ function spawnEnemy() {
   const y = 4 + Math.random() * 14;
   const z = -200 - Math.random() * 40;
 
-  const core = createSphere(1.8, C.drone, [x, y, z], 8, { material: 'metallic', metalness: 0.8 });
-  const eye = createSphere(0.8, C.droneEye, [x, y, z + 1.5], 8, {
+  const core = nova64.scene.createSphere(1.8, C.drone, [x, y, z], 8, {
+    material: 'metallic',
+    metalness: 0.8,
+  });
+  const eye = nova64.scene.createSphere(0.8, C.droneEye, [x, y, z + 1.5], 8, {
     material: 'emissive',
     emissive: C.droneEye,
   });
-  const wL = createCube(1, C.droneWing, [x - 2.5, y, z], { material: 'metallic' });
-  setScale(wL, 2.5, 0.15, 0.8);
-  const wR = createCube(1, C.droneWing, [x + 2.5, y, z], { material: 'metallic' });
-  setScale(wR, 2.5, 0.15, 0.8);
+  const wL = nova64.scene.createCube(1, C.droneWing, [x - 2.5, y, z], { material: 'metallic' });
+  nova64.scene.setScale(wL, 2.5, 0.15, 0.8);
+  const wR = nova64.scene.createCube(1, C.droneWing, [x + 2.5, y, z], { material: 'metallic' });
+  nova64.scene.setScale(wR, 2.5, 0.15, 0.8);
 
   game.enemies.push({
     parts: [
@@ -266,23 +338,23 @@ function spawnBoss() {
   const x = 0;
   const y = 8;
   const z = -150;
-  const core = createCube(6, 0xff0000, [x, y, z], {
+  const core = nova64.scene.createCube(6, 0xff0000, [x, y, z], {
     material: 'metallic',
     metalness: 0.9,
     roughness: 0.1,
   });
-  const eyeL = createSphere(1.5, 0xffffff, [x - 2, y + 1, z + 3], 8, {
+  const eyeL = nova64.scene.createSphere(1.5, 0xffffff, [x - 2, y + 1, z + 3], 8, {
     material: 'emissive',
     emissive: 0xffffff,
     intensity: 2,
   });
-  const eyeR = createSphere(1.5, 0xffffff, [x + 2, y + 1, z + 3], 8, {
+  const eyeR = nova64.scene.createSphere(1.5, 0xffffff, [x + 2, y + 1, z + 3], 8, {
     material: 'emissive',
     emissive: 0xffffff,
     intensity: 2,
   });
-  const mouth = createCube(3, 0x000000, [x, y - 2, z + 2.5], { material: 'standard' });
-  setScale(mouth, 1, 0.2, 1);
+  const mouth = nova64.scene.createCube(3, 0x000000, [x, y - 2, z + 2.5], { material: 'standard' });
+  nova64.scene.setScale(mouth, 1, 0.2, 1);
 
   game.boss = {
     parts: [
@@ -321,7 +393,7 @@ function updateBoss(dt) {
   }
 
   b.parts.forEach(part => {
-    setPosition(part.mesh, b.x + part.ox, b.y + part.oy, b.z + part.oz);
+    nova64.scene.setPosition(part.mesh, b.x + part.ox, b.y + part.oy, b.z + part.oz);
   });
 }
 
@@ -333,10 +405,13 @@ function spawnRing() {
   // Emissive glowing ring
   const mesh =
     typeof createTorus === 'function'
-      ? createTorus(x, y, z, 2.0, 0.35, C.ring)
-      : createSphere(2.0, C.ring, [x, y, z], 8, { material: 'emissive', emissive: 0xffaa00 });
+      ? nova64.scene.createTorus(x, y, z, 2.0, 0.35, C.ring)
+      : nova64.scene.createSphere(2.0, C.ring, [x, y, z], 8, {
+          material: 'emissive',
+          emissive: 0xffaa00,
+        });
 
-  if (typeof createTorus !== 'function') setScale(mesh, 1.0, 1.0, 0.1);
+  if (typeof createTorus !== 'function') nova64.scene.setScale(mesh, 1.0, 1.0, 0.1);
   game.rings.push({ mesh, x, y, z, collected: false });
 }
 
@@ -357,14 +432,14 @@ function fireLaser() {
     const bx = p.x + actualOffX,
       by = p.y - actualOffY,
       bz = p.z - 2;
-    const mesh = createCube(0.6, C.laser, [bx, by, bz], {
+    const mesh = nova64.scene.createCube(0.6, C.laser, [bx, by, bz], {
       material: 'emissive',
       emissive: C.laser,
     });
-    setScale(mesh, 0.3, 0.3, 5.0);
+    nova64.scene.setScale(mesh, 0.3, 0.3, 5.0);
     game.bullets.push({ mesh, x: bx, y: by, z: bz, vz: -240, life: 2.0 });
   }
-  sfx('laser');
+  nova64.audio.sfx('laser');
 }
 
 function fireEnemyShot(ex, ey, ez) {
@@ -375,11 +450,11 @@ function fireEnemyShot(ex, ey, ez) {
   const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
   const spd = 75;
 
-  const mesh = createSphere(0.8, C.enemyShot, [ex, ey, ez], 6, {
+  const mesh = nova64.scene.createSphere(0.8, C.enemyShot, [ex, ey, ez], 6, {
     material: 'emissive',
     emissive: C.enemyShot,
   });
-  setScale(mesh, 0.6, 0.6, 2.5);
+  nova64.scene.setScale(mesh, 0.6, 0.6, 2.5);
   // Optional: align projectile to velocity vector
 
   game.enemyBullets.push({
@@ -396,7 +471,10 @@ function fireEnemyShot(ex, ey, ez) {
 
 function createExplosion(x, y, z, color, count = 16) {
   for (let i = 0; i < count; i++) {
-    const mesh = createCube(0.6, color, [x, y, z], { material: 'emissive', emissive: color });
+    const mesh = nova64.scene.createCube(0.6, color, [x, y, z], {
+      material: 'emissive',
+      emissive: color,
+    });
     const spd = 15 + Math.random() * 25;
     const a1 = Math.random() * Math.PI * 2;
     const a2 = Math.random() * Math.PI * 2;
@@ -426,7 +504,7 @@ function spawnTrail() {
     let y = p.y + actualOffY;
     let z = p.z + 2.0;
 
-    const mesh = createCube(0.5, C.shipEngine, [x, y, z], {
+    const mesh = nova64.scene.createCube(0.5, C.shipEngine, [x, y, z], {
       material: 'emissive',
       emissive: C.shipEngine,
     });
@@ -451,10 +529,10 @@ export function update(dt) {
 
   if (gameState === 'start' || gameState === 'gameover') {
     if (inputLockout > 0) inputLockout -= dt;
-    updateAllButtons();
+    nova64.ui.updateAllButtons();
     updateGrid(dt * 0.3);
     updateArwingIdle(dt);
-    if (inputLockout <= 0 && isKeyPressed('Space')) startGame();
+    if (inputLockout <= 0 && nova64.input.isKeyPressed('Space')) startGame();
     return;
   }
 
@@ -474,15 +552,15 @@ export function update(dt) {
   updateEnemies(dt);
   updateBullets(dt);
   updateEnemyBullets(dt);
-  updateParticles(dt);
+  _local_updateParticles(dt);
   updateRings(dt);
 
   // Dynamic camera follow
   const camTag = game.player;
   const cx = camTag.x * 0.3;
   const cy = camTag.y * 0.5 + 8;
-  setCameraPosition(cx, cy, 22);
-  setCameraTarget(cx * 0.5, camTag.y * 0.8, -30);
+  nova64.camera.setCameraPosition(cx, cy, 22);
+  nova64.camera.setCameraTarget(cx * 0.5, camTag.y * 0.8, -30);
 }
 
 function startGame() {
@@ -501,23 +579,23 @@ function startGame() {
   game.ringSpawnTimer = 0;
   game.bossSpawned = false;
   if (game.boss) {
-    game.boss.parts.forEach(p => destroyMesh(p.mesh));
+    game.boss.parts.forEach(p => nova64.scene.destroyMesh(p.mesh));
     game.boss = null;
   }
 
   // Clean up old objects
-  game.enemies.forEach(e => e.parts.forEach(p => destroyMesh(p.mesh)));
-  game.bullets.forEach(b => destroyMesh(b.mesh));
-  game.enemyBullets.forEach(b => destroyMesh(b.mesh));
-  game.particles.forEach(p => destroyMesh(p.mesh));
-  game.rings.forEach(r => destroyMesh(r.mesh));
+  game.enemies.forEach(e => e.parts.forEach(p => nova64.scene.destroyMesh(p.mesh)));
+  game.bullets.forEach(b => nova64.scene.destroyMesh(b.mesh));
+  game.enemyBullets.forEach(b => nova64.scene.destroyMesh(b.mesh));
+  game.particles.forEach(p => nova64.scene.destroyMesh(p.mesh));
+  game.rings.forEach(r => nova64.scene.destroyMesh(r.mesh));
   game.enemies = [];
   game.bullets = [];
   game.enemyBullets = [];
   game.particles = [];
   game.rings = [];
 
-  clearButtons();
+  nova64.ui.clearButtons();
 }
 
 // ── Arwing Movement ────────────────────────────────────
@@ -528,22 +606,28 @@ function updateArwing(dt) {
     createExplosion(p.x, p.y, p.z, C.explosion, 30);
     createExplosion(p.x, p.y, p.z, 0xffffff, 10);
     // Hide all ship parts
-    Object.values(game.player.meshes).forEach(m => m && setPosition(m, 1000, 0, 0));
+    Object.values(game.player.meshes).forEach(m => m && nova64.scene.setPosition(m, 1000, 0, 0));
     gameState = 'gameover';
     inputLockout = 1.0;
-    sfx('death');
+    nova64.audio.sfx('death');
     initGameOverScreen();
     return;
   }
 
-  updateHitState(playerHit, dt);
+  nova64.util.updateHitState(playerHit, dt);
 
   // Barrel Roll Logic (Press Q/E or trigger dynamically)
-  if (!p.isBarrelRolling && (isKeyPressed('KeyQ') || isKeyPressed('KeyE') || btnp(1) || btnp(2))) {
+  if (
+    !p.isBarrelRolling &&
+    (nova64.input.isKeyPressed('KeyQ') ||
+      nova64.input.isKeyPressed('KeyE') ||
+      nova64.input.btnp(1) ||
+      nova64.input.btnp(2))
+  ) {
     p.isBarrelRolling = true;
-    p.rollSpeed = isKeyPressed('KeyE') ? -Math.PI * 6 : Math.PI * 6; // Fast spin
+    p.rollSpeed = nova64.input.isKeyPressed('KeyE') ? -Math.PI * 6 : Math.PI * 6; // Fast spin
     playerHit.invulnTimer = Math.max(playerHit.invulnTimer, 0.5); // Invincible during roll!
-    sfx('jump');
+    nova64.audio.sfx('jump');
   }
 
   if (p.isBarrelRolling) {
@@ -557,10 +641,34 @@ function updateArwing(dt) {
   // Input — smooth velocity-based movement
   let ix = 0,
     iy = 0;
-  if (key('ArrowLeft') || key('KeyA') || btn(14) || btn(12)) ix = -1;
-  if (key('ArrowRight') || key('KeyD') || btn(15) || btn(13)) ix = 1;
-  if (key('ArrowUp') || key('KeyW') || btn(12) || btn(14)) iy = 1;
-  if (key('ArrowDown') || key('KeyS') || btn(13) || btn(15)) iy = -1;
+  if (
+    nova64.input.key('ArrowLeft') ||
+    nova64.input.key('KeyA') ||
+    nova64.input.btn(14) ||
+    nova64.input.btn(12)
+  )
+    ix = -1;
+  if (
+    nova64.input.key('ArrowRight') ||
+    nova64.input.key('KeyD') ||
+    nova64.input.btn(15) ||
+    nova64.input.btn(13)
+  )
+    ix = 1;
+  if (
+    nova64.input.key('ArrowUp') ||
+    nova64.input.key('KeyW') ||
+    nova64.input.btn(12) ||
+    nova64.input.btn(14)
+  )
+    iy = 1;
+  if (
+    nova64.input.key('ArrowDown') ||
+    nova64.input.key('KeyS') ||
+    nova64.input.btn(13) ||
+    nova64.input.btn(15)
+  )
+    iy = -1;
 
   const accel = 140,
     friction = 5.0;
@@ -602,8 +710,8 @@ function updateArwing(dt) {
   if (Math.random() < 0.6) spawnTrail();
 
   // Shooting
-  updateCooldown(weaponCD, dt);
-  if ((key('Space') || btn(0)) && useCooldown(weaponCD)) {
+  nova64.util.updateCooldown(weaponCD, dt);
+  if ((nova64.input.key('Space') || nova64.input.btn(0)) && nova64.util.useCooldown(weaponCD)) {
     fireLaser();
   }
 }
@@ -633,26 +741,26 @@ function positionArwing(p, totalRoll) {
 
   if (!m.body) return; // Skip if dead/hidden
 
-  setPosition(m.body, ...applyRot(0, 0, 0));
-  setRotation(m.body, 0, 0, rz);
+  nova64.scene.setPosition(m.body, ...applyRot(0, 0, 0));
+  nova64.scene.setRotation(m.body, 0, 0, rz);
 
-  setPosition(m.cockpit, ...applyRot(0, 0.4, 0.8));
-  setRotation(m.cockpit, 0, 0, rz);
+  nova64.scene.setPosition(m.cockpit, ...applyRot(0, 0.4, 0.8));
+  nova64.scene.setRotation(m.cockpit, 0, 0, rz);
 
-  setPosition(m.wingL, ...applyRot(-2.2, -0.1, -0.3));
-  setRotation(m.wingL, 0, 0, rz);
+  nova64.scene.setPosition(m.wingL, ...applyRot(-2.2, -0.1, -0.3));
+  nova64.scene.setRotation(m.wingL, 0, 0, rz);
 
-  setPosition(m.wingR, ...applyRot(2.2, -0.1, -0.3));
-  setRotation(m.wingR, 0, 0, rz);
+  nova64.scene.setPosition(m.wingR, ...applyRot(2.2, -0.1, -0.3));
+  nova64.scene.setRotation(m.wingR, 0, 0, rz);
 
-  setPosition(m.engineL, ...applyRot(-1.2, -0.15, -2.0));
-  setRotation(m.engineL, 0, 0, rz);
+  nova64.scene.setPosition(m.engineL, ...applyRot(-1.2, -0.15, -2.0));
+  nova64.scene.setRotation(m.engineL, 0, 0, rz);
 
-  setPosition(m.engineR, ...applyRot(1.2, -0.15, -2.0));
-  setRotation(m.engineR, 0, 0, rz);
+  nova64.scene.setPosition(m.engineR, ...applyRot(1.2, -0.15, -2.0));
+  nova64.scene.setRotation(m.engineR, 0, 0, rz);
 
-  setPosition(m.tail, ...applyRot(0, 0.8, -1.8));
-  setRotation(m.tail, 0, 0, rz);
+  nova64.scene.setPosition(m.tail, ...applyRot(0, 0.8, -1.8));
+  nova64.scene.setRotation(m.tail, 0, 0, rz);
 }
 
 // ── World Updates ──────────────────────────────────────
@@ -661,21 +769,21 @@ function updateGrid(dt) {
   game.gridPlanes.forEach(g => {
     g.z += game.speed * dt;
     if (g.z > 15) g.z -= total;
-    setInstanceTransform(g.instanceId, g.index, g.x, -4, g.z, -Math.PI / 2, 0, 0);
+    nova64.scene.setInstanceTransform(g.instanceId, g.index, g.x, -4, g.z, -Math.PI / 2, 0, 0);
   });
-  if (gridInstanceA) finalizeInstances(gridInstanceA);
-  if (gridInstanceB) finalizeInstances(gridInstanceB);
+  if (gridInstanceA) nova64.scene.finalizeInstances(gridInstanceA);
+  if (gridInstanceB) nova64.scene.finalizeInstances(gridInstanceB);
 }
 
 function updateAsteroids(dt) {
   for (let i = game.asteroids.length - 1; i >= 0; i--) {
     const a = game.asteroids[i];
     a.z += game.speed * dt;
-    rotateMesh(a.mesh, a.rotSpeed * dt * a.rotAxisX, a.rotSpeed * dt * a.rotAxisY, 0);
-    setPosition(a.mesh, a.x, a.y, a.z);
+    nova64.scene.rotateMesh(a.mesh, a.rotSpeed * dt * a.rotAxisX, a.rotSpeed * dt * a.rotAxisY, 0);
+    nova64.scene.setPosition(a.mesh, a.x, a.y, a.z);
 
     if (a.z > 25) {
-      destroyMesh(a.mesh);
+      nova64.scene.destroyMesh(a.mesh);
       game.asteroids.splice(i, 1);
       spawnAsteroid(false);
     }
@@ -712,8 +820,8 @@ function updateEnemies(dt) {
         oy = part.oy;
       const rx = e.x + ox * Math.cos(bank) - oy * Math.sin(bank);
       const ry = e.y + ox * Math.sin(bank) + oy * Math.cos(bank) + bob;
-      setPosition(part.mesh, rx, ry, e.z + part.oz);
-      setRotation(part.mesh, 0, 0, bank);
+      nova64.scene.setPosition(part.mesh, rx, ry, e.z + part.oz);
+      nova64.scene.setRotation(part.mesh, 0, 0, bank);
     });
 
     // Predict and shoot
@@ -722,7 +830,7 @@ function updateEnemies(dt) {
     }
 
     if (e.z > 30) {
-      e.parts.forEach(part => destroyMesh(part.mesh));
+      e.parts.forEach(part => nova64.scene.destroyMesh(part.mesh));
       game.enemies.splice(i, 1);
     }
   }
@@ -733,10 +841,10 @@ function updateBullets(dt) {
     const b = game.bullets[i];
     b.z += b.vz * dt;
     b.life -= dt;
-    setPosition(b.mesh, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.mesh, b.x, b.y, b.z);
 
     if (b.life <= 0 || b.z < -250) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.bullets.splice(i, 1);
       continue;
     }
@@ -751,14 +859,14 @@ function updateBullets(dt) {
         boss.hp -= 10;
         hit = true;
         createExplosion(b.x, b.y, b.z, C.spark, 3);
-        sfx('hit');
+        nova64.audio.sfx('hit');
         if (boss.hp <= 0) {
           game.score += 5000;
           createExplosion(boss.x, boss.y, boss.z, 0xffffff, 50);
-          boss.parts.forEach(p => destroyMesh(p.mesh));
+          boss.parts.forEach(p => nova64.scene.destroyMesh(p.mesh));
           game.boss = null;
           game.wave++;
-          sfx('explosion');
+          nova64.audio.sfx('explosion');
         }
       }
     }
@@ -773,12 +881,12 @@ function updateBullets(dt) {
           createExplosion(e.x, e.y, e.z, 0xffbb00, 8); // secondary burst
           game.score += 500;
           game.kills++;
-          sfx('explosion');
-          e.parts.forEach(part => destroyMesh(part.mesh));
+          nova64.audio.sfx('explosion');
+          e.parts.forEach(part => nova64.scene.destroyMesh(part.mesh));
           game.enemies.splice(j, 1);
         } else {
           createExplosion(b.x, b.y, b.z, C.spark, 4); // hit spark
-          sfx('hit');
+          nova64.audio.sfx('hit');
         }
         break;
       }
@@ -798,7 +906,7 @@ function updateBullets(dt) {
             // Break medium/small ones
             createExplosion(a.x, a.y, a.z, C.asteroid, 8);
             game.score += 150;
-            destroyMesh(a.mesh);
+            nova64.scene.destroyMesh(a.mesh);
             game.asteroids.splice(j, 1);
             spawnAsteroid(false);
           }
@@ -809,7 +917,7 @@ function updateBullets(dt) {
     }
 
     if (hit) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.bullets.splice(i, 1);
     }
   }
@@ -827,50 +935,50 @@ function updateEnemyBullets(dt) {
     // Rotate projectile based on velocity
     const yaw = Math.atan2(b.vx, b.vz);
     const pitch = Math.atan2(-b.vy, Math.sqrt(b.vx * b.vx + b.vz * b.vz));
-    setRotation(b.mesh, pitch, yaw, 0);
-    setPosition(b.mesh, b.x, b.y, b.z);
+    nova64.scene.setRotation(b.mesh, pitch, yaw, 0);
+    nova64.scene.setPosition(b.mesh, b.x, b.y, b.z);
 
     if (
-      isInvulnerable(playerHit) === false &&
+      nova64.util.isInvulnerable(playerHit) === false &&
       Math.abs(b.x - p.x) < 2.0 &&
       Math.abs(b.y - p.y) < 1.8 &&
       Math.abs(b.z - p.z) < 2.5
     ) {
       p.health -= 25;
-      triggerHit(playerHit);
-      sfx('hit');
+      nova64.util.triggerHit(playerHit);
+      nova64.audio.sfx('hit');
       createExplosion(p.x, p.y, p.z, C.explosion, 8);
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.enemyBullets.splice(i, 1);
       continue;
     }
 
     if (b.life <= 0 || b.z > 30) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.enemyBullets.splice(i, 1);
     }
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = game.particles.length - 1; i >= 0; i--) {
     const p = game.particles[i];
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.z += p.vz * dt;
     p.life -= dt;
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
 
     if (p.isTrail) {
       const s = Math.max(0.01, p.life / p.maxLife) * 0.5;
-      setScale(p.mesh, s, s, s * 2);
+      nova64.scene.setScale(p.mesh, s, s, s * 2);
     } else {
       const s = Math.max(0.01, p.life / p.maxLife);
-      setScale(p.mesh, s, s, s);
+      nova64.scene.setScale(p.mesh, s, s, s);
     }
 
     if (p.life <= 0) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       game.particles.splice(i, 1);
     }
   }
@@ -888,21 +996,21 @@ function updateRings(dt) {
     const r = game.rings[i];
     r.z += game.speed * dt;
 
-    rotateMesh(r.mesh, 0, gameTime * 3, 0); // Active spinning
-    setPosition(r.mesh, r.x, r.y, r.z);
+    nova64.scene.rotateMesh(r.mesh, 0, gameTime * 3, 0); // Active spinning
+    nova64.scene.setPosition(r.mesh, r.x, r.y, r.z);
 
     if (Math.abs(r.x - p.x) < 3.5 && Math.abs(r.y - p.y) < 3.5 && Math.abs(r.z - p.z) < 3.5) {
       game.score += 1000;
       game.player.health = Math.min(100, game.player.health + 10); // Heal
       createExplosion(r.x, r.y, r.z, C.ring, 12);
-      sfx('coin');
-      destroyMesh(r.mesh);
+      nova64.audio.sfx('coin');
+      nova64.scene.destroyMesh(r.mesh);
       game.rings.splice(i, 1);
       continue;
     }
 
     if (r.z > 30) {
-      destroyMesh(r.mesh);
+      nova64.scene.destroyMesh(r.mesh);
       game.rings.splice(i, 1);
     }
   }
@@ -910,9 +1018,9 @@ function updateRings(dt) {
 
 // ── Screens ────────────────────────────────────────────
 function initStartScreen() {
-  clearButtons();
-  createButton(
-    centerX(260),
+  nova64.ui.clearButtons();
+  nova64.ui.createButton(
+    nova64.ui.centerX(260),
     250,
     260,
     52,
@@ -921,17 +1029,17 @@ function initStartScreen() {
       startGame();
     },
     {
-      normalColor: rgba8(0, 180, 255, 255),
-      hoverColor: rgba8(60, 220, 255, 255),
-      pressedColor: rgba8(0, 120, 200, 255),
+      normalColor: nova64.draw.rgba8(0, 180, 255, 255),
+      hoverColor: nova64.draw.rgba8(60, 220, 255, 255),
+      pressedColor: nova64.draw.rgba8(0, 120, 200, 255),
     }
   );
 }
 
 function initGameOverScreen() {
-  clearButtons();
-  createButton(
-    centerX(220),
+  nova64.ui.clearButtons();
+  nova64.ui.createButton(
+    nova64.ui.centerX(220),
     265,
     220,
     50,
@@ -942,9 +1050,9 @@ function initGameOverScreen() {
       initStartScreen();
     },
     {
-      normalColor: rgba8(220, 50, 50, 255),
-      hoverColor: rgba8(255, 80, 80, 255),
-      pressedColor: rgba8(180, 30, 30, 255),
+      normalColor: nova64.draw.rgba8(220, 50, 50, 255),
+      hoverColor: nova64.draw.rgba8(255, 80, 80, 255),
+      pressedColor: nova64.draw.rgba8(180, 30, 30, 255),
     }
   );
 }
@@ -965,113 +1073,217 @@ export function draw() {
 }
 
 function drawStartScreen() {
-  cls(rgba8(2, 4, 16, 255));
-  drawGradient(0, 0, 640, 360, rgba8(2, 6, 20, 255), rgba8(1, 2, 8, 255), 'v');
+  nova64.draw.cls(nova64.draw.rgba8(2, 4, 16, 255));
+  nova64.draw.drawGradient(
+    0,
+    0,
+    640,
+    360,
+    nova64.draw.rgba8(2, 6, 20, 255),
+    nova64.draw.rgba8(1, 2, 8, 255),
+    'v'
+  );
 
   // Intense Nebula glow
-  drawRadialGradient(320, 90, 280, rgba8(0, 100, 255, 50), rgba8(0, 0, 0, 0));
-  drawRadialGradient(320, 90, 140, rgba8(0, 220, 255, 40), rgba8(0, 0, 0, 0));
+  nova64.draw.drawRadialGradient(
+    320,
+    90,
+    280,
+    nova64.draw.rgba8(0, 100, 255, 50),
+    nova64.draw.rgba8(0, 0, 0, 0)
+  );
+  nova64.draw.drawRadialGradient(
+    320,
+    90,
+    140,
+    nova64.draw.rgba8(0, 220, 255, 40),
+    nova64.draw.rgba8(0, 0, 0, 0)
+  );
 
-  drawNoise(0, 0, 640, 360, 12, Math.floor(gameTime * 5));
+  nova64.draw.drawNoise(0, 0, 640, 360, 12, Math.floor(gameTime * 5));
 
   const sp = Math.sin(gameTime * 3.5) * 0.5 + 0.5;
-  drawStarburst(40, 35, 16, 6, 8, rgba8(0, 200, 255, Math.floor(sp * 200)), true);
-  drawStarburst(600, 35, 16, 6, 8, rgba8(0, 200, 255, Math.floor(sp * 200)), true);
+  nova64.draw.drawStarburst(
+    40,
+    35,
+    16,
+    6,
+    8,
+    nova64.draw.rgba8(0, 200, 255, Math.floor(sp * 200)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    600,
+    35,
+    16,
+    6,
+    8,
+    nova64.draw.rgba8(0, 200, 255, Math.floor(sp * 200)),
+    true
+  );
 
-  drawWave(0, 180, 640, 6, 0.03, gameTime * 3.2, rgba8(0, 150, 255, 100), 2);
-  drawWave(0, 184, 640, 4, 0.045, gameTime * 3.8 + 1, rgba8(0, 255, 200, 70), 1);
+  nova64.draw.drawWave(
+    0,
+    180,
+    640,
+    6,
+    0.03,
+    gameTime * 3.2,
+    nova64.draw.rgba8(0, 150, 255, 100),
+    2
+  );
+  nova64.draw.drawWave(
+    0,
+    184,
+    640,
+    4,
+    0.045,
+    gameTime * 3.8 + 1,
+    nova64.draw.rgba8(0, 255, 200, 70),
+    1
+  );
 
   const bob = Math.sin(gameTime * 2.0) * 8;
-  drawGlowTextCentered(
+  nova64.draw.drawGlowTextCentered(
     'STAR FOX',
     320,
     46 + bob,
-    rgba8(0, 220, 255, 255),
-    rgba8(0, 80, 255, 200),
+    nova64.draw.rgba8(0, 220, 255, 255),
+    nova64.draw.rgba8(0, 80, 255, 200),
     3
   );
-  drawGlowTextCentered(
+  nova64.draw.drawGlowTextCentered(
     'NOVA 64',
     320,
     100 + bob,
-    rgba8(140, 200, 255, 255),
-    rgba8(20, 60, 180, 180),
+    nova64.draw.rgba8(140, 200, 255, 255),
+    nova64.draw.rgba8(20, 60, 180, 180),
     2
   );
 
-  setFont('large');
-  setTextAlign('center');
+  nova64.ui.setFont('large');
+  nova64.ui.setTextAlign('center');
   const subPulse = Math.sin(gameTime * 4) * 0.25 + 0.75;
-  drawText('ULTIMATE SPACE COMBAT', 320, 148, rgba8(0, 255, 200, Math.floor(subPulse * 255)), 1);
+  nova64.ui.drawText(
+    'ULTIMATE SPACE COMBAT',
+    320,
+    148,
+    nova64.draw.rgba8(0, 255, 200, Math.floor(subPulse * 255)),
+    1
+  );
 
-  const panel = createPanel(centerX(440), 190, 440, 92, {
-    bgColor: rgba8(4, 10, 30, 230),
-    borderColor: rgba8(0, 180, 255, 255),
+  const panel = nova64.ui.createPanel(nova64.ui.centerX(440), 190, 440, 92, {
+    bgColor: nova64.draw.rgba8(4, 10, 30, 230),
+    borderColor: nova64.draw.rgba8(0, 180, 255, 255),
     borderWidth: 2,
     shadow: true,
   });
-  drawPanel(panel);
+  nova64.draw.drawPanel(panel);
 
-  setFont('small');
-  drawText('◆ Blast enemy forces and avoid asteroids', 320, 208, uiColors.light, 1);
-  drawText('◆ Collect rings to heal and points', 320, 223, uiColors.light, 1);
-  drawText('◆ Press Q or E to BARREL ROLL! (Invincibility)', 320, 240, rgba8(255, 220, 50, 255), 1);
+  nova64.ui.setFont('small');
+  nova64.ui.drawText('◆ Blast enemy forces and avoid asteroids', 320, 208, uiColors.light, 1);
+  nova64.ui.drawText('◆ Collect rings to heal and points', 320, 223, uiColors.light, 1);
+  nova64.ui.drawText(
+    '◆ Press Q or E to BARREL ROLL! (Invincibility)',
+    320,
+    240,
+    nova64.draw.rgba8(255, 220, 50, 255),
+    1
+  );
 
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
-  setFont('tiny');
-  setTextAlign('center');
-  drawText('WASD / Arrows: Steer  ◆  Space: Fire', 320, 316, uiColors.secondary, 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText('WASD / Arrows: Steer  ◆  Space: Fire', 320, 316, uiColors.secondary, 1);
   const alpha = Math.floor((Math.sin(gameTime * 6) * 0.5 + 0.5) * 255);
-  drawText('◆ PRESS SPACE TO LAUNCH ◆', 320, 335, rgba8(0, 220, 255, alpha), 1);
+  nova64.ui.drawText(
+    '◆ PRESS SPACE TO LAUNCH ◆',
+    320,
+    335,
+    nova64.draw.rgba8(0, 220, 255, alpha),
+    1
+  );
 
-  drawScanlines(45, 3);
+  nova64.draw.drawScanlines(45, 3);
 }
 
 function drawGameOverScreen() {
-  rect(0, 0, 640, 360, rgba8(100, 0, 0, 180), true);
-  drawNoise(0, 0, 640, 360, 20, Math.floor(gameTime * 8));
+  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(100, 0, 0, 180), true);
+  nova64.draw.drawNoise(0, 0, 640, 360, 20, Math.floor(gameTime * 8));
 
-  setFont('huge');
-  setTextAlign('center');
-  drawTextShadow('MISSION FAILED', 320, 100, rgba8(255, 50, 50, 255), rgba8(0, 0, 0, 255), 4, 1);
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawTextShadow(
+    'MISSION FAILED',
+    320,
+    100,
+    nova64.draw.rgba8(255, 50, 50, 255),
+    nova64.draw.rgba8(0, 0, 0, 255),
+    4,
+    1
+  );
 
-  setFont('large');
-  drawText('FINAL SCORE', 320, 160, rgba8(180, 200, 255, 200), 1);
+  nova64.ui.setFont('large');
+  nova64.ui.drawText('FINAL SCORE', 320, 160, nova64.draw.rgba8(180, 200, 255, 200), 1);
 
-  setFont('huge');
-  drawText(Math.floor(game.score).toString(), 320, 195, rgba8(0, 255, 200, 255), 1);
+  nova64.ui.setFont('huge');
+  nova64.ui.drawText(
+    Math.floor(game.score).toString(),
+    320,
+    195,
+    nova64.draw.rgba8(0, 255, 200, 255),
+    1
+  );
 
-  setFont('normal');
-  drawText('ENEMIES DESTROYED: ' + game.kills, 320, 235, rgba8(255, 180, 80, 220), 1);
-  drawText('WAVE REACHED: ' + game.wave, 320, 255, rgba8(160, 200, 255, 200), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.drawText(
+    'ENEMIES DESTROYED: ' + game.kills,
+    320,
+    235,
+    nova64.draw.rgba8(255, 180, 80, 220),
+    1
+  );
+  nova64.ui.drawText(
+    'WAVE REACHED: ' + game.wave,
+    320,
+    255,
+    nova64.draw.rgba8(160, 200, 255, 200),
+    1
+  );
 
-  drawAllButtons();
-  drawScanlines(40, 2);
+  nova64.ui.drawAllButtons();
+  nova64.draw.drawScanlines(40, 2);
 }
 
 function drawHUD() {
-  setFont('normal');
-  setTextAlign('left');
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('left');
 
   // Top info bar background
-  rect(0, 0, 640, 28, rgba8(0, 4, 16, 180), true);
-  line(0, 28, 640, 28, rgba8(0, 160, 255, 100));
+  nova64.draw.rect(0, 0, 640, 28, nova64.draw.rgba8(0, 4, 16, 180), true);
+  nova64.draw.line(0, 28, 640, 28, nova64.draw.rgba8(0, 160, 255, 100));
 
-  drawTextShadow(
+  nova64.ui.drawTextShadow(
     'SCORE ' + Math.floor(game.score),
     16,
     8,
-    rgba8(0, 255, 200, 255),
-    rgba8(0, 0, 0, 200),
+    nova64.draw.rgba8(0, 255, 200, 255),
+    nova64.draw.rgba8(0, 0, 0, 200),
     2,
     1
   );
-  drawText('WAVE ' + game.wave, 180, 8, rgba8(180, 200, 255, 200), 1);
-  drawText('KILLS ' + game.kills, 300, 8, rgba8(255, 180, 80, 180), 1);
+  nova64.ui.drawText('WAVE ' + game.wave, 180, 8, nova64.draw.rgba8(180, 200, 255, 200), 1);
+  nova64.ui.drawText('KILLS ' + game.kills, 300, 8, nova64.draw.rgba8(255, 180, 80, 180), 1);
 
-  setTextAlign('right');
-  drawText('SPD ' + Math.floor(game.speed), 624, 8, rgba8(100, 200, 255, 180), 1);
+  nova64.ui.setTextAlign('right');
+  nova64.ui.drawText(
+    'SPD ' + Math.floor(game.speed),
+    624,
+    8,
+    nova64.draw.rgba8(100, 200, 255, 180),
+    1
+  );
 
   // Modern angled health bar
   const barX = 420,
@@ -1079,38 +1291,49 @@ function drawHUD() {
     barW = 200,
     barH = 16;
   // Frame
-  rect(barX - 2, barY - 2, barW + 4, barH + 4, rgba8(0, 150, 255, 150), false);
-  rect(barX, barY, barW, barH, rgba8(20, 0, 0, 200), true);
+  nova64.draw.rect(
+    barX - 2,
+    barY - 2,
+    barW + 4,
+    barH + 4,
+    nova64.draw.rgba8(0, 150, 255, 150),
+    false
+  );
+  nova64.draw.rect(barX, barY, barW, barH, nova64.draw.rgba8(20, 0, 0, 200), true);
 
   const hp = Math.max(0, game.player.health);
   const hpW = (hp / 100) * barW;
   const hpColor =
-    hp > 50 ? rgba8(0, 255, 100, 255) : hp > 25 ? rgba8(255, 200, 0, 255) : rgba8(255, 50, 50, 255);
-  rect(barX, barY, hpW, barH, hpColor, true);
+    hp > 50
+      ? nova64.draw.rgba8(0, 255, 100, 255)
+      : hp > 25
+        ? nova64.draw.rgba8(255, 200, 0, 255)
+        : nova64.draw.rgba8(255, 50, 50, 255);
+  nova64.draw.rect(barX, barY, hpW, barH, hpColor, true);
 
-  setTextAlign('right');
-  setFont('small');
-  drawText('SHIELD', barX - 10, barY + 3, rgba8(180, 200, 255, 200), 1);
+  nova64.ui.setTextAlign('right');
+  nova64.ui.setFont('small');
+  nova64.ui.drawText('SHIELD', barX - 10, barY + 3, nova64.draw.rgba8(180, 200, 255, 200), 1);
 
   // Cool Crosshair
   const cx = 320,
     cy = 180;
-  const retColor = rgba8(0, 255, 200, 180);
-  line(cx - 15, cy, cx - 5, cy, retColor);
-  line(cx + 5, cy, cx + 15, cy, retColor);
-  line(cx, cy - 15, cx, cy - 5, retColor);
-  line(cx, cy + 5, cx, cy + 15, retColor);
+  const retColor = nova64.draw.rgba8(0, 255, 200, 180);
+  nova64.draw.line(cx - 15, cy, cx - 5, cy, retColor);
+  nova64.draw.line(cx + 5, cy, cx + 15, cy, retColor);
+  nova64.draw.line(cx, cy - 15, cx, cy - 5, retColor);
+  nova64.draw.line(cx, cy + 5, cx, cy + 15, retColor);
   // Center dot
-  rect(cx - 1, cy - 1, 3, 3, rgba8(255, 0, 0, 200), true);
+  nova64.draw.rect(cx - 1, cy - 1, 3, 3, nova64.draw.rgba8(255, 0, 0, 200), true);
 
   // Invuln flash / barrel roll glow
-  if (isInvulnerable(playerHit)) {
+  if (nova64.util.isInvulnerable(playerHit)) {
     if (game.player.isBarrelRolling) {
       const rollAlpha = Math.floor(Math.sin(gameTime * 40) * 30 + 30);
-      rect(0, 0, 640, 360, rgba8(0, 180, 255, rollAlpha), true);
+      nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 180, 255, rollAlpha), true);
     } else {
       const flashAlpha = Math.floor(Math.sin(gameTime * 30) * 40 + 40);
-      rect(0, 0, 640, 360, rgba8(255, 0, 0, flashAlpha), true);
+      nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(255, 0, 0, flashAlpha), true);
     }
   }
 }

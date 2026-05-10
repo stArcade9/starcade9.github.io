@@ -1,0 +1,2 @@
+import{wQ as r}from"./main-CjwG5TUg.js";const o="oitFinalSimpleBlendPixelShader",t="var uFrontColor: texture_2d<f32>;@fragment\nfn main(input: FragmentInputs)->FragmentOutputs {var fragCoord: vec2i=vec2i(fragmentInputs.position.xy);var frontColor: vec4f=textureLoad(uFrontColor,fragCoord,0);fragmentOutputs.color=frontColor;}\n";r.ShadersStoreWGSL[o]||(r.ShadersStoreWGSL[o]=t);const e={name:o,shader:t};export{e as oitFinalSimpleBlendPixelShaderWGSL};
+//# sourceMappingURL=oitFinalSimpleBlend.fragment-CfyE_nTf.js.map

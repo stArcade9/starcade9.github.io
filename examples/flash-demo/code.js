@@ -6,6 +6,29 @@
 
 // Dimensions are resolved at runtime from the actual framebuffer size so the
 // demo fills the screen regardless of launch resolution.
+const {
+  BM,
+  circle,
+  cls,
+  drawScanlines,
+  line,
+  print,
+  printCentered,
+  pset,
+  rect,
+  rectfill,
+  rgba8,
+  screenHeight,
+  screenWidth,
+  withBlend,
+} = nova64.draw;
+const { burstEmitter2D, clearEmitter2D, createEmitter2D, drawEmitter2D, updateEmitter2D } =
+  nova64.fx;
+const { key, keyp } = nova64.input;
+const { addChild, createContainer, createGraphicsNode, createTextNode, drawStage } = nova64.ui;
+const { createTween, killAllTweens, updateTweens } = nova64.tween;
+const { color } = nova64.util;
+
 let W, H, CX, CY;
 
 // ─── Scene manager state ──────────────────────────────────────────────────────
@@ -33,7 +56,7 @@ function _startFade(next) {
 
 function _cleanupScene() {
   // 1. Kill every active nova-style tween to prevent leaks into the new scene.
-  if (typeof killAllTweens === 'function') killAllTweens();
+  if (typeof killAllTweens === 'function') nova64.tween.killAllTweens();
 
   // 2. Cancel any stale setTimeout callbacks from the exiting scene.
   while (_timeouts.length) clearTimeout(_timeouts.pop());
@@ -44,7 +67,7 @@ function _cleanupScene() {
     for (const e of _st.emitters) {
       const em = e && e.em ? e.em : e;
       try {
-        clearEmitter2D(em);
+        nova64.fx.clearEmitter2D(em);
       } catch (_) {}
     }
   }
@@ -62,8 +85,8 @@ function _launchScene(idx) {
 // ─── Exports ──────────────────────────────────────────────────────────────────
 export function init() {
   // Resolve actual framebuffer dimensions at cart boot time.
-  W = typeof screenWidth === 'function' ? screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
   CX = W >> 1;
   CY = H >> 1;
   _si = 0;
@@ -77,11 +100,15 @@ export function update(dt) {
   _navCD = Math.max(0, _navCD - dt);
 
   if (_navCD <= 0 && _fadeDir === 0) {
-    if (keyp('Space') || keyp('Enter') || keyp('ArrowRight')) {
+    if (
+      nova64.input.keyp('Space') ||
+      nova64.input.keyp('Enter') ||
+      nova64.input.keyp('ArrowRight')
+    ) {
       _startFade((_si + 1) % SCENES.length);
       _navCD = 0.35;
     }
-    if (keyp('ArrowLeft')) {
+    if (nova64.input.keyp('ArrowLeft')) {
       _startFade((_si - 1 + SCENES.length) % SCENES.length);
       _navCD = 0.35;
     }
@@ -102,20 +129,20 @@ export function update(dt) {
   }
 
   SCENES[_si].update(_st, dt);
-  updateTweens(dt);
+  nova64.tween.updateTweens(dt);
 }
 
 export function draw() {
   SCENES[_si].draw(_st);
 
   // Bottom HUD strip
-  rectfill(0, H - 14, W, 14, rgba8(0, 0, 0, 200));
-  print(`${_si + 1}/${SCENES.length}  ${SCENES[_si].name}`, 4, H - 11, 0x667788);
-  print('◄ SPACE ►', W - 54, H - 11, 0x445566);
+  nova64.draw.rectfill(0, H - 14, W, 14, nova64.draw.rgba8(0, 0, 0, 200));
+  nova64.draw.print(`${_si + 1}/${SCENES.length}  ${SCENES[_si].name}`, 4, H - 11, 0x667788);
+  nova64.draw.print('◄ SPACE ►', W - 54, H - 11, 0x445566);
 
   // Fade cover
   if (_fade > 0) {
-    rectfill(0, 0, W, H, rgba8(0, 0, 0, Math.min(255, _fade) | 0));
+    nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(0, 0, 0, Math.min(255, _fade) | 0));
   }
 }
 
@@ -128,7 +155,7 @@ const _S1C = [0xff4466, 0xff8844, 0xffcc44, 0x44ff88, 0x44aaff, 0xaa44ff];
 function s1_init(s) {
   s.balls = _S1C.map((color, i) => {
     const r = 11 + (i % 3) * 3;
-    const tw = createTween({
+    const tw = nova64.tween.createTween({
       from: -r * 2,
       to: H - r * 2 - 12,
       duration: 0.52 + i * 0.07,
@@ -146,9 +173,9 @@ function s1_update(s, dt) {
 }
 
 function s1_draw(s) {
-  cls(0x0a0a1a);
-  rectfill(0, H - 12, W, 12, 0x1e2f40);
-  line(0, H - 12, W, H - 12, 0x3a5060);
+  nova64.draw.cls(0x0a0a1a);
+  nova64.draw.rectfill(0, H - 12, W, 12, 0x1e2f40);
+  nova64.draw.line(0, H - 12, W, H - 12, 0x3a5060);
 
   for (const b of s.balls) {
     const y = b.tw.value ?? -b.r * 2;
@@ -157,18 +184,24 @@ function s1_draw(s) {
 
     // Shadow on ground
     const sw = Math.max(2, (b.r * 2 * (0.2 + 0.8 * yNorm)) | 0);
-    circle(b.x | 0, H - 7, sw >> 1, rgba8(0, 10, 20, 160), true);
+    nova64.draw.circle(b.x | 0, H - 7, sw >> 1, nova64.draw.rgba8(0, 10, 20, 160), true);
 
     // Ball body
-    circle(b.x | 0, cy, b.r, b.color, true);
+    nova64.draw.circle(b.x | 0, cy, b.r, b.color, true);
 
     // Specular highlight
     const sr = Math.max(1, (b.r / 3) | 0);
-    circle((b.x - b.r * 0.35) | 0, (cy - b.r * 0.32) | 0, sr, rgba8(255, 255, 255, 200), true);
+    nova64.draw.circle(
+      (b.x - b.r * 0.35) | 0,
+      (cy - b.r * 0.32) | 0,
+      sr,
+      nova64.draw.rgba8(255, 255, 255, 200),
+      true
+    );
   }
 
-  print('TWEEN BOUNCE', 4, 4, 0x888888);
-  print('hype-style createTween  easeOutBounce  pingpong', 4, 12, 0x445566);
+  nova64.draw.print('TWEEN BOUNCE', 4, 4, 0x888888);
+  nova64.draw.print('hype-style createTween  easeOutBounce  pingpong', 4, 12, 0x445566);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -193,7 +226,7 @@ function _s2_launch(s) {
   const y = 18 + Math.random() * (H * 0.52);
   const tint = _S2C[s.launched % _S2C.length];
   s.launched++;
-  const em = createEmitter2D({
+  const em = nova64.fx.createEmitter2D({
     x,
     y,
     tint,
@@ -208,7 +241,7 @@ function _s2_launch(s) {
     scaleDown: true,
     gravity: 32,
   });
-  burstEmitter2D(em, 75);
+  nova64.fx.burstEmitter2D(em, 75);
   s.emitters.push(em); // raw — for _cleanupScene
   s._fw.push({ em, life: 2.8 }); // wrapper — for lifetime tracking
 }
@@ -222,7 +255,7 @@ function s2_update(s, dt) {
   }
   s._fw = s._fw.filter(e => {
     e.life -= dt;
-    updateEmitter2D(e.em, dt);
+    nova64.fx.updateEmitter2D(e.em, dt);
     return e.life > 0;
   });
   // Keep raw list in sync so GC can collect expired emitters
@@ -230,27 +263,27 @@ function s2_update(s, dt) {
 }
 
 function s2_draw(s) {
-  cls(0x050510);
+  nova64.draw.cls(0x050510);
   // Stars
   for (let i = 0; i < 55; i++) {
     const sx = (i * 137 + 5) % W;
     const sy = (i * 91 + 7) % (H - 32);
-    pset(sx, sy, Math.sin(_gT * 2 + i) > 0.55 ? 0xffffff : 0x223344);
+    nova64.draw.pset(sx, sy, Math.sin(_gT * 2 + i) > 0.55 ? 0xffffff : 0x223344);
   }
   // City silhouette
   for (let bx = 0; bx < W; bx += 18) {
     const bh = 15 + ((bx * 13) % 28);
-    rectfill(bx, H - 30 - bh, 14, bh, 0x0c0c1c);
+    nova64.draw.rectfill(bx, H - 30 - bh, 14, bh, 0x0c0c1c);
   }
-  rectfill(0, H - 30, W, 30, 0x090916);
-  for (const fw of s._fw) drawEmitter2D(fw.em);
-  print('FIREWORKS', 4, 4, 0x888888);
-  print('createEmitter2D  burstEmitter2D  BM.ADD', 4, 12, 0x445566);
+  nova64.draw.rectfill(0, H - 30, W, 30, 0x090916);
+  for (const fw of s._fw) nova64.fx.drawEmitter2D(fw.em);
+  nova64.draw.print('FIREWORKS', 4, 4, 0x888888);
+  nova64.draw.print('createEmitter2D  burstEmitter2D  BM.ADD', 4, 12, 0x445566);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // S3 — AURORA SKY
-// withBlend('screen') for aurora bands over a night sky on the stage canvas
+// nova64.draw.withBlend('screen') for aurora bands over a night sky on the stage canvas
 // ══════════════════════════════════════════════════════════════════════════════
 const _S3B = [
   { h: 160, phase: 0.0, freq: 0.7, y: 0.22, w: 0.4, spd: 0.12 },
@@ -265,10 +298,10 @@ function s3_update(s, dt) {}
 
 function s3_draw(s) {
   const t = s.t;
-  cls(0x020710);
+  nova64.draw.cls(0x020710);
 
   // Sky + stars on stage canvas
-  withBlend('source-over', ctx => {
+  nova64.draw.withBlend('source-over', ctx => {
     const grd = ctx.createLinearGradient(0, 0, 0, H);
     grd.addColorStop(0, '#020710');
     grd.addColorStop(1, '#0a1428');
@@ -284,7 +317,7 @@ function s3_draw(s) {
 
   // Aurora bands — each screen-blended over the previous stage canvas content
   for (const b of _S3B) {
-    withBlend('screen', ctx => {
+    nova64.draw.withBlend('screen', ctx => {
       const yMid = (b.y + Math.sin(t * b.spd + b.phase) * 0.08) * H;
       const bH = b.w * H;
       const a = 0.4 + 0.35 * Math.sin(t * 0.22 + b.phase);
@@ -298,7 +331,7 @@ function s3_draw(s) {
   }
 
   // Terrain silhouette on stage canvas
-  withBlend('source-over', ctx => {
+  nova64.draw.withBlend('source-over', ctx => {
     const ty = H * 0.64;
     ctx.fillStyle = '#050510';
     ctx.beginPath();
@@ -311,8 +344,8 @@ function s3_draw(s) {
     ctx.fill();
   });
 
-  print('AURORA', 4, 4, 0xffffff);
-  print('withBlend(screen)  animated gradient bands', 4, 12, 0x334455);
+  nova64.draw.print('AURORA', 4, 4, 0xffffff);
+  nova64.draw.print('nova64.draw.withBlend(screen)  animated gradient bands', 4, 12, 0x334455);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -336,7 +369,7 @@ function s4_init(s) {
   s.cursor = true;
   _S4L.forEach((ln, i) => {
     if (!ln.text) return;
-    const tw = createTween({
+    const tw = nova64.tween.createTween({
       from: 0,
       to: ln.text.length,
       duration: ln.text.length / 20,
@@ -365,16 +398,16 @@ function s4_update(s, dt) {
 }
 
 function s4_draw(s) {
-  cls(0x030608);
-  drawScanlines(55, 2);
-  rect(3, 3, W - 6, H - 6, 0x1a4a1a);
-  rectfill(6, 6, W - 12, 13, 0x0d2a0d);
-  print('▒▒ NOVA64 TERMINAL ▒▒', 10, 9, 0x44aa44);
+  nova64.draw.cls(0x030608);
+  nova64.draw.drawScanlines(55, 2);
+  nova64.draw.rect(3, 3, W - 6, H - 6, 0x1a4a1a);
+  nova64.draw.rectfill(6, 6, W - 12, 13, 0x0d2a0d);
+  nova64.draw.print('▒▒ NOVA64 TERMINAL ▒▒', 10, 9, 0x44aa44);
 
   for (let i = 0; i < _S4L.length; i++) {
     const ln = _S4L[i];
     if (!ln.text) continue;
-    print(s.shown[i], 14, 26 + i * 15, ln.col);
+    nova64.draw.print(s.shown[i], 14, 26 + i * 15, ln.col);
   }
 
   // Blinking cursor
@@ -389,11 +422,11 @@ function s4_draw(s) {
     if (lastI >= 0) {
       const cx = 14 + s.shown[lastI].length * 6;
       const cy = 26 + lastI * 15 - 1;
-      rectfill(cx, cy, 5, 9, 0x44ff88);
+      nova64.draw.rectfill(cx, cy, 5, 9, 0x44ff88);
     }
   }
-  print('TYPEWRITER', 4, 4, 0x224422);
-  print('hype-style createTween  onUpdate  drawScanlines', 4, 12, 0x1a3a1a);
+  nova64.draw.print('TYPEWRITER', 4, 4, 0x224422);
+  nova64.draw.print('hype-style createTween  onUpdate  drawScanlines', 4, 12, 0x1a3a1a);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -404,10 +437,10 @@ const _S5L = ['N', 'O', 'V', 'A', '6', '4'];
 const _S5C = [0xff4466, 0xff8844, 0xffcc44, 0x44ff88, 0x44aaff, 0xaa44ff];
 
 function s5_init(s) {
-  s.root = createContainer();
+  s.root = nova64.ui.createContainer();
   s.nodes = _S5L.map((ch, i) => {
     const col = _S5C[i];
-    const node = createGraphicsNode((ctx, n) => {
+    const node = nova64.ui.createGraphicsNode((ctx, n) => {
       if (n.alpha <= 0.02 || n.scaleX <= 0.02) return;
       ctx.save();
       ctx.globalAlpha = n.alpha;
@@ -431,7 +464,7 @@ function s5_init(s) {
     node.alpha = 0;
     node.scaleX = 0.1;
     node.scaleY = 0.1;
-    addChild(s.root, node);
+    nova64.ui.addChild(s.root, node);
     _trackTimeout(
       setTimeout(
         () => {
@@ -446,7 +479,7 @@ function s5_init(s) {
   _trackTimeout(
     setTimeout(
       () => {
-        createTween(s.tag, { alpha: 1 }, 0.8, { ease: 'easeInCubic' });
+        nova64.tween.createTween(s.tag, { alpha: 1 }, 0.8, { ease: 'easeInCubic' });
       },
       _S5L.length * 110 + 700
     )
@@ -458,17 +491,17 @@ function s5_update(s, dt) {
 }
 
 function s5_draw(s) {
-  cls(0x08080f);
-  for (let i = 0; i < 60; i++) pset((i * 137 + 3) % W, (i * 91 + 7) % H, 0x14143a);
-  drawStage(s.root);
-  printCentered(
+  nova64.draw.cls(0x08080f);
+  for (let i = 0; i < 60; i++) nova64.draw.pset((i * 137 + 3) % W, (i * 91 + 7) % H, 0x14143a);
+  nova64.ui.drawStage(s.root);
+  nova64.draw.printCentered(
     'ULTIMATE 3D FANTASY CONSOLE',
     CX,
     CY + 28,
-    rgba8(200, 200, 220, Math.floor(s.tag.alpha * 180))
+    nova64.draw.rgba8(200, 200, 220, Math.floor(s.tag.alpha * 180))
   );
-  print('LOGO REVEAL', 4, 4, 0x333355);
-  print('Stage graphicsNode + tweenTo easeOutElastic  stagger', 4, 12, 0x22223a);
+  nova64.draw.print('LOGO REVEAL', 4, 4, 0x333355);
+  nova64.draw.print('Stage graphicsNode + tweenTo easeOutElastic  stagger', 4, 12, 0x22223a);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -482,7 +515,7 @@ const _CW = 40,
   _CH = 58;
 
 function _s6Card(val, suit, sc, cx, cy) {
-  const node = createGraphicsNode((ctx, n) => {
+  const node = nova64.ui.createGraphicsNode((ctx, n) => {
     const flip = n._flip ?? -1;
     const aw = Math.abs(flip) * _CW;
     if (aw < 0.5) return;
@@ -518,7 +551,7 @@ function _s6Card(val, suit, sc, cx, cy) {
 }
 
 function s6_init(s) {
-  s.root = createContainer();
+  s.root = nova64.ui.createContainer();
   const cols = 7,
     rows = 2;
   const sx = CX - ((cols - 1) * (_CW + 8)) / 2;
@@ -530,7 +563,7 @@ function s6_init(s) {
       const suit = _S6S[idx % 4];
       const sc = _S6SC[idx % 4];
       const node = _s6Card(val, suit, sc, sx + c * (_CW + 8), sy + r * (_CH + 12));
-      addChild(s.root, node);
+      nova64.ui.addChild(s.root, node);
       _trackTimeout(
         setTimeout(
           () => {
@@ -548,11 +581,11 @@ function s6_update(s, dt) {
 }
 
 function s6_draw(s) {
-  cls(0x2a5530);
-  for (let y2 = 0; y2 < H; y2 += 20) line(0, y2, W, y2, 0x264c2b);
-  drawStage(s.root);
-  print('CARD FLIP', 4, 4, 0x88aa88);
-  print('Stage graphicsNode + tweenTo easeInOutBack', 4, 12, 0x4a7a50);
+  nova64.draw.cls(0x2a5530);
+  for (let y2 = 0; y2 < H; y2 += 20) nova64.draw.line(0, y2, W, y2, 0x264c2b);
+  nova64.ui.drawStage(s.root);
+  nova64.draw.print('CARD FLIP', 4, 4, 0x88aa88);
+  nova64.draw.print('Stage graphicsNode + tweenTo easeInOutBack', 4, 12, 0x4a7a50);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -580,7 +613,7 @@ function s7_init(s) {
   _s7MX = CX;
   _s7MY = CY;
   _s7BindMouse();
-  s.trail = createEmitter2D({
+  s.trail = nova64.fx.createEmitter2D({
     x: CX,
     y: CY,
     tint: 0x88ccff,
@@ -595,7 +628,7 @@ function s7_init(s) {
     scaleDown: true,
     gravity: -12,
   });
-  s.spark = createEmitter2D({
+  s.spark = nova64.fx.createEmitter2D({
     x: CX,
     y: CY,
     tint: 0xffcc44,
@@ -639,12 +672,12 @@ function s7_update(s, dt) {
 
   s.sparkCD -= dt;
   if (spd > 75 && s.sparkCD <= 0) {
-    burstEmitter2D(s.spark, (6 + Math.random() * 10) | 0);
+    nova64.fx.burstEmitter2D(s.spark, (6 + Math.random() * 10) | 0);
     s.sparkCD = 0.06;
   }
 
-  updateEmitter2D(s.trail, dt);
-  updateEmitter2D(s.spark, dt);
+  nova64.fx.updateEmitter2D(s.trail, dt);
+  nova64.fx.updateEmitter2D(s.spark, dt);
 
   // Auto-orbit when idle
   if (spd < 3) {
@@ -654,18 +687,18 @@ function s7_update(s, dt) {
 }
 
 function s7_draw(s) {
-  cls(0x050510);
-  for (let x2 = 0; x2 < W; x2 += 40) line(x2, 0, x2, H, 0x0c1222);
-  for (let y2 = 0; y2 < H; y2 += 40) line(0, y2, W, y2, 0x0c1222);
-  drawEmitter2D(s.trail);
-  drawEmitter2D(s.spark);
+  nova64.draw.cls(0x050510);
+  for (let x2 = 0; x2 < W; x2 += 40) nova64.draw.line(x2, 0, x2, H, 0x0c1222);
+  for (let y2 = 0; y2 < H; y2 += 40) nova64.draw.line(0, y2, W, y2, 0x0c1222);
+  nova64.fx.drawEmitter2D(s.trail);
+  nova64.fx.drawEmitter2D(s.spark);
   const mx = _s7MX | 0,
     my = _s7MY | 0;
-  line(mx - 8, my, mx + 8, my, rgba8(255, 255, 255, 80));
-  line(mx, my - 8, mx, my + 8, rgba8(255, 255, 255, 80));
-  print('PARTICLE TRAIL', 4, 4, 0x888888);
-  print('createEmitter2D  BM.ADD  mouse follow', 4, 12, 0x445566);
-  print('Move your mouse!', CX - 48, CY + 65, 0x445566);
+  nova64.draw.line(mx - 8, my, mx + 8, my, nova64.draw.rgba8(255, 255, 255, 80));
+  nova64.draw.line(mx, my - 8, mx, my + 8, nova64.draw.rgba8(255, 255, 255, 80));
+  nova64.draw.print('PARTICLE TRAIL', 4, 4, 0x888888);
+  nova64.draw.print('createEmitter2D  BM.ADD  mouse follow', 4, 12, 0x445566);
+  nova64.draw.print('Move your mouse!', CX - 48, CY + 65, 0x445566);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -704,9 +737,9 @@ function s8_init(s) {
 }
 
 function s8_update(s, dt) {
-  const left = key('ArrowLeft') || key('KeyA');
-  const right = key('ArrowRight') || key('KeyD');
-  const jump = keyp('ArrowUp') || keyp('KeyW'); // NOTE: Space = next scene
+  const left = nova64.input.key('ArrowLeft') || nova64.input.key('KeyA');
+  const right = nova64.input.key('ArrowRight') || nova64.input.key('KeyD');
+  const jump = nova64.input.keyp('ArrowUp') || nova64.input.keyp('KeyW'); // NOTE: Space = next scene
 
   s.pvx = left ? -115 : right ? 115 : 0;
   if (jump && s.onGround) s.pvy = -255;
@@ -760,7 +793,7 @@ function s8_update(s, dt) {
 }
 
 function s8_draw(s) {
-  cls(0x87ceeb);
+  nova64.draw.cls(0x87ceeb);
 
   // Parallax mountains
   for (let mx = 0; mx < _MC * _TW + 40; mx += 60) {
@@ -769,7 +802,7 @@ function s8_draw(s) {
     for (let i = 0; i < 60; i++) {
       const mh = 36 + ((mx * 7) % 24);
       const fh = (mh * Math.max(0, 1 - Math.abs(i - 30) / 30)) | 0;
-      if (fh > 0) rectfill(px + i, H - _MR * _TH - fh, 1, fh, 0x8aabb8);
+      if (fh > 0) nova64.draw.rectfill(px + i, H - _MR * _TH - fh, 1, fh, 0x8aabb8);
     }
   }
 
@@ -781,26 +814,26 @@ function s8_draw(s) {
       const wx = tx * _TW - cx,
         wy = ty * _TH;
       if (wx < -_TW || wx > W) continue;
-      rectfill(wx, wy, _TW, _TH, 0x5a8a3a);
-      rectfill(wx, wy, _TW, 4, 0x78c850);
-      line(wx, wy + 4, wx + _TW, wy + 4, 0x4a7a2a);
+      nova64.draw.rectfill(wx, wy, _TW, _TH, 0x5a8a3a);
+      nova64.draw.rectfill(wx, wy, _TW, 4, 0x78c850);
+      nova64.draw.line(wx, wy + 4, wx + _TW, wy + 4, 0x4a7a2a);
     }
   }
 
   // Player
   const ppx = (s.px - cx) | 0,
     ppy = s.py | 0;
-  rectfill(ppx, ppy, 10, 16, 0xff8844);
-  rectfill(ppx + 2, ppy + 2, 4, 4, 0xffd0a0);
-  pset(ppx + 3, ppy + 4, 0x000000);
+  nova64.draw.rectfill(ppx, ppy, 10, 16, 0xff8844);
+  nova64.draw.rectfill(ppx + 2, ppy + 2, 4, 4, 0xffd0a0);
+  nova64.draw.pset(ppx + 3, ppy + 4, 0x000000);
 
   // Goal flag
   const gx = _MC * _TW - 30 - cx;
-  line(gx, _MR * _TH - _TH, gx, _MR * _TH - _TH - 28, 0xeeeeff);
-  rectfill(gx + 1, _MR * _TH - _TH - 28, 14, 10, 0xff4444);
+  nova64.draw.line(gx, _MR * _TH - _TH, gx, _MR * _TH - _TH - 28, 0xeeeeff);
+  nova64.draw.rectfill(gx + 1, _MR * _TH - _TH - 28, 14, 10, 0xff4444);
 
-  print('PLATFORMER', 4, 4, 0x223344);
-  print('arrows/WASD  W/Up=jump  (Space=next scene)', 4, 12, 0x4a6a44);
+  nova64.draw.print('PLATFORMER', 4, 4, 0x223344);
+  nova64.draw.print('arrows/WASD  W/Up=jump  (Space=next scene)', 4, 12, 0x4a6a44);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -812,12 +845,12 @@ const _S9CN = [0xffffff, 0xaaddff, 0xaaddff, 0xaaddff];
 const _S9CH = [0xffcc44, 0x44ffaa, 0xff88cc, 0x88aaff];
 
 function s9_init(s) {
-  s.root = createContainer();
+  s.root = nova64.ui.createContainer();
   s.sel = 0;
   s.selCD = 0;
 
   // Cursor highlight bar
-  s.cursor = createGraphicsNode((ctx, n) => {
+  s.cursor = nova64.ui.createGraphicsNode((ctx, n) => {
     ctx.save();
     ctx.globalAlpha = 0.28;
     ctx.fillStyle = '#ffcc44';
@@ -826,18 +859,18 @@ function s9_init(s) {
   });
   s.cursor.x = 44;
   s.cursor.y = 70 + s.sel * 32 - 3;
-  addChild(s.root, s.cursor);
+  nova64.ui.addChild(s.root, s.cursor);
 
   // Menu items
   s.items = _S9I.map((text, i) => {
-    const node = createTextNode(text, {
+    const node = nova64.ui.createTextNode(text, {
       font: 'bold 13px monospace',
       fill: `#${_S9CN[i].toString(16).padStart(6, '0')}`,
       align: 'left',
     });
     node.x = -W;
     node.y = 70 + i * 32;
-    addChild(s.root, node);
+    nova64.ui.addChild(s.root, node);
     _trackTimeout(
       setTimeout(
         () => {
@@ -852,8 +885,8 @@ function s9_init(s) {
 
 function s9_update(s, dt) {
   s.selCD -= dt;
-  const up = keyp('ArrowUp') || keyp('KeyW');
-  const down = keyp('ArrowDown') || keyp('KeyS');
+  const up = nova64.input.keyp('ArrowUp') || nova64.input.keyp('KeyW');
+  const down = nova64.input.keyp('ArrowDown') || nova64.input.keyp('KeyS');
   if ((up || down) && s.selCD <= 0) {
     s.selCD = 0.16;
     s.sel = (s.sel + (up ? -1 : 1) + _S9I.length) % _S9I.length;
@@ -866,16 +899,17 @@ function s9_update(s, dt) {
 }
 
 function s9_draw(s) {
-  cls(0x0d1a2e);
-  for (let i = 0; i < 18; i++) pset(((_gT * 12 + i * 137) | 0) % W, (i * 83) % H, 0x1a2a3a);
-  rectfill(0, 0, W, 42, rgba8(0, 0, 0, 110));
-  printCentered('NOVA  64', CX, 12, 0xffcc44);
-  printCentered('ULTIMATE 3D FANTASY CONSOLE', CX, 27, 0x445566);
-  drawStage(s.root);
-  rectfill(0, H - 20, W, 20, rgba8(0, 0, 0, 150));
-  printCentered('[↑↓] Navigate   [SPACE] Next Scene', CX, H - 12, 0x334455);
-  print('STAGE MENU', 4, 4, 0x223344);
-  print('createTextNode + tweenTo slide-in + cursor', 4, 12, 0x1a2a3a);
+  nova64.draw.cls(0x0d1a2e);
+  for (let i = 0; i < 18; i++)
+    nova64.draw.pset(((_gT * 12 + i * 137) | 0) % W, (i * 83) % H, 0x1a2a3a);
+  nova64.draw.rectfill(0, 0, W, 42, nova64.draw.rgba8(0, 0, 0, 110));
+  nova64.draw.printCentered('NOVA  64', CX, 12, 0xffcc44);
+  nova64.draw.printCentered('ULTIMATE 3D FANTASY CONSOLE', CX, 27, 0x445566);
+  nova64.ui.drawStage(s.root);
+  nova64.draw.rectfill(0, H - 20, W, 20, nova64.draw.rgba8(0, 0, 0, 150));
+  nova64.draw.printCentered('[↑↓] Navigate   [SPACE] Next Scene', CX, H - 12, 0x334455);
+  nova64.draw.print('STAGE MENU', 4, 4, 0x223344);
+  nova64.draw.print('createTextNode + tweenTo slide-in + cursor', 4, 12, 0x1a2a3a);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -898,14 +932,14 @@ function s10_draw(s) {
   const sec = tot % 60;
   const min = (tot / 60) % 60;
   const hr = (tot / 3600) % 12;
-  cls(0x1a1a2e);
+  nova64.draw.cls(0x1a1a2e);
 
   // Tick marks
   for (let d = 0; d < 360; d += 6) {
     const a = (d * Math.PI) / 180;
     const major = d % 30 === 0;
     const r1 = _CR - (major ? 14 : 6);
-    line(
+    nova64.draw.line(
       (CX + Math.cos(a) * r1) | 0,
       (CY + Math.sin(a) * r1) | 0,
       (CX + Math.cos(a) * _CR) | 0,
@@ -913,8 +947,8 @@ function s10_draw(s) {
       major ? 0xffffff : 0x445566
     );
   }
-  circle(CX, CY, _CR, 0x334455, false);
-  circle(CX, CY, _CR - 5, 0x223344, false);
+  nova64.draw.circle(CX, CY, _CR, 0x334455, false);
+  nova64.draw.circle(CX, CY, _CR - 5, 0x223344, false);
 
   // Hand drawing helper
   function hand(angle, len, thick, col) {
@@ -927,7 +961,7 @@ function s10_draw(s) {
       const pa = a + Math.PI / 2;
       const ox = (Math.cos(pa) * t2) | 0;
       const oy = (Math.sin(pa) * t2) | 0;
-      line(ex + ox, ey + oy, lx + ox, ly + oy, col);
+      nova64.draw.line(ex + ox, ey + oy, lx + ox, ly + oy, col);
     }
   }
 
@@ -935,16 +969,16 @@ function s10_draw(s) {
   hand((min / 60) * Math.PI * 2, (_CR * 0.72) | 0, 2, 0xaaddff);
   hand((sec / 60) * Math.PI * 2, (_CR * 0.86) | 0, 1, 0xff4444);
 
-  circle(CX, CY, 5, 0xff4444, true);
-  circle(CX, CY, 2, 0xffffff, true);
+  nova64.draw.circle(CX, CY, 5, 0xff4444, true);
+  nova64.draw.circle(CX, CY, 2, 0xffffff, true);
 
   const hh = String(Math.floor(hr)).padStart(2, '0');
   const mm = String(Math.floor(min)).padStart(2, '0');
   const ss = String(Math.floor(sec)).padStart(2, '0');
-  printCentered(`${hh}:${mm}:${ss}`, CX, CY + _CR + 14, 0xaaddff);
+  nova64.draw.printCentered(`${hh}:${mm}:${ss}`, CX, CY + _CR + 14, 0xaaddff);
 
-  print('CLOCK', 4, 4, 0x445566);
-  print('analogue hands  smooth interpolation  real time', 4, 12, 0x2a3a4a);
+  nova64.draw.print('CLOCK', 4, 4, 0x445566);
+  nova64.draw.print('analogue hands  smooth interpolation  real time', 4, 12, 0x2a3a4a);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

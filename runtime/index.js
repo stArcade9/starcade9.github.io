@@ -4,17 +4,32 @@
 export { threeDApi } from './api-3d.js';
 export { uiApi } from './ui.js';
 export { logger } from './logger.js';
+export {
+  engine,
+  initAdapter,
+  createThreeEngineAdapter,
+  createUnityBridgeAdapter,
+  createCommandBufferAdapter,
+  setEngineAdapter,
+  installUnityBridge,
+  resetEngineAdapter,
+  ADAPTER_CONTRACT_VERSION,
+} from './engine-adapter.js';
+export { createBabylonEngineAdapter } from './engine-adapter-babylon.js';
+export { GpuBabylon } from './gpu-babylon.js';
 
-// Re-export sub-modules for tree-shaking
-export * from './api-3d/materials.js';
-export * from './api-3d/primitives.js';
-export * from './api-3d/transforms.js';
-export * from './api-3d/camera.js';
-export * from './api-3d/lights.js';
-export * from './api-3d/models.js';
-export * from './api-3d/instancing.js';
-export * from './api-3d/pbr.js';
-export * from './api-3d/scene.js';
+// Re-export sub-modules for tree-shaking (direct backend imports)
+export * from './backends/threejs/materials.js';
+export * from './backends/threejs/primitives.js';
+export * from './backends/threejs/transforms.js';
+export * from './backends/threejs/camera.js';
+export * from './backends/threejs/lights.js';
+export * from './backends/threejs/models.js';
+export * from './backends/threejs/instancing.js';
+export * from './backends/threejs/pbr.js';
+export * from './backends/threejs/scene.js';
+export * from './backends/threejs/particles.js';
+export * from './backends/threejs/tsl.js';
 
 export * from './ui/text.js';
 export * from './ui/panels.js';

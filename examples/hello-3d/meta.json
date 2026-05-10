@@ -20,6 +20,7 @@
     }
   },
   "defaults": {
+    "clearColor": "#1a0030",
     "fog": {
       "color": "#202040",
       "near": 20,

@@ -1,7 +1,8 @@
 // runtime/console.js
 import { logger } from './logger.js';
+import { listCartResetHooks, runCartResetHooks } from './cart-reset.js';
 
-export const NOVA64_VERSION = '0.4.8';
+export const NOVA64_VERSION = '0.4.9';
 
 export class Nova64 {
   constructor(gpu, manifestInst) {
@@ -16,48 +17,34 @@ export class Nova64 {
     // Bump generation — any earlier in-flight loadCart will see the mismatch and bail.
     const gen = ++this._loadGeneration;
     logger.info(`🧹 Clearing previous scene before loading new cart... (gen=${gen})`);
+    globalThis.__NOVA64_CURRENT_CART_PATH = modulePath;
+    globalThis.__nova64CurrentCartPath = modulePath;
 
     // CRITICAL: Null out cart FIRST to prevent old update() from running during transition
     this.cart = null;
 
-    // Clear UI buttons and panels from previous cart
-    if (typeof globalThis.clearButtons === 'function') {
-      globalThis.clearButtons();
+    if (listCartResetHooks().length > 0) {
+      await runCartResetHooks({
+        modulePath,
+        generation: gen,
+        gpu: this.gpu,
+        manifest: this._manifest,
+        console: this,
+      });
+    } else {
+      // Fallback for environments that import Nova64 without the main bootstrap.
+      const ns = globalThis.nova64;
+      ns?.ui?.clearButtons?.();
+      ns?.ui?.clearPanels?.();
+      ns?.ui?.screens?.reset?.();
+      ns?.voxel?.resetVoxelWorld?.({ restoreDefaults: true, cartPath: modulePath });
+      ns?.scene?.clearScene?.();
+      ns?.light?.clearSkybox?.();
+      ns?.camera?.setCameraPosition?.(0, 5, 10);
+      ns?.camera?.setCameraTarget?.(0, 0, 0);
+      ns?.light?.setFog?.(0x87ceeb, 50, 200);
+      if (this._manifest) this._manifest._reset();
     }
-    if (typeof globalThis.clearPanels === 'function') {
-      globalThis.clearPanels();
-    }
-
-    // Reset screen manager to clear registered screens from previous cart
-    if (globalThis.screens && typeof globalThis.screens.reset === 'function') {
-      globalThis.screens.reset();
-    }
-
-    // Clear the 3D scene completely before loading new cart
-    if (typeof globalThis.clearScene === 'function') {
-      globalThis.clearScene();
-    }
-
-    // Also clear any skybox
-    if (typeof globalThis.clearSkybox === 'function') {
-      globalThis.clearSkybox();
-    }
-
-    // Reset camera to default position
-    if (typeof globalThis.setCameraPosition === 'function') {
-      globalThis.setCameraPosition(0, 5, 10);
-    }
-    if (typeof globalThis.setCameraTarget === 'function') {
-      globalThis.setCameraTarget(0, 0, 0);
-    }
-
-    // Reset fog to default
-    if (typeof globalThis.setFog === 'function') {
-      globalThis.setFog(0x87ceeb, 50, 200);
-    }
-
-    // Reset manifest (env + i18n + data + assets)
-    if (this._manifest) this._manifest._reset();
 
     logger.info('✅ Scene cleared, loading new cart:', modulePath);
 
@@ -84,18 +71,11 @@ export class Nova64 {
 
     // Clear scene AGAIN right before init — in case a concurrent loadCart
     // already ran and added its own objects while we were awaiting import.
-    if (typeof globalThis.clearScene === 'function') {
-      globalThis.clearScene();
-    }
-    if (typeof globalThis.clearSkybox === 'function') {
-      globalThis.clearSkybox();
-    }
-    if (typeof globalThis.clearButtons === 'function') {
-      globalThis.clearButtons();
-    }
-    if (typeof globalThis.clearPanels === 'function') {
-      globalThis.clearPanels();
-    }
+    const ns = globalThis.nova64;
+    ns?.scene?.clearScene?.();
+    ns?.light?.clearSkybox?.();
+    ns?.ui?.clearButtons?.();
+    ns?.ui?.clearPanels?.();
 
     // Auto-load manifest: meta.json (preferred) or export const env (fallback)
     if (this._manifest) await this._manifest._loadFromCart(mod, modulePath);

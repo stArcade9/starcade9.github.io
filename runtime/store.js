@@ -12,6 +12,11 @@ import { logger } from './logger.js';
 
 let _createStore;
 
+function normalizeStoreInitializer(initialState) {
+  if (typeof initialState === 'function') return initialState;
+  return () => initialState || {};
+}
+
 // Try to use real Zustand vanilla, fall back to a compatible hand-rolled version
 // so the file works even before `npm install` resolves.
 async function _loadZustand() {
@@ -96,7 +101,7 @@ _loadZustand();
  * @returns {{ getState, setState, subscribe, destroy }}
  */
 export function createGameStore(initialState) {
-  return _createStore(initialState);
+  return _createStore(normalizeStoreInitializer(initialState));
 }
 
 /**
@@ -106,7 +111,7 @@ export function createGameStore(initialState) {
  * getState() returns:
  *   { gameState, score, lives, level, time, paused, playerX, playerY }
  */
-export const novaStore = _createStore({
+export const novaStore = createGameStore({
   gameState: 'start', // 'start' | 'playing' | 'paused' | 'gameover' | 'win'
   score: 0,
   lives: 3,

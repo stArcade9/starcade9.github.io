@@ -3,6 +3,32 @@
 // Works on desktop too with keyboard + mouse fallback.
 
 // ── State ──────────────────────────────────────────────
+const { drawProgressBar, print, printCentered } = nova64.draw;
+const {
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  removeMesh,
+  rotateMesh,
+  setPosition,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const {
+  createPointLight,
+  createSolidSkybox,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
+const { enableBloom } = nova64.fx;
+const { btnp } = nova64.input;
+const { sfx } = nova64.audio;
+const { t } = nova64.data;
+const { enableVR, getXRControllers, isXRActive } = nova64.xr;
+
 let gameState = 'playing'; // 'playing' | 'gameover'
 let score = 0;
 let combo = 0;
@@ -43,26 +69,26 @@ const C = {
 // ── Init ───────────────────────────────────────────────
 export function init() {
   // Enable VR (shows button, works on desktop without headset too)
-  enableVR({ referenceSpace: 'local-floor' });
+  nova64.xr.enableVR({ referenceSpace: 'local-floor' });
 
   // Camera for desktop view
-  setCameraPosition(0, 2.5, 6);
-  setCameraTarget(0, 1.5, 0);
-  setCameraFOV(70);
+  nova64.camera.setCameraPosition(0, 2.5, 6);
+  nova64.camera.setCameraTarget(0, 1.5, 0);
+  nova64.camera.setCameraFOV(70);
 
   // Dramatic dungeon lighting
-  setAmbientLight(0x1a1020, 0.4);
-  setLightDirection(-0.3, -1, -0.5);
-  setLightColor(0x332244);
+  nova64.light.setAmbientLight(0x1a1020, 0.4);
+  nova64.light.setLightDirection(-0.3, -1, -0.5);
+  nova64.light.setLightColor(0x332244);
 
   // Deep fog
-  setFog(0x0a0812, 8, 28);
+  nova64.light.setFog(0x0a0812, 8, 28);
 
   // Skybox — dark dungeon
-  createSolidSkybox(0x050408);
+  nova64.light.createSolidSkybox(0x050408);
 
   // Post-processing (auto-disabled in VR)
-  enableBloom(1.5, 0.3);
+  nova64.fx.enableBloom(1.5, 0.3);
 
   // Build dungeon
   buildArena();
@@ -81,8 +107,8 @@ export function init() {
 // ── Arena Construction ─────────────────────────────────
 function buildArena() {
   // Stone floor
-  floor = createPlane(20, 20, C.floor, [0, 0, 0]);
-  rotateMesh(floor, -Math.PI / 2, 0, 0);
+  floor = nova64.scene.createPlane(20, 20, C.floor, [0, 0, 0]);
+  nova64.scene.rotateMesh(floor, -Math.PI / 2, 0, 0);
 
   // Arena walls (octagonal)
   const wallCount = 8;
@@ -91,12 +117,12 @@ function buildArena() {
     const angle = (i / wallCount) * Math.PI * 2;
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
-    const wall = createCube(5, C.wall, [x, 2, z], {
+    const wall = nova64.scene.createCube(5, C.wall, [x, 2, z], {
       material: 'standard',
       roughness: 0.9,
     });
-    setScale(wall, 1, 1, 0.15);
-    rotateMesh(wall, 0, -angle + Math.PI / 2, 0);
+    nova64.scene.setScale(wall, 1, 1, 0.15);
+    nova64.scene.rotateMesh(wall, 0, -angle + Math.PI / 2, 0);
   }
 
   // Pillars at corners
@@ -104,14 +130,14 @@ function buildArena() {
     const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
     const x = Math.cos(angle) * 7;
     const z = Math.sin(angle) * 7;
-    const pillar = createCylinder(0.4, 5, C.pillar, [x, 2.5, z], {
+    const pillar = nova64.scene.createCylinder(0.4, 5, C.pillar, [x, 2.5, z], {
       material: 'standard',
       roughness: 0.7,
     });
 
     // Torch on each pillar
-    const torchLight = createPointLight(C.torchFire, 1.8, 10, [x, 4.5, z]);
-    const torchFlame = createSphere(0.2, C.torchFire, [x, 4.8, z], 6, {
+    const torchLight = nova64.light.createPointLight(C.torchFire, 1.8, 10, [x, 4.5, z]);
+    const torchFlame = nova64.scene.createSphere(0.2, C.torchFire, [x, 4.8, z], 6, {
       material: 'emissive',
       emissive: C.torchFire,
       intensity: 3,
@@ -120,7 +146,7 @@ function buildArena() {
   }
 
   // Center pedestal
-  createCylinder(1.5, 0.3, C.pillar, [0, 0.15, 0], {
+  nova64.scene.createCylinder(1.5, 0.3, C.pillar, [0, 0.15, 0], {
     material: 'metallic',
     metalness: 0.8,
   });
@@ -138,12 +164,12 @@ function createSwords() {
 
 function createSwordMesh() {
   // Blade — holographic glowing
-  const blade = createCube(1, C.swordBlade, [0, 100, 0], {
+  const blade = nova64.scene.createCube(1, C.swordBlade, [0, 100, 0], {
     material: 'emissive',
     emissive: C.swordBlade,
     intensity: 2,
   });
-  setScale(blade, 0.04, 0.6, 0.04);
+  nova64.scene.setScale(blade, 0.04, 0.6, 0.04);
   return blade;
 }
 
@@ -170,19 +196,19 @@ function spawnEnemy() {
   const hp = isElite ? 3 : 1;
 
   // Body
-  const body = createCube(size, color, [x, size * 0.7, z], {
+  const body = nova64.scene.createCube(size, color, [x, size * 0.7, z], {
     material: 'standard',
     roughness: 0.6,
   });
-  setScale(body, 0.8, 1.2, 0.5);
+  nova64.scene.setScale(body, 0.8, 1.2, 0.5);
 
   // Head
-  const head = createSphere(size * 0.35, C.skeleton, [x, size * 1.6, z], 6, {
+  const head = nova64.scene.createSphere(size * 0.35, C.skeleton, [x, size * 1.6, z], 6, {
     material: 'standard',
   });
 
   // Eyes — glowing red
-  const eyeL = createSphere(
+  const eyeL = nova64.scene.createSphere(
     size * 0.08,
     C.enemyEye,
     [x - size * 0.12, size * 1.65, z + size * 0.25],
@@ -193,7 +219,7 @@ function spawnEnemy() {
       intensity: 3,
     }
   );
-  const eyeR = createSphere(
+  const eyeR = nova64.scene.createSphere(
     size * 0.08,
     C.enemyEye,
     [x + size * 0.12, size * 1.65, z + size * 0.25],
@@ -244,7 +270,7 @@ function checkSlash(swordPos, velocity) {
       if (e.hp <= 0) {
         killEnemy(i);
       } else {
-        sfx('hurt');
+        nova64.audio.sfx('hurt');
         // Knockback
         const knockDir = dist > 0 ? 1.5 / dist : 1;
         e.x += dx * knockDir;
@@ -263,7 +289,7 @@ function killEnemy(index) {
     const py = e.size * 0.8 + (Math.random() - 0.5) * 0.5;
     const pz = e.z + (Math.random() - 0.5) * 0.5;
     const color = e.isElite ? 0xff44cc : C.particle;
-    const mesh = createCube(0.15, color, [px, py, pz], {
+    const mesh = nova64.scene.createCube(0.15, color, [px, py, pz], {
       material: 'emissive',
       emissive: color,
     });
@@ -282,7 +308,7 @@ function killEnemy(index) {
   }
 
   // Remove enemy meshes
-  e.parts.forEach(m => removeMesh(m));
+  e.parts.forEach(m => nova64.scene.removeMesh(m));
   enemies.splice(index, 1);
 
   // Score + combo
@@ -292,8 +318,8 @@ function killEnemy(index) {
   const comboMult = Math.min(combo, 10);
   score += 100 * comboMult + (e.isElite ? 500 : 0);
 
-  sfx('explosion');
-  if (combo > 2) sfx('coin');
+  nova64.audio.sfx('explosion');
+  if (combo > 2) nova64.audio.sfx('coin');
 
   // Next wave check
   if (kills >= killsForNextWave) {
@@ -314,7 +340,7 @@ export function update(dt) {
   torches.forEach((t, i) => {
     const flicker =
       Math.sin(gameTime * 8 + i * 2.3) * 0.1 + Math.sin(gameTime * 13 + i * 1.7) * 0.05;
-    setPosition(t.flame, t.x, t.baseY + flicker, t.z);
+    nova64.scene.setPosition(t.flame, t.x, t.baseY + flicker, t.z);
   });
 
   // ── Combo decay ──
@@ -324,22 +350,22 @@ export function update(dt) {
   }
 
   // ── VR sword positioning ──
-  if (isXRActive()) {
+  if (nova64.xr.isXRActive()) {
     updateVRSwords(dt);
     // Hide desktop sword
-    setPosition(desktopSword, 0, -100, 0);
+    nova64.scene.setPosition(desktopSword, 0, -100, 0);
   } else {
     updateDesktopSword(dt);
     // Hide VR swords
-    setPosition(swords.left, 0, -100, 0);
-    setPosition(swords.right, 0, -100, 0);
+    nova64.scene.setPosition(swords.left, 0, -100, 0);
+    nova64.scene.setPosition(swords.right, 0, -100, 0);
   }
 
   // ── Enemy AI ──
   updateEnemies(dt);
 
   // ── Particles ──
-  updateParticles(dt);
+  _local_updateParticles(dt);
 
   // ── Game over check ──
   if (playerHealth <= 0) {
@@ -348,7 +374,7 @@ export function update(dt) {
 }
 
 function updateVRSwords(dt) {
-  const ctrls = getXRControllers();
+  const ctrls = nova64.xr.getXRControllers();
 
   for (let i = 0; i < ctrls.length && i < 2; i++) {
     const ctrl = ctrls[i];
@@ -356,7 +382,7 @@ function updateVRSwords(dt) {
     const grip = ctrl.grip.position;
 
     // Position sword at grip, extended forward
-    setPosition(sword, grip.x, grip.y + 0.3, grip.z);
+    nova64.scene.setPosition(sword, grip.x, grip.y + 0.3, grip.z);
 
     // Calculate velocity from previous position
     if (prevCtrlPos[i]) {
@@ -370,7 +396,7 @@ function updateVRSwords(dt) {
       // Sword trail particles on fast swings
       const speed = Math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2);
       if (speed > 3) {
-        const trail = createCube(0.02, C.swordBlade, [grip.x, grip.y + 0.3, grip.z], {
+        const trail = nova64.scene.createCube(0.02, C.swordBlade, [grip.x, grip.y + 0.3, grip.z], {
           material: 'emissive',
           emissive: C.swordBlade,
         });
@@ -384,7 +410,7 @@ function updateVRSwords(dt) {
   for (let i = swordTrails.length - 1; i >= 0; i--) {
     swordTrails[i].life -= dt;
     if (swordTrails[i].life <= 0) {
-      removeMesh(swordTrails[i].mesh);
+      nova64.scene.removeMesh(swordTrails[i].mesh);
       swordTrails.splice(i, 1);
     }
   }
@@ -394,14 +420,14 @@ function updateDesktopSword(dt) {
   // Mouse controls the sword on desktop
   const sx = mouseX * 4;
   const sy = 1.5 + mouseY * 2;
-  setPosition(desktopSword, sx, sy, 2);
+  nova64.scene.setPosition(desktopSword, sx, sy, 2);
 
   // Click to slash
-  if (btnp(0)) {
+  if (nova64.input.btnp(0)) {
     // left mouse button
     const vel = { x: mouseX * 20, y: mouseY * 20, z: -10 };
     checkSlash({ x: sx, y: sy, z: 2 }, vel);
-    sfx('laser');
+    nova64.audio.sfx('laser');
   }
 }
 
@@ -411,7 +437,7 @@ function updateEnemies(dt) {
 
     // Move toward player center (0, 0, 0) in VR, or camera in desktop
     const targetX = 0;
-    const targetZ = isXRActive() ? 0 : 3;
+    const targetZ = nova64.xr.isXRActive() ? 0 : 3;
     const dx = targetX - e.x;
     const dz = targetZ - e.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
@@ -434,23 +460,23 @@ function updateEnemies(dt) {
 
     // Update mesh positions
     const headY = e.size * 1.6 + bob;
-    setPosition(e.parts[0], e.x, e.size * 0.7 + bob, e.z); // body
-    setPosition(e.parts[1], e.x, headY, e.z); // head
+    nova64.scene.setPosition(e.parts[0], e.x, e.size * 0.7 + bob, e.z); // body
+    nova64.scene.setPosition(e.parts[1], e.x, headY, e.z); // head
 
     // Eyes face toward player
     const faceAngle = Math.atan2(targetX - e.x, targetZ - e.z);
     const eyeOff = e.size * 0.25;
-    setPosition(e.parts[2], e.x - e.size * 0.12, headY + 0.05, e.z + eyeOff); // eyeL
-    setPosition(e.parts[3], e.x + e.size * 0.12, headY + 0.05, e.z + eyeOff); // eyeR
+    nova64.scene.setPosition(e.parts[2], e.x - e.size * 0.12, headY + 0.05, e.z + eyeOff); // eyeL
+    nova64.scene.setPosition(e.parts[3], e.x + e.size * 0.12, headY + 0.05, e.z + eyeOff); // eyeR
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.life -= dt;
     if (p.life <= 0) {
-      removeMesh(p.mesh);
+      nova64.scene.removeMesh(p.mesh);
       particles.splice(i, 1);
       continue;
     }
@@ -458,9 +484,9 @@ function updateParticles(dt) {
     p.y += p.vy * dt;
     p.z += p.vz * dt;
     p.vy -= 12 * dt; // gravity
-    setPosition(p.mesh, p.x, Math.max(0.05, p.y), p.z);
+    nova64.scene.setPosition(p.mesh, p.x, Math.max(0.05, p.y), p.z);
     const s = p.life * 1.5;
-    setScale(p.mesh, s, s, s);
+    nova64.scene.setScale(p.mesh, s, s, s);
   }
 }
 
@@ -472,39 +498,39 @@ export function draw() {
   }
 
   // Score
-  print(`SCORE: ${score}`, 10, 10, 0x00ccff);
-  print(`WAVE ${wave}`, 10, 30, 0xffffff);
+  nova64.draw.print(`SCORE: ${score}`, 10, 10, 0x00ccff);
+  nova64.draw.print(`WAVE ${wave}`, 10, 30, 0xffffff);
 
   // Combo
   if (combo > 1) {
     const comboColor = combo > 5 ? 0xff00ff : 0xffcc00;
-    print(`COMBO x${combo}!`, 10, 55, comboColor);
+    nova64.draw.print(`COMBO x${combo}!`, 10, 55, comboColor);
   }
 
   // Health bar
   const hpW = 120;
   const hpFill = Math.max(0, playerHealth / 100);
   const hpColor = playerHealth > 50 ? 0x00ff44 : playerHealth > 25 ? 0xffcc00 : 0xff2200;
-  drawProgressBar(10, 80, hpW, 10, hpFill, hpColor, 0x222222);
-  print('HP', hpW + 15, 78, 0xaaaaaa);
+  nova64.draw.drawProgressBar(10, 80, hpW, 10, hpFill, hpColor, 0x222222);
+  nova64.draw.print('HP', hpW + 15, 78, 0xaaaaaa);
 
   // Enemies remaining
-  print(`Enemies: ${enemies.length}`, 10, 100, 0xff6644);
+  nova64.draw.print(`Enemies: ${enemies.length}`, 10, 100, 0xff6644);
 
   // Instructions
-  if (!isXRActive()) {
-    print('Click "Enter VR" for immersive mode', 10, 220, 0x666666);
-    print('Desktop: mouse aim, click to slash', 10, 240, 0x666666);
+  if (!nova64.xr.isXRActive()) {
+    nova64.draw.print('Click "Enter VR" for immersive mode', 10, 220, 0x666666);
+    nova64.draw.print('Desktop: mouse aim, click to slash', 10, 240, 0x666666);
   } else {
-    print('Swing controllers to slash!', 10, 220, 0x888888);
+    nova64.draw.print('Swing controllers to slash!', 10, 220, 0x888888);
   }
 }
 
 function drawGameOver() {
-  printCentered('GAME OVER', 100, 0xff0044);
-  printCentered(`Final Score: ${score}`, 140, 0xffffff);
-  printCentered(`Waves Survived: ${wave}`, 170, 0x00ccff);
+  nova64.draw.printCentered('GAME OVER', 100, 0xff0044);
+  nova64.draw.printCentered(`Final Score: ${score}`, 140, 0xffffff);
+  nova64.draw.printCentered(`Waves Survived: ${wave}`, 170, 0x00ccff);
   if (combo > 2) {
-    printCentered(`Best Combo: x${combo}`, 200, 0xffcc00);
+    nova64.draw.printCentered(`Best Combo: x${combo}`, 200, 0xffcc00);
   }
 }

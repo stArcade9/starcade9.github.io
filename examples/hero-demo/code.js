@@ -2,6 +2,14 @@
 // Outrun synthwave: neon grid floor, displaced terrain hills, sun, clouds, particles
 
 // ── Shared GLSL noise lib (3-octave FBM) ──
+const { createPlane, createSphere, engine, getMesh, loadModel, rotateMesh } = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { createPointLight, setAmbientLight, setFog } = nova64.light;
+const { createParticleSystem, enableBloom, enableVignette, updateParticles } = nova64.fx;
+const { createTSLMaterial, createTSLShaderMaterial } = nova64.shader;
+const { grid } = nova64.ui;
+const { clamp, color, noise, pulse, smoothstep } = nova64.util;
+
 const noiseLib = `
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){
@@ -146,29 +154,31 @@ let logoId = null;
 
 export async function init() {
   // Camera
-  setCameraPosition(0, 3.5, 12);
-  setCameraTarget(0, 1.0, -80);
-  setCameraFOV(62);
+  nova64.camera.setCameraPosition(0, 3.5, 12);
+  nova64.camera.setCameraTarget(0, 1.0, -80);
+  nova64.camera.setCameraFOV(62);
 
   // Atmosphere
-  setFog(0x020010, 8, 250);
-  setAmbientLight(0x0c0030);
-  createPointLight(0xff0080, 3.5, 180, [0, 12, -60]);
-  createPointLight(0xff5500, 2.0, 200, [0, 30, -120]);
+  nova64.light.setFog(0x020010, 8, 250);
+  nova64.light.setAmbientLight(0x0c0030);
+  nova64.light.createPointLight(0xff0080, 3.5, 180, [0, 12, -60]);
+  nova64.light.createPointLight(0xff5500, 2.0, 200, [0, 30, -120]);
 
   // Post-processing
-  enableBloom(1.4, 0.35, 0.5);
-  enableVignette(1.1, 0.75);
+  nova64.fx.enableBloom(1.4, 0.35, 0.5);
+  nova64.fx.enableVignette(1.1, 0.75);
 
   // ── SUN ── (3 layered spheres)
-  const sunCoreMesh = getMesh(createSphere(40, 0xffffff, [0, 28, -165]));
+  const sunCoreMesh = nova64.scene.getMesh(nova64.scene.createSphere(40, 0xffffff, [0, 28, -165]));
   if (sunCoreMesh)
     sunCoreMesh.material = createTSLMaterial('rainbow', { speed: 0.1, opacity: 0.8 });
 
-  const sunGlowMesh = getMesh(createSphere(60, 0xffffff, [0, 28, -168]));
+  const sunGlowMesh = nova64.scene.getMesh(nova64.scene.createSphere(60, 0xffffff, [0, 28, -168]));
   if (sunGlowMesh) sunGlowMesh.material = createTSLMaterial('plasma', { speed: 0.2, opacity: 0.3 });
 
-  const sunCoronaMesh = getMesh(createSphere(85, 0xffffff, [0, 28, -170]));
+  const sunCoronaMesh = nova64.scene.getMesh(
+    nova64.scene.createSphere(85, 0xffffff, [0, 28, -170])
+  );
   if (sunCoronaMesh)
     sunCoronaMesh.material = createTSLShaderMaterial(
       null,
@@ -178,7 +188,9 @@ export async function init() {
     );
 
   // ── NEON GRID FLOOR ── (large plane, shader handles infinite scroll)
-  const floorMesh = getMesh(createPlane(300, 350, 0x000011, [0, -0.1, -120]));
+  const floorMesh = nova64.scene.getMesh(
+    nova64.scene.createPlane(300, 350, 0x000011, [0, -0.1, -120])
+  );
   if (floorMesh) {
     floorMesh.rotation.x = -Math.PI / 2;
     floorMesh.material = createTSLShaderMaterial(null, gridFloorFrag, {}, { transparent: true });
@@ -187,7 +199,7 @@ export async function init() {
   // ── TERRAIN ── (displaced hills flanking the road — need subdivisions for vertex displacement)
   const tMat = createTSLShaderMaterial(terrainVert, terrainFrag, {}, { transparent: true });
   for (const xOff of [-70, 70]) {
-    const m = getMesh(createPlane(100, 280, 0x110033, [xOff, 0.1, -90]));
+    const m = nova64.scene.getMesh(nova64.scene.createPlane(100, 280, 0x110033, [xOff, 0.1, -90]));
     if (m) {
       // Swap to subdivided geometry (64x128 segments for smooth rolling hills)
       subdivPlane(m, 100, 280, 64, 128);
@@ -199,7 +211,9 @@ export async function init() {
   // ── ROAD RAILS ── (glowing neon strips)
   const railMat = createTSLMaterial('plasma', { speed: 1.5, opacity: 0.85 });
   for (const xOff of [-16, 16]) {
-    const m = getMesh(createPlane(0.35, 200, 0xff0066, [xOff, 0.08, -80]));
+    const m = nova64.scene.getMesh(
+      nova64.scene.createPlane(0.35, 200, 0xff0066, [xOff, 0.08, -80])
+    );
     if (m) {
       m.rotation.x = -Math.PI / 2;
       m.material = railMat;
@@ -221,15 +235,15 @@ export async function init() {
     [-60, 27, -150],
   ];
   for (const pos of cloudPos) {
-    const m = getMesh(createPlane(60, 20, 0xffffff, pos));
+    const m = nova64.scene.getMesh(nova64.scene.createPlane(60, 20, 0xffffff, pos));
     if (m) m.material = cMat;
   }
 
   // ── NOVA64 LOGO — floating in front of the sun ──
   // Position z=-100 puts it 25 units in front of the sun core near face (z=-125),
   // so it is never occluded by opaque sun geometry in the depth buffer.
-  logoId = await loadModel('/assets/glb/nova_64_logo.glb', [24, 4, -55], 22);
-  const logoMesh = getMesh(logoId);
+  logoId = await nova64.scene.loadModel('/assets/glb/nova_64_logo.glb', [24, 4, -55], 22);
+  const logoMesh = nova64.scene.getMesh(logoId);
   if (logoMesh) {
     // ── Pick a logo material (uncomment ONE) ──
 
@@ -280,7 +294,7 @@ export async function init() {
     //    vec3 gold=vec3(1.0,0.84,0.0);
     //    vec3 darkGold=vec3(0.45,0.3,0.05);
     //    float light=dot(normalize(vec3(sin(uTime*0.3),1.0,0.5)),normalize(vec3(bump-0.5,bump-0.5,1.0)));
-    //    light=clamp(light,0.0,1.0);
+    //    light=nova64.util.clamp(light,0.0,1.0);
     //    vec3 col=mix(darkGold,gold,light*0.7+0.3);
     //    float spec=pow(light,16.0)*0.8;
     //    col+=vec3(1.0,0.95,0.8)*spec;
@@ -351,7 +365,7 @@ export async function init() {
   }
 
   // ── PARTICLES — Stars ──
-  createParticleSystem(400, {
+  nova64.fx.createParticleSystem(400, {
     emitterX: 0,
     emitterY: 40,
     emitterZ: -80,
@@ -372,7 +386,7 @@ export async function init() {
   });
 
   // ── PARTICLES — Road sparkles ──
-  createParticleSystem(250, {
+  nova64.fx.createParticleSystem(250, {
     emitterX: 0,
     emitterY: 0.5,
     emitterZ: -20,
@@ -395,7 +409,7 @@ export async function init() {
   });
 
   // ── PARTICLES — Horizon glow motes ──
-  createParticleSystem(200, {
+  nova64.fx.createParticleSystem(200, {
     emitterX: 0,
     emitterY: 6,
     emitterZ: -100,
@@ -417,7 +431,7 @@ export async function init() {
 
   // ── PARTICLES — Side streaks ──
   for (const xOff of [-30, 30]) {
-    createParticleSystem(120, {
+    nova64.fx.createParticleSystem(120, {
       emitterX: xOff,
       emitterY: 1.5,
       emitterZ: -40,
@@ -441,11 +455,11 @@ export async function init() {
 
 export function update(dt) {
   t += dt;
-  //if (logoId != null) rotateMesh(logoId, 0, dt * 0.4, 0);
+  //if (logoId != null) nova64.scene.rotateMesh(logoId, 0, dt * 0.4, 0);
   const cx = Math.sin(t * 0.22) * 2.0;
   const cy = 3.5 + Math.sin(t * 0.1) * 0.4;
-  setCameraPosition(cx, cy, 12);
-  updateParticles(dt);
+  nova64.camera.setCameraPosition(cx, cy, 12);
+  nova64.fx.updateParticles(dt);
 }
 
 export function draw() {

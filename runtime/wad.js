@@ -1,6 +1,8 @@
 // runtime/wad.js — WAD File Parser, Level Converter & Texture Manager for Nova64
 // Supports classic DOOM WAD format (IWAD and PWAD)
-/* global getMesh */
+/* global */
+
+import { engine } from './engine-adapter.js';
 
 // ── Thing type mappings ──
 
@@ -220,6 +222,49 @@ class WADLoader {
 
   getMapNames() {
     return this.directory.filter(e => /^(E\dM\d|MAP\d\d)$/.test(e.name)).map(e => e.name);
+  }
+
+  /**
+   * Parse UMAPINFO and MAPINFO lumps and return a map from internal map
+   * identifier (e.g. "E1M1", "MAP01") to a human-readable level title.
+   * UMAPINFO is checked first (more standardised); falls back to MAPINFO.
+   * Returns an empty object when neither lump is present.
+   */
+  getMapTitles() {
+    const titles = {};
+
+    // ── UMAPINFO ──────────────────────────────────────────────────────────
+    // Format:  MAP E1M1 { LEVELNAME = "Hangar" ... }
+    const umapLump = this.getLump('UMAPINFO');
+    if (umapLump) {
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(umapLump.data);
+      const re = /\bMAP\s+(\w+)\s*\{([^}]*)\}/gi;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const key = m[1].toUpperCase();
+        const body = m[2];
+        const nameMatch = body.match(/LEVELNAME\s*=\s*"([^"]+)"/i);
+        if (nameMatch) titles[key] = nameMatch[1];
+      }
+      if (Object.keys(titles).length > 0) return titles;
+    }
+
+    // ── MAPINFO ───────────────────────────────────────────────────────────
+    // Handles three common variants:
+    //   map E1M1 "Title"
+    //   map MAP01 "Title"   (ZDoom / GZDoom)
+    //   map E1M1 lookup TITLESTRING  (ZDoom lookup)
+    const mapinfoLump = this.getLump('MAPINFO');
+    if (mapinfoLump) {
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(mapinfoLump.data);
+      const re = /^\s*map\s+(\w+)\s+"([^"]+)"/gim;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        titles[m[1].toUpperCase()] = m[2];
+      }
+    }
+
+    return titles;
   }
 
   getMap(name) {
@@ -667,13 +712,11 @@ class WADTextureManager {
       flipped.set(comp.pixels.subarray(srcRow, srcRow + rowBytes), dstRow);
     }
 
-    const tex = new THREE.DataTexture(flipped, comp.width, comp.height, THREE.RGBAFormat);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(flipped, comp.width, comp.height, {
+      filter: 'nearest',
+      wrap: 'repeat',
+      generateMipmaps: false,
+    });
 
     this.wallTexCache.set(name, tex);
     return tex;
@@ -706,13 +749,11 @@ class WADTextureManager {
       pixels[i * 4 + 3] = 255;
     }
 
-    const tex = new THREE.DataTexture(pixels, 64, 64, THREE.RGBAFormat);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(pixels, 64, 64, {
+      filter: 'nearest',
+      wrap: 'repeat',
+      generateMipmaps: false,
+    });
 
     this.flatTexCache.set(name, tex);
     return tex;
@@ -752,11 +793,10 @@ class WADTextureManager {
       flipped.set(pic.pixels.subarray(srcRow, srcRow + rowBytes), dstRow);
     }
 
-    const tex = new THREE.DataTexture(flipped, pic.width, pic.height, THREE.RGBAFormat);
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
+    const tex = engine.createDataTexture(flipped, pic.width, pic.height, {
+      filter: 'nearest',
+      generateMipmaps: false,
+    });
 
     const result = {
       texture: tex,
@@ -781,24 +821,150 @@ class WADTextureManager {
 
 // ── setWallUVs helper ──
 
-function setWallUVs(meshId, wallDoomLen, wallDoomH, texWidth, texHeight, xoff, yoff) {
-  const mesh = getMesh(meshId);
-  if (!mesh || !mesh.geometry) return;
+function getMeshTexture(mesh) {
+  const materials = Array.isArray(mesh?.material) ? mesh.material : [mesh?.material];
+  for (const material of materials) {
+    if (!material) continue;
+    if (material.map) return material.map;
+    if (material.diffuseTexture) return material.diffuseTexture;
+    if (material.albedoTexture) return material.albedoTexture;
+  }
+  return null;
+}
 
-  const uvAttr = mesh.geometry.attributes.uv;
-  if (!uvAttr) return;
+function applyTextureOffsets(texture, ofsU, ofsV) {
+  if (!texture) return;
+  if (texture.offset?.set) {
+    texture.offset.set(ofsU, ofsV);
+  } else {
+    if ('uOffset' in texture) texture.uOffset = ofsU;
+    if ('vOffset' in texture) texture.vOffset = ofsV;
+  }
+  try {
+    engine.invalidateTexture(texture);
+  } catch {
+    // Offset changes are runtime-only metadata on some backends.
+  }
+}
+
+function setBabylonMeshUVs(mesh, next) {
+  if (!next?.length) return false;
+
+  try {
+    mesh.makeGeometryUnique?.();
+    mesh.markVerticesDataAsUpdatable?.('uv', true);
+    mesh.geometry?.markVerticesDataAsUpdatable?.('uv', true);
+
+    if (typeof mesh.setVerticesData === 'function') {
+      mesh.setVerticesData('uv', next, true);
+    } else if (typeof mesh.updateVerticesData === 'function') {
+      mesh.updateVerticesData('uv', next, true, true);
+    } else {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  const applied = mesh?.getVerticesData?.('uv');
+  return (
+    !!applied && applied.length === next.length && Math.abs((applied[0] ?? 0) - next[0]) < 1e-6
+  );
+}
+
+function setBabylonBoxFaceUVs(mesh, faceRects) {
+  const uvData = mesh?.getVerticesData?.('uv');
+  if (!uvData || uvData.length < 48) return false;
+
+  const next = typeof uvData.slice === 'function' ? uvData.slice() : Float32Array.from(uvData);
+  const setFace = (faceIndex, rect) => {
+    const start = faceIndex * 8;
+    next[start] = rect.z;
+    next[start + 1] = rect.w;
+    next[start + 2] = rect.x;
+    next[start + 3] = rect.w;
+    next[start + 4] = rect.x;
+    next[start + 5] = rect.y;
+    next[start + 6] = rect.z;
+    next[start + 7] = rect.y;
+  };
+
+  for (const [faceIndex, rect] of Object.entries(faceRects)) {
+    setFace(Number(faceIndex), rect);
+  }
+
+  return setBabylonMeshUVs(mesh, next);
+}
+
+function setBabylonPlaneUVs(mesh, ofsU, ofsV, tileU, tileV) {
+  const rawUvData = mesh?.getVerticesData?.('uv');
+  if (!rawUvData || (rawUvData.length !== 8 && rawUvData.length !== 16)) return false;
+
+  const next =
+    typeof rawUvData.slice === 'function' ? rawUvData.slice() : Float32Array.from(rawUvData);
+  const writeFace = start => {
+    next[start] = ofsU + tileU;
+    next[start + 1] = ofsV + tileV;
+    next[start + 2] = ofsU;
+    next[start + 3] = ofsV + tileV;
+    next[start + 4] = ofsU;
+    next[start + 5] = ofsV;
+    next[start + 6] = ofsU + tileU;
+    next[start + 7] = ofsV;
+  };
+
+  writeFace(0);
+  if (next.length === 16) writeFace(8);
+  return setBabylonMeshUVs(mesh, next);
+}
+
+function setWallUVs(meshId, wallDoomLen, wallDoomH, texWidth, texHeight, xoff, yoff) {
+  const mesh = globalThis.nova64?.scene?.getMesh?.(meshId);
+  if (!mesh || !texWidth || !texHeight) return;
+
+  const uvAttr = mesh.geometry?.attributes?.uv ?? mesh.geometry?.getAttribute?.('uv');
 
   const tileU = wallDoomLen / texWidth;
   const tileV = wallDoomH / texHeight;
   const ofsU = (xoff || 0) / texWidth;
   const ofsV = (yoff || 0) / texHeight;
-
   const setFace = (start, tu, tv) => {
     uvAttr.setXY(start, ofsU, ofsV);
     uvAttr.setXY(start + 1, ofsU + tu, ofsV);
     uvAttr.setXY(start + 2, ofsU, ofsV + tv);
     uvAttr.setXY(start + 3, ofsU + tu, ofsV + tv);
   };
+
+  if (uvAttr?.count === 4 || uvAttr?.array?.length === 8) {
+    setFace(0, tileU, tileV);
+    uvAttr.needsUpdate = true;
+    return;
+  }
+
+  if (!uvAttr) {
+    if (setBabylonPlaneUVs(mesh, ofsU, ofsV, tileU, tileV)) return;
+
+    const faceRects = {
+      // Babylon box face order: front, back, right, left, top, bottom.
+      0: { x: ofsU, y: ofsV, z: ofsU + tileU, w: ofsV + tileV },
+      1: { x: ofsU, y: ofsV, z: ofsU + tileU, w: ofsV + tileV },
+      2: { x: ofsU, y: ofsV, z: ofsU + 0.5, w: ofsV + tileV },
+      3: { x: ofsU, y: ofsV, z: ofsU + 0.5, w: ofsV + tileV },
+      4: { x: ofsU, y: ofsV, z: ofsU + tileU, w: ofsV + 0.5 },
+      5: { x: ofsU, y: ofsV, z: ofsU + tileU, w: ofsV + 0.5 },
+    };
+
+    const texture = getMeshTexture(mesh);
+    if (!texture) return;
+    if (setBabylonBoxFaceUVs(mesh, faceRects)) {
+      engine.setTextureRepeat(texture, 1, 1);
+      applyTextureOffsets(texture, 0, 0);
+      return;
+    }
+    engine.setTextureRepeat(texture, tileU, tileV);
+    applyTextureOffsets(texture, ofsU, ofsV);
+    return;
+  }
 
   setFace(16, tileU, tileV);
   setFace(20, tileU, tileV);

@@ -1,5 +1,70 @@
 // ⭐ SPACE HARRIER NOVA 64 - Exceptional 2.5D/3D Rail Shooter ⭐
 
+const {
+  cls,
+  drawGlowTextCentered,
+  drawGradient,
+  drawNoise,
+  drawPanel,
+  drawRadialGradient,
+  drawScanlines,
+  drawStarburst,
+  drawWave,
+  line,
+  rect,
+  rgba8,
+} = nova64.draw;
+const {
+  createAdvancedCube,
+  createCube,
+  createPlane,
+  createSphere,
+  destroyMesh,
+  rotateMesh,
+  setMeshVisible,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  disableGlitch,
+  enableBloom,
+  enableDithering,
+  enableFXAA,
+  enableGlitch,
+  enablePixelation,
+  enableVignette,
+  setGlitchIntensity,
+} = nova64.fx;
+const { isKeyPressed, key } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  centerX,
+  clearButtons,
+  createButton,
+  createPanel,
+  drawAllButtons,
+  drawText,
+  drawTextShadow,
+  setFont,
+  setTextAlign,
+  uiColors,
+  updateAllButtons,
+} = nova64.ui;
+const {
+  arc,
+  cooldownReady,
+  createCooldown,
+  createShake,
+  noise,
+  triggerShake,
+  updateCooldown,
+  updateShake,
+  useCooldown,
+} = nova64.util;
+
 let gameState = 'start';
 let gameTime = 0;
 let inputLockoutCD;
@@ -62,39 +127,45 @@ let game = {
 export async function init() {
   console.log('🚀 SPACE HARRIER NOVA 64 - Loading...');
 
-  setCameraPosition(0, 5, 12);
-  setCameraTarget(0, 3, -50);
-  setCameraFOV(70);
+  try {
+    nova64.camera.setCameraPosition(0, 5, 12);
+    nova64.camera.setCameraTarget(0, 3, -50);
+    nova64.camera.setCameraFOV(70);
 
-  // Vibrant alien sky and effects
-  setAmbientLight(0xffffff, 1.0);
-  setLightDirection(-0.5, -1, -0.5);
-  setLightColor(0xfff0dd);
-  setFog(PALETTE.sky, 30, 150);
+    // Vibrant alien sky and effects
+    nova64.light.setAmbientLight(0xffffff, 1.0);
+    nova64.light.setLightDirection(-0.5, -1, -0.5);
+    nova64.light.setLightColor(0xfff0dd);
+    nova64.light.setFog(PALETTE.sky, 30, 150);
 
-  // Retro presentation with modern shader touch
-  if (typeof enablePixelation === 'function') enablePixelation(1);
-  if (typeof enableDithering === 'function') enableDithering(true);
-  enableBloom(1.0, 0.5, 0.3); // Alien sky & bullet glow
-  enableFXAA();
-  enableVignette(1.0, 0.95);
+    // Retro presentation with modern shader touch
+    if (typeof enablePixelation === 'function') nova64.fx.enablePixelation(1);
+    if (typeof enableDithering === 'function') nova64.fx.enableDithering(true);
+    nova64.fx.enableBloom(1.0, 0.5, 0.3); // Alien sky & bullet glow
+    nova64.fx.enableFXAA();
+    nova64.fx.enableVignette(1.0, 0.95);
 
-  createCheckeredFloor();
-  createPlayer();
+    createCheckeredFloor();
+    createPlayer();
 
-  // Hide player meshes on start screen to prevent 3D artifacts/bloom trails
-  setPlayerVisible(false);
+    // Hide player meshes on start screen to prevent 3D artifacts/bloom trails
+    setPlayerVisible(false);
 
-  for (let i = 0; i < 40; i++) {
-    spawnScenery(true);
+    for (let i = 0; i < 40; i++) {
+      spawnScenery(true);
+    }
+
+    inputLockoutCD = nova64.util.createCooldown(0.6);
+    inputLockoutCD.timer = 0.6; // start locked out
+    weaponCD = nova64.util.createCooldown(0.12);
+    game.shake = nova64.util.createShake({ decay: 5 });
+
+    initStartScreen();
+    console.log('[space-harrier] ✅ Init complete!');
+  } catch (error) {
+    console.error('[space-harrier] ❌ Init failed with error:', error);
+    throw error; // Re-throw so Nova64 console can catch it
   }
-
-  inputLockoutCD = createCooldown(0.6);
-  inputLockoutCD.timer = 0.6; // start locked out
-  weaponCD = createCooldown(0.12);
-  game.shake = createShake({ decay: 5 });
-
-  initStartScreen();
 }
 
 function createCheckeredFloor() {
@@ -112,8 +183,8 @@ function createCheckeredFloor() {
       const z = startZ - r * size - size / 2;
       const y = -2;
 
-      const plane = createPlane(size, size, color, [x, y, z]);
-      rotateMesh(plane, -Math.PI / 2, 0, 0);
+      const plane = nova64.scene.createPlane(size, size, color, [x, y, z]);
+      nova64.scene.rotateMesh(plane, -Math.PI / 2, 0, 0);
 
       game.gridPlanes.push({
         mesh: plane,
@@ -132,38 +203,38 @@ function createPlayer() {
     by = p.y,
     bz = p.z;
 
-  p.meshes.body = createCube(1.2, PALETTE.playerBody, [bx, by, bz]);
-  setScale(p.meshes.body, 1.0, 1.3, 0.8);
+  p.meshes.body = nova64.scene.createCube(1.2, PALETTE.playerBody, [bx, by, bz]);
+  nova64.scene.setScale(p.meshes.body, 1.0, 1.3, 0.8);
 
-  p.meshes.head = createSphere(0.6, PALETTE.playerHead, [bx, by + 1.2, bz], 8);
+  p.meshes.head = nova64.scene.createSphere(0.6, PALETTE.playerHead, [bx, by + 1.2, bz], 8);
 
-  p.meshes.hair = createCube(0.7, 0x5a2d0c, [bx, by + 1.5, bz + 0.1]);
-  setScale(p.meshes.hair, 1.1, 0.4, 1.1);
+  p.meshes.hair = nova64.scene.createCube(0.7, 0x5a2d0c, [bx, by + 1.5, bz + 0.1]);
+  nova64.scene.setScale(p.meshes.hair, 1.1, 0.4, 1.1);
 
-  p.meshes.jetpack = createCube(0.8, 0x888888, [bx, by + 0.2, bz + 0.6]);
-  setScale(p.meshes.jetpack, 1.2, 1.5, 0.5);
+  p.meshes.jetpack = nova64.scene.createCube(0.8, 0x888888, [bx, by + 0.2, bz + 0.6]);
+  nova64.scene.setScale(p.meshes.jetpack, 1.2, 1.5, 0.5);
 
-  p.meshes.gun = createCube(0.5, PALETTE.gun, [bx + 0.8, by, bz - 1.5]);
-  setScale(p.meshes.gun, 0.6, 0.6, 3.5);
+  p.meshes.gun = nova64.scene.createCube(0.5, PALETTE.gun, [bx + 0.8, by, bz - 1.5]);
+  nova64.scene.setScale(p.meshes.gun, 0.6, 0.6, 3.5);
 
-  p.meshes.armL = createCube(0.4, PALETTE.playerBody, [bx - 0.8, by + 0.2, bz]);
-  setScale(p.meshes.armL, 0.7, 1.8, 0.7);
+  p.meshes.armL = nova64.scene.createCube(0.4, PALETTE.playerBody, [bx - 0.8, by + 0.2, bz]);
+  nova64.scene.setScale(p.meshes.armL, 0.7, 1.8, 0.7);
 
-  p.meshes.armR = createCube(0.4, PALETTE.playerBody, [bx + 0.8, by + 0.2, bz]);
-  setScale(p.meshes.armR, 0.7, 1.8, 0.7);
+  p.meshes.armR = nova64.scene.createCube(0.4, PALETTE.playerBody, [bx + 0.8, by + 0.2, bz]);
+  nova64.scene.setScale(p.meshes.armR, 0.7, 1.8, 0.7);
 
-  p.meshes.legL = createCube(0.4, PALETTE.playerBody, [bx - 0.4, by - 1.0, bz]);
-  setScale(p.meshes.legL, 0.8, 2.0, 0.8);
+  p.meshes.legL = nova64.scene.createCube(0.4, PALETTE.playerBody, [bx - 0.4, by - 1.0, bz]);
+  nova64.scene.setScale(p.meshes.legL, 0.8, 2.0, 0.8);
 
-  p.meshes.legR = createCube(0.4, PALETTE.playerBody, [bx + 0.4, by - 1.0, bz]);
-  setScale(p.meshes.legR, 0.8, 2.0, 0.8);
+  p.meshes.legR = nova64.scene.createCube(0.4, PALETTE.playerBody, [bx + 0.4, by - 1.0, bz]);
+  nova64.scene.setScale(p.meshes.legR, 0.8, 2.0, 0.8);
 
-  p.meshes.flameL = createCube(0.3, 0xffaa00, [bx - 0.3, by - 0.6, bz + 0.6]);
-  p.meshes.flameR = createCube(0.3, 0xffaa00, [bx + 0.3, by - 0.6, bz + 0.6]);
+  p.meshes.flameL = nova64.scene.createCube(0.3, 0xffaa00, [bx - 0.3, by - 0.6, bz + 0.6]);
+  p.meshes.flameR = nova64.scene.createCube(0.3, 0xffaa00, [bx + 0.3, by - 0.6, bz + 0.6]);
 }
 
 function setPlayerVisible(visible) {
-  Object.values(game.player.meshes).forEach(m => setMeshVisible(m, visible));
+  Object.values(game.player.meshes).forEach(m => nova64.scene.setMeshVisible(m, visible));
 }
 
 function spawnScenery(randomZ = false) {
@@ -177,11 +248,16 @@ function spawnScenery(randomZ = false) {
 
   if (type === 'tree') {
     const height = 3 + Math.random() * 6;
-    const trunk = createCube(1, PALETTE.treeTrunk, [x, y + height / 2, z]);
-    setScale(trunk, 1, height, 1);
+    const trunk = nova64.scene.createCube(1, PALETTE.treeTrunk, [x, y + height / 2, z]);
+    nova64.scene.setScale(trunk, 1, height, 1);
 
     // Exceptional foliage look
-    const top = createSphere(2.5 + Math.random(), PALETTE.treeLeaves, [x, y + height + 1, z], 6);
+    const top = nova64.scene.createSphere(
+      2.5 + Math.random(),
+      PALETTE.treeLeaves,
+      [x, y + height + 1, z],
+      6
+    );
     parts.push({ mesh: trunk, oy: y + height / 2 });
     parts.push({ mesh: top, oy: y + height + 1 });
   } else {
@@ -196,9 +272,9 @@ function spawnScenery(randomZ = false) {
       transparent: true,
     };
     // Use createAdvancedCube for holographic/emissive material support
-    const pillar = createAdvancedCube(1, pillarOptions, [x, y + pHeight / 2, z]);
+    const pillar = nova64.scene.createAdvancedCube(1, pillarOptions, [x, y + pHeight / 2, z]);
 
-    setScale(pillar, 2, pHeight, 2);
+    nova64.scene.setScale(pillar, 2, pHeight, 2);
     parts.push({ mesh: pillar, oy: y + pHeight / 2 });
   }
 
@@ -237,13 +313,13 @@ function spawnEnemy(type) {
     size = 5;
   }
 
-  const core = createSphere(size, color, [x, y, z], 8);
-  const eye = createSphere(size * 0.5, PALETTE.enemyEye, [x, y, z + size * 0.8], 8);
+  const core = nova64.scene.createSphere(size, color, [x, y, z], 8);
+  const eye = nova64.scene.createSphere(size * 0.5, PALETTE.enemyEye, [x, y, z + size * 0.8], 8);
 
-  const wingL = createCube(size * 0.6, 0x5500aa, [x - size * 1.2, y, z]);
-  setScale(wingL, 3, 0.2, 1);
-  const wingR = createCube(size * 0.6, 0x5500aa, [x + size * 1.2, y, z]);
-  setScale(wingR, 3, 0.2, 1);
+  const wingL = nova64.scene.createCube(size * 0.6, 0x5500aa, [x - size * 1.2, y, z]);
+  nova64.scene.setScale(wingL, 3, 0.2, 1);
+  const wingR = nova64.scene.createCube(size * 0.6, 0x5500aa, [x + size * 1.2, y, z]);
+  nova64.scene.setScale(wingR, 3, 0.2, 1);
 
   game.enemies.push({
     parts: [
@@ -271,8 +347,8 @@ function firePlayerBullet(xOffset) {
   const y = p.y;
   const z = p.z - 2;
 
-  const bullet = createCube(0.8, PALETTE.bullet, [x, y, z]);
-  setScale(bullet, 0.5, 0.5, 6.0);
+  const bullet = nova64.scene.createCube(0.8, PALETTE.bullet, [x, y, z]);
+  nova64.scene.setScale(bullet, 0.5, 0.5, 6.0);
 
   game.bullets.push({
     mesh: bullet,
@@ -285,7 +361,7 @@ function firePlayerBullet(xOffset) {
 }
 
 function fireEnemyBullet(ex, ey, ez) {
-  const bullet = createSphere(1.2, PALETTE.enemyShot, [ex, ey, ez], 6);
+  const bullet = nova64.scene.createSphere(1.2, PALETTE.enemyShot, [ex, ey, ez], 6);
 
   const p = game.player;
   const dx = p.x - ex,
@@ -308,7 +384,7 @@ function fireEnemyBullet(ex, ey, ez) {
 
 function createExplosion(x, y, z, color) {
   for (let i = 0; i < 15; i++) {
-    const p = createCube(0.8, color, [x, y, z]);
+    const p = nova64.scene.createCube(0.8, color, [x, y, z]);
     const speed = 15 + Math.random() * 25;
     const angle1 = Math.random() * Math.PI * 2;
     const angle2 = Math.random() * Math.PI * 2;
@@ -331,30 +407,31 @@ export function update(dt) {
   gameTime += dt;
 
   if (gameState === 'start' || gameState === 'gameover') {
-    updateCooldown(inputLockoutCD, dt);
-    updateAllButtons();
+    nova64.util.updateCooldown(inputLockoutCD, dt);
+    nova64.ui.updateAllButtons();
     updateGrid(dt * 0.4);
 
     // Animate player idly
     updatePlayer(dt, true);
 
-    if (cooldownReady(inputLockoutCD) && isKeyPressed('Space')) startGame();
+    if (nova64.util.cooldownReady(inputLockoutCD) && nova64.input.isKeyPressed('Space'))
+      startGame();
     return;
   }
 
   game.distance += game.speed * dt;
   game.score += dt * 25;
   game.speed = Math.min(100, 45 + game.wave * 3);
-  updateShake(game.shake, dt);
+  nova64.util.updateShake(game.shake, dt);
 
   // Glitch decay
   if (game.glitchTimer > 0) {
     game.glitchTimer -= dt;
     if (game.glitchTimer <= 0) {
       game.glitchTimer = 0;
-      disableGlitch();
+      nova64.fx.disableGlitch();
     } else {
-      setGlitchIntensity(game.glitchTimer * 1.5);
+      nova64.fx.setGlitchIntensity(game.glitchTimer * 1.5);
     }
   }
 
@@ -382,7 +459,7 @@ export function update(dt) {
     game.waveClearTimer = 2.0;
     const waveBonus = game.wave * 200;
     game.score += waveBonus;
-    sfx('powerup');
+    nova64.audio.sfx('powerup');
   }
 
   updatePlayer(dt, false);
@@ -391,7 +468,7 @@ export function update(dt) {
   updateEnemies(dt);
   updateBullets(dt);
   updateEnemyBullets(dt);
-  updateParticles(dt);
+  _local_updateParticles(dt);
   updatePowerupPickups(dt);
 }
 
@@ -399,6 +476,7 @@ function startGame() {
   if (gameState === 'playing') return;
   inputLockoutCD.timer = 0.3;
   gameState = 'playing';
+  console.log('[space-harrier] ✅ gameState is now: playing');
   setPlayerVisible(true);
   game.score = 0;
   game.player.health = 100;
@@ -411,16 +489,16 @@ function startGame() {
   game.streakTimer = 0;
   game.waveClear = false;
 
-  game.enemies.forEach(e => e.parts.forEach(p => destroyMesh(p.mesh)));
-  game.enemyBullets.forEach(b => destroyMesh(b.mesh));
-  game.bullets.forEach(b => destroyMesh(b.mesh));
-  game.powerupPickups.forEach(p => destroyMesh(p.mesh));
+  game.enemies.forEach(e => e.parts.forEach(p => nova64.scene.destroyMesh(p.mesh)));
+  game.enemyBullets.forEach(b => nova64.scene.destroyMesh(b.mesh));
+  game.bullets.forEach(b => nova64.scene.destroyMesh(b.mesh));
+  game.powerupPickups.forEach(p => nova64.scene.destroyMesh(p.mesh));
 
   game.enemies = [];
   game.enemyBullets = [];
   game.bullets = [];
   game.powerupPickups = [];
-  clearButtons();
+  nova64.ui.clearButtons();
 
   startWave(1);
 }
@@ -436,7 +514,7 @@ function spawnPowerup(x, y, z) {
   const types = ['health', 'rapid', 'spread', 'shield'];
   const type = types[Math.floor(Math.random() * types.length)];
   const colors = { health: 0x00ff00, rapid: 0xffff00, spread: 0xff8800, shield: 0x00ccff };
-  const mesh = createSphere(1.5, colors[type], [x, y, z], 6);
+  const mesh = nova64.scene.createSphere(1.5, colors[type], [x, y, z], 6);
   game.powerupPickups.push({ mesh, x, y, z, type, timer: 0 });
 }
 
@@ -446,8 +524,8 @@ function updatePowerupPickups(dt) {
     const pu = game.powerupPickups[i];
     pu.z += game.speed * dt * 0.5;
     pu.timer += dt;
-    setPosition(pu.mesh, pu.x, pu.y + Math.sin(pu.timer * 4) * 1.5, pu.z);
-    setRotation(pu.mesh, 0, pu.timer * 3, 0);
+    nova64.scene.setPosition(pu.mesh, pu.x, pu.y + Math.sin(pu.timer * 4) * 1.5, pu.z);
+    nova64.scene.setRotation(pu.mesh, 0, pu.timer * 3, 0);
 
     // Collect
     if (Math.abs(pu.x - p.x) < 3 && Math.abs(pu.y - p.y) < 3 && Math.abs(pu.z - p.z) < 4) {
@@ -457,14 +535,14 @@ function updatePowerupPickups(dt) {
         game.powerup = pu.type;
         game.powerupTimer = 8;
       }
-      sfx('coin');
-      destroyMesh(pu.mesh);
+      nova64.audio.sfx('coin');
+      nova64.scene.destroyMesh(pu.mesh);
       game.powerupPickups.splice(i, 1);
       continue;
     }
 
     if (pu.z > 25) {
-      destroyMesh(pu.mesh);
+      nova64.scene.destroyMesh(pu.mesh);
       game.powerupPickups.splice(i, 1);
     }
   }
@@ -474,7 +552,7 @@ function updatePlayer(dt, isIdle) {
   const p = game.player;
   if (!isIdle && p.health <= 0) {
     createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
-    sfx('explosion');
+    nova64.audio.sfx('explosion');
     game.lives--;
     if (game.lives <= 0) {
       gameState = 'gameover';
@@ -493,15 +571,26 @@ function updatePlayer(dt, isIdle) {
   let dx = 0;
   let dy = 0;
   if (!isIdle) {
-    if (key('ArrowLeft') || key('a')) dx = -1;
-    if (key('ArrowRight') || key('d')) dx = 1;
-    if (key('ArrowUp') || key('w')) dy = 1;
-    if (key('ArrowDown') || key('s')) dy = -1;
+    if (nova64.input.key('ArrowLeft') || nova64.input.key('a')) dx = -1;
+    if (nova64.input.key('ArrowRight') || nova64.input.key('d')) dx = 1;
+    if (nova64.input.key('ArrowUp') || nova64.input.key('w')) dy = 1;
+    if (nova64.input.key('ArrowDown') || nova64.input.key('s')) dy = -1;
   }
 
   const moveSpeed = 45;
+  const oldX = p.x;
+  const oldY = p.y;
   p.x += dx * moveSpeed * dt;
   p.y += dy * moveSpeed * dt;
+
+  // DEBUG: Log player movement every 60 frames
+  if (!globalThis._playerDebugCounter) globalThis._playerDebugCounter = 0;
+  globalThis._playerDebugCounter++;
+  if (globalThis._playerDebugCounter % 60 === 0 && (dx !== 0 || dy !== 0)) {
+    console.log(
+      `[Space Harrier] Player move: dx=${dx}, dy=${dy}, pos=(${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})`
+    );
+  }
 
   if (p.x < -22) p.x = -22;
   if (p.x > 22) p.x = 22;
@@ -514,32 +603,32 @@ function updatePlayer(dt, isIdle) {
 
   const bY = p.y + (isGrounded && dx !== 0 ? Math.abs(Math.sin(p.bobPhase)) * 0.8 : 0);
 
-  setPosition(p.meshes.body, p.x, bY, p.z);
-  setPosition(p.meshes.head, p.x, bY + 1.2, p.z);
-  setPosition(p.meshes.hair, p.x, bY + 1.5, p.z + 0.1);
-  setPosition(p.meshes.jetpack, p.x, bY + 0.2, p.z + 0.6);
-  setPosition(p.meshes.gun, p.x + 0.8, bY - 0.2, p.z - 1.5);
-  setPosition(p.meshes.armL, p.x - 0.8, bY + 0.2, p.z);
-  setPosition(p.meshes.armR, p.x + 0.8, bY + 0.2, p.z);
+  nova64.scene.setPosition(p.meshes.body, p.x, bY, p.z);
+  nova64.scene.setPosition(p.meshes.head, p.x, bY + 1.2, p.z);
+  nova64.scene.setPosition(p.meshes.hair, p.x, bY + 1.5, p.z + 0.1);
+  nova64.scene.setPosition(p.meshes.jetpack, p.x, bY + 0.2, p.z + 0.6);
+  nova64.scene.setPosition(p.meshes.gun, p.x + 0.8, bY - 0.2, p.z - 1.5);
+  nova64.scene.setPosition(p.meshes.armL, p.x - 0.8, bY + 0.2, p.z);
+  nova64.scene.setPosition(p.meshes.armR, p.x + 0.8, bY + 0.2, p.z);
 
   // Jetpack flames flicker
-  setPosition(p.meshes.flameL, p.x - 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
-  setPosition(p.meshes.flameR, p.x + 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
+  nova64.scene.setPosition(p.meshes.flameL, p.x - 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
+  nova64.scene.setPosition(p.meshes.flameR, p.x + 0.3, bY - 0.6 - Math.random() * 0.3, p.z + 0.6);
 
   if (isGrounded && (dx !== 0 || isIdle)) {
     // idle running in place effectively
     const legSwing = Math.sin(p.animPhase) * 1.5;
-    setPosition(p.meshes.legL, p.x - 0.4, bY - 1.0, p.z + legSwing);
-    setPosition(p.meshes.legR, p.x + 0.4, bY - 1.0, p.z - legSwing);
+    nova64.scene.setPosition(p.meshes.legL, p.x - 0.4, bY - 1.0, p.z + legSwing);
+    nova64.scene.setPosition(p.meshes.legR, p.x + 0.4, bY - 1.0, p.z - legSwing);
   } else {
-    setPosition(p.meshes.legL, p.x - 0.4, bY - 1.0, p.z + 0.5);
-    setPosition(p.meshes.legR, p.x + 0.4, bY - 1.0, p.z + 0.5);
+    nova64.scene.setPosition(p.meshes.legL, p.x - 0.4, bY - 1.0, p.z + 0.5);
+    nova64.scene.setPosition(p.meshes.legR, p.x + 0.4, bY - 1.0, p.z + 0.5);
   }
 
-  updateCooldown(weaponCD, dt);
+  nova64.util.updateCooldown(weaponCD, dt);
   const fireRate = game.powerup === 'rapid' ? 0.04 : 0.12;
   weaponCD.duration = fireRate;
-  if (!isIdle && key('Space') && useCooldown(weaponCD)) {
+  if (!isIdle && nova64.input.key('Space') && nova64.util.useCooldown(weaponCD)) {
     firePlayerBullet();
     if (game.powerup === 'spread') {
       firePlayerBullet(-8);
@@ -555,7 +644,7 @@ function updateGrid(dt) {
     if (g.z > 20) {
       g.z -= totalLength;
     }
-    setPosition(g.mesh, g.x, g.y, g.z);
+    nova64.scene.setPosition(g.mesh, g.x, g.y, g.z);
   });
 }
 
@@ -567,7 +656,7 @@ function updateScenery(dt) {
       s.x = (Math.random() > 0.5 ? -1 : 1) * (15 + Math.random() * 30);
     }
     s.parts.forEach(p => {
-      setPosition(p.mesh, s.x, p.oy, s.z);
+      nova64.scene.setPosition(p.mesh, s.x, p.oy, s.z);
     });
   });
 }
@@ -604,7 +693,7 @@ function updateEnemies(dt) {
     const bob = Math.sin(e.timer * 4) * 2;
 
     e.parts.forEach(p => {
-      setPosition(p.mesh, e.x + p.ox, e.y + p.oy + bob, e.z + p.oz);
+      nova64.scene.setPosition(p.mesh, e.x + p.ox, e.y + p.oy + bob, e.z + p.oz);
     });
 
     if (e.timer > 1.5 && Math.random() < (e.type === 'boss' ? 0.06 : 0.02)) {
@@ -619,7 +708,7 @@ function updateEnemies(dt) {
     }
 
     if (e.z > 20) {
-      e.parts.forEach(p => destroyMesh(p.mesh));
+      e.parts.forEach(p => nova64.scene.destroyMesh(p.mesh));
       game.enemies.splice(i, 1);
     }
   }
@@ -630,10 +719,10 @@ function updateBullets(dt) {
     const b = game.bullets[i];
     b.z += b.vz * dt;
     b.life -= dt;
-    setPosition(b.mesh, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.mesh, b.x, b.y, b.z);
 
     if (b.life <= 0 || b.z < -150) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.bullets.splice(i, 1);
       continue;
     }
@@ -644,7 +733,7 @@ function updateBullets(dt) {
       if (Math.abs(b.x - e.x) < 3.0 && Math.abs(b.y - e.y) < 3.0 && Math.abs(b.z - e.z) < 4.0) {
         e.health -= 15;
         hit = true;
-        sfx('hit');
+        nova64.audio.sfx('hit');
         if (e.health <= 0) {
           createExplosion(e.x, e.y, e.z, PALETTE.explosion);
           const killPoints =
@@ -655,12 +744,12 @@ function updateBullets(dt) {
           if (game.killStreak >= 5) {
             game.score += game.killStreak * 100;
           }
-          sfx('explosion');
+          nova64.audio.sfx('explosion');
           // 25% chance to drop power-up
           if (Math.random() < 0.25) {
             spawnPowerup(e.x, e.y, e.z);
           }
-          e.parts.forEach(p => destroyMesh(p.mesh));
+          e.parts.forEach(p => nova64.scene.destroyMesh(p.mesh));
           game.enemies.splice(j, 1);
         }
         break;
@@ -668,7 +757,7 @@ function updateBullets(dt) {
     }
 
     if (hit) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.bullets.splice(i, 1);
     }
   }
@@ -683,32 +772,32 @@ function updateEnemyBullets(dt) {
     b.z += b.vz * dt;
     b.life -= dt;
 
-    setPosition(b.mesh, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.mesh, b.x, b.y, b.z);
 
     if (Math.abs(b.x - p.x) < 1.5 && Math.abs(b.y - p.y) < 2.0 && Math.abs(b.z - p.z) < 2.0) {
       if (game.powerup === 'shield') {
         // Shield absorbs hit
       } else {
         p.health -= 25;
-        triggerShake(game.shake, 0.4);
-        enableGlitch(0.5);
+        nova64.util.triggerShake(game.shake, 0.4);
+        nova64.fx.enableGlitch(0.5);
         game.glitchTimer = 0.3;
-        sfx('hit');
+        nova64.audio.sfx('hit');
       }
       createExplosion(p.x, p.y, p.z, PALETTE.playerBody);
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.enemyBullets.splice(i, 1);
       continue;
     }
 
     if (b.life <= 0 || b.z > 20) {
-      destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.mesh);
       game.enemyBullets.splice(i, 1);
     }
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = game.particles.length - 1; i >= 0; i--) {
     const p = game.particles[i];
     p.x += p.vx * dt;
@@ -716,22 +805,22 @@ function updateParticles(dt) {
     p.z += p.vz * dt;
     p.life -= dt;
 
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
 
     const alpha = p.life / p.maxLife;
-    setScale(p.mesh, alpha, alpha, alpha);
+    nova64.scene.setScale(p.mesh, alpha, alpha, alpha);
 
     if (p.life <= 0) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       game.particles.splice(i, 1);
     }
   }
 }
 
 function initStartScreen() {
-  clearButtons();
-  createButton(
-    centerX(240),
+  nova64.ui.clearButtons();
+  nova64.ui.createButton(
+    nova64.ui.centerX(240),
     252,
     240,
     52,
@@ -739,108 +828,220 @@ function initStartScreen() {
     () => {
       startGame();
     },
-    { normalColor: uiColors.success, hoverColor: rgba8(60, 220, 120, 255) }
+    { normalColor: uiColors.success, hoverColor: nova64.draw.rgba8(60, 220, 120, 255) }
   );
 }
 
 function drawStartScreen() {
   // Solid opaque base — guaranteed to cover the 3D scene
-  cls(rgba8(5, 0, 15, 255));
+  nova64.draw.cls(nova64.draw.rgba8(5, 0, 15, 255));
 
   // Rich alien-world gradient layered on top
-  drawGradient(0, 0, 640, 360, rgba8(20, 5, 55, 255), rgba8(4, 0, 18, 255), 'v');
+  nova64.draw.drawGradient(
+    0,
+    0,
+    640,
+    360,
+    nova64.draw.rgba8(20, 5, 55, 255),
+    nova64.draw.rgba8(4, 0, 18, 255),
+    'v'
+  );
 
   // Radial spotlight glow behind title
-  drawRadialGradient(320, 105, 230, rgba8(200, 60, 255, 48), rgba8(0, 0, 0, 0));
+  nova64.draw.drawRadialGradient(
+    320,
+    105,
+    230,
+    nova64.draw.rgba8(200, 60, 255, 48),
+    nova64.draw.rgba8(0, 0, 0, 0)
+  );
 
   // Cosmic starfield noise
-  drawNoise(0, 0, 640, 360, 22, Math.floor(gameTime * 6));
+  nova64.draw.drawNoise(0, 0, 640, 360, 22, Math.floor(gameTime * 6));
 
   // Distant planet arc at horizon
-  drawRadialGradient(320, 440, 280, rgba8(80, 0, 160, 70), rgba8(0, 0, 0, 0));
+  nova64.draw.drawRadialGradient(
+    320,
+    440,
+    280,
+    nova64.draw.rgba8(80, 0, 160, 70),
+    nova64.draw.rgba8(0, 0, 0, 0)
+  );
 
   // Corner starbursts — pulsing
   const sp = Math.sin(gameTime * 2) * 0.5 + 0.5;
-  drawStarburst(30, 30, 18, 7, 6, rgba8(255, 140, 0, Math.floor(sp * 210)), true);
-  drawStarburst(610, 30, 18, 7, 6, rgba8(255, 140, 0, Math.floor(sp * 210)), true);
-  drawStarburst(30, 330, 12, 5, 5, rgba8(180, 0, 255, Math.floor((1 - sp) * 180)), true);
-  drawStarburst(610, 330, 12, 5, 5, rgba8(180, 0, 255, Math.floor((1 - sp) * 180)), true);
+  nova64.draw.drawStarburst(
+    30,
+    30,
+    18,
+    7,
+    6,
+    nova64.draw.rgba8(255, 140, 0, Math.floor(sp * 210)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    610,
+    30,
+    18,
+    7,
+    6,
+    nova64.draw.rgba8(255, 140, 0, Math.floor(sp * 210)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    30,
+    330,
+    12,
+    5,
+    5,
+    nova64.draw.rgba8(180, 0, 255, Math.floor((1 - sp) * 180)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    610,
+    330,
+    12,
+    5,
+    5,
+    nova64.draw.rgba8(180, 0, 255, Math.floor((1 - sp) * 180)),
+    true
+  );
 
   // More scattered star shots across the sky
-  drawStarburst(90, 70, 7, 3, 4, rgba8(255, 255, 180, Math.floor(sp * 160)), true);
-  drawStarburst(550, 55, 6, 2, 4, rgba8(200, 180, 255, Math.floor((1 - sp) * 150)), true);
-  drawStarburst(480, 80, 5, 2, 5, rgba8(255, 200, 100, Math.floor(sp * 130)), true);
+  nova64.draw.drawStarburst(
+    90,
+    70,
+    7,
+    3,
+    4,
+    nova64.draw.rgba8(255, 255, 180, Math.floor(sp * 160)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    550,
+    55,
+    6,
+    2,
+    4,
+    nova64.draw.rgba8(200, 180, 255, Math.floor((1 - sp) * 150)),
+    true
+  );
+  nova64.draw.drawStarburst(
+    480,
+    80,
+    5,
+    2,
+    5,
+    nova64.draw.rgba8(255, 200, 100, Math.floor(sp * 130)),
+    true
+  );
 
   // Energy wave at the horizon line
-  drawWave(0, 185, 640, 6, 0.028, gameTime * 2.2, rgba8(180, 0, 255, 100), 2);
-  drawWave(0, 190, 640, 4, 0.042, gameTime * 2.8 + 1.0, rgba8(255, 100, 0, 75), 2);
+  nova64.draw.drawWave(
+    0,
+    185,
+    640,
+    6,
+    0.028,
+    gameTime * 2.2,
+    nova64.draw.rgba8(180, 0, 255, 100),
+    2
+  );
+  nova64.draw.drawWave(
+    0,
+    190,
+    640,
+    4,
+    0.042,
+    gameTime * 2.8 + 1.0,
+    nova64.draw.rgba8(255, 100, 0, 75),
+    2
+  );
 
   // Main title — SPACE HARRIER with orange/flame glow
   const titleBob = Math.sin(gameTime * 1.8) * 7;
-  drawGlowTextCentered(
+  nova64.draw.drawGlowTextCentered(
     'SPACE',
     320,
     44 + titleBob,
-    rgba8(255, 160, 0, 255),
-    rgba8(160, 50, 0, 170),
+    nova64.draw.rgba8(255, 160, 0, 255),
+    nova64.draw.rgba8(160, 50, 0, 170),
     2
   );
-  drawGlowTextCentered(
+  nova64.draw.drawGlowTextCentered(
     'HARRIER',
     320,
     98 + titleBob,
-    rgba8(255, 80, 20, 255),
-    rgba8(120, 20, 0, 160),
+    nova64.draw.rgba8(255, 80, 20, 255),
+    nova64.draw.rgba8(120, 20, 0, 160),
     2
   );
 
   // Subtitle
   const subPulse = Math.sin(gameTime * 3) * 0.25 + 0.75;
-  setFont('large');
-  setTextAlign('center');
-  drawText('NOVA 64 EDITION', 320, 152, rgba8(120, 200, 255, Math.floor(subPulse * 255)), 1);
+  nova64.ui.setFont('large');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText(
+    'NOVA 64 EDITION',
+    320,
+    152,
+    nova64.draw.rgba8(120, 200, 255, Math.floor(subPulse * 255)),
+    1
+  );
 
   // Tagline
-  setFont('normal');
-  drawText('THE LEGENDARY RAIL SHOOTER RETURNS', 320, 174, rgba8(200, 150, 255, 200), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.drawText(
+    'THE LEGENDARY RAIL SHOOTER RETURNS',
+    320,
+    174,
+    nova64.draw.rgba8(200, 150, 255, 200),
+    1
+  );
 
   // Info panel
-  const panel = createPanel(centerX(440), 200, 440, 92, {
-    bgColor: rgba8(15, 5, 35, 215),
-    borderColor: rgba8(180, 60, 255, 255),
+  const panel = nova64.ui.createPanel(nova64.ui.centerX(440), 200, 440, 92, {
+    bgColor: nova64.draw.rgba8(15, 5, 35, 215),
+    borderColor: nova64.draw.rgba8(180, 60, 255, 255),
     borderWidth: 2,
     shadow: true,
   });
-  drawPanel(panel);
+  nova64.draw.drawPanel(panel);
 
-  setFont('small');
-  setTextAlign('center');
-  drawText('◆ Blast through waves of alien enemies', 320, 218, uiColors.light, 1);
-  drawText('◆ Dodge projectiles & collect power-ups', 320, 233, uiColors.light, 1);
-  drawText('◆ Retro N64 rail-shooter with 3D visuals', 320, 248, uiColors.light, 1);
+  nova64.ui.setFont('small');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText('◆ Blast through waves of alien enemies', 320, 218, uiColors.light, 1);
+  nova64.ui.drawText('◆ Dodge projectiles & collect power-ups', 320, 233, uiColors.light, 1);
+  nova64.ui.drawText('◆ Retro N64 rail-shooter with 3D visuals', 320, 248, uiColors.light, 1);
 
   // Buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
   // Controls hint
-  setFont('tiny');
-  drawText('WASD / Arrows: Move  ◆  Space: Shoot', 320, 318, uiColors.secondary, 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.drawText('WASD / Arrows: Move  ◆  Space: Shoot', 320, 318, uiColors.secondary, 1);
 
   // Pulsing prompt
   const alpha = Math.floor((Math.sin(gameTime * 5) * 0.5 + 0.5) * 255);
-  drawText('◆ PRESS SPACE TO LAUNCH ◆', 320, 334, rgba8(255, 160, 0, alpha), 1);
+  nova64.ui.drawText(
+    '◆ PRESS SPACE TO LAUNCH ◆',
+    320,
+    334,
+    nova64.draw.rgba8(255, 160, 0, alpha),
+    1
+  );
 
   // CRT scanlines
-  drawScanlines(45, 2);
+  nova64.draw.drawScanlines(45, 2);
 }
 
 function initGameOverScreen() {
   setPlayerVisible(false);
-  disableGlitch();
+  nova64.fx.disableGlitch();
   game.glitchTimer = 0;
-  clearButtons();
-  createButton(
-    centerX(220),
+  nova64.ui.clearButtons();
+  nova64.ui.createButton(
+    nova64.ui.centerX(220),
     260,
     220,
     50,
@@ -850,7 +1051,7 @@ function initGameOverScreen() {
       inputLockoutCD.timer = 0.6;
       initStartScreen();
     },
-    { normalColor: uiColors.danger, hoverColor: rgba8(250, 60, 60, 255) }
+    { normalColor: uiColors.danger, hoverColor: nova64.draw.rgba8(250, 60, 60, 255) }
   );
 }
 
@@ -861,41 +1062,49 @@ export function draw() {
   }
 
   if (gameState === 'gameover') {
-    rect(0, 0, 640, 360, rgba8(100, 0, 0, 150), true);
-    setFont('huge');
-    setTextAlign('center');
-    drawTextShadow('GAME OVER', 320, 120, uiColors.danger, rgba8(0, 0, 0, 255), 4, 1);
+    nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(100, 0, 0, 150), true);
+    nova64.ui.setFont('huge');
+    nova64.ui.setTextAlign('center');
+    nova64.ui.drawTextShadow(
+      'GAME OVER',
+      320,
+      120,
+      uiColors.danger,
+      nova64.draw.rgba8(0, 0, 0, 255),
+      4,
+      1
+    );
 
-    setFont('normal');
-    drawText('SCORE: ' + Math.floor(game.score), 320, 180, uiColors.warning, 1);
-    drawAllButtons();
+    nova64.ui.setFont('normal');
+    nova64.ui.drawText('SCORE: ' + Math.floor(game.score), 320, 180, uiColors.warning, 1);
+    nova64.ui.drawAllButtons();
     return;
   }
 
-  setFont('normal');
-  setTextAlign('left');
-  drawText('SCORE: ' + Math.floor(game.score), 20, 20, uiColors.warning, 1);
-  drawText(`WAVE ${game.wave}`, 20, 40, rgba8(0, 255, 255, 255), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('left');
+  nova64.ui.drawText('SCORE: ' + Math.floor(game.score), 20, 20, uiColors.warning, 1);
+  nova64.ui.drawText(`WAVE ${game.wave}`, 20, 40, nova64.draw.rgba8(0, 255, 255, 255), 1);
 
   // Lives
   for (let i = 0; i < game.lives; i++) {
-    rect(170 + i * 18, 22, 12, 12, rgba8(255, 50, 50, 255), true);
+    nova64.draw.rect(170 + i * 18, 22, 12, 12, nova64.draw.rgba8(255, 50, 50, 255), true);
   }
 
   // Health bar
-  rect(420, 20, 200, 20, rgba8(50, 0, 0, 200), true);
+  nova64.draw.rect(420, 20, 200, 20, nova64.draw.rgba8(50, 0, 0, 200), true);
   const hpWidth = Math.max(0, game.player.health * 2);
-  rect(420, 20, hpWidth, 20, hpWidth > 40 ? uiColors.success : uiColors.danger, true);
-  rect(420, 20, 200, 20, uiColors.light, false);
+  nova64.draw.rect(420, 20, hpWidth, 20, hpWidth > 40 ? uiColors.success : uiColors.danger, true);
+  nova64.draw.rect(420, 20, 200, 20, uiColors.light, false);
 
   // Power-up indicator
   if (game.powerup) {
     const puColors = {
-      rapid: rgba8(255, 255, 0, 255),
-      spread: rgba8(255, 136, 0, 255),
-      shield: rgba8(0, 200, 255, 255),
+      rapid: nova64.draw.rgba8(255, 255, 0, 255),
+      spread: nova64.draw.rgba8(255, 136, 0, 255),
+      shield: nova64.draw.rgba8(0, 200, 255, 255),
     };
-    drawText(
+    nova64.ui.drawText(
       `${game.powerup.toUpperCase()} ${Math.ceil(game.powerupTimer)}s`,
       420,
       46,
@@ -906,18 +1115,36 @@ export function draw() {
 
   // Kill streak
   if (game.killStreak >= 3) {
-    setTextAlign('center');
-    drawText(`${game.killStreak}x STREAK!`, 320, 60, rgba8(255, 200, 50, 255), 1);
-    setTextAlign('left');
+    nova64.ui.setTextAlign('center');
+    nova64.ui.drawText(
+      `${game.killStreak}x STREAK!`,
+      320,
+      60,
+      nova64.draw.rgba8(255, 200, 50, 255),
+      1
+    );
+    nova64.ui.setTextAlign('left');
   }
 
   // Wave clear message
   if (game.waveClear) {
-    setTextAlign('center');
-    setFont('large');
-    drawText(`WAVE ${game.wave} CLEAR!`, 320, 160, rgba8(0, 255, 100, 255), 1);
-    setFont('normal');
-    drawText(`+${game.wave * 200} BONUS`, 320, 185, rgba8(255, 255, 100, 255), 1);
-    setTextAlign('left');
+    nova64.ui.setTextAlign('center');
+    nova64.ui.setFont('large');
+    nova64.ui.drawText(
+      `WAVE ${game.wave} CLEAR!`,
+      320,
+      160,
+      nova64.draw.rgba8(0, 255, 100, 255),
+      1
+    );
+    nova64.ui.setFont('normal');
+    nova64.ui.drawText(
+      `+${game.wave * 200} BONUS`,
+      320,
+      185,
+      nova64.draw.rgba8(255, 255, 100, 255),
+      1
+    );
+    nova64.ui.setTextAlign('left');
   }
 }

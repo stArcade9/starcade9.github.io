@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>NOVA-64 Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="./os9-shell/nova-icon.svg" type="image/svg+xml" />
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
@@ -554,6 +555,15 @@
     "console.controls.action": "Action"
   }
   </script>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
     <script type="importmap">
     {
       "imports": {
@@ -564,8 +574,8 @@
       }
     }
     </script>
-    <script type="module" crossorigin src="./assets/main-qb_accud.js"></script>
-  </head>
+  <script type="module" crossorigin src="./assets/main-CjwG5TUg.js"></script>
+</head>
   <body>
     <div class="shell">
       <div class="stage">
@@ -640,6 +650,9 @@
               🛸 Space Harrier (2.5D Rail Shooter)
             </option>
             <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
+            <option value="/examples/hello-namespaced/code.js">
+              📦 Hello Namespaced (nova64.* API)
+            </option>
             <option value="/examples/crystal-cathedral-3d/code.js">
               🏛️ Crystal Cathedral (Graphics)
             </option>
@@ -962,7 +975,9 @@
       });
 
       const urlParams = new URLSearchParams(window.location.search);
-      const demoParam = urlParams.get('demo');
+      // TODO: rename the URL param from 'demo' to 'cart' throughout — then
+      // remove the ?cart= alias. Old bookmarks still resolve via the alias.
+      const demoParam = urlParams.get('demo') || urlParams.get('cart');
       if (demoParam) {
         window.addEventListener('load', () => {
           const select = document.getElementById('cart');
@@ -978,6 +993,7 @@
             demoscene: '/examples/demoscene/code.js',
             'space-harrier-3d': '/examples/space-harrier-3d/code.js',
             'hello-3d': '/examples/hello-3d/code.js',
+            'hello-namespaced': '/examples/hello-namespaced/code.js',
             'mystical-realm-3d': '/examples/mystical-realm-3d/code.js',
             'physics-demo-3d': '/examples/physics-demo-3d/code.js',
             'shooter-demo-3d': '/examples/shooter-demo-3d/code.js',
@@ -997,9 +1013,12 @@
             'creative-coding': '/examples/creative-coding/code.js',
             'hype-demo': '/examples/hype-demo/code.js',
             'flash-demo': '/examples/flash-demo/code.js',
+            'hero-demo': '/examples/hero-demo/code.js',
+            'dungeon-crawler-3d': '/examples/dungeon-crawler-3d/code.js',
           };
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];
+            select.dispatchEvent(new Event('change'));
           }
         });
       }

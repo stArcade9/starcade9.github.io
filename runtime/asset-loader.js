@@ -58,10 +58,12 @@ async function preloadAssets(assetConfig, basePath) {
     _assets[entry.name] = { type: entry.type, path: entry.path, data: null, status: 'loading' };
     try {
       let data;
-      if (entry.type === 'texture' && typeof globalThis.loadTexture === 'function') {
-        data = await globalThis.loadTexture(entry.path);
-      } else if (entry.type === 'model' && typeof globalThis.loadModel === 'function') {
-        data = await globalThis.loadModel(entry.path);
+      const loadTexture = globalThis.loadTexture ?? globalThis.nova64?.scene?.loadTexture;
+      const loadModel = globalThis.loadModel ?? globalThis.nova64?.scene?.loadModel;
+      if (entry.type === 'texture' && typeof loadTexture === 'function') {
+        data = await loadTexture(entry.path);
+      } else if (entry.type === 'model' && typeof loadModel === 'function') {
+        data = await loadModel(entry.path);
       } else {
         // Can't load this type — store path for manual use
         data = entry.path;

@@ -96,6 +96,15 @@
     .pg-foot p,.pg-foot a{font-size:13px;color:var(--muted)}
     .pg-foot a:hover{color:var(--cyan)}
   </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
 <div class="page">
@@ -153,6 +162,7 @@
       <li>App framework with mount/unmount lifecycle and menu bar integration</li>
       <li>Pub/sub event bus for OS, apps, and cart code to communicate</li>
       <li>Control strip with volume, brightness, scanlines, FPS counter, and custom widgets</li>
+      <li>Crystal desktop background with right-click wallpaper switching, solid colors, custom image URLs, and visual-only sandboxed HTML iframe backgrounds</li>
       <li>Modal alert dialogs with icon variants and auto-dismissing toast notifications</li>
       <li>Persistent user preferences that survive browser restarts</li>
       <li>Mobile-optimised shell variant in <code>os9-shellMobile/</code></li>
@@ -175,7 +185,7 @@
     <div class="steps">
       <div class="step"><div class="step-n">1</div><div class="step-b"><h4>Install dependencies</h4><p>Move into the shell folder and run <code>pnpm install</code>.</p></div></div>
       <div class="step"><div class="step-n">2</div><div class="step-b"><h4>Start the dev server</h4><p>Vite serves NovaOS at <code>http://localhost:3000</code> with hot-module reload.</p></div></div>
-      <div class="step"><div class="step-n">3</div><div class="step-b"><h4>Watch the boot sequence</h4><p>Gray splash &rarr; extension icons march &rarr; desktop fades in with icons and menu bar.</p></div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-b"><h4>Watch the boot sequence</h4><p>Crystal splash &rarr; extension icons load &rarr; desktop fades in with icons and menu bar.</p></div></div>
       <div class="step"><div class="step-n">4</div><div class="step-b"><h4>Access the live API</h4><p>Press <code>F12</code> and call <code>await novaContext.launchApp('com.nova64.notes')</code> in the console.</p></div></div>
     </div>
 <pre>cd os9-shell
@@ -192,13 +202,26 @@ pnpm preview      # serve dist/ on http://localhost:4173</pre>
     <h2>&#128268; Boot Sequence</h2>
     <p>NovaOS boots through a scripted sequence mirroring classic Mac OS 9 startup:</p>
     <ul>
-      <li><strong>Gray splash screen</strong> &mdash; Nova64 logo centred on platinum gray</li>
-      <li><strong>Extensions parade</strong> &mdash; icon badges march across a bottom bar (like OS 9 extensions)</li>
-      <li><strong>Desktop reveal</strong> &mdash; fades in with Trash, disk icons, and app aliases visible</li>
+      <li><strong>Crystal splash screen</strong> &mdash; Nova64 welcome panel over the deep-blue crystal wallpaper</li>
+      <li><strong>Extension progress</strong> &mdash; icon badges light up as shell capabilities load</li>
+      <li><strong>Desktop reveal</strong> &mdash; fades into the persisted background with Trash, disk icons, and app aliases visible</li>
       <li><strong>Menu bar activates</strong> &mdash; clock starts ticking, app menus become interactive</li>
       <li><strong>Control strip slides in</strong> &mdash; bottom-right panel collapses in from the viewport edge</li>
     </ul>
     <p>Full boot takes ~3&ndash;4 seconds. On subsequent loads, IndexedDB restores all filesystem contents, window positions, and preferences exactly as they were left.</p>
+  </section>
+
+  <section class="doc-sec" id="backgrounds">
+    <h2>&#127912; Desktop Backgrounds</h2>
+    <p>NovaOS ships with a calm deep-blue crystal wallpaper as the default desktop and includes additional built-in backgrounds in <code>os9-shell/public/wallpapers/</code>. It can also render visual-only sandboxed HTML iframe backgrounds behind desktop icons.</p>
+    <ul>
+      <li><strong>Desktop context menu</strong> &mdash; right-click the desktop and choose <strong>Desktop Background</strong> to switch presets, set an image URL, or choose a visual HTML iframe URL.</li>
+      <li><strong>Appearance app</strong> &mdash; preview built-in wallpapers, apply a solid color, enter a remote image URL, or enter a visual HTML iframe URL.</li>
+      <li><strong>Visual only</strong> &mdash; HTML backgrounds cannot receive clicks or act like desktop widgets. They may only receive passive desktop signals such as mouse location.</li>
+      <li><strong>HTML example</strong> &mdash; the built-in option includes <code>plasma-drift.html</code>, a pleasing plasma background that reacts to mouse location.</li>
+      <li><strong>Persistence</strong> &mdash; selected background settings are stored in <code>localStorage</code> under <code>nova64-desktop-background</code>.</li>
+      <li><strong>Build output</strong> &mdash; <code>pnpm osBuild</code> copies the compiled shell and wallpaper assets into <code>public/os9-shell/</code>.</li>
+    </ul>
   </section>
 
   <section class="doc-sec" id="desktop">

@@ -2,6 +2,13 @@
 // Enter any token ID, hash, or text to generate a unique deterministic world.
 // Same seed = same world, always.
 
+const { drawRect, prinprintCentered } = nova64.draw;
+const { clearScene, getPosition } = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog } = nova64.light;
+const { key, keyp } = nova64.input;
+const { configureVoxelWorld, resetVoxelWorld, setVoxelDayTime, updateVoxelWorld } = nova64.voxel;
+const { createSeedFromHash, createSeedRNG, exportSeedMetadata, seedToTraits, t } = nova64.data;
 const WORLD_SCHEMA = {
   biome: {
     values: ['forest', 'desert', 'tundra', 'ocean', 'mushroom', 'crystal', 'volcanic', 'floating'],
@@ -71,7 +78,7 @@ export function update(dt) {
   cursorBlink += dt;
 
   if (showMetadata) {
-    if (keyp('Escape') || keyp('KeyM')) {
+    if (nova64.input.keyp('Escape') || nova64.input.keyp('KeyM')) {
       showMetadata = false;
     }
     return;
@@ -80,34 +87,34 @@ export function update(dt) {
   if (inputActive) {
     // Handle typing
     for (let i = 48; i <= 57; i++) {
-      if (keyp('Digit' + String.fromCharCode(i))) seedInput += String.fromCharCode(i);
+      if (nova64.input.keyp('Digit' + String.fromCharCode(i))) seedInput += String.fromCharCode(i);
     }
     for (let i = 65; i <= 90; i++) {
       const code = 'Key' + String.fromCharCode(i);
-      if (keyp(code)) {
+      if (nova64.input.keyp(code)) {
         seedInput +=
-          key('ShiftLeft') || key('ShiftRight')
+          nova64.input.key('ShiftLeft') || nova64.input.key('ShiftRight')
             ? String.fromCharCode(i)
             : String.fromCharCode(i + 32);
       }
     }
-    if (keyp('Space')) seedInput += ' ';
-    if (keyp('Minus')) seedInput += '-';
-    if (keyp('Equal')) seedInput += '=';
-    if (keyp('Period')) seedInput += '.';
-    if (keyp('Slash')) seedInput += '/';
-    if (keyp('Backspace') && seedInput.length > 0) {
+    if (nova64.input.keyp('Space')) seedInput += ' ';
+    if (nova64.input.keyp('Minus')) seedInput += '-';
+    if (nova64.input.keyp('Equal')) seedInput += '=';
+    if (nova64.input.keyp('Period')) seedInput += '.';
+    if (nova64.input.keyp('Slash')) seedInput += '/';
+    if (nova64.input.keyp('Backspace') && seedInput.length > 0) {
       seedInput = seedInput.slice(0, -1);
     }
 
     // Enter to generate
-    if (keyp('Enter') && seedInput.length > 0) {
+    if (nova64.input.keyp('Enter') && seedInput.length > 0) {
       generateWorld(seedInput);
       inputActive = false;
     }
 
     // Tab to cycle presets
-    if (keyp('Tab')) {
+    if (nova64.input.keyp('Tab')) {
       presetIdx = (presetIdx + 1) % PRESETS.length;
       seedInput = PRESETS[presetIdx];
     }
@@ -116,15 +123,15 @@ export function update(dt) {
   }
 
   // World navigation
-  if (keyp('Escape')) {
+  if (nova64.input.keyp('Escape')) {
     inputActive = true;
     worldGenerated = false;
-    resetVoxelWorld();
-    clearScene();
+    nova64.voxel.resetVoxelWorld();
+    nova64.scene.clearScene();
   }
-  if (keyp('KeyM')) {
-    metadataJSON = exportSeedMetadata(currentSeed, currentTraits, {
-      name: `Nova64 World #${createSeedFromHash(currentSeed)}`,
+  if (nova64.input.keyp('KeyM')) {
+    metadataJSON = nova64.data.exportSeedMetadata(currentSeed, currentTraits, {
+      name: `Nova64 World #${nova64.data.createSeedFromHash(currentSeed)}`,
       description: `Procedurally generated voxel world from seed "${currentSeed}"`,
       collection: 'Nova64 NFT Worlds',
     });
@@ -133,37 +140,37 @@ export function update(dt) {
   }
 
   // Arrow keys to try adjacent seeds
-  if (keyp('BracketRight')) {
+  if (nova64.input.keyp('BracketRight')) {
     presetIdx = (presetIdx + 1) % PRESETS.length;
     generateWorld(PRESETS[presetIdx]);
   }
-  if (keyp('BracketLeft')) {
+  if (nova64.input.keyp('BracketLeft')) {
     presetIdx = (presetIdx - 1 + PRESETS.length) % PRESETS.length;
     generateWorld(PRESETS[presetIdx]);
   }
 
   // Standard voxel world update
-  const cam = getPosition(null); // camera
+  const cam = nova64.scene.getPosition(null); // camera
   if (cam) {
-    updateVoxelWorld(cam[0] || 0, cam[1] || 0, cam[2] || 0);
+    nova64.voxel.updateVoxelWorld(cam[0] || 0, cam[1] || 0, cam[2] || 0);
   }
 }
 
 function generateWorld(seed) {
   currentSeed = seed;
-  const numericSeed = typeof seed === 'number' ? seed : createSeedFromHash(seed);
-  currentRNG = createSeedRNG(numericSeed);
-  currentTraits = seedToTraits(numericSeed, WORLD_SCHEMA);
+  const numericSeed = typeof seed === 'number' ? seed : nova64.data.createSeedFromHash(seed);
+  currentRNG = nova64.data.createSeedRNG(numericSeed);
+  currentTraits = nova64.data.seedToTraits(numericSeed, WORLD_SCHEMA);
 
   // Reset and configure world
-  resetVoxelWorld();
-  clearScene();
+  nova64.voxel.resetVoxelWorld();
+  nova64.scene.clearScene();
 
   const traits = currentTraits;
   const biomeColors = BIOME_COLORS[traits.biome] || BIOME_COLORS.forest;
   const timeLight = TIME_LIGHT[traits.timeOfDay] || TIME_LIGHT.noon;
 
-  configureVoxelWorld({
+  nova64.voxel.configureVoxelWorld({
     seed: numericSeed,
     renderDistance: 4,
     chunkSize: 16,
@@ -171,14 +178,14 @@ function generateWorld(seed) {
   });
 
   // Apply time of day
-  setVoxelDayTime(timeLight.dayTime);
-  setAmbientLight(timeLight.ambient);
-  setFog(timeLight.fog, 20, 80);
+  nova64.voxel.setVoxelDayTime(timeLight.dayTime);
+  nova64.light.setAmbientLight(timeLight.ambient);
+  nova64.light.setFog(timeLight.fog, 20, 80);
 
   // Position camera
   const spawnY = traits.waterLevel + traits.hillHeight + 10;
-  setCameraPosition(8, spawnY, 8);
-  setCameraTarget(32, traits.waterLevel, 32);
+  nova64.camera.setCameraPosition(8, spawnY, 8);
+  nova64.camera.setCameraTarget(32, traits.waterLevel, 32);
 
   worldGenerated = true;
   seedInput = String(seed);
@@ -200,27 +207,27 @@ export function draw() {
 
 function drawSeedInput() {
   // Title
-  printCentered('🌐 NFT WORLDS', 30, 0x44ddff);
-  printCentered('Seed-Generated Voxel Worlds', 50, 0x888888);
+  nova64.draw.printCentered('🌐 NFT WORLDS', 30, 0x44ddff);
+  nova64.draw.printCentered('Seed-Generated Voxel Worlds', 50, 0x888888);
 
   // Input box
   const boxY = 100;
-  drawRect(80, boxY - 5, 480, 30, 0x1a1a2e);
-  drawRect(82, boxY - 3, 476, 26, 0x2a2a4e);
+  nova64.draw.drawRect(80, boxY - 5, 480, 30, 0x1a1a2e);
+  nova64.draw.drawRect(82, boxY - 3, 476, 26, 0x2a2a4e);
 
   const cursor = Math.floor(cursorBlink * 2) % 2 === 0 ? '▋' : '';
-  print('> ' + seedInput + cursor, 90, boxY + 2, 0x44ff44);
+  nova64.draw.print('> ' + seedInput + cursor, 90, boxY + 2, 0x44ff44);
 
   // Instructions
-  printCentered('Type a seed (token ID, hash, or any text)', 155, 0x666688);
-  printCentered('ENTER to generate  |  TAB to cycle presets', 175, 0x666688);
+  nova64.draw.printCentered('Type a seed (token ID, hash, or any text)', 155, 0x666688);
+  nova64.draw.printCentered('ENTER to generate  |  TAB to cycle presets', 175, 0x666688);
 
   // Preset list
-  print('Presets:', 90, 210, 0x888888);
+  nova64.draw.print('Presets:', 90, 210, 0x888888);
   for (let i = 0; i < PRESETS.length; i++) {
     const c = i === presetIdx ? 0x44ddff : 0x555566;
     const arrow = i === presetIdx ? '▸ ' : '  ';
-    print(arrow + PRESETS[i], 100, 230 + i * 16, c);
+    nova64.draw.print(arrow + PRESETS[i], 100, 230 + i * 16, c);
   }
 }
 
@@ -229,33 +236,33 @@ function drawWorldHUD() {
   const t = currentTraits;
 
   // Seed info (top left)
-  print('SEED: ' + seedInput, 10, 10, 0x44ff44);
-  print('ID: ' + createSeedFromHash(currentSeed), 10, 26, 0x888888);
+  nova64.draw.print('SEED: ' + seedInput, 10, 10, 0x44ff44);
+  nova64.draw.print('ID: ' + nova64.data.createSeedFromHash(currentSeed), 10, 26, 0x888888);
 
   // Traits (top right)
   const rx = 440;
-  print('TRAITS', rx, 10, 0x44ddff);
-  print('Biome: ' + t.biome, rx, 28, 0xdddddd);
-  print('Palette: ' + t.palette, rx, 44, 0xdddddd);
-  print('Time: ' + t.timeOfDay, rx, 60, 0xdddddd);
-  print('Terrain: ' + t.hillHeight.toFixed(0) + 'm', rx, 76, 0xdddddd);
-  print('Density: ' + (t.density * 100).toFixed(0) + '%', rx, 92, 0xdddddd);
-  print('Caves: ' + (t.caveDepth * 100).toFixed(0) + '%', rx, 108, 0xdddddd);
-  print('Ores: ' + (t.oreRichness * 100).toFixed(1) + '%', rx, 124, 0xdddddd);
-  print('Water: Y' + t.waterLevel, rx, 140, 0x4488cc);
-  print('Features: ' + t.features, rx, 156, 0xdddddd);
+  nova64.draw.print('TRAITS', rx, 10, 0x44ddff);
+  nova64.draw.print('Biome: ' + t.biome, rx, 28, 0xdddddd);
+  nova64.draw.print('Palette: ' + t.palette, rx, 44, 0xdddddd);
+  nova64.draw.print('Time: ' + t.timeOfDay, rx, 60, 0xdddddd);
+  nova64.draw.print('Terrain: ' + t.hillHeight.toFixed(0) + 'm', rx, 76, 0xdddddd);
+  nova64.draw.print('Density: ' + (t.density * 100).toFixed(0) + '%', rx, 92, 0xdddddd);
+  nova64.draw.print('Caves: ' + (t.caveDepth * 100).toFixed(0) + '%', rx, 108, 0xdddddd);
+  nova64.draw.print('Ores: ' + (t.oreRichness * 100).toFixed(1) + '%', rx, 124, 0xdddddd);
+  nova64.draw.print('Water: Y' + t.waterLevel, rx, 140, 0x4488cc);
+  nova64.draw.print('Features: ' + t.features, rx, 156, 0xdddddd);
 
   // Controls (bottom)
-  print('[ESC] New Seed  [M] Metadata  [/] Browse', 10, 340, 0x555566);
+  nova64.draw.print('[ESC] New Seed  [M] Metadata  [/] Browse', 10, 340, 0x555566);
 }
 
 function drawMetadataOverlay() {
   // Dark overlay
-  drawRect(30, 20, 580, 320, 0x0a0a1e);
-  drawRect(32, 22, 576, 316, 0x1a1a3e);
+  nova64.draw.drawRect(30, 20, 580, 320, 0x0a0a1e);
+  nova64.draw.drawRect(32, 22, 576, 316, 0x1a1a3e);
 
-  printCentered('NFT METADATA (ERC-721)', 32, 0x44ddff);
-  print('Press M or ESC to close', 40, 50, 0x555566);
+  nova64.draw.printCentered('NFT METADATA (ERC-721)', 32, 0x44ddff);
+  nova64.draw.print('Press M or ESC to close', 40, 50, 0x555566);
 
   // Show JSON lines
   const lines = metadataJSON.split('\n');
@@ -266,10 +273,10 @@ function drawMetadataOverlay() {
     if (line.includes('"name"') || line.includes('"trait_type"')) color = 0x44ddff;
     else if (line.includes('"value"')) color = 0x44ff44;
     else if (line.includes('"seed"')) color = 0xffaa44;
-    print(line.slice(0, 72), 44, 70 + i * 14, color);
+    nova64.draw.print(line.slice(0, 72), 44, 70 + i * 14, color);
   }
   if (lines.length > maxLines) {
-    print(
+    nova64.draw.print(
       '... (' + (lines.length - maxLines) + ' more lines — see console)',
       44,
       70 + maxLines * 14,

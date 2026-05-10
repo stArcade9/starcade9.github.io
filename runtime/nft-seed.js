@@ -269,9 +269,7 @@ function setSeed(hashOrNumber) {
   _globalRNG = createSeedRNG(_globalSeed);
 
   // Notify voxel engine if available
-  if (typeof globalThis.configureVoxelWorld === 'function') {
-    globalThis.configureVoxelWorld({ seed: _globalSeed });
-  }
+  globalThis.nova64?.voxel?.configureVoxelWorld?.({ seed: _globalSeed });
 
   return _globalSeed;
 }

@@ -3,6 +3,24 @@
 // NEO-DOOM: FAST, BRIGHT, FUN ARENA SHOOTER
 // 3 levels, 4 enemy types, pickups, boss fights — now with .WAD file support!
 
+const { drawProgressBar, prinprintCentered, rectfill, rgba8 } = nova64.draw;
+const { createCube, createPlane, destroyMesh, getMesh, setPosition, setRotation, setScale } =
+  nova64.scene;
+const engine = nova64.scene.engine ?? globalThis.engine;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const {
+  createPointLight,
+  removeLight,
+  setAmbientLight,
+  setDirectionalLight,
+  setFog,
+  setPointLightPosition,
+} = nova64.light;
+const { btn, key, mouseDown } = nova64.input;
+const { sfx } = nova64.audio;
+const { WADLoader, WADTextureManager, convertWADMap, setWallUVs, t } = nova64.data;
+const { createShake, triggerShake, updateShake } = nova64.util;
+
 let gameTime = 0;
 let gameState = 'start'; // start, playing, gameover, levelclear, victory
 
@@ -128,22 +146,22 @@ let floorMesh = null;
 let enemyLights = [];
 
 export function init() {
-  shake = createShake({ maxIntensity: 8, decay: 0.88, noiseScale: 0.15 });
+  shake = nova64.util.createShake({ maxIntensity: 8, decay: 0.88, noiseScale: 0.15 });
 
-  setFog(0x001122, 8, 60);
-  setAmbientLight(0x334466, 0.4);
-  setDirectionalLight([-1, -2, -1], 0xaabbdd, 0.8);
+  nova64.light.setFog(0x001122, 8, 60);
+  nova64.light.setAmbientLight(0x334466, 0.4);
+  nova64.light.setDirectionalLight([-1, -2, -1], 0xaabbdd, 0.8);
 
-  floorMesh = createPlane(200, 200, 0x112233, [0, 0, 0], MAT.floor);
-  setRotation(floorMesh, -Math.PI / 2, 0, 0);
+  floorMesh = nova64.scene.createPlane(200, 200, 0x112233, [0, 0, 0], MAT.floor);
+  nova64.scene.setRotation(floorMesh, -Math.PI / 2, 0, 0);
 
   // Ceiling
-  ceilingMesh = createPlane(200, 200, 0x0a0a15, [0, 9, 0], {
+  ceilingMesh = nova64.scene.createPlane(200, 200, 0x0a0a15, [0, 9, 0], {
     material: 'standard',
     color: 0x0a0a15,
     roughness: 1.0,
   });
-  setRotation(ceilingMesh, Math.PI / 2, 0, 0);
+  nova64.scene.setRotation(ceilingMesh, Math.PI / 2, 0, 0);
 
   if (!mouseInit) {
     mouseInit = true;
@@ -193,19 +211,19 @@ export function init() {
 }
 
 function cleanupLevel() {
-  for (let w of entities.walls) if (w.m) destroyMesh(w.m);
+  for (let w of entities.walls) if (w.m) nova64.scene.destroyMesh(w.m);
   for (let e of entities.enemies) {
-    destroyMesh(e.body);
-    destroyMesh(e.head);
-    if (e.detail) destroyMesh(e.detail);
-    if (e.sprite) destroyMesh(e.sprite);
-    if (e.light) removeLight(e.light);
+    nova64.scene.destroyMesh(e.body);
+    nova64.scene.destroyMesh(e.head);
+    if (e.detail) nova64.scene.destroyMesh(e.detail);
+    if (e.sprite) nova64.scene.destroyMesh(e.sprite);
+    if (e.light) nova64.light.removeLight(e.light);
   }
-  for (let b of entities.bullets) destroyMesh(b.m);
-  for (let b of entities.enemyBullets) destroyMesh(b.m);
-  for (let p of entities.particles) destroyMesh(p.m);
-  for (let p of entities.pickups) destroyMesh(p.m);
-  for (let l of enemyLights) removeLight(l);
+  for (let b of entities.bullets) nova64.scene.destroyMesh(b.m);
+  for (let b of entities.enemyBullets) nova64.scene.destroyMesh(b.m);
+  for (let p of entities.particles) nova64.scene.destroyMesh(p.m);
+  for (let p of entities.pickups) nova64.scene.destroyMesh(p.m);
+  for (let l of enemyLights) nova64.light.removeLight(l);
   enemyLights = [];
   entities = { walls: [], enemies: [], bullets: [], particles: [], pickups: [], enemyBullets: [] };
 }
@@ -249,18 +267,18 @@ function startGame(lvl) {
       if (char === '#') {
         let isColor = (x + z) % 3 === 0;
         let wallMat = isColor ? accentMat : MAT.wall;
-        let m = createCube(SIZE, wallMat.color, [px, 3, pz], wallMat);
-        setScale(m, 1, 1.5, 1);
+        let m = nova64.scene.createCube(SIZE, wallMat.color, [px, 3, pz], wallMat);
+        nova64.scene.setScale(m, 1, 1.5, 1);
         entities.walls.push({ m, x: px, z: pz, r: SIZE / 2 });
 
         // Add wall trim along top of colored walls
         if (isColor) {
-          let trim = createCube(SIZE * 0.95, 0xffffff, [px, 8.5, pz], {
+          let trim = nova64.scene.createCube(SIZE * 0.95, 0xffffff, [px, 8.5, pz], {
             material: 'emissive',
             color: accentMat.color,
             intensity: 0.5,
           });
-          setScale(trim, 1, 0.08, 1);
+          nova64.scene.setScale(trim, 1, 0.08, 1);
           entities.walls.push({ m: trim, x: px, z: pz, r: 0 }); // r:0 = decorative only
         }
       } else if (char === 'E') {
@@ -323,30 +341,40 @@ function spawnEnemy(x, z, type, doomType) {
   }
 
   // Body
-  let body = createCube(size, mat.color, [x, 2, z], mat);
-  setScale(body, 0.7, 1.2, 0.7);
+  let body = nova64.scene.createCube(size, mat.color, [x, 2, z], mat);
+  nova64.scene.setScale(body, 0.7, 1.2, 0.7);
 
   // Head (sphere-like with small cube for now — looks like a visor)
-  let head = createCube(size * 0.55, MAT.enemyEye.color, [x, 2 + size * 0.7, z], MAT.enemyEye);
-  setScale(head, 1, 0.6, 0.8);
+  let head = nova64.scene.createCube(
+    size * 0.55,
+    MAT.enemyEye.color,
+    [x, 2 + size * 0.7, z],
+    MAT.enemyEye
+  );
+  nova64.scene.setScale(head, 1, 0.6, 0.8);
 
   // Detail piece (shoulder pads / horns / crown depending on type)
   let detail = null;
   if (type === 'tank') {
-    detail = createCube(size * 0.9, detailMat.color, [x, 2, z], detailMat);
-    setScale(detail, 1.3, 0.3, 1.3);
+    detail = nova64.scene.createCube(size * 0.9, detailMat.color, [x, 2, z], detailMat);
+    nova64.scene.setScale(detail, 1.3, 0.3, 1.3);
   } else if (type === 'boss') {
-    detail = createCube(size * 0.6, detailMat.color, [x, 2 + size, z], detailMat);
-    setScale(detail, 1.5, 0.4, 0.5);
+    detail = nova64.scene.createCube(size * 0.6, detailMat.color, [x, 2 + size, z], detailMat);
+    nova64.scene.setScale(detail, 1.5, 0.4, 0.5);
   } else if (type === 'shooter') {
-    detail = createCube(size * 0.2, detailMat.color, [x, 2, z + size * 0.5], detailMat);
-    setScale(detail, 0.4, 0.4, 2.0); // gun barrel
+    detail = nova64.scene.createCube(
+      size * 0.2,
+      detailMat.color,
+      [x, 2, z + size * 0.5],
+      detailMat
+    );
+    nova64.scene.setScale(detail, 0.4, 0.4, 2.0); // gun barrel
   }
 
   // Point light on enemies for dynamic lighting (cap in WAD mode for performance)
   let light = null;
   if (!isWADMode || enemyLights.length < 20) {
-    light = createPointLight(mat.color, 1.2, 12, [x, 3, z]);
+    light = nova64.light.createPointLight(mat.color, 1.2, 12, [x, 3, z]);
     enemyLights.push(light);
   }
 
@@ -359,7 +387,7 @@ function spawnEnemy(x, z, type, doomType) {
       const sc = 1 / 20;
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
-      sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
+      sprite = nova64.scene.createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
       engine.setMeshMaterial(
         sprite,
         engine.createMaterial('basic', {
@@ -369,9 +397,9 @@ function spawnEnemy(x, z, type, doomType) {
           side: 'double',
         })
       );
-      getMesh(body).visible = false;
-      getMesh(head).visible = false;
-      if (detail) getMesh(detail).visible = false;
+      nova64.scene.getMesh(body).visible = false;
+      nova64.scene.getMesh(head).visible = false;
+      if (detail) nova64.scene.getMesh(detail).visible = false;
     }
   }
 
@@ -427,9 +455,9 @@ function shoot() {
   let sz = fz + (Math.random() - 0.5) * spread;
   let bulletSpeed = 80;
 
-  let m = createCube(0.15, MAT.bullet.color, [bx, by, bz], MAT.bullet);
-  setScale(m, 0.5, 0.5, 4);
-  setRotation(m, -player.pitch, player.yaw, 0);
+  let m = nova64.scene.createCube(0.15, MAT.bullet.color, [bx, by, bz], MAT.bullet);
+  nova64.scene.setScale(m, 0.5, 0.5, 4);
+  nova64.scene.setRotation(m, -player.pitch, player.yaw, 0);
 
   entities.bullets.push({
     m,
@@ -445,8 +473,8 @@ function shoot() {
   // Gun kick
   player.pitch += 0.015;
   muzzleFlash = 0.06;
-  triggerShake(shake, 1.5);
-  sfx('laser');
+  nova64.util.triggerShake(shake, 1.5);
+  nova64.audio.sfx('laser');
 }
 
 function enemyShoot(e, angleOffset) {
@@ -462,8 +490,8 @@ function enemyShoot(e, angleOffset) {
   let bx = e.x,
     by = e.y + 0.5,
     bz = e.z;
-  let m = createCube(0.25, MAT.enemyBullet.color, [bx, by, bz], MAT.enemyBullet);
-  setScale(m, 0.6, 0.6, 3);
+  let m = nova64.scene.createCube(0.25, MAT.enemyBullet.color, [bx, by, bz], MAT.enemyBullet);
+  nova64.scene.setScale(m, 0.6, 0.6, 3);
 
   entities.enemyBullets.push({
     m,
@@ -492,7 +520,7 @@ function spawnPickup(x, y, z) {
     mat = MAT.armorPickup;
   }
 
-  let m = createCube(0.6, mat.color, [x, y, z], mat);
+  let m = nova64.scene.createCube(0.6, mat.color, [x, y, z], mat);
   entities.pickups.push({ m, x, y, z, type, life: 15 }); // 15 seconds
 }
 
@@ -501,7 +529,7 @@ function spawnPickup(x, y, z) {
 async function loadWADFile(file) {
   try {
     const buf = await file.arrayBuffer();
-    wadLoader = new WADLoader();
+    wadLoader = new nova64.data.WADLoader();
     wadLoader.load(buf);
     wadMapNames = wadLoader.getMapNames();
     if (wadMapNames.length === 0) {
@@ -509,7 +537,7 @@ async function loadWADFile(file) {
       return;
     }
     // Initialize texture manager
-    wadTexMgr = new WADTextureManager(wadLoader);
+    wadTexMgr = new nova64.data.WADTextureManager(wadLoader);
     wadTexMgr.init();
 
     isWADMode = true;
@@ -527,7 +555,7 @@ function buildWADLevel(mapName) {
   const mapData = wadLoader.getMap(mapName);
   if (!mapData) return;
 
-  const converted = convertWADMap(mapData);
+  const converted = nova64.data.convertWADMap(mapData);
   const accentColors = [0x00aaff, 0xff6600, 0xcc00ff, 0x00ff88, 0xff0066, 0xffaa00];
   const accent = accentColors[wadMapIndex % accentColors.length];
   const SCALE = 1 / 20;
@@ -542,25 +570,31 @@ function buildWADLevel(mapName) {
     if (wadTexMgr && w.texName) {
       const tex = wadTexMgr.getWallTexture(w.texName);
       if (tex) {
-        const m = createCube(1, 0xffffff, [w.x, w.y, w.z], {
+        const m = nova64.scene.createCube(1, 0xffffff, [w.x, w.y, w.z], {
           material: 'standard',
           roughness: 0.9,
         });
-        setScale(m, w.len, w.h, 0.5);
-        setRotation(m, 0, w.ang, 0);
+        nova64.scene.setScale(m, w.len, w.h, 0.5);
+        nova64.scene.setRotation(m, 0, w.ang, 0);
+
+        const mat = engine.createMaterial('phong', {
+          map: tex,
+          color: engine.createColor(bri, bri, bri),
+        });
+        engine.setMeshMaterial(m, mat);
 
         const texDef = wadTexMgr.getTextureDef(w.texName);
         if (texDef) {
-          setWallUVs(m, w.len / SCALE, w.h / SCALE, texDef.width, texDef.height, w.xoff, w.yoff);
+          nova64.data.setWallUVs(
+            m,
+            w.len / SCALE,
+            w.h / SCALE,
+            texDef.width,
+            texDef.height,
+            w.xoff,
+            w.yoff
+          );
         }
-
-        engine.setMeshMaterial(
-          m,
-          engine.createMaterial('phong', {
-            map: tex,
-            color: engine.createColor(bri, bri, bri),
-          })
-        );
 
         entities.walls.push({ m, x: w.x, z: w.z, r: 0 });
         textured = true;
@@ -582,9 +616,9 @@ function buildWADLevel(mapName) {
         mat = { material: 'standard', color, roughness: 0.85 };
       }
 
-      const m = createCube(1, color, [w.x, w.y, w.z], mat);
-      setScale(m, w.len, w.h, 0.5);
-      setRotation(m, 0, w.ang, 0);
+      const m = nova64.scene.createCube(1, color, [w.x, w.y, w.z], mat);
+      nova64.scene.setScale(m, w.len, w.h, 0.5);
+      nova64.scene.setRotation(m, 0, w.ang, 0);
       entities.walls.push({ m, x: w.x, z: w.z, r: 0 });
     }
   }
@@ -617,12 +651,12 @@ function buildWADLevel(mapName) {
 
   // Wider fog for WAD levels
   let fogColors = [0x001122, 0x221100, 0x110022, 0x002211, 0x220011, 0x111122];
-  setFog(fogColors[wadMapIndex % fogColors.length], 20, 150);
+  nova64.light.setFog(fogColors[wadMapIndex % fogColors.length], 20, 150);
 
   // Add a floor plane for WAD levels
   const floorSize = 400;
-  const floor = createPlane(floorSize, floorSize, 0x222222, [0, 0, 0]);
-  setRotation(floor, -Math.PI / 2, 0, 0);
+  const floor = nova64.scene.createPlane(floorSize, floorSize, 0x222222, [0, 0, 0]);
+  nova64.scene.setRotation(floor, -Math.PI / 2, 0, 0);
   entities.walls.push({ m: floor, x: 0, z: 0, r: 0 });
 
   // Texture the floor with the most common floor flat
@@ -655,7 +689,11 @@ function buildWADLevel(mapName) {
 function spawnGibs(cx, cy, cz, color, count) {
   for (let i = 0; i < count; i++) {
     let size = 0.15 + Math.random() * 0.25;
-    let m = createCube(size, color, [cx, cy, cz], { material: 'emissive', color, intensity: 2.5 });
+    let m = nova64.scene.createCube(size, color, [cx, cy, cz], {
+      material: 'emissive',
+      color,
+      intensity: 2.5,
+    });
     let life = 0.4 + Math.random() * 0.6;
     entities.particles.push({
       m,
@@ -679,12 +717,12 @@ function applyDamage(dmg) {
   }
   player.health -= dmg;
   damageFlash = 0.25;
-  triggerShake(shake, Math.min(dmg * 0.8, 6));
-  sfx('hit');
+  nova64.util.triggerShake(shake, Math.min(dmg * 0.8, 6));
+  nova64.audio.sfx('hit');
   if (player.health <= 0) {
     gameState = 'gameover';
-    triggerShake(shake, 10);
-    sfx('death');
+    nova64.util.triggerShake(shake, 10);
+    nova64.audio.sfx('death');
     if (document.pointerLockElement) document.exitPointerLock();
   }
 }
@@ -698,7 +736,7 @@ export function update(dt) {
   if (killFlash > 0) killFlash -= dt;
   if (muzzleFlash > 0) muzzleFlash -= dt;
   if (shootCooldown > 0) shootCooldown -= dt;
-  updateShake(shake, dt);
+  nova64.util.updateShake(shake, dt);
 
   // Level clear transition
   if (gameState === 'levelclear') {
@@ -721,8 +759,8 @@ export function update(dt) {
       }
     }
     let headY = player.y + 1.0;
-    setCameraPosition(player.x, headY, player.z);
-    setCameraTarget(
+    nova64.camera.setCameraPosition(player.x, headY, player.z);
+    nova64.camera.setCameraTarget(
       player.x + Math.sin(player.yaw),
       headY + Math.sin(player.pitch),
       player.z + Math.cos(player.yaw)
@@ -732,13 +770,13 @@ export function update(dt) {
 
   if (gameState !== 'playing') {
     let r = 40;
-    setCameraPosition(Math.sin(gameTime * 0.3) * r, 30, Math.cos(gameTime * 0.3) * r);
-    setCameraTarget(0, 0, 0);
+    nova64.camera.setCameraPosition(Math.sin(gameTime * 0.3) * r, 30, Math.cos(gameTime * 0.3) * r);
+    nova64.camera.setCameraTarget(0, 0, 0);
     return;
   }
 
   // ── Player Movement (dt-based) ──
-  let isSprinting = key('ShiftLeft') || key('ShiftRight');
+  let isSprinting = nova64.input.key('ShiftLeft') || nova64.input.key('ShiftRight');
   let baseSpeed = 14;
   let speed = isSprinting ? baseSpeed * 1.6 : baseSpeed;
 
@@ -749,19 +787,19 @@ export function update(dt) {
 
   let dx = 0,
     dz = 0;
-  if (key('KeyW') || key('ArrowUp')) {
+  if (nova64.input.key('KeyW') || nova64.input.key('ArrowUp')) {
     dx += fx;
     dz += fz;
   }
-  if (key('KeyS') || key('ArrowDown')) {
+  if (nova64.input.key('KeyS') || nova64.input.key('ArrowDown')) {
     dx -= fx;
     dz -= fz;
   }
-  if (key('KeyA') || key('ArrowLeft')) {
+  if (nova64.input.key('KeyA') || nova64.input.key('ArrowLeft')) {
     dx += rx;
     dz += rz;
   }
-  if (key('KeyD') || key('ArrowRight')) {
+  if (nova64.input.key('KeyD') || nova64.input.key('ArrowRight')) {
     dx -= rx;
     dz -= rz;
   }
@@ -790,16 +828,16 @@ export function update(dt) {
   let camY = headY + shakeOff.y * 0.02;
   let camZ = player.z;
   let tiltFromDamage = damageFlash > 0 ? Math.sin(gameTime * 40) * damageFlash * 0.05 : 0;
-  setCameraPosition(camX, camY, camZ);
-  setCameraTarget(
+  nova64.camera.setCameraPosition(camX, camY, camZ);
+  nova64.camera.setCameraTarget(
     camX + Math.sin(player.yaw) * Math.cos(player.pitch),
     camY + Math.sin(player.pitch + tiltFromDamage),
     camZ + Math.cos(player.yaw) * Math.cos(player.pitch)
   );
-  setCameraFOV(isSprinting ? 95 : 85);
+  nova64.camera.setCameraFOV(isSprinting ? 95 : 85);
 
   // ── Shooting ──
-  if (mouseDown() || key('Space') || btn('A')) {
+  if (nova64.input.mouseDown() || nova64.input.key('Space') || nova64.input.btn('A')) {
     shoot();
   }
 
@@ -809,7 +847,7 @@ export function update(dt) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.z += b.vz * dt;
-    setPosition(b.m, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.m, b.x, b.y, b.z);
     b.life -= dt;
     let hit = false;
 
@@ -822,12 +860,12 @@ export function update(dt) {
         e.hitFlash = 0.1;
         spawnGibs(b.x, b.y, b.z, 0xffaa00, 3);
         if (e.health <= 0) {
-          destroyMesh(e.body);
-          destroyMesh(e.head);
-          if (e.detail) destroyMesh(e.detail);
-          if (e.sprite) destroyMesh(e.sprite);
+          nova64.scene.destroyMesh(e.body);
+          nova64.scene.destroyMesh(e.head);
+          if (e.detail) nova64.scene.destroyMesh(e.detail);
+          if (e.sprite) nova64.scene.destroyMesh(e.sprite);
           if (e.light) {
-            removeLight(e.light);
+            nova64.light.removeLight(e.light);
             let li = enemyLights.indexOf(e.light);
             if (li >= 0) enemyLights.splice(li, 1);
           }
@@ -846,11 +884,11 @@ export function update(dt) {
                   : 0xff3300;
           spawnGibs(e.x, e.y, e.z, gibColor, 18);
           killFlash = 0.15;
-          triggerShake(shake, 3);
-          sfx('explosion');
+          nova64.util.triggerShake(shake, 3);
+          nova64.audio.sfx('explosion');
           if (Math.random() < 0.55) spawnPickup(e.x, 1, e.z);
         } else {
-          sfx('hit');
+          nova64.audio.sfx('hit');
         }
         break;
       }
@@ -861,7 +899,7 @@ export function update(dt) {
       spawnGibs(b.x, b.y, b.z, 0x00ffff, 5);
     }
     if (b.life <= 0 || hit) {
-      destroyMesh(b.m);
+      nova64.scene.destroyMesh(b.m);
       entities.bullets.splice(i, 1);
     }
   }
@@ -872,7 +910,7 @@ export function update(dt) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.z += b.vz * dt;
-    setPosition(b.m, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.m, b.x, b.y, b.z);
     b.life -= dt;
     let hit = false;
 
@@ -882,7 +920,7 @@ export function update(dt) {
     }
     if (!hit && getWallCollision(b.x, b.z, 0)) hit = true;
     if (b.life <= 0 || hit) {
-      destroyMesh(b.m);
+      nova64.scene.destroyMesh(b.m);
       entities.enemyBullets.splice(i, 1);
     }
   }
@@ -924,47 +962,47 @@ export function update(dt) {
     e.y = e.type === 'boss' ? 3 + Math.sin(t) * 0.6 : 2 + Math.sin(t * 1.5) * 0.3;
     let faceYaw = Math.atan2(player.x - e.x, player.z - e.z);
 
-    setPosition(e.body, e.x, e.y, e.z);
-    setRotation(e.body, 0, faceYaw, 0);
+    nova64.scene.setPosition(e.body, e.x, e.y, e.z);
+    nova64.scene.setRotation(e.body, 0, faceYaw, 0);
 
     let eyeOff = e.size * 0.4;
-    setPosition(
+    nova64.scene.setPosition(
       e.head,
       e.x + Math.sin(faceYaw) * eyeOff,
       e.y + e.size * 0.55,
       e.z + Math.cos(faceYaw) * eyeOff
     );
-    setRotation(e.head, 0, faceYaw, 0);
+    nova64.scene.setRotation(e.head, 0, faceYaw, 0);
 
     if (e.detail) {
       if (e.type === 'tank') {
-        setPosition(e.detail, e.x, e.y + e.size * 0.2, e.z);
-        setRotation(e.detail, 0, faceYaw, 0);
+        nova64.scene.setPosition(e.detail, e.x, e.y + e.size * 0.2, e.z);
+        nova64.scene.setRotation(e.detail, 0, faceYaw, 0);
       } else if (e.type === 'boss') {
-        setPosition(e.detail, e.x, e.y + e.size * 0.7, e.z);
-        setRotation(e.detail, 0, faceYaw + Math.sin(t) * 0.2, 0);
+        nova64.scene.setPosition(e.detail, e.x, e.y + e.size * 0.7, e.z);
+        nova64.scene.setRotation(e.detail, 0, faceYaw + Math.sin(t) * 0.2, 0);
       } else if (e.type === 'shooter') {
-        setPosition(
+        nova64.scene.setPosition(
           e.detail,
           e.x + Math.sin(faceYaw) * e.size * 0.6,
           e.y + e.size * 0.1,
           e.z + Math.cos(faceYaw) * e.size * 0.6
         );
-        setRotation(e.detail, 0, faceYaw, 0);
+        nova64.scene.setRotation(e.detail, 0, faceYaw, 0);
       }
     }
 
     if (e.light) {
-      setPointLightPosition(e.light, e.x, e.y + 1, e.z);
+      nova64.light.setPointLightPosition(e.light, e.x, e.y + 1, e.z);
     }
 
     // Update sprite billboard
     if (e.sprite) {
-      setPosition(e.sprite, e.x, e.spriteH / 2, e.z);
+      nova64.scene.setPosition(e.sprite, e.x, e.spriteH / 2, e.z);
       const camPos = engine.getCameraPosition();
       const sdx = camPos.x - e.x;
       const sdz = camPos.z - e.z;
-      setRotation(e.sprite, 0, Math.atan2(sdx, sdz), 0);
+      nova64.scene.setRotation(e.sprite, 0, Math.atan2(sdx, sdz), 0);
     }
 
     // Ranged attacks (shooters + boss) — dt-based fire rate
@@ -996,32 +1034,32 @@ export function update(dt) {
     let p = entities.pickups[i];
     p.life -= dt;
     let py = p.y + Math.sin(gameTime * 3 + i) * 0.3;
-    setPosition(p.m, p.x, py, p.z);
-    setRotation(p.m, 0, gameTime * 2, 0);
+    nova64.scene.setPosition(p.m, p.x, py, p.z);
+    nova64.scene.setRotation(p.m, 0, gameTime * 2, 0);
 
     if (Math.hypot(player.x - p.x, player.z - p.z) < 2.0) {
       let picked = false;
       if (p.type === 'health' && player.health < 100) {
         player.health = Math.min(100, player.health + 25);
-        sfx('powerup');
+        nova64.audio.sfx('powerup');
         picked = true;
       } else if (p.type === 'ammo') {
         player.ammo += 20;
-        sfx('coin');
+        nova64.audio.sfx('coin');
         picked = true;
       } else if (p.type === 'armor' && player.armor < 100) {
         player.armor = Math.min(100, player.armor + 25);
-        sfx('powerup');
+        nova64.audio.sfx('powerup');
         picked = true;
       }
       if (picked) {
-        destroyMesh(p.m);
+        nova64.scene.destroyMesh(p.m);
         entities.pickups.splice(i, 1);
         continue;
       }
     }
     if (p.life <= 0) {
-      destroyMesh(p.m);
+      nova64.scene.destroyMesh(p.m);
       entities.pickups.splice(i, 1);
     }
   }
@@ -1038,11 +1076,11 @@ export function update(dt) {
       p.vy *= -0.4;
     }
     p.life -= dt;
-    setPosition(p.m, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.m, p.x, p.y, p.z);
     let s = Math.max(0, p.life / p.maxLife);
-    setScale(p.m, s, s, s);
+    nova64.scene.setScale(p.m, s, s, s);
     if (p.life <= 0) {
-      destroyMesh(p.m);
+      nova64.scene.destroyMesh(p.m);
       entities.particles.splice(i, 1);
     }
   }
@@ -1052,13 +1090,13 @@ export function update(dt) {
     gameState = 'levelclear';
     levelClearTimer = 3.0;
     player.score += level * 500;
-    sfx('powerup');
+    nova64.audio.sfx('powerup');
   }
 
   // ── Fog per level ──
   if (player.health > 0 && !isWADMode) {
     let fogColor = level === 1 ? 0x001122 : level === 2 ? 0x221100 : 0x110022;
-    setFog(fogColor, 8, 60);
+    nova64.light.setFog(fogColor, 8, 60);
   }
 }
 
@@ -1080,43 +1118,78 @@ export function draw() {
 function drawStartScreen() {
   let W = 640,
     H = 360;
-  rectfill(0, 0, W, H, rgba8(0, 0, 0, 210));
+  nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(0, 0, 0, 210));
 
   // Title with glow effect
   let pulse = Math.sin(gameTime * 4) * 0.3 + 0.7;
   let g = Math.floor(pulse * 255);
-  printCentered('N E O - D O O M', W / 2, 68, rgba8(0, g, 204, 255));
+  nova64.draw.printCentered('N E O - D O O M', W / 2, 68, nova64.draw.rgba8(0, g, 204, 255));
 
   // Subtitle
-  printCentered('ARENA SHOOTER', W / 2, 98, rgba8(255, 100, 0, 255));
+  nova64.draw.printCentered('ARENA SHOOTER', W / 2, 98, nova64.draw.rgba8(255, 100, 0, 255));
 
   // Animated separator
   let sepW = 240 + Math.sin(gameTime * 2) * 40;
-  rectfill(W / 2 - sepW / 2, 120, sepW, 3, rgba8(0, 255, 204, 180));
+  nova64.draw.rectfill(W / 2 - sepW / 2, 120, sepW, 3, nova64.draw.rgba8(0, 255, 204, 180));
 
   // Instructions
-  printCentered('CLICK TO START', W / 2, 150, rgba8(255, 255, 255, 255));
-  printCentered('WASD - Move  |  SHIFT - Sprint', W / 2, 188, rgba8(150, 150, 150, 255));
-  printCentered('Mouse - Aim  |  Click - Shoot', W / 2, 210, rgba8(150, 150, 150, 255));
+  nova64.draw.printCentered('CLICK TO START', W / 2, 150, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.printCentered(
+    'WASD - Move  |  SHIFT - Sprint',
+    W / 2,
+    188,
+    nova64.draw.rgba8(150, 150, 150, 255)
+  );
+  nova64.draw.printCentered(
+    'Mouse - Aim  |  Click - Shoot',
+    W / 2,
+    210,
+    nova64.draw.rgba8(150, 150, 150, 255)
+  );
 
   // Game info + WAD status
   if (isWADMode) {
-    printCentered(`WAD LOADED: ${wadMapNames.length} MAPS`, W / 2, 233, rgba8(0, 255, 100, 255));
-    printCentered(`STARTING: ${wadMapNames[wadMapIndex]}`, W / 2, 255, rgba8(255, 170, 0, 200));
-    printCentered('R - Return to original levels', W / 2, 278, rgba8(120, 120, 120, 200));
+    nova64.draw.printCentered(
+      `WAD LOADED: ${wadMapNames.length} MAPS`,
+      W / 2,
+      233,
+      nova64.draw.rgba8(0, 255, 100, 255)
+    );
+    nova64.draw.printCentered(
+      `STARTING: ${wadMapNames[wadMapIndex]}`,
+      W / 2,
+      255,
+      nova64.draw.rgba8(255, 170, 0, 200)
+    );
+    nova64.draw.printCentered(
+      'R - Return to original levels',
+      W / 2,
+      278,
+      nova64.draw.rgba8(120, 120, 120, 200)
+    );
   } else {
-    printCentered(
+    nova64.draw.printCentered(
       '3 LEVELS  |  4 ENEMY TYPES  |  BOSS FIGHTS',
       W / 2,
       233,
-      rgba8(255, 170, 0, 200)
+      nova64.draw.rgba8(255, 170, 0, 200)
     );
-    printCentered('DROP .WAD FILE or press L to load', W / 2, 267, rgba8(100, 200, 255, 180));
+    nova64.draw.printCentered(
+      'DROP .WAD FILE or press L to load',
+      W / 2,
+      267,
+      nova64.draw.rgba8(100, 200, 255, 180)
+    );
   }
 
   // Blinking prompt
   if (Math.sin(gameTime * 5) > 0) {
-    printCentered('>>> CLICK TO BEGIN <<<', W / 2, 312, rgba8(0, 255, 204, 255));
+    nova64.draw.printCentered(
+      '>>> CLICK TO BEGIN <<<',
+      W / 2,
+      312,
+      nova64.draw.rgba8(0, 255, 204, 255)
+    );
   }
 }
 
@@ -1125,18 +1198,33 @@ function drawGameOver() {
     H = 360;
   // Red vignette
   let a = Math.floor(160 + Math.sin(gameTime * 3) * 30);
-  rectfill(0, 0, W, H, rgba8(120, 0, 0, a));
+  nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(120, 0, 0, a));
 
-  printCentered('Y O U   D I E D', W / 2, 75, rgba8(255, 50, 50, 255));
+  nova64.draw.printCentered('Y O U   D I E D', W / 2, 75, nova64.draw.rgba8(255, 50, 50, 255));
 
-  rectfill(W / 2 - 120, 102, 240, 2, rgba8(255, 50, 50, 150));
+  nova64.draw.rectfill(W / 2 - 120, 102, 240, 2, nova64.draw.rgba8(255, 50, 50, 150));
 
-  printCentered(`LEVEL ${level}`, W / 2, 128, rgba8(255, 170, 0, 255));
-  printCentered(`KILLS: ${kills} / ${totalEnemies}`, W / 2, 158, rgba8(255, 255, 255, 255));
-  printCentered(`SCORE: ${player.score}`, W / 2, 188, rgba8(255, 204, 0, 255));
+  nova64.draw.printCentered(`LEVEL ${level}`, W / 2, 128, nova64.draw.rgba8(255, 170, 0, 255));
+  nova64.draw.printCentered(
+    `KILLS: ${kills} / ${totalEnemies}`,
+    W / 2,
+    158,
+    nova64.draw.rgba8(255, 255, 255, 255)
+  );
+  nova64.draw.printCentered(
+    `SCORE: ${player.score}`,
+    W / 2,
+    188,
+    nova64.draw.rgba8(255, 204, 0, 255)
+  );
 
   if (Math.sin(gameTime * 5) > 0) {
-    printCentered('CLICK TO RESTART', W / 2, 255, rgba8(200, 200, 200, 255));
+    nova64.draw.printCentered(
+      'CLICK TO RESTART',
+      W / 2,
+      255,
+      nova64.draw.rgba8(200, 200, 200, 255)
+    );
   }
 }
 
@@ -1144,17 +1232,32 @@ function drawVictory() {
   let W = 640,
     H = 360;
   let a = Math.floor(180 + Math.sin(gameTime * 2) * 20);
-  rectfill(0, 0, W, H, rgba8(0, 30, 0, a));
+  nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(0, 30, 0, a));
 
-  printCentered('V I C T O R Y', W / 2, 68, rgba8(0, 255, 100, 255));
-  rectfill(W / 2 - 120, 95, 240, 3, rgba8(0, 255, 100, 150));
+  nova64.draw.printCentered('V I C T O R Y', W / 2, 68, nova64.draw.rgba8(0, 255, 100, 255));
+  nova64.draw.rectfill(W / 2 - 120, 95, 240, 3, nova64.draw.rgba8(0, 255, 100, 150));
 
-  printCentered('ALL DEMONS SLAIN', W / 2, 120, rgba8(255, 255, 255, 255));
-  printCentered(`FINAL SCORE: ${player.score}`, W / 2, 165, rgba8(255, 204, 0, 255));
-  printCentered(`TOTAL KILLS: ${kills}`, W / 2, 195, rgba8(255, 170, 0, 255));
+  nova64.draw.printCentered('ALL DEMONS SLAIN', W / 2, 120, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.printCentered(
+    `FINAL SCORE: ${player.score}`,
+    W / 2,
+    165,
+    nova64.draw.rgba8(255, 204, 0, 255)
+  );
+  nova64.draw.printCentered(
+    `TOTAL KILLS: ${kills}`,
+    W / 2,
+    195,
+    nova64.draw.rgba8(255, 170, 0, 255)
+  );
 
   if (Math.sin(gameTime * 5) > 0) {
-    printCentered('CLICK TO PLAY AGAIN', W / 2, 270, rgba8(200, 200, 200, 255));
+    nova64.draw.printCentered(
+      'CLICK TO PLAY AGAIN',
+      W / 2,
+      270,
+      nova64.draw.rgba8(200, 200, 200, 255)
+    );
   }
 }
 
@@ -1163,11 +1266,11 @@ function drawLevelClear() {
     H = 360;
   let cx = W / 2,
     cy = H / 2;
-  rectfill(cx - 160, cy - 45, 320, 83, rgba8(0, 0, 0, 210));
-  rectfill(cx - 160, cy - 45, 320, 3, rgba8(0, 255, 100, 200));
+  nova64.draw.rectfill(cx - 160, cy - 45, 320, 83, nova64.draw.rgba8(0, 0, 0, 210));
+  nova64.draw.rectfill(cx - 160, cy - 45, 320, 3, nova64.draw.rgba8(0, 255, 100, 200));
   let clearText = isWADMode ? `${wadMapNames[wadMapIndex]} CLEAR!` : `LEVEL ${level} CLEAR!`;
-  printCentered(clearText, cx, cy - 27, rgba8(0, 255, 100, 255));
-  printCentered(`+${level * 500} BONUS`, cx, cy, rgba8(255, 170, 0, 255));
+  nova64.draw.printCentered(clearText, cx, cy - 27, nova64.draw.rgba8(0, 255, 100, 255));
+  nova64.draw.printCentered(`+${level * 500} BONUS`, cx, cy, nova64.draw.rgba8(255, 170, 0, 255));
   let remaining;
   if (isWADMode) {
     remaining =
@@ -1177,7 +1280,7 @@ function drawLevelClear() {
   } else {
     remaining = level < 3 ? `NEXT: LEVEL ${level + 1}` : 'FINAL VICTORY AWAITS';
   }
-  printCentered(remaining, cx, cy + 23, rgba8(200, 200, 200, 200));
+  nova64.draw.printCentered(remaining, cx, cy + 23, nova64.draw.rgba8(200, 200, 200, 200));
 }
 
 function drawHUD() {
@@ -1187,73 +1290,96 @@ function drawHUD() {
   // ── Damage flash overlay ──
   if (damageFlash > 0) {
     let a = Math.floor(Math.min(damageFlash * 400, 120));
-    rectfill(0, 0, W, H, rgba8(255, 0, 0, a));
+    nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(255, 0, 0, a));
   }
 
   // ── Kill flash overlay ──
   if (killFlash > 0) {
     let a = Math.floor(Math.min(killFlash * 300, 60));
-    rectfill(0, 0, W, H, rgba8(255, 200, 0, a));
+    nova64.draw.rectfill(0, 0, W, H, nova64.draw.rgba8(255, 200, 0, a));
   }
 
   // ── Bottom HUD bar ──
-  rectfill(0, H - 48, W, 48, rgba8(0, 0, 0, 180));
-  rectfill(0, H - 48, W, 2, rgba8(0, 255, 204, 80));
+  nova64.draw.rectfill(0, H - 48, W, 48, nova64.draw.rgba8(0, 0, 0, 180));
+  nova64.draw.rectfill(0, H - 48, W, 2, nova64.draw.rgba8(0, 255, 204, 80));
 
   // Health
   let hp = Math.max(0, player.health);
   let hColor =
-    hp > 60 ? rgba8(0, 255, 100, 255) : hp > 25 ? rgba8(255, 200, 0, 255) : rgba8(255, 40, 40, 255);
-  let hpFlicker = hp <= 25 && Math.sin(gameTime * 15) > 0 ? rgba8(255, 100, 100, 255) : hColor;
-  drawProgressBar(16, H - 21, 140, 11, hp / 100, hpFlicker, rgba8(40, 40, 40, 200));
-  print(`HP ${hp}`, 16, H - 38, hColor);
+    hp > 60
+      ? nova64.draw.rgba8(0, 255, 100, 255)
+      : hp > 25
+        ? nova64.draw.rgba8(255, 200, 0, 255)
+        : nova64.draw.rgba8(255, 40, 40, 255);
+  let hpFlicker =
+    hp <= 25 && Math.sin(gameTime * 15) > 0 ? nova64.draw.rgba8(255, 100, 100, 255) : hColor;
+  nova64.draw.drawProgressBar(
+    16,
+    H - 21,
+    140,
+    11,
+    hp / 100,
+    hpFlicker,
+    nova64.draw.rgba8(40, 40, 40, 200)
+  );
+  nova64.draw.print(`HP ${hp}`, 16, H - 38, hColor);
 
   // Armor
   if (player.armor > 0) {
-    drawProgressBar(
+    nova64.draw.drawProgressBar(
       16,
       H - 9,
       140,
       6,
       player.armor / 100,
-      rgba8(68, 136, 255, 255),
-      rgba8(40, 40, 40, 180)
+      nova64.draw.rgba8(68, 136, 255, 255),
+      nova64.draw.rgba8(40, 40, 40, 180)
     );
   }
 
   // Ammo — right side
-  let ammoColor = player.ammo > 10 ? rgba8(255, 204, 0, 255) : rgba8(255, 50, 50, 255);
-  print(`AMMO`, W - 140, H - 38, rgba8(180, 180, 180, 200));
-  print(`${player.ammo}`, W - 66, H - 38, ammoColor);
+  let ammoColor =
+    player.ammo > 10 ? nova64.draw.rgba8(255, 204, 0, 255) : nova64.draw.rgba8(255, 50, 50, 255);
+  nova64.draw.print(`AMMO`, W - 140, H - 38, nova64.draw.rgba8(180, 180, 180, 200));
+  nova64.draw.print(`${player.ammo}`, W - 66, H - 38, ammoColor);
   if (player.ammo <= 0) {
     if (Math.sin(gameTime * 12) > 0)
-      printCentered('NO AMMO!', W / 2, H / 2 + 30, rgba8(255, 50, 50, 255));
+      nova64.draw.printCentered('NO AMMO!', W / 2, H / 2 + 30, nova64.draw.rgba8(255, 50, 50, 255));
   }
 
   // Score — top center
-  printCentered(`SCORE: ${player.score}`, W / 2, 6, rgba8(255, 170, 0, 255));
+  nova64.draw.printCentered(
+    `SCORE: ${player.score}`,
+    W / 2,
+    6,
+    nova64.draw.rgba8(255, 170, 0, 255)
+  );
 
   // Level — top left
-  print(`LV${level}`, 8, 6, rgba8(0, 255, 204, 255));
+  nova64.draw.print(`LV${level}`, 8, 6, nova64.draw.rgba8(0, 255, 204, 255));
 
   // Kills — top right
   let killStr = `${kills}/${totalEnemies}`;
-  print(killStr, W - 90, 6, rgba8(255, 255, 255, 255));
+  nova64.draw.print(killStr, W - 90, 6, nova64.draw.rgba8(255, 255, 255, 255));
 
   // ── Crosshair ──
   let cx = W / 2,
     cy = H / 2;
-  let spread = mouseDown() ? 8 : 12;
-  let cAlpha = rgba8(0, 255, 204, 200);
-  rectfill(cx, cy, 1, 1, rgba8(255, 255, 255, 255)); // center dot
-  rectfill(cx - spread - 6, cy, 6, 1, cAlpha); // left
-  rectfill(cx + spread + 2, cy, 6, 1, cAlpha); // right
-  rectfill(cx, cy - spread - 6, 1, 6, cAlpha); // top
-  rectfill(cx, cy + spread + 2, 1, 6, cAlpha); // bottom
+  let spread = nova64.input.mouseDown() ? 8 : 12;
+  let cAlpha = nova64.draw.rgba8(0, 255, 204, 200);
+  nova64.draw.rectfill(cx, cy, 1, 1, nova64.draw.rgba8(255, 255, 255, 255)); // center dot
+  nova64.draw.rectfill(cx - spread - 6, cy, 6, 1, cAlpha); // left
+  nova64.draw.rectfill(cx + spread + 2, cy, 6, 1, cAlpha); // right
+  nova64.draw.rectfill(cx, cy - spread - 6, 1, 6, cAlpha); // top
+  nova64.draw.rectfill(cx, cy + spread + 2, 1, 6, cAlpha); // bottom
 
   // ── Gun viewmodel ──
-  let isMoving = key('KeyW') || key('KeyS') || key('KeyA') || key('KeyD');
-  let isSprinting = key('ShiftLeft') || key('ShiftRight');
+  let isMoving =
+    nova64.input.key('KeyW') ||
+    nova64.input.key('KeyS') ||
+    nova64.input.key('KeyA') ||
+    nova64.input.key('KeyD');
+  let isSprinting = nova64.input.key('ShiftLeft') || nova64.input.key('ShiftRight');
   let bobSpeed = isSprinting ? 14 : 9;
   let bobAmplitude = isSprinting ? 9 : 5;
   let bobX = isMoving ? Math.sin(gameTime * bobSpeed) * bobAmplitude : Math.sin(gameTime * 1.5) * 1;
@@ -1265,36 +1391,54 @@ function drawHUD() {
   let gy = H - 10 + bobY + recoilKick;
 
   // Barrel
-  rectfill(gx - 6, gy - 120, 12, 75, rgba8(60, 60, 70, 255));
-  rectfill(gx - 5, gy - 123, 9, 8, rgba8(80, 80, 90, 255));
+  nova64.draw.rectfill(gx - 6, gy - 120, 12, 75, nova64.draw.rgba8(60, 60, 70, 255));
+  nova64.draw.rectfill(gx - 5, gy - 123, 9, 8, nova64.draw.rgba8(80, 80, 90, 255));
   // Barrel glow stripe
-  rectfill(gx - 2, gy - 117, 3, 68, rgba8(0, 200, 200, 120));
+  nova64.draw.rectfill(gx - 2, gy - 117, 3, 68, nova64.draw.rgba8(0, 200, 200, 120));
 
   // Body
-  rectfill(gx - 21, gy - 53, 42, 68, rgba8(55, 55, 65, 255));
-  rectfill(gx - 24, gy - 45, 48, 53, rgba8(70, 70, 80, 255));
+  nova64.draw.rectfill(gx - 21, gy - 53, 42, 68, nova64.draw.rgba8(55, 55, 65, 255));
+  nova64.draw.rectfill(gx - 24, gy - 45, 48, 53, nova64.draw.rgba8(70, 70, 80, 255));
   // Side detail
-  rectfill(gx - 24, gy - 42, 5, 30, rgba8(0, 180, 180, 180));
-  rectfill(gx + 20, gy - 42, 5, 30, rgba8(0, 180, 180, 180));
+  nova64.draw.rectfill(gx - 24, gy - 42, 5, 30, nova64.draw.rgba8(0, 180, 180, 180));
+  nova64.draw.rectfill(gx + 20, gy - 42, 5, 30, nova64.draw.rgba8(0, 180, 180, 180));
 
   // Grip
-  rectfill(gx - 12, gy + 8, 24, 38, rgba8(45, 45, 50, 255));
+  nova64.draw.rectfill(gx - 12, gy + 8, 24, 38, nova64.draw.rgba8(45, 45, 50, 255));
 
   // Muzzle flash
   if (muzzleFlash > 0) {
     let fa = Math.floor(muzzleFlash * 3000);
-    rectfill(gx - 23, gy - 143, 45, 30, rgba8(0, 255, 255, Math.min(fa, 200)));
-    rectfill(gx - 12, gy - 150, 24, 18, rgba8(255, 255, 255, Math.min(fa, 255)));
-    rectfill(gx - 5, gy - 158, 9, 12, rgba8(255, 255, 200, Math.min(fa, 200)));
+    nova64.draw.rectfill(
+      gx - 23,
+      gy - 143,
+      45,
+      30,
+      nova64.draw.rgba8(0, 255, 255, Math.min(fa, 200))
+    );
+    nova64.draw.rectfill(
+      gx - 12,
+      gy - 150,
+      24,
+      18,
+      nova64.draw.rgba8(255, 255, 255, Math.min(fa, 255))
+    );
+    nova64.draw.rectfill(
+      gx - 5,
+      gy - 158,
+      9,
+      12,
+      nova64.draw.rgba8(255, 255, 200, Math.min(fa, 200))
+    );
   }
 
   // Sprint indicator
   if (isSprinting && isMoving) {
-    print('SPRINT', W / 2 - 30, H - 60, rgba8(255, 200, 0, 180));
+    nova64.draw.print('SPRINT', W / 2 - 30, H - 60, nova64.draw.rgba8(255, 200, 0, 180));
   }
 
   // Armor indicator
   if (player.armor > 0) {
-    print(`ARM ${player.armor}`, 16, H - 8, rgba8(68, 136, 255, 200));
+    nova64.draw.print(`ARM ${player.armor}`, 16, H - 8, nova64.draw.rgba8(68, 136, 255, 200));
   }
 }

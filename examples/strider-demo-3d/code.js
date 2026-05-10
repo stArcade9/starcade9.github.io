@@ -4,6 +4,41 @@
 // Inspired by Gauntlet, Diablo, and Hades
 // ========================================================================
 
+const { drawFloatingTexts3D, print, printCentered, rect, rgba8 } = nova64.draw;
+const {
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  createTorus,
+  destroyMesh,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog, setLightDirection } = nova64.light;
+const { enableBloom, enableVignette } = nova64.fx;
+const { key, keyp } = nova64.input;
+const { sfx } = nova64.audio;
+const {
+  arc,
+  cooldownProgress,
+  cooldownReady,
+  createCooldownSet,
+  createFloatingTextSystem,
+  createHitState,
+  createShake,
+  getShakeOffset,
+  isVisible,
+  triggerHit,
+  triggerShake,
+  updateCooldowns,
+  updateHitState,
+  updateShake,
+  useCooldown,
+} = nova64.util;
+
 const W = 640,
   H = 360;
 const TILE = 2; // world-space tile size
@@ -154,19 +189,19 @@ export function init() {
   kills = 0;
   totalKills = 0;
   classIdx = 0;
-  shake = createShake();
+  shake = nova64.util.createShake();
 
   // Set up isometric camera
-  setCameraFOV(45);
-  setAmbientLight(0xffffff, 0.6);
-  setLightDirection(-0.5, -1, -0.3);
-  enableBloom(0.5, 0.4, 0.4);
-  enableVignette(1.1, 0.9);
-  setFog(0x336644, 20, 60);
+  nova64.camera.setCameraFOV(45);
+  nova64.light.setAmbientLight(0xffffff, 0.6);
+  nova64.light.setLightDirection(-0.5, -1, -0.3);
+  nova64.fx.enableBloom(0.5, 0.4, 0.4);
+  nova64.fx.enableVignette(1.1, 0.9);
+  nova64.light.setFog(0x336644, 20, 60);
 
   // Placeholder camera while on menus
-  setCameraPosition(16, 30, 40);
-  setCameraTarget(16, 0, 16);
+  nova64.camera.setCameraPosition(16, 30, 40);
+  nova64.camera.setCameraTarget(16, 0, 16);
 }
 
 function startLevel() {
@@ -176,14 +211,14 @@ function startLevel() {
   projectiles = [];
   playerProjectiles = [];
   particles = [];
-  floats = createFloatingTextSystem();
+  floats = nova64.util.createFloatingTextSystem();
   spawnTimers = [];
 
   generateMap();
   buildMapMeshes();
   createPlayer();
-  cooldowns = createCooldownSet({ dash: DASH_CD, attack: PLAYER_ATK_CD });
-  playerHit = createHitState({ invulnDuration: 0.8, blinkRate: 25 });
+  cooldowns = nova64.util.createCooldownSet({ dash: DASH_CD, attack: PLAYER_ATK_CD });
+  playerHit = nova64.util.createHitState({ invulnDuration: 0.8, blinkRate: 25 });
   spawnEnemies();
 
   // Boss on every 3rd floor (floor 3, 6, 9...)
@@ -193,7 +228,7 @@ function startLevel() {
   }
 
   const th = theme();
-  setFog(th.fog, 15, 50);
+  nova64.light.setFog(th.fog, 15, 50);
 }
 
 // ========================================================================
@@ -317,9 +352,9 @@ function tileBlocking(x, y) {
 // ========================================================================
 function buildMapMeshes() {
   // Clean up old meshes
-  if (mapMeshes) mapMeshes.forEach(m => destroyMesh(m));
-  if (treeMeshes) treeMeshes.forEach(m => destroyMesh(m));
-  if (waterMeshes) waterMeshes.forEach(m => destroyMesh(m));
+  if (mapMeshes) mapMeshes.forEach(m => nova64.scene.destroyMesh(m));
+  if (treeMeshes) treeMeshes.forEach(m => nova64.scene.destroyMesh(m));
+  if (waterMeshes) waterMeshes.forEach(m => nova64.scene.destroyMesh(m));
   mapMeshes = [];
   treeMeshes = [];
   waterMeshes = [];
@@ -328,8 +363,12 @@ function buildMapMeshes() {
 
   // Ground plane
   const groundSize = MAP_W * TILE;
-  const gm = createPlane(groundSize, groundSize, th.floor, [groundSize / 2, 0, groundSize / 2]);
-  setRotation(gm, -Math.PI / 2, 0, 0);
+  const gm = nova64.scene.createPlane(groundSize, groundSize, th.floor, [
+    groundSize / 2,
+    0,
+    groundSize / 2,
+  ]);
+  nova64.scene.setRotation(gm, -Math.PI / 2, 0, 0);
   mapMeshes.push(gm);
 
   for (let x = 0; x < MAP_W; x++) {
@@ -340,37 +379,37 @@ function buildMapMeshes() {
 
       if (tile === T_WALL) {
         const h = 2 + Math.random() * 1.5;
-        const m = createCube(TILE, th.wall, [wx, h / 2, wz]);
-        setScale(m, 1, h / TILE, 1);
+        const m = nova64.scene.createCube(TILE, th.wall, [wx, h / 2, wz]);
+        nova64.scene.setScale(m, 1, h / TILE, 1);
         mapMeshes.push(m);
       } else if (tile === T_TREE) {
         // Trunk
-        const trunk = createCylinder(0.2, 2, 0x553311, [wx, 1, wz]);
+        const trunk = nova64.scene.createCylinder(0.2, 2, 0x553311, [wx, 1, wz]);
         treeMeshes.push(trunk);
         // Canopy
-        const canopy = createSphere(1.2 + Math.random() * 0.5, th.treeCol, [
+        const canopy = nova64.scene.createSphere(1.2 + Math.random() * 0.5, th.treeCol, [
           wx,
           2.5 + Math.random() * 0.5,
           wz,
         ]);
         treeMeshes.push(canopy);
       } else if (tile === T_WATER) {
-        const m = createPlane(TILE, TILE, 0x2255aa, [wx, 0.05, wz]);
-        setRotation(m, -Math.PI / 2, 0, 0);
+        const m = nova64.scene.createPlane(TILE, TILE, 0x2255aa, [wx, 0.05, wz]);
+        nova64.scene.setRotation(m, -Math.PI / 2, 0, 0);
         waterMeshes.push(m);
       } else if (tile === T_EXIT) {
         // Glowing exit portal
-        const portal = createCylinder(0.8, 3, 0x44ffaa, [wx, 1.5, wz]);
+        const portal = nova64.scene.createCylinder(0.8, 3, 0x44ffaa, [wx, 1.5, wz]);
         mapMeshes.push(portal);
-        const ring = createTorus(1.2, 0.15, 0xaaffdd, [wx, 0.5, wz]);
-        setRotation(ring, Math.PI / 2, 0, 0);
+        const ring = nova64.scene.createTorus(1.2, 0.15, 0xaaffdd, [wx, 0.5, wz]);
+        nova64.scene.setRotation(ring, Math.PI / 2, 0, 0);
         mapMeshes.push(ring);
       } else if (tile === T_SPAWNER) {
-        const spawner = createCube(1.2, 0x663333, [wx, 0.6, wz]);
-        setScale(spawner, 1, 0.6, 1);
+        const spawner = nova64.scene.createCube(1.2, 0x663333, [wx, 0.6, wz]);
+        nova64.scene.setScale(spawner, 1, 0.6, 1);
         mapMeshes.push(spawner);
         // Skull decor
-        const skull = createSphere(0.3, 0xddccaa, [wx, 1.2, wz]);
+        const skull = nova64.scene.createSphere(0.3, 0xddccaa, [wx, 1.2, wz]);
         mapMeshes.push(skull);
         spawnTimers.push({
           x,
@@ -393,8 +432,8 @@ function buildMapMeshes() {
     const dz = Math.sin(angle) * dist + (MAP_H * TILE) / 2;
     const h = 5 + Math.random() * 10;
     const c = [0x334433, 0x443344, 0x333344][Math.floor(Math.random() * 3)];
-    const m = createCube(3 + Math.random() * 4, c, [dx, h / 2, dz]);
-    setScale(m, 1, h / 3, 1);
+    const m = nova64.scene.createCube(3 + Math.random() * 4, c, [dx, h / 2, dz]);
+    nova64.scene.setScale(m, 1, h / 3, 1);
     mapMeshes.push(m);
   }
 }
@@ -429,11 +468,11 @@ function createPlayer() {
     meshWeapon: null,
   };
 
-  player.meshBody = createCube(0.8, cls.color, [player.x, 0.7, player.z]);
-  setScale(player.meshBody, 0.8, 1.2, 0.6);
-  player.meshHead = createSphere(0.3, 0xeeddcc, [player.x, 1.6, player.z]);
-  player.meshWeapon = createCube(0.1, 0xccccdd, [player.x + 0.6, 1.0, player.z]);
-  setScale(player.meshWeapon, 0.1, 1.2, 0.1);
+  player.meshBody = nova64.scene.createCube(0.8, cls.color, [player.x, 0.7, player.z]);
+  nova64.scene.setScale(player.meshBody, 0.8, 1.2, 0.6);
+  player.meshHead = nova64.scene.createSphere(0.3, 0xeeddcc, [player.x, 1.6, player.z]);
+  player.meshWeapon = nova64.scene.createCube(0.1, 0xccccdd, [player.x + 0.6, 1.0, player.z]);
+  nova64.scene.setScale(player.meshWeapon, 0.1, 1.2, 0.1);
 
   camX = player.x;
   camZ = player.z;
@@ -466,8 +505,16 @@ function spawnEnemies() {
       const colors = { food: 0x44cc44, potion: 0x4444ff, gold: 0xffdd00 };
       const m =
         type === 'gold'
-          ? createCylinder(0.25, 0.15, colors[type], [pos.x * TILE + 1, 0.3, pos.y * TILE + 1])
-          : createSphere(0.25, colors[type], [pos.x * TILE + 1, 0.5, pos.y * TILE + 1]);
+          ? nova64.scene.createCylinder(0.25, 0.15, colors[type], [
+              pos.x * TILE + 1,
+              0.3,
+              pos.y * TILE + 1,
+            ])
+          : nova64.scene.createSphere(0.25, colors[type], [
+              pos.x * TILE + 1,
+              0.5,
+              pos.y * TILE + 1,
+            ]);
       pickups.push({
         x: pos.x * TILE + 1,
         z: pos.y * TILE + 1,
@@ -497,9 +544,9 @@ function spawnEnemyAt(wx, wz) {
   const et = ENEMY_TYPES[typeIdx];
   const scaledHp = Math.floor(et.hp * (1 + level * 0.15));
   const scaledAtk = Math.floor(et.atk * (1 + level * 0.1));
-  const m = createCube(0.7, et.color, [wx, 0.6, wz]);
+  const m = nova64.scene.createCube(0.7, et.color, [wx, 0.6, wz]);
   if (typeIdx >= 3) {
-    setScale(m, 0.9, 1.3, 0.9); // taller for sorcerer/death
+    nova64.scene.setScale(m, 0.9, 1.3, 0.9); // taller for sorcerer/death
   }
   enemies.push({
     x: wx,
@@ -540,18 +587,19 @@ export function update() {
   t += dt;
 
   if (state === 'classSelect') {
-    if (keyp('ArrowLeft') || keyp('KeyA'))
+    if (nova64.input.keyp('ArrowLeft') || nova64.input.keyp('KeyA'))
       classIdx = (classIdx + CLASSES.length - 1) % CLASSES.length;
-    if (keyp('ArrowRight') || keyp('KeyD')) classIdx = (classIdx + 1) % CLASSES.length;
-    if (keyp('Space') || keyp('Enter')) startLevel();
+    if (nova64.input.keyp('ArrowRight') || nova64.input.keyp('KeyD'))
+      classIdx = (classIdx + 1) % CLASSES.length;
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter')) startLevel();
     return;
   }
   if (state === 'dead') {
-    if (keyp('Space') || keyp('Enter')) init();
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter')) init();
     return;
   }
   if (state === 'levelComplete') {
-    if (keyp('Space') || keyp('Enter')) {
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter')) {
       level++;
       cleanupLevel();
       startLevel();
@@ -565,10 +613,10 @@ export function update() {
   updateProjectiles(dt);
   updatePlayerProjectiles(dt);
   updatePickups(dt);
-  updateParticles(dt);
+  _local_updateParticles(dt);
   updateBoss(dt);
   floats.update(dt);
-  updateShake(shake, dt);
+  nova64.util.updateShake(shake, dt);
   updateCamera(dt);
 }
 
@@ -582,7 +630,7 @@ function updatePlayer(dt) {
     mz = 0;
 
   // Cooldown & dash update
-  updateCooldowns(cooldowns, dt);
+  nova64.util.updateCooldowns(cooldowns, dt);
   if (player.dashTimer > 0) {
     player.dashTimer -= dt;
     const nx = player.x + player.dashDX * DASH_SPD * dt;
@@ -593,10 +641,10 @@ function updatePlayer(dt) {
   }
 
   // 8-directional movement
-  if (key('ArrowUp') || key('KeyW')) mz = -1;
-  if (key('ArrowDown') || key('KeyS')) mz = 1;
-  if (key('ArrowLeft') || key('KeyA')) mx = -1;
-  if (key('ArrowRight') || key('KeyD')) mx = 1;
+  if (nova64.input.key('ArrowUp') || nova64.input.key('KeyW')) mz = -1;
+  if (nova64.input.key('ArrowDown') || nova64.input.key('KeyS')) mz = 1;
+  if (nova64.input.key('ArrowLeft') || nova64.input.key('KeyA')) mx = -1;
+  if (nova64.input.key('ArrowRight') || nova64.input.key('KeyD')) mx = 1;
 
   // Normalize diagonal
   if (mx !== 0 && mz !== 0) {
@@ -609,12 +657,17 @@ function updatePlayer(dt) {
   }
 
   // Dash trigger
-  if ((keyp('ShiftLeft') || keyp('ShiftRight') || keyp('KeyK')) && useCooldown(cooldowns.dash)) {
+  if (
+    (nova64.input.keyp('ShiftLeft') ||
+      nova64.input.keyp('ShiftRight') ||
+      nova64.input.keyp('KeyK')) &&
+    nova64.util.useCooldown(cooldowns.dash)
+  ) {
     player.dashTimer = DASH_DUR;
     player.dashDX = mx !== 0 || mz !== 0 ? mx : Math.sin(player.facing);
     player.dashDZ = mx !== 0 || mz !== 0 ? mz : -Math.cos(player.facing);
     spawnParts(player.x, 0.3, player.z, 6, 0xaaddff);
-    sfx('jump');
+    nova64.audio.sfx('jump');
   }
 
   // Normal movement (skip during dash)
@@ -626,19 +679,22 @@ function updatePlayer(dt) {
   }
 
   // Attack
-  updateHitState(playerHit, dt);
+  nova64.util.updateHitState(playerHit, dt);
   if (player.atkAnim > 0) player.atkAnim -= dt;
 
   if (
-    (keyp('Space') || keyp('KeyZ') || keyp('KeyX') || keyp('KeyJ')) &&
-    useCooldown(cooldowns.attack)
+    (nova64.input.keyp('Space') ||
+      nova64.input.keyp('KeyZ') ||
+      nova64.input.keyp('KeyX') ||
+      nova64.input.keyp('KeyJ')) &&
+    nova64.util.useCooldown(cooldowns.attack)
   ) {
     player.atkAnim = 0.2;
 
     if (cls.ranged) {
       // Ranged attack: fire a projectile
-      sfx('jump');
-      const pm = createSphere(0.18, cls.projColor, [player.x, 0.9, player.z]);
+      nova64.audio.sfx('jump');
+      const pm = nova64.scene.createSphere(0.18, cls.projColor, [player.x, 0.9, player.z]);
       playerProjectiles.push({
         x: player.x,
         z: player.z,
@@ -658,8 +714,8 @@ function updatePlayer(dt) {
       );
     } else {
       // Melee attack: hit enemies in arc
-      sfx('explosion');
-      triggerShake(shake, 0.3);
+      nova64.audio.sfx('explosion');
+      nova64.util.triggerShake(shake, 0.3);
       const range = cls.atkRange;
       for (const e of enemies) {
         if (!e.alive) continue;
@@ -686,13 +742,13 @@ function updatePlayer(dt) {
           sp.hp -= player.atk;
           if (sp.hp <= 0) {
             sp.alive = false;
-            destroyMesh(sp.mesh);
-            destroyMesh(sp.skullMesh);
+            nova64.scene.destroyMesh(sp.mesh);
+            nova64.scene.destroyMesh(sp.skullMesh);
             setTile(sp.x, sp.y, T_FLOOR);
             score += 100;
             spawnParts(sx, 0.5, sz, 10, 0xff4444);
             floats.spawn('DESTROYED +100', sx, 2, { z: sz, duration: 1, color: 0xffff64 });
-            sfx('coin');
+            nova64.audio.sfx('coin');
           }
         }
       }
@@ -705,12 +761,16 @@ function updatePlayer(dt) {
   }
 
   // Use potion
-  if ((keyp('KeyP') || keyp('KeyQ')) && player.potions > 0 && player.hp < player.maxHp) {
+  if (
+    (nova64.input.keyp('KeyP') || nova64.input.keyp('KeyQ')) &&
+    player.potions > 0 &&
+    player.hp < player.maxHp
+  ) {
     player.potions--;
     player.hp = Math.min(player.hp + 40, player.maxHp);
     spawnParts(player.x, 1, player.z, 8, 0x44ff44);
     floats.spawn('HEALED!', player.x, 2, { z: player.z, duration: 0.8, color: 0xffff64 });
-    sfx('coin');
+    nova64.audio.sfx('coin');
   }
 
   // Check exit (boss must be dead first)
@@ -724,9 +784,9 @@ function updatePlayer(dt) {
   // Sync player mesh
   const vis = isVisible(playerHit, t);
   const bob = (mx !== 0 || mz !== 0) && player.y === 0 ? Math.abs(Math.sin(t * 10)) * 0.15 : 0;
-  setPosition(player.meshBody, player.x, 0.7 + bob, player.z);
-  setPosition(player.meshHead, player.x, 1.6 + bob, player.z);
-  setRotation(player.meshBody, 0, player.facing, 0);
+  nova64.scene.setPosition(player.meshBody, player.x, 0.7 + bob, player.z);
+  nova64.scene.setPosition(player.meshHead, player.x, 1.6 + bob, player.z);
+  nova64.scene.setRotation(player.meshBody, 0, player.facing, 0);
 
   // Weapon swing
   const weapAngle =
@@ -734,31 +794,31 @@ function updatePlayer(dt) {
       ? player.facing + Math.sin((1 - player.atkAnim / 0.2) * Math.PI) * 1.2
       : player.facing;
   const wDist = player.atkAnim > 0 ? 1.0 : 0.6;
-  setPosition(
+  nova64.scene.setPosition(
     player.meshWeapon,
     player.x + Math.sin(weapAngle) * wDist,
     1.0 + bob,
     player.z - Math.cos(weapAngle) * wDist
   );
-  setRotation(player.meshWeapon, 0, weapAngle, 0.3);
+  nova64.scene.setRotation(player.meshWeapon, 0, weapAngle, 0.3);
 
   if (vis) {
-    setScale(player.meshBody, 0.8, 1.2, 0.6);
-    setScale(player.meshHead, 1, 1, 1);
+    nova64.scene.setScale(player.meshBody, 0.8, 1.2, 0.6);
+    nova64.scene.setScale(player.meshHead, 1, 1, 1);
   } else {
-    setScale(player.meshBody, 0.01, 0.01, 0.01);
-    setScale(player.meshHead, 0.01, 0.01, 0.01);
+    nova64.scene.setScale(player.meshBody, 0.01, 0.01, 0.01);
+    nova64.scene.setScale(player.meshHead, 0.01, 0.01, 0.01);
   }
 }
 
 function hurtPlayer(dmg) {
-  if (!triggerHit(playerHit)) return;
+  if (!nova64.util.triggerHit(playerHit)) return;
   player.hp -= dmg;
-  triggerShake(shake, 0.5);
-  sfx('explosion');
+  nova64.util.triggerShake(shake, 0.5);
+  nova64.audio.sfx('explosion');
   if (player.hp <= 0) {
     state = 'dead';
-    triggerShake(shake, 1.0);
+    nova64.util.triggerShake(shake, 1.0);
     spawnParts(player.x, 1, player.z, 20, 0xff4444);
   }
 }
@@ -778,7 +838,7 @@ function gainXP(amount) {
       color: 0xffff64,
     });
     spawnParts(player.x, 1, player.z, 15, 0xffdd44);
-    sfx('coin');
+    nova64.audio.sfx('coin');
   }
 }
 
@@ -792,13 +852,13 @@ function updateEnemies(dt) {
     if (!e.alive) {
       e.deathT -= dt;
       if (e.deathT <= 0) {
-        destroyMesh(e.mesh);
+        nova64.scene.destroyMesh(e.mesh);
         enemies.splice(i, 1);
         continue;
       }
-      setPosition(e.mesh, e.x, e.deathT * 3, e.z);
-      setRotation(e.mesh, t * 10, t * 8, 0);
-      setScale(e.mesh, e.deathT * 2, e.deathT * 2, e.deathT * 2);
+      nova64.scene.setPosition(e.mesh, e.x, e.deathT * 3, e.z);
+      nova64.scene.setRotation(e.mesh, t * 10, t * 8, 0);
+      nova64.scene.setScale(e.mesh, e.deathT * 2, e.deathT * 2, e.deathT * 2);
       continue;
     }
 
@@ -835,7 +895,7 @@ function updateEnemies(dt) {
         if (e.shotCD <= 0 && dist < 15 && dist > 3) {
           e.shotCD = 2.5;
           const pAng = Math.atan2(dx, -dz);
-          const pm = createSphere(0.15, 0xcc44ff, [e.x, 0.8, e.z]);
+          const pm = nova64.scene.createSphere(0.15, 0xcc44ff, [e.x, 0.8, e.z]);
           projectiles.push({
             x: e.x,
             z: e.z,
@@ -852,8 +912,8 @@ function updateEnemies(dt) {
 
     // Render
     const bob2 = Math.sin(t * 3 + i) * 0.1;
-    setPosition(e.mesh, e.x, 0.6 + bob2, e.z);
-    setRotation(e.mesh, 0, e.facing, 0);
+    nova64.scene.setPosition(e.mesh, e.x, 0.6 + bob2, e.z);
+    nova64.scene.setRotation(e.mesh, 0, e.facing, 0);
   }
 }
 
@@ -869,24 +929,24 @@ function damageEnemy(e, dmg) {
     gainXP(e.xp);
     spawnParts(e.x, 0.5, e.z, 8, 0xff8844);
     floats.spawn(`+${e.scorePts}`, e.x, 1.5, { z: e.z, duration: 0.7, color: 0xffff64 });
-    sfx('coin');
+    nova64.audio.sfx('coin');
     // Random drops
     if (Math.random() < 0.15) {
-      const m = createSphere(0.2, 0x44cc44, [e.x, 0.4, e.z]);
+      const m = nova64.scene.createSphere(0.2, 0x44cc44, [e.x, 0.4, e.z]);
       pickups.push({ x: e.x, z: e.z, type: 'food', mesh: m, bob: Math.random() * 6 });
     }
     // If this was the boss, mark it dead
     if (boss && e === boss) {
       boss.alive = false;
       floats.spawn('BOSS SLAIN!', e.x, 3, { z: e.z, duration: 2, color: 0xffdd00 });
-      sfx('explosion');
-      triggerShake(shake, 8);
+      nova64.audio.sfx('explosion');
+      nova64.util.triggerShake(shake, 8);
       score += 500 + level * 100;
       // Drop extra loot
       for (let k = 0; k < 5; k++) {
         const ox = e.x + (Math.random() - 0.5) * 3;
         const oz = e.z + (Math.random() - 0.5) * 3;
-        const m2 = createCylinder(0.25, 0.15, 0xffdd00, [ox, 0.3, oz]);
+        const m2 = nova64.scene.createCylinder(0.25, 0.15, 0xffdd00, [ox, 0.3, oz]);
         pickups.push({ x: ox, z: oz, type: 'gold', mesh: m2, bob: Math.random() * 6 });
       }
     }
@@ -921,24 +981,24 @@ function updateProjectiles(dt) {
     p.x += p.vx * dt;
     p.z += p.vz * dt;
     p.timer -= dt;
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
     // Hit player
     const dx = p.x - player.x,
       dz = p.z - player.z;
     if (Math.sqrt(dx * dx + dz * dz) < 0.8) {
       hurtPlayer(p.dmg);
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       projectiles.splice(i, 1);
       continue;
     }
     // Hit wall
     if (tileBlocking(Math.floor(p.x / TILE), Math.floor(p.z / TILE))) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       projectiles.splice(i, 1);
       continue;
     }
     if (p.timer <= 0) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       projectiles.splice(i, 1);
     }
   }
@@ -950,7 +1010,7 @@ function updatePlayerProjectiles(dt) {
     p.x += p.vx * dt;
     p.z += p.vz * dt;
     p.timer -= dt;
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
     // Hit enemies
     let hit = false;
     for (const e of enemies) {
@@ -976,13 +1036,13 @@ function updatePlayerProjectiles(dt) {
           hit = true;
           if (sp.hp <= 0) {
             sp.alive = false;
-            destroyMesh(sp.mesh);
-            destroyMesh(sp.skullMesh);
+            nova64.scene.destroyMesh(sp.mesh);
+            nova64.scene.destroyMesh(sp.skullMesh);
             setTile(sp.x, sp.y, T_FLOOR);
             score += 100;
             spawnParts(sx, 0.5, sz, 10, 0xff4444);
             floats.spawn('DESTROYED +100', sx, 2, { z: sz, duration: 1, color: 0xffff64 });
-            sfx('coin');
+            nova64.audio.sfx('coin');
           }
           break;
         }
@@ -990,7 +1050,7 @@ function updatePlayerProjectiles(dt) {
     }
     if (hit || tileBlocking(Math.floor(p.x / TILE), Math.floor(p.z / TILE)) || p.timer <= 0) {
       if (hit) spawnParts(p.x, p.y, p.z, 4, 0xffdd44);
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       playerProjectiles.splice(i, 1);
     }
   }
@@ -1000,12 +1060,12 @@ function updatePickups(dt) {
   for (let i = pickups.length - 1; i >= 0; i--) {
     const p = pickups[i];
     p.bob += dt * 3;
-    setPosition(p.mesh, p.x, 0.4 + Math.sin(p.bob) * 0.15, p.z);
-    setRotation(p.mesh, 0, t * 2, 0);
+    nova64.scene.setPosition(p.mesh, p.x, 0.4 + Math.sin(p.bob) * 0.15, p.z);
+    nova64.scene.setRotation(p.mesh, 0, t * 2, 0);
     const dx = p.x - player.x,
       dz = p.z - player.z;
     if (Math.sqrt(dx * dx + dz * dz) < 1.3) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       pickups.splice(i, 1);
       if (p.type === 'food') {
         player.hp = Math.min(player.hp + 15, player.maxHp);
@@ -1017,7 +1077,7 @@ function updatePickups(dt) {
         score += 25;
         floats.spawn('+25 GOLD', p.x, 1, { z: p.z, duration: 0.8, color: 0xffff64 });
       }
-      sfx('coin');
+      nova64.audio.sfx('coin');
       spawnParts(p.x, 0.5, p.z, 4, 0xffdd00);
     }
   }
@@ -1027,7 +1087,7 @@ function spawnParts(x, y, z, n, col) {
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2,
       s = 1 + Math.random() * 3;
-    const m = createSphere(0.08, col, [x, y, z]);
+    const m = nova64.scene.createSphere(0.08, col, [x, y, z]);
     particles.push({
       x,
       y,
@@ -1041,7 +1101,7 @@ function spawnParts(x, y, z, n, col) {
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.vy -= 12 * dt;
@@ -1049,9 +1109,9 @@ function updateParticles(dt) {
     p.y += p.vy * dt;
     p.z += p.vz * dt;
     p.life -= dt;
-    setPosition(p.mesh, p.x, p.y, p.z);
+    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
     if (p.life <= 0) {
-      destroyMesh(p.mesh);
+      nova64.scene.destroyMesh(p.mesh);
       particles.splice(i, 1);
     }
   }
@@ -1064,9 +1124,9 @@ function updateCamera(dt) {
   camX += (player.x - camX) * 0.12;
   camZ += (player.z - camZ) * 0.12;
   // Isometric: elevated, angled view — closer for better action feel
-  const [sx, sy] = getShakeOffset(shake);
-  setCameraPosition(camX - 6 + sx, 18 + sy, camZ + 14);
-  setCameraTarget(camX + sx * 0.5, 0, camZ + sy * 0.5);
+  const [sx, sy] = nova64.util.getShakeOffset(shake);
+  nova64.camera.setCameraPosition(camX - 6 + sx, 18 + sy, camZ + 14);
+  nova64.camera.setCameraTarget(camX + sx * 0.5, 0, camZ + sy * 0.5);
 }
 
 // ========================================================================
@@ -1088,8 +1148,8 @@ function spawnBoss() {
   const cz = Math.floor(MAP_H / 2) * TILE + 1;
   const scaledHp = Math.floor(bt.hp * (1 + level * 0.1));
   const scaledAtk = Math.floor(bt.atk * (1 + level * 0.08));
-  const m = createCube(1.4, bt.color, [cx, 1.2, cz]);
-  setScale(m, 1.5, 2.0, 1.5);
+  const m = nova64.scene.createCube(1.4, bt.color, [cx, 1.2, cz]);
+  nova64.scene.setScale(m, 1.5, 2.0, 1.5);
   const bossEnemy = {
     x: cx,
     z: cz,
@@ -1123,8 +1183,8 @@ function spawnBoss() {
   enemies.push(bossEnemy);
   boss = bossEnemy;
   floats.spawn(`⚠ ${bt.name} ⚠`, cx, 4, { z: cz, duration: 2.5, color: 0xff4444 });
-  sfx('explosion');
-  triggerShake(shake, 5);
+  nova64.audio.sfx('explosion');
+  nova64.util.triggerShake(shake, 5);
 }
 
 function updateBoss(dt) {
@@ -1142,7 +1202,7 @@ function updateBoss(dt) {
     // Bounds
     boss.x = Math.max(TILE, Math.min((MAP_W - 1) * TILE, boss.x));
     boss.z = Math.max(TILE, Math.min((MAP_H - 1) * TILE, boss.z));
-    setPosition(boss.mesh, boss.x, 1.2, boss.z);
+    nova64.scene.setPosition(boss.mesh, boss.x, 1.2, boss.z);
     // Damage on contact during charge
     if (dist < 2.5) {
       hurtPlayer(boss.atk);
@@ -1151,9 +1211,9 @@ function updateBoss(dt) {
     if (boss.chargeTimer <= 0) {
       boss.charging = false;
       // Slam on landing
-      triggerShake(shake, 4);
+      nova64.util.triggerShake(shake, 4);
       spawnParts(boss.x, 0.5, boss.z, 15, 0xff4400);
-      sfx('explosion');
+      nova64.audio.sfx('explosion');
       // AoE damage near landing
       if (dist < 4) hurtPlayer(Math.floor(boss.atk * 0.6));
     }
@@ -1172,43 +1232,43 @@ function updateBoss(dt) {
   boss.slamCD -= dt;
   if (boss.slamCD <= 0 && !boss.charging && dist < 6) {
     boss.slamCD = 5 + Math.random() * 3;
-    triggerShake(shake, 6);
+    nova64.util.triggerShake(shake, 6);
     spawnParts(boss.x, 0.5, boss.z, 20, 0xffaa00);
-    sfx('explosion');
+    nova64.audio.sfx('explosion');
     if (dist < 5) hurtPlayer(Math.floor(boss.atk * 0.8));
     floats.spawn('SLAM!', boss.x, 3, { z: boss.z, duration: 0.6, color: 0xff6600 });
   }
 
   // Boss bob animation
   const bob3 = Math.sin(t * 2) * 0.15 + (boss.charging ? 0.3 : 0);
-  setPosition(boss.mesh, boss.x, 1.2 + bob3, boss.z);
+  nova64.scene.setPosition(boss.mesh, boss.x, 1.2 + bob3, boss.z);
 }
 
 // ========================================================================
 // CLEANUP between levels
 // ========================================================================
 function cleanupLevel() {
-  if (mapMeshes) mapMeshes.forEach(m => destroyMesh(m));
-  if (treeMeshes) treeMeshes.forEach(m => destroyMesh(m));
-  if (waterMeshes) waterMeshes.forEach(m => destroyMesh(m));
+  if (mapMeshes) mapMeshes.forEach(m => nova64.scene.destroyMesh(m));
+  if (treeMeshes) treeMeshes.forEach(m => nova64.scene.destroyMesh(m));
+  if (waterMeshes) waterMeshes.forEach(m => nova64.scene.destroyMesh(m));
   enemies.forEach(e => {
-    if (e.mesh) destroyMesh(e.mesh);
+    if (e.mesh) nova64.scene.destroyMesh(e.mesh);
   });
   pickups.forEach(p => {
-    if (p.mesh) destroyMesh(p.mesh);
+    if (p.mesh) nova64.scene.destroyMesh(p.mesh);
   });
   projectiles.forEach(p => {
-    if (p.mesh) destroyMesh(p.mesh);
+    if (p.mesh) nova64.scene.destroyMesh(p.mesh);
   });
   particles.forEach(p => {
-    if (p.mesh) destroyMesh(p.mesh);
+    if (p.mesh) nova64.scene.destroyMesh(p.mesh);
   });
   playerProjectiles.forEach(p => {
-    if (p.mesh) destroyMesh(p.mesh);
+    if (p.mesh) nova64.scene.destroyMesh(p.mesh);
   });
-  if (player.meshBody) destroyMesh(player.meshBody);
-  if (player.meshHead) destroyMesh(player.meshHead);
-  if (player.meshWeapon) destroyMesh(player.meshWeapon);
+  if (player.meshBody) nova64.scene.destroyMesh(player.meshBody);
+  if (player.meshHead) nova64.scene.destroyMesh(player.meshHead);
+  if (player.meshWeapon) nova64.scene.destroyMesh(player.meshWeapon);
   mapMeshes = [];
   treeMeshes = [];
   waterMeshes = [];
@@ -1228,43 +1288,64 @@ export function draw() {
   if (state === 'levelComplete') return drawLevelComplete();
 
   // ── HUD panel ──
-  rect(8, 8, 200, 82, rgba8(0, 0, 0, 180), true);
-  rect(8, 8, 200, 82, rgba8(100, 150, 200, 100), false);
+  nova64.draw.rect(8, 8, 200, 82, nova64.draw.rgba8(0, 0, 0, 180), true);
+  nova64.draw.rect(8, 8, 200, 82, nova64.draw.rgba8(100, 150, 200, 100), false);
 
   // HP bar
   const hpP = player.hp / player.maxHp;
   const hpC =
-    hpP > 0.5 ? rgba8(50, 220, 80) : hpP > 0.25 ? rgba8(220, 200, 50) : rgba8(220, 50, 50);
-  print('HP', 14, 14, rgba8(200, 200, 200));
-  rect(40, 14, 150, 7, rgba8(30, 30, 30), true);
-  rect(40, 14, Math.floor(150 * hpP), 7, hpC, true);
-  print(`${player.hp}/${player.maxHp}`, 80, 14, rgba8(255, 255, 255));
+    hpP > 0.5
+      ? nova64.draw.rgba8(50, 220, 80)
+      : hpP > 0.25
+        ? nova64.draw.rgba8(220, 200, 50)
+        : nova64.draw.rgba8(220, 50, 50);
+  nova64.draw.print('HP', 14, 14, nova64.draw.rgba8(200, 200, 200));
+  nova64.draw.rect(40, 14, 150, 7, nova64.draw.rgba8(30, 30, 30), true);
+  nova64.draw.rect(40, 14, Math.floor(150 * hpP), 7, hpC, true);
+  nova64.draw.print(`${player.hp}/${player.maxHp}`, 80, 14, nova64.draw.rgba8(255, 255, 255));
 
   // XP bar
   const xpP = player.xp / player.xpNext;
-  print('XP', 14, 26, rgba8(180, 180, 255));
-  rect(40, 26, 150, 5, rgba8(20, 20, 40), true);
-  rect(40, 26, Math.floor(150 * xpP), 5, rgba8(120, 120, 255), true);
+  nova64.draw.print('XP', 14, 26, nova64.draw.rgba8(180, 180, 255));
+  nova64.draw.rect(40, 26, 150, 5, nova64.draw.rgba8(20, 20, 40), true);
+  nova64.draw.rect(40, 26, Math.floor(150 * xpP), 5, nova64.draw.rgba8(120, 120, 255), true);
 
-  print(`LVL ${player.lvl}  ATK ${player.atk}`, 14, 38, rgba8(220, 220, 255));
-  print(`SCORE ${score}`, 14, 50, rgba8(255, 215, 0));
-  print(`POTIONS ${player.potions}`, 14, 62, rgba8(100, 100, 255));
+  nova64.draw.print(
+    `LVL ${player.lvl}  ATK ${player.atk}`,
+    14,
+    38,
+    nova64.draw.rgba8(220, 220, 255)
+  );
+  nova64.draw.print(`SCORE ${score}`, 14, 50, nova64.draw.rgba8(255, 215, 0));
+  nova64.draw.print(`POTIONS ${player.potions}`, 14, 62, nova64.draw.rgba8(100, 100, 255));
 
   // Level & theme
   const th = theme();
-  print(`FLOOR ${level + 1}: ${th.name}`, 440, 14, rgba8(180, 180, 220, 200));
-  print(`KILLS ${kills}`, 550, 28, rgba8(200, 120, 120));
+  nova64.draw.print(
+    `FLOOR ${level + 1}: ${th.name}`,
+    440,
+    14,
+    nova64.draw.rgba8(180, 180, 220, 200)
+  );
+  nova64.draw.print(`KILLS ${kills}`, 550, 28, nova64.draw.rgba8(200, 120, 120));
 
   // Boss HP bar (big, prominent at top center)
   if (boss && boss.alive) {
     const bossHpP = boss.hp / boss.maxHp;
     const bossBarW = 240;
     const bossBarX = 320 - bossBarW / 2;
-    rect(bossBarX - 2, 6, bossBarW + 4, 18, rgba8(0, 0, 0, 200), true);
-    rect(bossBarX, 8, bossBarW, 14, rgba8(40, 10, 10), true);
-    rect(bossBarX, 8, Math.floor(bossBarW * bossHpP), 14, rgba8(220, 40, 40), true);
-    rect(bossBarX - 2, 6, bossBarW + 4, 18, rgba8(200, 100, 50), false);
-    printCentered(`⚔ ${boss.bossName} ⚔`, 320, 10, rgba8(255, 200, 100));
+    nova64.draw.rect(bossBarX - 2, 6, bossBarW + 4, 18, nova64.draw.rgba8(0, 0, 0, 200), true);
+    nova64.draw.rect(bossBarX, 8, bossBarW, 14, nova64.draw.rgba8(40, 10, 10), true);
+    nova64.draw.rect(
+      bossBarX,
+      8,
+      Math.floor(bossBarW * bossHpP),
+      14,
+      nova64.draw.rgba8(220, 40, 40),
+      true
+    );
+    nova64.draw.rect(bossBarX - 2, 6, bossBarW + 4, 18, nova64.draw.rgba8(200, 100, 50), false);
+    nova64.draw.printCentered(`⚔ ${boss.bossName} ⚔`, 320, 10, nova64.draw.rgba8(255, 200, 100));
   }
 
   // Exit locked warning
@@ -1272,14 +1353,24 @@ export function draw() {
     const ptx2 = Math.floor(player.x / TILE),
       ptz2 = Math.floor(player.z / TILE);
     if (ptx2 === exitPos.x && ptz2 === exitPos.y) {
-      printCentered('EXIT LOCKED — DEFEAT THE BOSS!', 320, 180, rgba8(255, 80, 80));
+      nova64.draw.printCentered(
+        'EXIT LOCKED — DEFEAT THE BOSS!',
+        320,
+        180,
+        nova64.draw.rgba8(255, 80, 80)
+      );
     }
   }
 
   // Enemy count
   const alive = enemies.filter(e => e.alive).length;
   const spawners = spawnTimers.filter(s => s.alive).length;
-  print(`ENEMIES ${alive}  SPAWNERS ${spawners}`, 400, 344, rgba8(180, 130, 130, 160));
+  nova64.draw.print(
+    `ENEMIES ${alive}  SPAWNERS ${spawners}`,
+    400,
+    344,
+    nova64.draw.rgba8(180, 130, 130, 160)
+  );
 
   // Enemy HP bars (drawn above enemies on screen)
   for (const e of enemies) {
@@ -1292,52 +1383,71 @@ export function draw() {
     const bw = 20,
       bh = 3;
     const hp = e.hp / e.maxHp;
-    rect(sx - bw / 2, sy, bw, bh, rgba8(40, 0, 0, 180), true);
-    rect(sx - bw / 2, sy, Math.floor(bw * hp), bh, rgba8(220, 50, 50), true);
+    nova64.draw.rect(sx - bw / 2, sy, bw, bh, nova64.draw.rgba8(40, 0, 0, 180), true);
+    nova64.draw.rect(
+      sx - bw / 2,
+      sy,
+      Math.floor(bw * hp),
+      bh,
+      nova64.draw.rgba8(220, 50, 50),
+      true
+    );
   }
 
   // Dash cooldown indicator
-  if (!cooldownReady(cooldowns.dash)) {
-    const dP = cooldownProgress(cooldowns.dash);
-    print('DASH', 14, 78, rgba8(120, 160, 220, 120));
-    rect(50, 78, 40, 5, rgba8(30, 30, 50), true);
-    rect(50, 78, Math.floor(40 * dP), 5, rgba8(100, 180, 255), true);
+  if (!nova64.util.cooldownReady(cooldowns.dash)) {
+    const dP = nova64.util.cooldownProgress(cooldowns.dash);
+    nova64.draw.print('DASH', 14, 78, nova64.draw.rgba8(120, 160, 220, 120));
+    nova64.draw.rect(50, 78, 40, 5, nova64.draw.rgba8(30, 30, 50), true);
+    nova64.draw.rect(50, 78, Math.floor(40 * dP), 5, nova64.draw.rgba8(100, 180, 255), true);
   } else {
-    print('DASH RDY', 14, 78, rgba8(100, 200, 255, 180));
+    nova64.draw.print('DASH RDY', 14, 78, nova64.draw.rgba8(100, 200, 255, 180));
   }
 
   // Minimap
-  drawMinimap();
+  _local_drawMinimap();
 
   // Floating texts (3D world-space → isometric screen projection)
-  drawFloatingTexts3D(floats, (x, y, z) => [
+  nova64.draw.drawFloatingTexts3D(floats, (x, y, z) => [
     Math.floor(320 + (x - player.x) * 12),
     Math.floor(180 - y * 12 - (z - player.z) * 6),
   ]);
 
   // Controls hint
-  print('WASD Move  SPC/Z Attack  SHIFT Dash  P Potion', 100, 352, rgba8(80, 80, 110, 110));
+  nova64.draw.print(
+    'WASD Move  SPC/Z Attack  SHIFT Dash  P Potion',
+    100,
+    352,
+    nova64.draw.rgba8(80, 80, 110, 110)
+  );
 }
 
 // ---- MINIMAP ----
-function drawMinimap() {
+function _local_drawMinimap() {
   const mmX = W - 78,
     mmY = 56;
   const mmS = 2; // pixel per tile
-  rect(mmX - 2, mmY - 2, MAP_W * mmS + 4, MAP_H * mmS + 4, rgba8(0, 0, 0, 180), true);
+  nova64.draw.rect(
+    mmX - 2,
+    mmY - 2,
+    MAP_W * mmS + 4,
+    MAP_H * mmS + 4,
+    nova64.draw.rgba8(0, 0, 0, 180),
+    true
+  );
 
   for (let x = 0; x < MAP_W; x++) {
     for (let y = 0; y < MAP_H; y++) {
       const tile = getTile(x, y);
       let col = 0;
-      if (tile === T_FLOOR) col = rgba8(60, 60, 60, 120);
-      else if (tile === T_WALL) col = rgba8(100, 80, 60);
-      else if (tile === T_TREE) col = rgba8(30, 80, 30);
-      else if (tile === T_WATER) col = rgba8(30, 50, 120);
-      else if (tile === T_EXIT) col = rgba8(50, 255, 150);
-      else if (tile === T_SPAWNER) col = rgba8(200, 50, 50);
+      if (tile === T_FLOOR) col = nova64.draw.rgba8(60, 60, 60, 120);
+      else if (tile === T_WALL) col = nova64.draw.rgba8(100, 80, 60);
+      else if (tile === T_TREE) col = nova64.draw.rgba8(30, 80, 30);
+      else if (tile === T_WATER) col = nova64.draw.rgba8(30, 50, 120);
+      else if (tile === T_EXIT) col = nova64.draw.rgba8(50, 255, 150);
+      else if (tile === T_SPAWNER) col = nova64.draw.rgba8(200, 50, 50);
       else continue;
-      rect(mmX + x * mmS, mmY + y * mmS, mmS, mmS, col, true);
+      nova64.draw.rect(mmX + x * mmS, mmY + y * mmS, mmS, mmS, col, true);
     }
   }
 
@@ -1345,7 +1455,14 @@ function drawMinimap() {
   if (Math.sin(t * 8) > 0) {
     const px = Math.floor(player.x / TILE),
       pz = Math.floor(player.z / TILE);
-    rect(mmX + px * mmS, mmY + pz * mmS, mmS + 1, mmS + 1, rgba8(255, 255, 0), true);
+    nova64.draw.rect(
+      mmX + px * mmS,
+      mmY + pz * mmS,
+      mmS + 1,
+      mmS + 1,
+      nova64.draw.rgba8(255, 255, 0),
+      true
+    );
   }
 
   // Enemy dots
@@ -1353,59 +1470,91 @@ function drawMinimap() {
     if (!e.alive) continue;
     const ex = Math.floor(e.x / TILE),
       ez = Math.floor(e.z / TILE);
-    rect(mmX + ex * mmS, mmY + ez * mmS, mmS, mmS, rgba8(255, 80, 80), true);
+    nova64.draw.rect(
+      mmX + ex * mmS,
+      mmY + ez * mmS,
+      mmS,
+      mmS,
+      nova64.draw.rgba8(255, 80, 80),
+      true
+    );
   }
 }
 
 // ---- SCREENS ----
 function drawClassSelect() {
-  rect(0, 0, W, H, rgba8(10, 8, 20, 230), true);
-  printCentered('GAUNTLET 64', 320, 40, rgba8(255, 200, 80));
-  printCentered('ISOMETRIC ACTION RPG', 320, 65, rgba8(150, 140, 120));
+  nova64.draw.rect(0, 0, W, H, nova64.draw.rgba8(10, 8, 20, 230), true);
+  nova64.draw.printCentered('GAUNTLET 64', 320, 40, nova64.draw.rgba8(255, 200, 80));
+  nova64.draw.printCentered('ISOMETRIC ACTION RPG', 320, 65, nova64.draw.rgba8(150, 140, 120));
 
   // Class cards
   for (let i = 0; i < CLASSES.length; i++) {
     const c = CLASSES[i];
     const cx = 80 + i * 130;
     const selected = i === classIdx;
-    const border = selected ? rgba8(255, 255, 100) : rgba8(80, 80, 100);
-    const bg = selected ? rgba8(40, 40, 60, 220) : rgba8(20, 20, 30, 180);
-    rect(cx, 100, 110, 140, bg, true);
-    rect(cx, 100, 110, 140, border, false);
+    const border = selected ? nova64.draw.rgba8(255, 255, 100) : nova64.draw.rgba8(80, 80, 100);
+    const bg = selected ? nova64.draw.rgba8(40, 40, 60, 220) : nova64.draw.rgba8(20, 20, 30, 180);
+    nova64.draw.rect(cx, 100, 110, 140, bg, true);
+    nova64.draw.rect(cx, 100, 110, 140, border, false);
 
     // Color swatch
     const r = (c.color >> 16) & 0xff,
       g = (c.color >> 8) & 0xff,
       b = c.color & 0xff;
-    rect(cx + 35, 110, 40, 40, rgba8(r, g, b), true);
+    nova64.draw.rect(cx + 35, 110, 40, 40, nova64.draw.rgba8(r, g, b), true);
 
-    print(c.name, cx + 8, 158, selected ? rgba8(255, 255, 200) : rgba8(160, 160, 180));
-    print(`HP: ${c.hp}`, cx + 8, 174, rgba8(100, 200, 100));
-    print(`ATK: ${c.atk}`, cx + 8, 186, rgba8(200, 100, 100));
-    print(`SPD: ${(c.spd * 100).toFixed(0)}%`, cx + 8, 198, rgba8(100, 150, 255));
-    print(c.desc, cx + 4, 216, rgba8(120, 120, 140));
+    nova64.draw.print(
+      c.name,
+      cx + 8,
+      158,
+      selected ? nova64.draw.rgba8(255, 255, 200) : nova64.draw.rgba8(160, 160, 180)
+    );
+    nova64.draw.print(`HP: ${c.hp}`, cx + 8, 174, nova64.draw.rgba8(100, 200, 100));
+    nova64.draw.print(`ATK: ${c.atk}`, cx + 8, 186, nova64.draw.rgba8(200, 100, 100));
+    nova64.draw.print(
+      `SPD: ${(c.spd * 100).toFixed(0)}%`,
+      cx + 8,
+      198,
+      nova64.draw.rgba8(100, 150, 255)
+    );
+    nova64.draw.print(c.desc, cx + 4, 216, nova64.draw.rgba8(120, 120, 140));
   }
 
   const pulse = Math.sin(t * 3) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'LEFT/RIGHT to choose  |  SPACE to start',
     320,
     270,
-    rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
+    nova64.draw.rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
   );
-  printCentered('WASD Move | SPC/Z Attack | SHIFT Dash | P Potion', 320, 300, rgba8(140, 140, 170));
-  printCentered('Destroy spawners! Find the exit portal!', 320, 320, rgba8(120, 160, 140));
+  nova64.draw.printCentered(
+    'WASD Move | SPC/Z Attack | SHIFT Dash | P Potion',
+    320,
+    300,
+    nova64.draw.rgba8(140, 140, 170)
+  );
+  nova64.draw.printCentered(
+    'Destroy spawners! Find the exit portal!',
+    320,
+    320,
+    nova64.draw.rgba8(120, 160, 140)
+  );
 }
 
 function drawDead() {
-  rect(0, 0, W, H, rgba8(50, 0, 0, 210), true);
-  printCentered('YOU HAVE FALLEN', 320, 80, rgba8(255, 60, 60));
-  printCentered(`${CLASSES[classIdx].name}  Level ${player.lvl}`, 320, 120, rgba8(200, 200, 200));
-  printCentered(
+  nova64.draw.rect(0, 0, W, H, nova64.draw.rgba8(50, 0, 0, 210), true);
+  nova64.draw.printCentered('YOU HAVE FALLEN', 320, 80, nova64.draw.rgba8(255, 60, 60));
+  nova64.draw.printCentered(
+    `${CLASSES[classIdx].name}  Level ${player.lvl}`,
+    320,
+    120,
+    nova64.draw.rgba8(200, 200, 200)
+  );
+  nova64.draw.printCentered(
     `Score: ${score}  |  Kills: ${totalKills}  |  Floor: ${level + 1}`,
     320,
     150,
-    rgba8(180, 180, 200)
+    nova64.draw.rgba8(180, 180, 200)
   );
 
   const rating =
@@ -1418,45 +1567,65 @@ function drawDead() {
           : 'NOVICE';
   const rc =
     totalKills >= 50
-      ? rgba8(255, 215, 0)
+      ? nova64.draw.rgba8(255, 215, 0)
       : totalKills >= 30
-        ? rgba8(200, 100, 255)
-        : rgba8(100, 200, 100);
-  printCentered(rating, 320, 190, rc);
+        ? nova64.draw.rgba8(200, 100, 255)
+        : nova64.draw.rgba8(100, 200, 100);
+  nova64.draw.printCentered(rating, 320, 190, rc);
 
   const pulse = Math.sin(t * 3) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'PRESS SPACE TO TRY AGAIN',
     320,
     250,
-    rgba8(255, 200, 150, Math.floor(100 + pulse * 155))
+    nova64.draw.rgba8(255, 200, 150, Math.floor(100 + pulse * 155))
   );
 }
 
 function drawLevelComplete() {
-  rect(0, 0, W, H, rgba8(0, 20, 40, 210), true);
-  printCentered(`FLOOR ${level + 1} COMPLETE!`, 320, 80, rgba8(100, 255, 200));
-  printCentered(`Score: ${score}  |  Kills: ${kills}`, 320, 130, rgba8(200, 200, 200));
-  printCentered(`${CLASSES[classIdx].name}  Level ${player.lvl}`, 320, 160, rgba8(180, 180, 220));
+  nova64.draw.rect(0, 0, W, H, nova64.draw.rgba8(0, 20, 40, 210), true);
+  nova64.draw.printCentered(
+    `FLOOR ${level + 1} COMPLETE!`,
+    320,
+    80,
+    nova64.draw.rgba8(100, 255, 200)
+  );
+  nova64.draw.printCentered(
+    `Score: ${score}  |  Kills: ${kills}`,
+    320,
+    130,
+    nova64.draw.rgba8(200, 200, 200)
+  );
+  nova64.draw.printCentered(
+    `${CLASSES[classIdx].name}  Level ${player.lvl}`,
+    320,
+    160,
+    nova64.draw.rgba8(180, 180, 220)
+  );
 
   if (level < THEMES.length - 1) {
     const nextIsBoss = (level + 2) % 3 === 0;
-    printCentered(
+    nova64.draw.printCentered(
       `Next: ${THEMES[level + 1].name}${nextIsBoss ? ' ⚔ BOSS FLOOR ⚔' : ''}`,
       320,
       200,
-      nextIsBoss ? rgba8(255, 100, 100) : rgba8(200, 180, 140)
+      nextIsBoss ? nova64.draw.rgba8(255, 100, 100) : nova64.draw.rgba8(200, 180, 140)
     );
   } else {
-    printCentered('The depths grow darker...', 320, 200, rgba8(200, 100, 100));
+    nova64.draw.printCentered(
+      'The depths grow darker...',
+      320,
+      200,
+      nova64.draw.rgba8(200, 100, 100)
+    );
   }
 
   kills = 0; // reset per-floor kills
   const pulse = Math.sin(t * 3) * 0.5 + 0.5;
-  printCentered(
+  nova64.draw.printCentered(
     'PRESS SPACE TO CONTINUE',
     320,
     260,
-    rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
+    nova64.draw.rgba8(255, 255, 100, Math.floor(100 + pulse * 155))
   );
 }

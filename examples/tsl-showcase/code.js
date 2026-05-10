@@ -3,6 +3,34 @@
 // Scenes: Galaxy Spiral, Procedural Terrain, Energy Tornado, Material Lab
 // Navigate: Space/Enter = next scene, Arrow Left = prev scene
 
+const { print, screenHeight, screenWidth } = nova64.draw;
+const {
+  clearScene,
+  createCone,
+  createCube,
+  createPlane,
+  createSphere,
+  createTorus,
+  getMesh,
+  removeMesh,
+  rotateMesh,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { createPointLight, setAmbientLight, setFog } = nova64.light;
+const { createParticleSystem, enableBloom, enableVignette, removeParticleSystem, updateParticles } =
+  nova64.fx;
+const {
+  createHologramMaterial,
+  createLavaMaterial,
+  createPlasmaMaterial,
+  createShockwaveMaterial,
+  createTSLMaterial,
+  createTSLShaderMaterial,
+  createVortexMaterial,
+  createWaterMaterial,
+} = nova64.shader;
+const { keyp } = nova64.input;
 let currentScene = 0;
 const SCENE_COUNT = 4;
 let sceneTime = 0;
@@ -21,9 +49,17 @@ function hslToHex(h, s, l) {
   return (f(0) << 16) | (f(8) << 8) | f(4);
 }
 
+function createSeededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
 /** Apply a material to a mesh ID (safely via getMesh + traverse) */
 function applyMat(id, mat) {
-  const mesh = getMesh(id);
+  const mesh = nova64.scene.getMesh(id);
   if (mesh) {
     mesh.traverse(child => {
       if (child.isMesh) child.material = mat;
@@ -34,20 +70,20 @@ function applyMat(id, mat) {
 // ─── Scene management ────────────────────────────────────────────────────
 
 export function init() {
-  setupScene(0);
+  _local_setupScene(0);
 }
 
 function teardown() {
-  ids.forEach(id => removeMesh(id));
+  ids.forEach(id => nova64.scene.removeMesh(id));
   ids = [];
   if (particles) {
-    removeParticleSystem(particles);
+    nova64.fx.removeParticleSystem(particles);
     particles = null;
   }
-  clearScene();
+  nova64.scene.clearScene();
 }
 
-function setupScene(idx) {
+function _local_setupScene(idx) {
   teardown();
   sceneTime = 0;
   currentScene = ((idx % SCENE_COUNT) + SCENE_COUNT) % SCENE_COUNT;
@@ -73,23 +109,25 @@ function setupScene(idx) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function setupGalaxy() {
-  setCameraPosition(0, 18, 22);
-  setCameraTarget(0, 0, 0);
-  setCameraFOV(50);
-  setFog(0x020208, 25, 70);
-  setAmbientLight(0x111133);
-  createPointLight(0x6666ff, 2.0, 40, [0, 8, 0]);
-  createPointLight(0xff4488, 1.0, 30, [10, 3, -5]);
+  const random = createSeededRandom(0x67a1c4);
+
+  nova64.camera.setCameraPosition(0, 18, 22);
+  nova64.camera.setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraFOV(50);
+  nova64.light.setFog(0x020208, 25, 70);
+  nova64.light.setAmbientLight(0x111133);
+  nova64.light.createPointLight(0x6666ff, 2.0, 40, [0, 8, 0]);
+  nova64.light.createPointLight(0xff4488, 1.0, 30, [10, 3, -5]);
 
   // Glowing galaxy core — large sphere with galaxy shader
-  const coreId = createSphere(4, 0xffffff, [0, 0, 0], 24);
+  const coreId = nova64.scene.createSphere(4, 0xffffff, [0, 0, 0], 24);
   applyMat(coreId, createTSLMaterial('galaxy', { speed: 0.3 }));
   ids.push(coreId);
 
   // Inner halo ring — torus with void shader
-  const haloId = createTorus(6, 0.4, 0xffffff, [0, 0, 0]);
+  const haloId = nova64.scene.createTorus(6, 0.4, 0xffffff, [0, 0, 0]);
   applyMat(haloId, createTSLMaterial('void', { speed: 0.2 }));
-  const haloMesh = getMesh(haloId);
+  const haloMesh = nova64.scene.getMesh(haloId);
   if (haloMesh) haloMesh.rotation.x = Math.PI / 2;
   ids.push(haloId);
 
@@ -101,11 +139,11 @@ function setupGalaxy() {
       const angle = armOffset + i * 0.18;
       const x = Math.cos(angle) * r;
       const z = Math.sin(angle) * r;
-      const y = (Math.random() - 0.5) * 0.8;
-      const size = 0.12 + Math.random() * 0.25;
+      const y = (random() - 0.5) * 0.8;
+      const size = 0.12 + random() * 0.25;
       const hue = 0.55 + arm * 0.12;
-      const col = hslToHex(hue, 0.9, 0.65 + Math.random() * 0.15);
-      const starId = createCube(size, col, [x, y, z], {
+      const col = hslToHex(hue, 0.9, 0.65 + random() * 0.15);
+      const starId = nova64.scene.createCube(size, col, [x, y, z], {
         emissive: col,
         emissiveIntensity: 2.5,
       });
@@ -114,14 +152,14 @@ function setupGalaxy() {
   }
 
   // Outer dust ring with rainbow shader
-  const dustId = createTorus(16, 0.15, 0xffffff, [0, 0, 0]);
+  const dustId = nova64.scene.createTorus(16, 0.15, 0xffffff, [0, 0, 0]);
   applyMat(dustId, createTSLMaterial('rainbow', { speed: 0.5 }));
-  const dustMesh = getMesh(dustId);
+  const dustMesh = nova64.scene.getMesh(dustId);
   if (dustMesh) dustMesh.rotation.x = Math.PI / 2;
   ids.push(dustId);
 
   // Particles — stardust
-  particles = createParticleSystem(400, {
+  particles = nova64.fx.createParticleSystem(400, {
     emitRate: 60,
     minLife: 3,
     maxLife: 6,
@@ -142,8 +180,8 @@ function setupGalaxy() {
     opacityOverLife: [0, 1, 0],
   });
 
-  enableBloom(1.8, 0.5, 0.15);
-  enableVignette(1.0, 0.75);
+  nova64.fx.enableBloom(1.8, 0.5, 0.15);
+  nova64.fx.enableVignette(1.0, 0.75);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -151,18 +189,18 @@ function setupGalaxy() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function setupTerrain() {
-  setCameraPosition(0, 14, 20);
-  setCameraTarget(0, 0, 0);
-  setCameraFOV(50);
-  setFog(0x1a1020, 18, 50);
-  setAmbientLight(0x221122);
-  createPointLight(0xff6600, 2.0, 40, [0, 15, 0]);
-  createPointLight(0x44aaff, 1.5, 30, [-10, 8, 5]);
-  createPointLight(0xff2200, 1.0, 25, [8, 3, -8]);
+  nova64.camera.setCameraPosition(0, 14, 20);
+  nova64.camera.setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraFOV(50);
+  nova64.light.setFog(0x1a1020, 18, 50);
+  nova64.light.setAmbientLight(0x221122);
+  nova64.light.createPointLight(0xff6600, 2.0, 40, [0, 15, 0]);
+  nova64.light.createPointLight(0x44aaff, 1.5, 30, [-10, 8, 5]);
+  nova64.light.createPointLight(0xff2200, 1.0, 25, [8, 3, -8]);
 
   // Lava floor with lava2 shader (Phase 1 improved lava)
-  const floorId = createPlane(35, 35, 0xff4400, [0, -0.5, 0]);
-  const floorMesh = getMesh(floorId);
+  const floorId = nova64.scene.createPlane(35, 35, 0xff4400, [0, -0.5, 0]);
+  const floorMesh = nova64.scene.getMesh(floorId);
   if (floorMesh) floorMesh.rotation.x = -Math.PI / 2;
   applyMat(floorId, createLavaMaterial({ speed: 0.15, intensity: 3.0 }));
   ids.push(floorId);
@@ -176,21 +214,21 @@ function setupTerrain() {
       // Deterministic height based on position
       const h = Math.abs(Math.sin(gx * 0.4 + seed) * Math.cos(gz * 0.5 + seed)) * 7 + 0.5;
       const col = dist < 5 ? 0x664422 : dist < 8 ? 0x556644 : 0x445533;
-      const pillarId = createCube(1.6, col, [gx, h / 2, gz]);
-      setScale(pillarId, 1.6, h, 1.6);
+      const pillarId = nova64.scene.createCube(1.6, col, [gx, h / 2, gz]);
+      nova64.scene.setScale(pillarId, 1.6, h, 1.6);
       ids.push(pillarId);
 
       // Electric crystals on tall pillars
       if (h > 4 && (gx + gz + seed) % 3 === 0) {
-        const crystalId = createCone(0.35, 1.2, 0x44ffaa, [gx, h + 0.6, gz]);
+        const crystalId = nova64.scene.createCone(0.35, 1.2, 0x44ffaa, [gx, h + 0.6, gz]);
         applyMat(crystalId, createTSLMaterial('electricity', { speed: 2.5, color: 0x44ffaa }));
         ids.push(crystalId);
       }
 
       // Water pools in low spots
       if (h < 2 && dist > 5) {
-        const poolId = createPlane(1.8, 1.8, 0x2244aa, [gx, 0.1, gz]);
-        const poolMesh = getMesh(poolId);
+        const poolId = nova64.scene.createPlane(1.8, 1.8, 0x2244aa, [gx, 0.1, gz]);
+        const poolMesh = nova64.scene.getMesh(poolId);
         if (poolMesh) poolMesh.rotation.x = -Math.PI / 2;
         applyMat(poolId, createWaterMaterial({ speed: 0.4 }));
         ids.push(poolId);
@@ -199,12 +237,12 @@ function setupTerrain() {
   }
 
   // Central vortex portal
-  const portalId = createTorus(2.5, 0.3, 0xffffff, [0, 3, 0]);
+  const portalId = nova64.scene.createTorus(2.5, 0.3, 0xffffff, [0, 3, 0]);
   applyMat(portalId, createVortexMaterial({ speed: 1.5 }));
   ids.push(portalId);
 
-  enableBloom(1.0, 0.35, 0.35);
-  enableVignette(1.0, 0.8);
+  nova64.fx.enableBloom(1.0, 0.35, 0.35);
+  nova64.fx.enableVignette(1.0, 0.8);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -212,17 +250,17 @@ function setupTerrain() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function setupTornado() {
-  setCameraPosition(12, 10, 12);
-  setCameraTarget(0, 6, 0);
-  setCameraFOV(50);
-  setFog(0x060618, 15, 45);
-  setAmbientLight(0x110022);
-  createPointLight(0xff44aa, 3.0, 40, [0, 12, 0]);
-  createPointLight(0x4400ff, 2.0, 30, [-8, 4, 8]);
+  nova64.camera.setCameraPosition(12, 10, 12);
+  nova64.camera.setCameraTarget(0, 6, 0);
+  nova64.camera.setCameraFOV(50);
+  nova64.light.setFog(0x060618, 15, 45);
+  nova64.light.setAmbientLight(0x110022);
+  nova64.light.createPointLight(0xff44aa, 3.0, 40, [0, 12, 0]);
+  nova64.light.createPointLight(0x4400ff, 2.0, 30, [-8, 4, 8]);
 
   // Ground plane with plasma shader
-  const groundId = createPlane(30, 30, 0x110022, [0, -0.1, 0]);
-  const groundMesh = getMesh(groundId);
+  const groundId = nova64.scene.createPlane(30, 30, 0x110022, [0, -0.1, 0]);
+  const groundMesh = nova64.scene.getMesh(groundId);
   if (groundMesh) groundMesh.rotation.x = -Math.PI / 2;
   applyMat(groundId, createPlasmaMaterial({ speed: 0.3 }));
   ids.push(groundId);
@@ -240,7 +278,7 @@ function setupTornado() {
       const blockSize = 0.35 - layer * 0.008;
       const hue = 0.7 + layer * 0.015;
       const col = hslToHex(hue, 0.95, 0.5 + layer * 0.015);
-      const blockId = createCube(Math.max(blockSize, 0.1), col, [x, y, z], {
+      const blockId = nova64.scene.createCube(Math.max(blockSize, 0.1), col, [x, y, z], {
         emissive: col,
         emissiveIntensity: 2.5,
       });
@@ -251,13 +289,17 @@ function setupTornado() {
   // Orbiting energy orbs with shockwave material
   for (let i = 0; i < 4; i++) {
     const angle = (i / 4) * Math.PI * 2;
-    const orbId = createSphere(0.6, 0xffffff, [Math.cos(angle) * 5, 6, Math.sin(angle) * 5]);
+    const orbId = nova64.scene.createSphere(0.6, 0xffffff, [
+      Math.cos(angle) * 5,
+      6,
+      Math.sin(angle) * 5,
+    ]);
     applyMat(orbId, createShockwaveMaterial({ speed: 0.5 }));
     ids.push(orbId);
   }
 
   // Debris particles
-  particles = createParticleSystem(500, {
+  particles = nova64.fx.createParticleSystem(500, {
     emitRate: 80,
     emitterY: 0,
     minLife: 2,
@@ -285,8 +327,8 @@ function setupTornado() {
     rotationSpeed: 4,
   });
 
-  enableBloom(2.0, 0.5, 0.12);
-  enableVignette(1.2, 0.7);
+  nova64.fx.enableBloom(1.2, 0.45, 0.25);
+  nova64.fx.enableVignette(1.2, 0.7);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -294,14 +336,14 @@ function setupTornado() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function setupMaterialLab() {
-  setCameraPosition(0, 6, 16);
-  setCameraTarget(0, 2.5, 0);
-  setCameraFOV(55);
-  setFog(0x0a0a18, 20, 50);
-  setAmbientLight(0x222244);
-  createPointLight(0xffffff, 2.0, 40, [0, 12, 10]);
-  createPointLight(0xff4400, 1.0, 25, [-10, 6, -5]);
-  createPointLight(0x0044ff, 1.0, 25, [10, 6, -5]);
+  nova64.camera.setCameraPosition(0, 6, 16);
+  nova64.camera.setCameraTarget(0, 2.5, 0);
+  nova64.camera.setCameraFOV(55);
+  nova64.light.setFog(0x0a0a18, 20, 50);
+  nova64.light.setAmbientLight(0x222244);
+  nova64.light.createPointLight(0xffffff, 2.0, 40, [0, 12, 10]);
+  nova64.light.createPointLight(0xff4400, 1.0, 25, [-10, 6, -5]);
+  nova64.light.createPointLight(0x0044ff, 1.0, 25, [10, 6, -5]);
 
   // All 12 presets — two rows of 6 spheres
   const presets = [
@@ -335,7 +377,7 @@ function setupMaterialLab() {
     const y = row === 0 ? 4.5 : 1.0;
     const z = -row * 3;
 
-    const sphereId = createSphere(1.3, 0xffffff, [x, y, z], 20);
+    const sphereId = nova64.scene.createSphere(1.3, 0xffffff, [x, y, z], 20);
     applyMat(sphereId, presets[i].fn());
     ids.push(sphereId);
   }
@@ -354,18 +396,18 @@ function setupMaterialLab() {
     }
   `
   );
-  const customId = createSphere(1.8, 0xffffff, [0, 7.5, -1.5], 24);
+  const customId = nova64.scene.createSphere(1.8, 0xffffff, [0, 7.5, -1.5], 24);
   applyMat(customId, customMat);
   ids.push(customId);
 
   // Floor
-  const floorId = createPlane(40, 20, 0x0a0a1e, [0, -0.5, -1]);
-  const floorMesh = getMesh(floorId);
+  const floorId = nova64.scene.createPlane(40, 20, 0x0a0a1e, [0, -0.5, -1]);
+  const floorMesh = nova64.scene.getMesh(floorId);
   if (floorMesh) floorMesh.rotation.x = -Math.PI / 2;
   ids.push(floorId);
 
-  enableBloom(1.2, 0.35, 0.3);
-  enableVignette(0.8, 0.85);
+  nova64.fx.enableBloom(1.2, 0.35, 0.3);
+  nova64.fx.enableVignette(0.8, 0.85);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -376,19 +418,24 @@ export function update(dt) {
   sceneTime += dt;
 
   // Navigate scenes
-  if (keyp('Space') || keyp('Enter') || keyp('ArrowRight') || keyp('ArrowDown')) {
-    setupScene(currentScene + 1);
+  if (
+    nova64.input.keyp('Space') ||
+    nova64.input.keyp('Enter') ||
+    nova64.input.keyp('ArrowRight') ||
+    nova64.input.keyp('ArrowDown')
+  ) {
+    _local_setupScene(currentScene + 1);
     return;
   }
-  if (keyp('ArrowLeft') || keyp('ArrowUp')) {
-    setupScene(currentScene - 1);
+  if (nova64.input.keyp('ArrowLeft') || nova64.input.keyp('ArrowUp')) {
+    _local_setupScene(currentScene - 1);
     return;
   }
 
   // Rotate all objects gently
   for (let i = 0; i < ids.length; i++) {
     const dir = i % 2 === 0 ? 1 : -1;
-    rotateMesh(ids[i], 0, dt * 0.3 * dir, 0);
+    nova64.scene.rotateMesh(ids[i], 0, dt * 0.3 * dir, 0);
   }
 
   // Scene-specific animation
@@ -396,27 +443,27 @@ export function update(dt) {
     // Galaxy: slow galactic rotation for the whole field
     const cy = 18 + Math.sin(sceneTime * 0.1) * 1.5;
     const cx = Math.sin(sceneTime * 0.05) * 3;
-    setCameraPosition(cx, cy, 22);
+    nova64.camera.setCameraPosition(cx, cy, 22);
   } else if (currentScene === 2) {
     // Tornado: faster rotation for funnel blocks + orbiting camera
     for (let i = 0; i < ids.length; i++) {
       const speed = 0.6 + (i % 25) * 0.04;
-      rotateMesh(ids[i], 0, dt * speed, 0);
+      nova64.scene.rotateMesh(ids[i], 0, dt * speed, 0);
     }
     const camAngle = sceneTime * 0.15;
-    setCameraPosition(
+    nova64.camera.setCameraPosition(
       Math.cos(camAngle) * 14,
       10 + Math.sin(sceneTime * 0.2) * 2,
       Math.sin(camAngle) * 14
     );
-    setCameraTarget(0, 6, 0);
+    nova64.camera.setCameraTarget(0, 6, 0);
   } else if (currentScene === 3) {
     // Material Lab: gentle camera bob
     const cy = 6 + Math.sin(sceneTime * 0.12) * 0.4;
-    setCameraPosition(0, cy, 16);
+    nova64.camera.setCameraPosition(0, cy, 16);
   }
 
-  updateParticles(dt);
+  nova64.fx.updateParticles(dt);
 }
 
 const sceneNames = ['Galaxy Spiral', 'Procedural Terrain', 'Energy Tornado', 'Material Lab'];
@@ -428,33 +475,33 @@ const sceneDescs = [
 ];
 
 export function draw() {
-  const W = typeof screenWidth === 'function' ? screenWidth() : 640;
-  const H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  const W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+  const H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
   const num = currentScene + 1;
 
   // Title bar
-  print('TSL SHOWCASE', 10, 8, 0x00ffcc, 2);
-  print(`${num}/${SCENE_COUNT}`, W - 50, 10, 0x00ffcc);
+  nova64.draw.print('TSL SHOWCASE', 10, 8, 0x00ffcc, 2);
+  nova64.draw.print(`${num}/${SCENE_COUNT}`, W - 50, 10, 0x00ffcc);
 
   // Scene name + description
   const name = sceneNames[currentScene];
   const nameW = name.length * 8;
-  print(name, Math.floor((W - nameW) / 2), 38, 0xffffff, 2);
+  nova64.draw.print(name, Math.floor((W - nameW) / 2), 38, 0xffffff, 2);
   const desc = sceneDescs[currentScene];
   const descW = desc.length * 7;
-  print(desc, Math.floor((W - descW) / 2), 58, 0x888899);
+  nova64.draw.print(desc, Math.floor((W - descW) / 2), 58, 0x888899);
 
   // Navigation hint
   const hint = 'SPACE / ENTER  next     ARROWS  prev/next';
   const hintW = hint.length * 7;
-  print(hint, Math.floor((W - hintW) / 2), H - 16, 0x555577);
+  nova64.draw.print(hint, Math.floor((W - hintW) / 2), H - 16, 0x555577);
 
   // Dot indicators
   const dotW = SCENE_COUNT * 14;
   const dotX = Math.floor((W - dotW) / 2);
   for (let i = 0; i < SCENE_COUNT; i++) {
     const col = i === currentScene ? 0x00ffcc : 0x333344;
-    print('\u2022', dotX + i * 14, H - 30, col, 2);
+    nova64.draw.print('\u2022', dotX + i * 14, H - 30, col, 2);
   }
 
   // Material Lab: label each preset
@@ -481,8 +528,8 @@ export function draw() {
       const row = Math.floor(i / cols);
       const lx = startPx + col * 68;
       const ly = row === 0 ? 110 : 230;
-      print(names[i], lx, ly, row === 0 ? 0x999999 : 0x44ffaa);
+      nova64.draw.print(names[i], lx, ly, row === 0 ? 0x999999 : 0x44ffaa);
     }
-    print('custom GLSL', Math.floor(W / 2) - 40, 80, 0x44ffaa);
+    nova64.draw.print('custom GLSL', Math.floor(W / 2) - 40, 80, 0x44ffaa);
   }
 }

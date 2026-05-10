@@ -37,11 +37,12 @@ Nova64's intelligent renderer system ensures maximum compatibility:
 
 ### 🎨 **Advanced Object Creation**
 
-#### `createCube(size, color, position, options?)` ⭐
+#### `createCube(size, color, position, options?)` / `createCube(width, height, depth, color, position, options?)` ⭐
 
-Creates a cube mesh.
+Creates a cube or rectangular box mesh.
 
 - `size` (number): Cube side length (default: 1)
+- `width`, `height`, `depth` (number): Box dimensions when using the rectangular signature
 - `color` (hex): Colour, e.g. `0xff4488`
 - `position` (array): `[x, y, z]` world position (default: `[0, 0, 0]`)
 - `options` (object): Material options — see Material Options table
@@ -50,6 +51,9 @@ Creates a cube mesh.
 ```javascript
 // Basic cube
 const box = createCube(2, 0xff4488, [0, 1, 0]);
+
+// Rectangular box
+const wall = createCube(8, 3, 0.5, 0x666688, [0, 1.5, -4]);
 
 // Holographic cube
 const holoCube = createCube(1.5, 0x00ff88, [3, 1, -3], {

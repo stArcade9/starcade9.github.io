@@ -1,5 +1,11 @@
 // HELLO 3D WORLD - Simple Nintendo 64/PlayStation style 3D demo
 // Demonstrates basic 3D rendering with GPU acceleration
+//
+// 💡 TIP: All globals also live under the `nova64` namespace:
+//   const { createCube, setPosition, rotateMesh } = nova64.scene;
+//   const { setCameraPosition, setCameraTarget } = nova64.camera;
+//   const { print, rgba8, cls } = nova64.draw;
+//   const { key, isKeyPressed } = nova64.input;
 
 let cubes = [];
 let spheres = [];
@@ -18,20 +24,20 @@ export async function init() {
   cubes = [];
   spheres = [];
 
-  cls();
+  nova64.draw.cls();
 
   // Setup 3D scene
-  setCameraPosition(0, 5, 15);
-  setCameraTarget(0, 0, 0);
-  setCameraFOV(60);
+  nova64.camera.setCameraPosition(0, 5, 15);
+  nova64.camera.setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraFOV(60);
 
   // Nintendo 64 style lighting
-  setLightDirection(-0.5, -1, -0.3);
-  setFog(0x202040, 20, 100);
+  nova64.light.setLightDirection(-0.5, -1, -0.3);
+  nova64.light.setFog(0x202040, 20, 100);
 
   // Enable retro effects
-  enablePixelation(1);
-  enableDithering(true);
+  nova64.fx.enablePixelation(1);
+  nova64.fx.enableDithering(true);
 
   // Create some basic 3D objects
   createScene();
@@ -48,8 +54,8 @@ function initStartScreen() {
 
   // Start button - positioned higher for easier clicking
   uiButtons.push(
-    createButton(
-      centerX(220),
+    nova64.ui.createButton(
+      nova64.ui.centerX(220),
       150,
       220,
       55,
@@ -60,17 +66,17 @@ function initStartScreen() {
         console.log('✅ gameState is now:', gameState);
       },
       {
-        normalColor: rgba8(50, 180, 255, 255),
-        hoverColor: rgba8(80, 200, 255, 255),
-        pressedColor: rgba8(20, 140, 220, 255),
+        normalColor: nova64.draw.rgba8(50, 180, 255, 255),
+        hoverColor: nova64.draw.rgba8(80, 200, 255, 255),
+        pressedColor: nova64.draw.rgba8(20, 140, 220, 255),
       }
     )
   );
 
   // Info button
   uiButtons.push(
-    createButton(
-      centerX(200),
+    nova64.ui.createButton(
+      nova64.ui.centerX(200),
       350,
       200,
       45,
@@ -79,9 +85,9 @@ function initStartScreen() {
         console.log('Hello 3D World - Basic 3D demo with GPU acceleration');
       },
       {
-        normalColor: rgba8(100, 100, 255, 255),
-        hoverColor: rgba8(130, 130, 255, 255),
-        pressedColor: rgba8(70, 70, 220, 255),
+        normalColor: nova64.draw.rgba8(100, 100, 255, 255),
+        hoverColor: nova64.draw.rgba8(130, 130, 255, 255),
+        pressedColor: nova64.draw.rgba8(70, 70, 220, 255),
       }
     )
   );
@@ -98,7 +104,7 @@ function createScene() {
     const z = Math.sin(angle) * 8;
 
     // Create cube with enhanced visual effects
-    const cube = createCube(2, colors[i], [x, 0, z]);
+    const cube = nova64.scene.createCube(2, colors[i], [x, 0, z]);
 
     cubes.push({
       mesh: cube,
@@ -113,7 +119,7 @@ function createScene() {
 
   // Create magical glowing spheres
   for (let i = 0; i < 4; i++) {
-    const sphere = createSphere(1, 0x88ddff, [
+    const sphere = nova64.scene.createSphere(1, 0x88ddff, [
       (Math.random() - 0.5) * 12,
       2 + Math.random() * 4,
       (Math.random() - 0.5) * 12,
@@ -132,8 +138,8 @@ function createScene() {
   }
 
   // Create stunning ground plane
-  const ground = createPlane(40, 40, 0x444466, [0, -2, 0]);
-  setRotation(ground, -Math.PI / 2, 0, 0);
+  const ground = nova64.scene.createPlane(40, 40, 0x444466, [0, -2, 0]);
+  nova64.scene.setRotation(ground, -Math.PI / 2, 0, 0);
 }
 
 export function update(dt) {
@@ -147,10 +153,14 @@ export function update(dt) {
 
   if (gameState === 'start') {
     startScreenTime += dt;
-    updateAllButtons();
+    nova64.ui.updateAllButtons();
 
     // KEYBOARD FALLBACK: Press ENTER or SPACE to start
-    if (isKeyPressed('Enter') || isKeyPressed(' ') || isKeyPressed('Space')) {
+    if (
+      nova64.input.isKeyPressed('Enter') ||
+      nova64.input.isKeyPressed(' ') ||
+      nova64.input.isKeyPressed('Space')
+    ) {
       console.log('🎮 Keyboard start pressed!');
       gameState = 'playing';
       return;
@@ -160,15 +170,15 @@ export function update(dt) {
     cubes.forEach(cube => {
       cube.bobPhase += dt * 2;
       const bobY = Math.sin(cube.bobPhase) * 2;
-      setPosition(cube.mesh, cube.x, bobY, cube.z);
-      rotateMesh(cube.mesh, dt * cube.rotationSpeed, dt * cube.rotationSpeed * 0.7, 0);
+      nova64.scene.setPosition(cube.mesh, cube.x, bobY, cube.z);
+      nova64.scene.rotateMesh(cube.mesh, dt * cube.rotationSpeed, dt * cube.rotationSpeed * 0.7, 0);
     });
 
     cameraAngle += dt * 0.2;
     const camX = Math.cos(cameraAngle) * 15;
     const camZ = Math.sin(cameraAngle) * 15;
-    setCameraPosition(camX, 8, camZ);
-    setCameraTarget(0, 0, 0);
+    nova64.camera.setCameraPosition(camX, 8, camZ);
+    nova64.camera.setCameraTarget(0, 0, 0);
     return;
   }
 
@@ -178,8 +188,8 @@ export function update(dt) {
     cube.bobPhase += dt * 2;
     const bobY = Math.sin(cube.bobPhase) * 2;
 
-    setPosition(cube.mesh, cube.x, bobY, cube.z);
-    rotateMesh(cube.mesh, dt * cube.rotationSpeed, dt * cube.rotationSpeed * 0.7, 0);
+    nova64.scene.setPosition(cube.mesh, cube.x, bobY, cube.z);
+    nova64.scene.rotateMesh(cube.mesh, dt * cube.rotationSpeed, dt * cube.rotationSpeed * 0.7, 0);
   });
 
   // Bounce spheres
@@ -207,7 +217,7 @@ export function update(dt) {
       sphere.z = Math.sign(sphere.z) * 10;
     }
 
-    setPosition(sphere.mesh, sphere.x, sphere.y, sphere.z);
+    nova64.scene.setPosition(sphere.mesh, sphere.x, sphere.y, sphere.z);
   });
 
   // Rotate camera
@@ -215,8 +225,8 @@ export function update(dt) {
   const camX = Math.cos(cameraAngle) * 15;
   const camZ = Math.sin(cameraAngle) * 15;
 
-  setCameraPosition(camX, 8, camZ);
-  setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraPosition(camX, 8, camZ);
+  nova64.camera.setCameraTarget(0, 0, 0);
 }
 
 export function draw() {
@@ -226,100 +236,174 @@ export function draw() {
   }
 
   // Playing - Simple HUD
-  print('🎮 HELLO 3D WORLD', 8, 8, rgba8(0, 255, 255, 255));
-  print('Nintendo 64 / PlayStation Style', 8, 24, rgba8(255, 200, 0, 255));
-  print(`Time: ${time.toFixed(1)}s`, 8, 40, rgba8(255, 255, 255, 255));
-  print(`Objects: ${cubes.length + spheres.length + 1}`, 8, 56, rgba8(100, 255, 100, 255));
+  nova64.draw.print('🎮 HELLO 3D WORLD', 8, 8, nova64.draw.rgba8(0, 255, 255, 255));
+  nova64.draw.print('Nintendo 64 / PlayStation Style', 8, 24, nova64.draw.rgba8(255, 200, 0, 255));
+  nova64.draw.print(`Time: ${time.toFixed(1)}s`, 8, 40, nova64.draw.rgba8(255, 255, 255, 255));
+  nova64.draw.print(
+    `Objects: ${cubes.length + spheres.length + 1}`,
+    8,
+    56,
+    nova64.draw.rgba8(100, 255, 100, 255)
+  );
 
   // 3D Stats
-  const stats = get3DStats();
+  const stats = nova64.scene.get3DStats();
   if (stats && stats.render) {
-    print(`3D Meshes: ${stats.meshes || 0}`, 8, 72, rgba8(150, 150, 255, 255));
-    print(`GPU: ${stats.renderer || 'Three.js'}`, 8, 88, rgba8(150, 150, 255, 255));
+    nova64.draw.print(
+      `3D Meshes: ${stats.meshes || 0}`,
+      8,
+      72,
+      nova64.draw.rgba8(150, 150, 255, 255)
+    );
+    nova64.draw.print(
+      `GPU: ${stats.renderer || 'Three.js'}`,
+      8,
+      88,
+      nova64.draw.rgba8(150, 150, 255, 255)
+    );
   }
 
-  print('WASD: Move camera manually', 8, 320, rgba8(200, 200, 200, 200));
-  print('Full GPU 3D acceleration with Three.js!', 8, 340, rgba8(100, 255, 100, 180));
+  nova64.draw.print('WASD: Move camera manually', 8, 320, nova64.draw.rgba8(200, 200, 200, 200));
+  nova64.draw.print(
+    'Full GPU 3D acceleration with Three.js!',
+    8,
+    340,
+    nova64.draw.rgba8(100, 255, 100, 180)
+  );
 }
 
 function drawStartScreen() {
   // Bright gradient background
-  drawGradientRect(0, 0, 640, 360, rgba8(30, 60, 120, 230), rgba8(10, 30, 80, 240), true);
+  nova64.ui.drawGradientRect(
+    0,
+    0,
+    640,
+    360,
+    nova64.draw.rgba8(30, 60, 120, 230),
+    nova64.draw.rgba8(10, 30, 80, 240),
+    true
+  );
 
   // Animated title with rainbow glow
   const rainbow = [
-    rgba8(255, 0, 0, 255),
-    rgba8(255, 127, 0, 255),
-    rgba8(255, 255, 0, 255),
-    rgba8(0, 255, 0, 255),
-    rgba8(0, 0, 255, 255),
-    rgba8(148, 0, 211, 255),
+    nova64.draw.rgba8(255, 0, 0, 255),
+    nova64.draw.rgba8(255, 127, 0, 255),
+    nova64.draw.rgba8(255, 255, 0, 255),
+    nova64.draw.rgba8(0, 255, 0, 255),
+    nova64.draw.rgba8(0, 0, 255, 255),
+    nova64.draw.rgba8(148, 0, 211, 255),
   ];
   const colorIndex = Math.floor(startScreenTime * 2) % rainbow.length;
 
-  setFont('huge');
-  setTextAlign('center');
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
   const bounce = Math.sin(startScreenTime * 3) * 8;
-  drawTextShadow('HELLO', 320, 60 + bounce, rainbow[colorIndex], rgba8(0, 0, 0, 255), 5, 1);
-  drawTextShadow('3D WORLD', 320, 110 + bounce, rgba8(0, 255, 255, 255), rgba8(0, 0, 0, 255), 5, 1);
+  nova64.ui.drawTextShadow(
+    'HELLO',
+    320,
+    60 + bounce,
+    rainbow[colorIndex],
+    nova64.draw.rgba8(0, 0, 0, 255),
+    5,
+    1
+  );
+  nova64.ui.drawTextShadow(
+    '3D WORLD',
+    320,
+    110 + bounce,
+    nova64.draw.rgba8(0, 255, 255, 255),
+    nova64.draw.rgba8(0, 0, 0, 255),
+    5,
+    1
+  );
 
   // Subtitle
-  setFont('large');
+  nova64.ui.setFont('large');
   const pulse = Math.sin(startScreenTime * 4) * 0.3 + 0.7;
-  drawTextOutline(
+  nova64.ui.drawTextOutline(
     'Nintendo 64 / PlayStation Style',
     320,
     160,
-    rgba8(255, 200, 0, Math.floor(pulse * 255)),
-    rgba8(0, 0, 0, 255),
+    nova64.draw.rgba8(255, 200, 0, Math.floor(pulse * 255)),
+    nova64.draw.rgba8(0, 0, 0, 255),
     1
   );
 
   // Info panel
-  const panel = createPanel(centerX(450), 200, 450, 180, {
-    bgColor: rgba8(20, 40, 80, 200),
-    borderColor: rgba8(50, 180, 255, 255),
+  const panel = nova64.ui.createPanel(nova64.ui.centerX(450), 200, 450, 180, {
+    bgColor: nova64.draw.rgba8(20, 40, 80, 200),
+    borderColor: nova64.draw.rgba8(50, 180, 255, 255),
     borderWidth: 3,
     shadow: true,
     gradient: true,
-    gradientColor: rgba8(30, 50, 100, 200),
+    gradientColor: nova64.draw.rgba8(30, 50, 100, 200),
   });
-  drawPanel(panel);
+  nova64.draw.drawPanel(panel);
 
-  setFont('normal');
-  setTextAlign('center');
-  drawText('BASIC 3D RENDERING DEMO', 320, 220, rgba8(0, 255, 255, 255), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText('BASIC 3D RENDERING DEMO', 320, 220, nova64.draw.rgba8(0, 255, 255, 255), 1);
 
-  setFont('small');
-  drawText('Experience GPU-accelerated 3D graphics with Three.js', 320, 245, uiColors.light, 1);
-  drawText('Watch spinning cubes and bouncing spheres', 320, 260, uiColors.light, 1);
-  drawText('Full retro Nintendo 64 visual effects enabled', 320, 275, uiColors.light, 1);
+  nova64.ui.setFont('small');
+  nova64.ui.drawText(
+    'Experience GPU-accelerated 3D graphics with Three.js',
+    320,
+    245,
+    nova64.ui.uiColors.light,
+    1
+  );
+  nova64.ui.drawText(
+    'Watch spinning cubes and bouncing spheres',
+    320,
+    260,
+    nova64.ui.uiColors.light,
+    1
+  );
+  nova64.ui.drawText(
+    'Full retro Nintendo 64 visual effects enabled',
+    320,
+    275,
+    nova64.ui.uiColors.light,
+    1
+  );
 
-  setFont('tiny');
-  drawText('Camera rotates automatically around the scene', 320, 300, uiColors.secondary, 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.drawText(
+    'Camera rotates automatically around the scene',
+    320,
+    300,
+    nova64.ui.uiColors.secondary,
+    1
+  );
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
   // DEBUG: Show mouse position and button bounds
-  const mx = mouseX();
-  const my = mouseY();
+  const mx = nova64.input.mouseX();
+  const my = nova64.input.mouseY();
   if (mx >= 0 && my >= 0) {
-    setFont('tiny');
-    setTextAlign('left');
-    drawText(`Mouse: ${mx}, ${my}`, 10, 10, rgba8(255, 255, 0, 255), 1);
+    nova64.ui.setFont('tiny');
+    nova64.ui.setTextAlign('left');
+    nova64.ui.drawText(`Mouse: ${mx}, ${my}`, 10, 10, nova64.draw.rgba8(255, 255, 0, 255), 1);
     // Draw crosshair at mouse position
-    line(mx - 10, my, mx + 10, my, rgba8(0, 255, 0, 255));
-    line(mx, my - 10, mx, my + 10, rgba8(0, 255, 0, 255));
+    nova64.draw.line(mx - 10, my, mx + 10, my, nova64.draw.rgba8(0, 255, 0, 255));
+    nova64.draw.line(mx, my - 10, mx, my + 10, nova64.draw.rgba8(0, 255, 0, 255));
   }
 
   // Pulsing start prompt
   const alpha = Math.floor((Math.sin(startScreenTime * 6) * 0.5 + 0.5) * 255);
-  setFont('normal');
-  setTextAlign('center');
-  drawText('▶ PRESS START DEMO ◀', 320, 425, rgba8(50, 200, 255, alpha), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText('▶ PRESS START DEMO ◀', 320, 425, nova64.draw.rgba8(50, 200, 255, alpha), 1);
 
   // Nova64 branding
-  setFont('tiny');
-  drawText('Nova64 v0.2.0 - Fantasy Console', 320, 345, rgba8(150, 150, 200, 150), 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.drawText(
+    'Nova64 v0.2.0 - Fantasy Console',
+    320,
+    345,
+    nova64.draw.rgba8(150, 150, 200, 150),
+    1
+  );
 }

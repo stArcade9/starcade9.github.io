@@ -2,6 +2,15 @@
 // A mesmerizing cellular automata with multiple rulesets and patterns
 // Uses the Nova64 3D engine for a stunning visual twist on classic CA
 
+const { print, printCentered, rect, rgba8 } = nova64.draw;
+const { createCube, destroyMesh, engine, setPosition, setScale } = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { setAmbientLight, setFog, setLightDirection } = nova64.light;
+const { enableBloom } = nova64.fx;
+const { keyp } = nova64.input;
+const { remove } = nova64.data;
+const { color, hsb } = nova64.util;
+
 const GRID_W = 40;
 const GRID_H = 30;
 const CELL_SIZE = 0.9;
@@ -43,7 +52,7 @@ function clearMeshes() {
   for (let y = 0; y < GRID_H; y++) {
     for (let x = 0; x < GRID_W; x++) {
       if (meshGrid[y] && meshGrid[y][x]) {
-        destroyMesh(meshGrid[y][x]);
+        nova64.scene.destroyMesh(meshGrid[y][x]);
         meshGrid[y][x] = null;
       }
     }
@@ -195,10 +204,10 @@ export function init() {
   meshGrid = [];
   for (let y = 0; y < GRID_H; y++) meshGrid[y] = new Array(GRID_W).fill(null);
 
-  setAmbientLight(0xffffff, 0.3);
-  setLightDirection(-1, -2, -1);
-  setFog(0x050510, 30, 80);
-  enableBloom(1.0, 0.4, 0.3);
+  nova64.light.setAmbientLight(0xffffff, 0.3);
+  nova64.light.setLightDirection(-1, -2, -1);
+  nova64.light.setFog(0x050510, 30, 80);
+  nova64.fx.enableBloom(1.0, 0.4, 0.3);
 
   loadPattern(0);
   gameState = 'start';
@@ -209,7 +218,7 @@ export function update(dt) {
   time += dt;
 
   if (gameState === 'start') {
-    if (keyp('Space') || keyp('Enter')) {
+    if (nova64.input.keyp('Space') || nova64.input.keyp('Enter')) {
       gameState = 'running';
     }
     // Still animate camera on start
@@ -219,23 +228,23 @@ export function update(dt) {
   }
 
   // Controls
-  if (keyp('Space')) paused = !paused;
-  if (keyp('ArrowRight')) {
+  if (nova64.input.keyp('Space')) paused = !paused;
+  if (nova64.input.keyp('ArrowRight')) {
     ruleset = (ruleset + 1) % RULESETS.length;
     loadPattern(pattern);
   }
-  if (keyp('ArrowLeft')) {
+  if (nova64.input.keyp('ArrowLeft')) {
     ruleset = (ruleset - 1 + RULESETS.length) % RULESETS.length;
     loadPattern(pattern);
   }
-  if (keyp('ArrowUp')) {
+  if (nova64.input.keyp('ArrowUp')) {
     pattern = (pattern + 1) % 4;
     loadPattern(pattern);
   }
-  if (keyp('ArrowDown')) {
+  if (nova64.input.keyp('ArrowDown')) {
     tickSpeed = tickSpeed === 0.12 ? 0.04 : tickSpeed === 0.04 ? 0.25 : 0.12;
   }
-  if (keyp('KeyR')) loadPattern(pattern);
+  if (nova64.input.keyp('KeyR')) loadPattern(pattern);
 
   // Simulation tick
   if (!paused) {
@@ -259,8 +268,8 @@ function updateCamera() {
   const cz = GRID_H * CELL_SIZE * 0.5;
   const camX = cx + Math.cos(cameraAngle) * cameraDistance;
   const camZ = cz + Math.sin(cameraAngle) * cameraDistance;
-  setCameraPosition(camX, cameraHeight, camZ);
-  setCameraTarget(cx, 0, cz);
+  nova64.camera.setCameraPosition(camX, cameraHeight, camZ);
+  nova64.camera.setCameraTarget(cx, 0, cz);
 }
 
 function syncMeshes() {
@@ -272,15 +281,15 @@ function syncMeshes() {
       if (alive && !hasMesh) {
         // Birth — create a cube
         const hue = ((x + y) * 7 + generation * 2) % 360;
-        const col = hsb(hue, 80, 90);
+        const col = nova64.util.hsb(hue, 80, 90);
         const px = x * CELL_SIZE;
         const pz = y * CELL_SIZE;
         const height = 0.5 + Math.sin(generation * 0.3 + x * 0.2 + y * 0.2) * 0.3;
-        meshGrid[y][x] = createCube(CELL_SIZE * 0.85, col, [px, height, pz]);
-        setScale(meshGrid[y][x], 1, 0.5 + height, 1);
+        meshGrid[y][x] = nova64.scene.createCube(CELL_SIZE * 0.85, col, [px, height, pz]);
+        nova64.scene.setScale(meshGrid[y][x], 1, 0.5 + height, 1);
       } else if (!alive && hasMesh) {
         // Death — remove the cube
-        destroyMesh(meshGrid[y][x]);
+        nova64.scene.destroyMesh(meshGrid[y][x]);
         meshGrid[y][x] = null;
       } else if (alive && hasMesh) {
         // Alive — animate height and color
@@ -288,8 +297,8 @@ function syncMeshes() {
         const height = 0.5 + Math.sin(generation * 0.3 + x * 0.2 + y * 0.2) * 0.3;
         const px = x * CELL_SIZE;
         const pz = y * CELL_SIZE;
-        setPosition(meshGrid[y][x], px, height, pz);
-        setScale(meshGrid[y][x], 1, 0.5 + height, 1);
+        nova64.scene.setPosition(meshGrid[y][x], px, height, pz);
+        nova64.scene.setScale(meshGrid[y][x], 1, 0.5 + height, 1);
       }
     }
   }
@@ -304,35 +313,50 @@ function countAlive() {
 export function draw() {
   if (gameState === 'start') {
     // Dark overlay
-    rect(0, 0, 640, 360, rgba8(0, 0, 20, 180), true);
-    printCentered('GAME OF LIFE 3D', 320, 80, rgba8(100, 200, 255));
-    printCentered("Conway's Cellular Automata in Three Dimensions", 320, 110, rgba8(150, 150, 200));
+    nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 20, 180), true);
+    nova64.draw.printCentered('GAME OF LIFE 3D', 320, 80, nova64.draw.rgba8(100, 200, 255));
+    nova64.draw.printCentered(
+      "Conway's Cellular Automata in Three Dimensions",
+      320,
+      110,
+      nova64.draw.rgba8(150, 150, 200)
+    );
     const pulse = Math.sin(time * 3) * 0.5 + 0.5;
-    printCentered('PRESS SPACE TO BEGIN', 320, 180, rgba8(255, 255, 100, 100 + pulse * 155));
-    printCentered(
+    nova64.draw.printCentered(
+      'PRESS SPACE TO BEGIN',
+      320,
+      180,
+      nova64.draw.rgba8(255, 255, 100, 100 + pulse * 155)
+    );
+    nova64.draw.printCentered(
       'LEFT/RIGHT = Ruleset  |  UP = Pattern  |  R = Reset',
       320,
       240,
-      rgba8(120, 120, 160)
+      nova64.draw.rgba8(120, 120, 160)
     );
-    printCentered('DOWN = Speed  |  SPACE = Pause', 320, 260, rgba8(120, 120, 160));
+    nova64.draw.printCentered(
+      'DOWN = Speed  |  SPACE = Pause',
+      320,
+      260,
+      nova64.draw.rgba8(120, 120, 160)
+    );
     return;
   }
 
   // Minimal HUD over 3D scene
-  rect(0, 0, 640, 20, rgba8(0, 0, 0, 120), true);
+  nova64.draw.rect(0, 0, 640, 20, nova64.draw.rgba8(0, 0, 0, 120), true);
   const alive = countAlive();
   const speedLabel = tickSpeed <= 0.04 ? 'FAST' : tickSpeed >= 0.25 ? 'SLOW' : 'MED';
-  print(
+  nova64.draw.print(
     `${RULESETS[ruleset].name}  |  GEN: ${generation}  |  ALIVE: ${alive}  |  SPEED: ${speedLabel}${paused ? '  [PAUSED]' : ''}`,
     10,
     6,
-    rgba8(180, 220, 255)
+    nova64.draw.rgba8(180, 220, 255)
   );
-  print(
+  nova64.draw.print(
     'LEFT/RIGHT=Rules UP=Pattern DOWN=Speed R=Reset SPACE=Pause',
     10,
     348,
-    rgba8(100, 100, 130, 180)
+    nova64.draw.rgba8(100, 100, 130, 180)
   );
 }

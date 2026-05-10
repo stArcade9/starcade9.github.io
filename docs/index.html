@@ -73,6 +73,15 @@
     .docs-footer p,.docs-footer a{font-size:13px;color:var(--muted)}
     .docs-footer a:hover{color:var(--cyan)}
   </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 </head>
 <body>
 <div class="terminal-hero">
@@ -96,7 +105,7 @@
 <header class="docs-header">
   <h1>NOVA<span>64</span> RUNTIME</h1>
   <p class="sub">Complete API reference for the Nova64 3D Fantasy Console</p>
-  <span class="version">v0.4.8</span>
+  <span class="version">v0.4.9</span>
 </header>
 <nav class="docs-nav-strip">
   <ul>
@@ -135,7 +144,7 @@
     <div class="os-hero-band">
       <div class="ohb-text">
         <h3>Run a whole OS in your browser</h3>
-        <p>NovaOS is a Mac&nbsp;OS&nbsp;9-inspired fantasy operating system bundled with Nova64. Window manager, virtual filesystem, app framework, event bus, and a boot sequence that makes you feel like it&rsquo;s&nbsp;1999.</p>
+        <p>NovaOS is a Mac&nbsp;OS&nbsp;9-inspired fantasy operating system bundled with Nova64. Window manager, virtual filesystem, app framework, event bus, crystal desktop backgrounds, and a modernized boot sequence.</p>
       </div>
       <a href="os.html" class="ohb-btn">Full OS Docs &#8599;</a>
     </div>
@@ -170,6 +179,11 @@
         <h3>Preferences</h3>
         <p>JSON-serialisable key/value store backed by the VFS. Namespaced and persistent.</p>
       </a>
+      <a href="os.html#backgrounds" class="api-card os-card">
+        <span class="icon">&#127912;</span>
+        <h3>Desktop Backgrounds</h3>
+        <p>Built-in crystal wallpapers, solid colors, custom image URLs, and visual-only sandboxed HTML iframe backgrounds from Appearance or desktop right-click.</p>
+      </a>
     </div>
   </section>
 
@@ -189,7 +203,7 @@
       <a href="gpu-systems.html" class="api-card console-card">
         <span class="icon">&#128296;</span>
         <h3>GPU Systems</h3>
-        <p>Three.js backend, WebGL2 fallback, Canvas2D fallback. Advanced materials, shaders, and post-processing.</p>
+        <p>Three.js and Babylon.js backends with WebGL2 and Canvas2D fallback paths. Advanced materials, shaders, post-processing, and parity guardrails.</p>
       </a>
       <a href="assets.html" class="api-card console-card">
         <span class="icon">&#128230;</span>
@@ -225,7 +239,7 @@
       <a href="api-voxel.html" class="api-card">
         <span class="icon">&#129513;</span>
         <h3>Voxel Engine</h3>
-        <p>Full Minecraft-style voxel world. Biomes, fluid simulation, entity system, path-finding, and save/load.</p>
+        <p>Full Minecraft-style voxel world with backend-aware Three.js and Babylon.js chunk/entity rendering.</p>
       </a>
       <a href="font.html" class="api-card">
         <span class="icon">&#128293;</span>
@@ -319,7 +333,7 @@
       <a href="wad.html" class="api-card">
         <span class="icon">&#128184;</span>
         <h3>WAD Asset Bundle</h3>
-        <p>Doom-inspired WAD format for packaging sprites, audio, and level data into distributable cart files.</p>
+        <p>Doom-inspired WAD loading with wall/floor textures, sprite billboards, and Babylon.js visual parity coverage.</p>
       </a>
     </div>
   </section>
@@ -350,7 +364,17 @@
       <a href="gpu-systems.html" class="api-card">
         <span class="icon">&#128296;</span>
         <h3>GPU Systems</h3>
-        <p>Three.js, WebGL2, and Canvas2D renderer backends. Progressive fallback on capability detect.</p>
+        <p>Three.js, Babylon.js, WebGL2, and Canvas2D renderer backends with capability-gated fallback behavior.</p>
+      </a>
+      <a href="BACKEND_RUNTIME.md" class="api-card">
+        <span class="icon">&#9881;&#65039;</span>
+        <h3>Backend Runtime</h3>
+        <p>Backend architecture notes for Babylon compatibility, WAD parity, voxel routing, TSL visual checks, and focused validation commands.</p>
+      </a>
+      <a href="BABYLON_NOA_INTEGRATION.md" class="api-card">
+        <span class="icon">&#129482;</span>
+        <h3>Babylon NOA Adapter</h3>
+        <p>Experimental, opt-in NOA adapter notes for Babylon voxel parity work without bypassing the shared voxel API.</p>
       </a>
     </div>
   </section>

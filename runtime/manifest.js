@@ -7,6 +7,11 @@ import { i18nApi } from './i18n.js';
 import { dataApi } from './data.js';
 import { assetLoaderApi } from './asset-loader.js';
 
+const _exampleMetaModules = import.meta.glob('../examples/**/meta.json', {
+  eager: true,
+  import: 'default',
+});
+
 // ── Subsystem instances ──────────────────────────────────────
 let _envInst = null;
 let _i18nInst = null;
@@ -110,9 +115,28 @@ export function manifestApi() {
     },
     _reset: _resetAll,
     async _loadFromCart(mod, cartPath) {
-      // Try fetching meta.json from the cart directory (convention over configuration)
       const basePath = cartPath ? cartPath.replace(/\/[^/]+$/, '') : '';
-      if (basePath) {
+
+      // Example carts are bundled by Vite, so we can check for sidecar metadata
+      // without issuing a fetch that would spam the console with 404s.
+      if (basePath.startsWith('/examples/')) {
+        const bundledMeta = _exampleMetaModules[`..${basePath}/meta.json`];
+        if (bundledMeta) {
+          logger.info('📄 Loaded bundled meta.json from', basePath);
+          if (_envInst && _envInst._setRawMeta) _envInst._setRawMeta(bundledMeta);
+          _loadManifest(bundledMeta, cartPath);
+          return;
+        }
+      }
+
+      // Fallback: check if cart exports env (legacy inline manifest)
+      if (mod.env) {
+        _loadManifest(mod.env, cartPath);
+        return;
+      }
+
+      // For non-bundled carts, still try the conventional sidecar meta.json.
+      if (basePath && !basePath.startsWith('/examples/')) {
         try {
           const metaUrl = basePath + '/meta.json?t=' + Date.now();
           const res = await fetch(metaUrl);
@@ -127,11 +151,6 @@ export function manifestApi() {
         } catch {
           // No meta.json or fetch failed — fall through to export const env
         }
-      }
-
-      // Fallback: check if cart exports env (legacy inline manifest)
-      if (mod.env) {
-        _loadManifest(mod.env, cartPath);
       }
     },
   };

@@ -512,7 +512,39 @@ export function voxelApi(gpu) {
   // World data
   const chunks = new Map();
   const chunkMeshes = new Map();
-  let worldSeed = Math.floor(Math.random() * 50000);
+
+  function hashStringToSeed(input) {
+    let hash = 2166136261;
+    const text = String(input || 'nova64-voxel');
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0) % 1000000;
+  }
+
+  function resolveDefaultWorldSeed(cartPath = null) {
+    if (typeof window === 'undefined') return 1337;
+
+    const activeCartPath =
+      cartPath ||
+      globalThis.__NOVA64_CURRENT_CART_PATH ||
+      globalThis.__nova64CurrentCartPath ||
+      null;
+    if (activeCartPath) return hashStringToSeed(`nova64-cart-path:${activeCartPath}`);
+
+    const params = new URLSearchParams(window.location.search);
+    const demo = params.get('demo');
+    if (demo) return hashStringToSeed(`nova64-demo:${demo}`);
+
+    const cart = params.get('cart');
+    if (cart) return hashStringToSeed(`nova64-cart:${cart}`);
+
+    const normalizedPath = window.location.pathname.replace('babylon_console.html', 'console.html');
+    return hashStringToSeed(`nova64-path:${normalizedPath}`);
+  }
+
+  let worldSeed = resolveDefaultWorldSeed();
   let noise = createSimplexNoise(worldSeed);
 
   // Shared materials (fix material leak — one material for all chunks)
@@ -796,9 +828,35 @@ export function voxelApi(gpu) {
     return canvas;
   }
 
-  function buildAtlasTexture() {
-    const canvas = generateProceduralAtlas();
+  // Inject fract-based atlas tiling into MeshStandardMaterial
+  // UV = block-space tiling coords (0→w, 0→h), UV2 = atlas tile origin
+  const TILE_SIZE_U = 1.0 / ATLAS_COLS;
+  const TILE_SIZE_V = 1.0 / ATLAS_ROWS;
+
+  function getVoxelEngineAdapter() {
+    return gpu?.engine ?? globalThis.engine ?? globalThis.nova64?.scene?.engine ?? null;
+  }
+
+  function hasCustomVoxelMaterial() {
+    return typeof window !== 'undefined' && !!window.VOXEL_MATERIAL;
+  }
+
+  function useAtlasTilingShader() {
+    return atlasEnabled && !!atlasTexture && !hasCustomVoxelMaterial();
+  }
+
+  function createVoxelTextureFromCanvas(canvas) {
     if (!canvas) return null;
+
+    const engine = getVoxelEngineAdapter();
+    if (engine?.createCanvasTexture) {
+      return engine.createCanvasTexture(canvas, {
+        filter: 'nearest',
+        wrap: 'repeat',
+        generateMipmaps: false,
+      });
+    }
+
     const tex = new THREE.CanvasTexture(canvas);
     tex.magFilter = THREE.NearestFilter;
     tex.minFilter = THREE.NearestFilter;
@@ -806,6 +864,24 @@ export function voxelApi(gpu) {
     tex.wrapT = THREE.RepeatWrapping;
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
+  }
+
+  function createVoxelTextureFromImage(image) {
+    if (!image || typeof document === 'undefined') return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth || image.width || 1;
+    canvas.height = image.naturalHeight || image.height || 1;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return createVoxelTextureFromCanvas(canvas);
+  }
+
+  function buildAtlasTexture() {
+    const canvas = generateProceduralAtlas();
+    if (!canvas) return null;
+    return createVoxelTextureFromCanvas(canvas);
   }
 
   function enableTextureAtlas(enable = true) {
@@ -830,13 +906,8 @@ export function voxelApi(gpu) {
     const img = new Image();
     img.onload = () => {
       if (atlasTexture) atlasTexture.dispose();
-      atlasTexture = new THREE.Texture(img);
-      atlasTexture.magFilter = THREE.NearestFilter;
-      atlasTexture.minFilter = THREE.NearestFilter;
-      atlasTexture.wrapS = THREE.RepeatWrapping;
-      atlasTexture.wrapT = THREE.RepeatWrapping;
-      atlasTexture.colorSpace = THREE.SRGBColorSpace;
-      atlasTexture.needsUpdate = true;
+      atlasTexture = createVoxelTextureFromImage(img);
+      if (atlasTexture) atlasTexture.needsUpdate = true;
       atlasEnabled = true;
       // Apply custom tile mappings
       if (tileMapping) {
@@ -858,13 +929,8 @@ export function voxelApi(gpu) {
     sharedTransparentMaterial = null;
   }
 
-  // Inject fract-based atlas tiling into MeshStandardMaterial
-  // UV = block-space tiling coords (0→w, 0→h), UV2 = atlas tile origin
-  const TILE_SIZE_U = 1.0 / ATLAS_COLS;
-  const TILE_SIZE_V = 1.0 / ATLAS_ROWS;
-
   function injectAtlasTiling(material) {
-    if (!atlasEnabled) return;
+    if (!useAtlasTilingShader()) return;
     material.onBeforeCompile = shader => {
       shader.uniforms.uTileSize = { value: new THREE.Vector2(TILE_SIZE_U, TILE_SIZE_V) };
       // Declare uv2 attribute (Three.js r152+ no longer auto-declares it)
@@ -884,36 +950,165 @@ export function voxelApi(gpu) {
   }
 
   function getOpaqueMaterial() {
-    if (window.VOXEL_MATERIAL) return window.VOXEL_MATERIAL;
+    if (hasCustomVoxelMaterial()) {
+      if (gpu?.createVoxelChunkMaterial) {
+        if (!sharedOpaqueMaterial) {
+          sharedOpaqueMaterial = gpu.createVoxelChunkMaterial({
+            texture: window.VOXEL_MATERIAL?.map ?? atlasTexture ?? null,
+            transparent: false,
+            opacity: window.VOXEL_MATERIAL?.opacity ?? 1,
+            atlasTiling: false,
+            roughness: window.VOXEL_MATERIAL?.roughness,
+            metalness: window.VOXEL_MATERIAL?.metalness,
+            flatShading: window.VOXEL_MATERIAL?.flatShading,
+            tileSizeU: TILE_SIZE_U,
+            tileSizeV: TILE_SIZE_V,
+          });
+        }
+        return sharedOpaqueMaterial;
+      }
+      return window.VOXEL_MATERIAL;
+    }
+
     if (!sharedOpaqueMaterial) {
-      sharedOpaqueMaterial = new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        flatShading: true,
-        roughness: 0.8,
-        metalness: 0.1,
-        map: atlasEnabled && atlasTexture ? atlasTexture : null,
-      });
-      injectAtlasTiling(sharedOpaqueMaterial);
+      if (gpu?.createVoxelChunkMaterial) {
+        sharedOpaqueMaterial = gpu.createVoxelChunkMaterial({
+          texture: atlasEnabled && atlasTexture ? atlasTexture : null,
+          transparent: false,
+          opacity: 1,
+          atlasTiling: useAtlasTilingShader(),
+          tileSizeU: TILE_SIZE_U,
+          tileSizeV: TILE_SIZE_V,
+        });
+      } else {
+        sharedOpaqueMaterial = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          flatShading: true,
+          roughness: 0.8,
+          metalness: 0.1,
+          map: atlasEnabled && atlasTexture ? atlasTexture : null,
+        });
+        injectAtlasTiling(sharedOpaqueMaterial);
+      }
     }
     return sharedOpaqueMaterial;
   }
 
   function getTransparentMaterial() {
     if (!sharedTransparentMaterial) {
-      sharedTransparentMaterial = new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        flatShading: true,
-        roughness: 0.6,
-        metalness: 0.0,
-        transparent: true,
-        opacity: 0.6,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        map: atlasEnabled && atlasTexture ? atlasTexture : null,
-      });
-      injectAtlasTiling(sharedTransparentMaterial);
+      const transparentTexture = hasCustomVoxelMaterial()
+        ? (window.VOXEL_MATERIAL?.map ?? atlasTexture ?? null)
+        : atlasEnabled && atlasTexture
+          ? atlasTexture
+          : null;
+
+      if (gpu?.createVoxelChunkMaterial) {
+        sharedTransparentMaterial = gpu.createVoxelChunkMaterial({
+          texture: transparentTexture,
+          transparent: true,
+          opacity: 0.6,
+          atlasTiling: useAtlasTilingShader(),
+          roughness: window.VOXEL_MATERIAL?.roughness,
+          metalness: window.VOXEL_MATERIAL?.metalness,
+          flatShading: window.VOXEL_MATERIAL?.flatShading,
+          tileSizeU: TILE_SIZE_U,
+          tileSizeV: TILE_SIZE_V,
+        });
+      } else {
+        sharedTransparentMaterial = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          flatShading: true,
+          roughness: 0.6,
+          metalness: 0.0,
+          transparent: true,
+          opacity: 0.6,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+          map: transparentTexture,
+        });
+        injectAtlasTiling(sharedTransparentMaterial);
+      }
     }
     return sharedTransparentMaterial;
+  }
+
+  function createVoxelMeshData(positions, normals, colors, uvs, uv2s, indices) {
+    return {
+      positions: positions instanceof Float32Array ? positions : new Float32Array(positions),
+      normals: normals instanceof Float32Array ? normals : new Float32Array(normals),
+      colors: colors instanceof Float32Array ? colors : new Float32Array(colors),
+      uvs: uvs instanceof Float32Array ? uvs : new Float32Array(uvs),
+      uv2s: uv2s instanceof Float32Array ? uv2s : new Float32Array(uv2s),
+      indices:
+        indices instanceof Uint16Array || indices instanceof Uint32Array
+          ? indices
+          : new Uint32Array(indices),
+    };
+  }
+
+  function createThreeChunkMesh(meshData, material, opts = {}) {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(meshData.positions, 3));
+    geom.setAttribute('normal', new THREE.BufferAttribute(meshData.normals, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(meshData.colors, 3));
+    geom.setAttribute('uv', new THREE.BufferAttribute(meshData.uvs, 2));
+    geom.setAttribute('uv2', new THREE.BufferAttribute(meshData.uv2s, 2));
+    geom.setIndex(new THREE.BufferAttribute(meshData.indices, 1));
+    geom.computeBoundingSphere();
+
+    if (opts.translate) {
+      geom.translate(opts.translate[0] ?? 0, opts.translate[1] ?? 0, opts.translate[2] ?? 0);
+    }
+
+    const mesh = new THREE.Mesh(geom, material);
+    if (opts.position) {
+      mesh.position.set(opts.position[0] ?? 0, opts.position[1] ?? 0, opts.position[2] ?? 0);
+    }
+    mesh.castShadow = !!opts.castShadow;
+    mesh.receiveShadow = opts.receiveShadow !== false;
+    mesh.renderOrder = opts.renderOrder ?? 0;
+    gpu.scene.add(mesh);
+    return mesh;
+  }
+
+  function createChunkRenderMesh(meshData, material, opts = {}) {
+    if (!meshData) return null;
+    if (gpu?.createVoxelChunkMesh) {
+      return gpu.createVoxelChunkMesh(meshData, material, opts);
+    }
+    return createThreeChunkMesh(meshData, material, opts);
+  }
+
+  function disposeRenderMesh(mesh) {
+    if (!mesh) return;
+    if (gpu?.disposeVoxelMesh) {
+      gpu.disposeVoxelMesh(mesh);
+      return;
+    }
+    gpu.scene.remove(mesh);
+    mesh.geometry?.dispose?.();
+  }
+
+  function createEntityRenderMaterial(colorKey) {
+    if (gpu?.createVoxelEntityMaterial) {
+      return gpu.createVoxelEntityMaterial(colorKey);
+    }
+    return new THREE.MeshStandardMaterial({
+      color: colorKey,
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+  }
+
+  function createEntityRenderMesh(size, material) {
+    if (gpu?.createVoxelEntityMesh) {
+      return gpu.createVoxelEntityMesh(size, material);
+    }
+
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
   }
 
   // Custom terrain generator (carts can override)
@@ -1165,7 +1360,7 @@ export function voxelApi(gpu) {
       baseZ: chunk.chunkZ * CHUNK_SIZE,
       enableAO,
       enableLighting,
-      atlasEnabled,
+      atlasEnabled: useAtlasTilingShader(),
       dayTimeFactor,
     };
 
@@ -1190,7 +1385,7 @@ export function voxelApi(gpu) {
   }
 
   /**
-   * Handle worker result: build Three.js geometry on main thread.
+   * Handle worker result: build backend-native render meshes on the main thread.
    */
   function handleWorkerResult(workerIdx, result) {
     meshWorkerBusy[workerIdx] = false;
@@ -1226,19 +1421,17 @@ export function voxelApi(gpu) {
   }
 
   /**
-   * Apply mesh result from worker — create Three.js BufferGeometry and add to scene.
+   * Apply mesh result from worker — create backend-native render meshes and add to scene.
    */
   function applyMeshResult(key, result) {
     // Remove old meshes
     if (chunkMeshes.has(key)) {
       const old = chunkMeshes.get(key);
       if (old.opaque) {
-        gpu.scene.remove(old.opaque);
-        old.opaque.geometry.dispose();
+        disposeRenderMesh(old.opaque);
       }
       if (old.transparent) {
-        gpu.scene.remove(old.transparent);
-        old.transparent.geometry.dispose();
+        disposeRenderMesh(old.transparent);
       }
       chunkMeshes.delete(key);
     }
@@ -1246,42 +1439,46 @@ export function voxelApi(gpu) {
     const entry = { opaque: null, transparent: null };
 
     if (result.hasOpaque && result.opaqueVerts) {
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.BufferAttribute(result.opaqueVerts, 3));
-      geom.setAttribute('normal', new THREE.BufferAttribute(result.opaqueNorms, 3));
-      geom.setAttribute('color', new THREE.BufferAttribute(result.opaqueColors, 3));
-      geom.setAttribute('uv', new THREE.BufferAttribute(result.opaqueUvs, 2));
-      geom.setAttribute('uv2', new THREE.Float32BufferAttribute(result.opaqueUv2s, 2));
-      geom.setIndex(new THREE.BufferAttribute(result.opaqueIdx, 1));
-      geom.computeBoundingSphere();
-      const mesh = new THREE.Mesh(geom, getOpaqueMaterial());
-      mesh.castShadow = enableShadows;
-      mesh.receiveShadow = enableShadows;
-      gpu.scene.add(mesh);
-      entry.opaque = mesh;
+      entry.opaque = createChunkRenderMesh(
+        createVoxelMeshData(
+          result.opaqueVerts,
+          result.opaqueNorms,
+          result.opaqueColors,
+          result.opaqueUvs,
+          result.opaqueUv2s,
+          result.opaqueIdx
+        ),
+        getOpaqueMaterial(),
+        {
+          castShadow: enableShadows,
+          receiveShadow: enableShadows,
+        }
+      );
     }
 
     if (result.hasTrans && result.transVerts) {
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.BufferAttribute(result.transVerts, 3));
-      geom.setAttribute('normal', new THREE.BufferAttribute(result.transNorms, 3));
-      geom.setAttribute('color', new THREE.BufferAttribute(result.transColors, 3));
-      geom.setAttribute('uv', new THREE.BufferAttribute(result.transUvs, 2));
-      geom.setAttribute('uv2', new THREE.Float32BufferAttribute(result.transUv2s, 2));
-      geom.setIndex(new THREE.BufferAttribute(result.transIdx, 1));
-      geom.computeBoundingSphere();
       const [cxStr, czStr] = key.split(',');
       const cx = Number(cxStr) * CHUNK_SIZE + CHUNK_SIZE / 2;
       const cy = CHUNK_HEIGHT / 2;
       const cz = Number(czStr) * CHUNK_SIZE + CHUNK_SIZE / 2;
-      geom.translate(-cx, -cy, -cz);
-      const mesh = new THREE.Mesh(geom, getTransparentMaterial());
-      mesh.position.set(cx, cy, cz);
-      mesh.castShadow = false;
-      mesh.receiveShadow = enableShadows;
-      mesh.renderOrder = 1;
-      gpu.scene.add(mesh);
-      entry.transparent = mesh;
+      entry.transparent = createChunkRenderMesh(
+        createVoxelMeshData(
+          result.transVerts,
+          result.transNorms,
+          result.transColors,
+          result.transUvs,
+          result.transUv2s,
+          result.transIdx
+        ),
+        getTransparentMaterial(),
+        {
+          translate: [-cx, -cy, -cz],
+          position: [cx, cy, cz],
+          castShadow: false,
+          receiveShadow: enableShadows,
+          renderOrder: 1,
+        }
+      );
     }
 
     if (entry.opaque || entry.transparent) {
@@ -2434,7 +2631,7 @@ export function voxelApi(gpu) {
               verts.push(vxArr[ci] + baseX, vyArr[ci] + fluidYOff, vzArr[ci] + baseZ);
               norms.push(normal[0], normal[1], normal[2]);
               const aoLight = aoScale[aoArr[ci]] * lightBrightness;
-              if (atlasEnabled) {
+              if (useAtlasTilingShader()) {
                 cols.push(aoLight, aoLight, aoLight);
               } else {
                 _tmpColor.set(blockColor);
@@ -2445,7 +2642,7 @@ export function voxelApi(gpu) {
             // UV coordinates: block-space tiling (0→w, 0→h)
             // When atlas enabled, uv2 stores tile origin; the shader uses fract(uv) to tile within the tile
             uvArr.push(0, h, w, h, w, 0, 0, 0);
-            if (atlasEnabled) {
+            if (useAtlasTilingShader()) {
               const tileIdx = registry.getTextureFace(blockType, faceIdx);
               const tileU = tileIdx >= 0 ? (tileIdx % ATLAS_COLS) / ATLAS_COLS : 0;
               const tileV =
@@ -2504,7 +2701,7 @@ export function voxelApi(gpu) {
           // Atlas tile info
           let tileU = 0,
             tileV = 0;
-          if (atlasEnabled) {
+          if (useAtlasTilingShader()) {
             const tileIdx = registry.getTextureFace(blockType, 2); // use side face tile
             if (tileIdx >= 0) {
               tileU = (tileIdx % ATLAS_COLS) / ATLAS_COLS;
@@ -2516,7 +2713,7 @@ export function voxelApi(gpu) {
           const emitQuad = (x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, nx, ny, nz) => {
             verts.push(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3);
             for (let i = 0; i < 4; i++) norms.push(nx, ny, nz);
-            if (atlasEnabled) {
+            if (useAtlasTilingShader()) {
               for (let i = 0; i < 4; i++) cols.push(1, 1, 1);
             } else {
               for (let i = 0; i < 4; i++) cols.push(cr, cg, cb);
@@ -2648,32 +2845,32 @@ export function voxelApi(gpu) {
     }
 
     // Build opaque geometry
-    let opaqueGeometry = null;
+    let opaqueMeshData = null;
     if (opaqueVerts.length > 0) {
-      opaqueGeometry = new THREE.BufferGeometry();
-      opaqueGeometry.setAttribute('position', new THREE.Float32BufferAttribute(opaqueVerts, 3));
-      opaqueGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(opaqueNorms, 3));
-      opaqueGeometry.setAttribute('color', new THREE.Float32BufferAttribute(opaqueColors, 3));
-      opaqueGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(opaqueUvs, 2));
-      opaqueGeometry.setAttribute('uv2', new THREE.Float32BufferAttribute(opaqueUv2s, 2));
-      opaqueGeometry.setIndex(opaqueIdx);
-      opaqueGeometry.computeBoundingSphere();
+      opaqueMeshData = createVoxelMeshData(
+        opaqueVerts,
+        opaqueNorms,
+        opaqueColors,
+        opaqueUvs,
+        opaqueUv2s,
+        opaqueIdx
+      );
     }
 
     // Build transparent geometry
-    let transGeometry = null;
+    let transMeshData = null;
     if (transVerts.length > 0) {
-      transGeometry = new THREE.BufferGeometry();
-      transGeometry.setAttribute('position', new THREE.Float32BufferAttribute(transVerts, 3));
-      transGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(transNorms, 3));
-      transGeometry.setAttribute('color', new THREE.Float32BufferAttribute(transColors, 3));
-      transGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(transUvs, 2));
-      transGeometry.setAttribute('uv2', new THREE.Float32BufferAttribute(transUv2s, 2));
-      transGeometry.setIndex(transIdx);
-      transGeometry.computeBoundingSphere();
+      transMeshData = createVoxelMeshData(
+        transVerts,
+        transNorms,
+        transColors,
+        transUvs,
+        transUv2s,
+        transIdx
+      );
     }
 
-    return { opaqueGeometry, transGeometry };
+    return { opaqueMeshData, transMeshData };
   }
 
   // ─── LOD 1 Simplified Chunk Mesher ────────────────────────────────────
@@ -2816,7 +3013,7 @@ export function voxelApi(gpu) {
               const q = quad[ci];
               verts.push(baseX + x + q[0] * STEP, y + q[1] * STEP, baseZ + z + q[2] * STEP);
               norms.push(n[0], n[1], n[2]);
-              if (atlasEnabled) {
+              if (useAtlasTilingShader()) {
                 cols.push(lightBrightness, lightBrightness, lightBrightness);
               } else {
                 cols.push(cr * lightBrightness, cg * lightBrightness, cb * lightBrightness);
@@ -2824,7 +3021,7 @@ export function voxelApi(gpu) {
             }
 
             uvs.push(0, STEP, STEP, STEP, STEP, 0, 0, 0);
-            if (atlasEnabled) {
+            if (useAtlasTilingShader()) {
               const tileIdx = registry.getTextureFace(block, f);
               const tileU = tileIdx >= 0 ? (tileIdx % ATLAS_COLS) / ATLAS_COLS : 0;
               const tileV =
@@ -2841,19 +3038,12 @@ export function voxelApi(gpu) {
       }
     }
 
-    let opaqueGeometry = null;
+    let opaqueMeshData = null;
     if (verts.length > 0) {
-      opaqueGeometry = new THREE.BufferGeometry();
-      opaqueGeometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-      opaqueGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(norms, 3));
-      opaqueGeometry.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-      opaqueGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-      opaqueGeometry.setAttribute('uv2', new THREE.Float32BufferAttribute(uv2s, 2));
-      opaqueGeometry.setIndex(indices);
-      opaqueGeometry.computeBoundingSphere();
+      opaqueMeshData = createVoxelMeshData(verts, norms, cols, uvs, uv2s, indices);
     }
 
-    return { opaqueGeometry, transGeometry: null };
+    return { opaqueMeshData, transMeshData: null };
   }
 
   // ─── Chunk mesh update ──────────────────────────────────────────────────
@@ -2877,41 +3067,37 @@ export function voxelApi(gpu) {
     if (chunkMeshes.has(key)) {
       const entry = chunkMeshes.get(key);
       if (entry.opaque) {
-        gpu.scene.remove(entry.opaque);
-        entry.opaque.geometry.dispose();
+        disposeRenderMesh(entry.opaque);
       }
       if (entry.transparent) {
-        gpu.scene.remove(entry.transparent);
-        entry.transparent.geometry.dispose();
+        disposeRenderMesh(entry.transparent);
       }
       chunkMeshes.delete(key);
     }
 
-    const { opaqueGeometry, transGeometry } =
+    const { opaqueMeshData, transMeshData } =
       lodLevel >= 1 ? createChunkMeshLOD1(chunk) : createChunkMesh(chunk);
     const entry = { opaque: null, transparent: null, lod: lodLevel };
 
-    if (opaqueGeometry) {
-      const mesh = new THREE.Mesh(opaqueGeometry, getOpaqueMaterial());
-      mesh.castShadow = enableShadows;
-      mesh.receiveShadow = enableShadows;
-      gpu.scene.add(mesh);
-      entry.opaque = mesh;
+    if (opaqueMeshData) {
+      entry.opaque = createChunkRenderMesh(opaqueMeshData, getOpaqueMaterial(), {
+        castShadow: enableShadows,
+        receiveShadow: enableShadows,
+      });
     }
 
-    if (transGeometry) {
+    if (transMeshData) {
       // Translate vertices to chunk-local space so mesh.position enables distance-based sorting
       const cx = chunk.chunkX * CHUNK_SIZE + CHUNK_SIZE / 2;
       const cy = CHUNK_HEIGHT / 2;
       const cz = chunk.chunkZ * CHUNK_SIZE + CHUNK_SIZE / 2;
-      transGeometry.translate(-cx, -cy, -cz);
-      const mesh = new THREE.Mesh(transGeometry, getTransparentMaterial());
-      mesh.position.set(cx, cy, cz);
-      mesh.castShadow = false;
-      mesh.receiveShadow = enableShadows;
-      mesh.renderOrder = 1; // render after opaque
-      gpu.scene.add(mesh);
-      entry.transparent = mesh;
+      entry.transparent = createChunkRenderMesh(transMeshData, getTransparentMaterial(), {
+        translate: [-cx, -cy, -cz],
+        position: [cx, cy, cz],
+        castShadow: false,
+        receiveShadow: enableShadows,
+        renderOrder: 1,
+      });
     }
 
     if (entry.opaque || entry.transparent) {
@@ -3121,12 +3307,10 @@ export function voxelApi(gpu) {
         Math.abs(cz - centerChunkZ) > RENDER_DISTANCE + 1
       ) {
         if (entry.opaque) {
-          gpu.scene.remove(entry.opaque);
-          entry.opaque.geometry.dispose();
+          disposeRenderMesh(entry.opaque);
         }
         if (entry.transparent) {
-          gpu.scene.remove(entry.transparent);
-          entry.transparent.geometry.dispose();
+          disposeRenderMesh(entry.transparent);
         }
         keysToRemove.push(key);
         chunks.delete(key);
@@ -3153,12 +3337,10 @@ export function voxelApi(gpu) {
         const entry = chunkMeshes.get(key);
         if (entry) {
           if (entry.opaque) {
-            gpu.scene.remove(entry.opaque);
-            entry.opaque.geometry.dispose();
+            disposeRenderMesh(entry.opaque);
           }
           if (entry.transparent) {
-            gpu.scene.remove(entry.transparent);
-            entry.transparent.geometry.dispose();
+            disposeRenderMesh(entry.transparent);
           }
           chunkMeshes.delete(key);
         }
@@ -3183,15 +3365,21 @@ export function voxelApi(gpu) {
 
   // ─── World reset ────────────────────────────────────────────────────────
 
-  function resetWorld() {
+  function resetWorld(opts = {}) {
+    const restoreDefaults = !!opts.restoreDefaults;
+    const nextSeed =
+      opts.seed !== undefined
+        ? opts.seed
+        : restoreDefaults
+          ? resolveDefaultWorldSeed(opts.cartPath)
+          : worldSeed;
+
     for (const entry of chunkMeshes.values()) {
       if (entry.opaque) {
-        gpu.scene.remove(entry.opaque);
-        entry.opaque.geometry.dispose();
+        disposeRenderMesh(entry.opaque);
       }
       if (entry.transparent) {
-        gpu.scene.remove(entry.transparent);
-        entry.transparent.geometry.dispose();
+        disposeRenderMesh(entry.transparent);
       }
     }
     chunkMeshes.clear();
@@ -3202,8 +3390,7 @@ export function voxelApi(gpu) {
     // Clear all entities
     for (const ent of entities.values()) {
       if (ent.mesh && gpu && gpu.scene) {
-        gpu.scene.remove(ent.mesh);
-        if (ent.mesh.geometry) ent.mesh.geometry.dispose();
+        disposeRenderMesh(ent.mesh);
       }
     }
     entities.clear();
@@ -3223,7 +3410,38 @@ export function voxelApi(gpu) {
     meshJobCallbacks.clear();
     pendingAsyncMeshes.clear();
     meshJobIdCounter = 0;
-    worldSeed += 5000 + Math.floor(Math.random() * 10000);
+    if (restoreDefaults) {
+      // Cross-cart resets need a full voxel presentation reset so the next cart
+      // doesn't inherit cached chunk materials, atlas textures, or generators.
+      customTerrainGenerator = null;
+      dayTimeFactor = 1.0;
+      if (typeof window !== 'undefined') {
+        window.VOXEL_MATERIAL = null;
+      }
+      rebuildMaterials();
+      if (atlasTexture?.dispose) {
+        atlasTexture.dispose();
+      }
+      atlasTexture = null;
+      atlasEnabled = false;
+      CHUNK_SIZE = 16;
+      CHUNK_HEIGHT = 128;
+      RENDER_DISTANCE = 4;
+      SEA_LEVEL = 62;
+      enableAO = true;
+      enableLighting = true;
+      enableCaves = true;
+      enableOres = true;
+      enableTrees = true;
+      enableShadows = true;
+      enableLOD = false;
+      lodDistances = [4, 8];
+      maxTerrainGenPerFrame = 2;
+      maxMeshRebuildsPerFrame = 4;
+      enableFluids = true;
+      enableAsyncMeshing = false;
+    }
+    worldSeed = nextSeed;
     noise = createSimplexNoise(worldSeed);
   }
 
@@ -4065,7 +4283,7 @@ export function voxelApi(gpu) {
    * @param {number[]} pos - [x, y, z] world position
    * @param {object} opts - Options:
    *   color: number — hex color to auto-create a box mesh (simplest usage)
-   *   mesh: THREE.Mesh — attach a raw THREE.Mesh (not a createCube ID)
+   *   mesh: backend-native mesh object with a mutable .position
    *   size: [w, h, d] — AABB collision size (default [0.8, 1.8, 0.8])
    *   health: number — max & current health (default 10)
    *   gravity: boolean — apply gravity (default true)
@@ -4077,26 +4295,19 @@ export function voxelApi(gpu) {
     const id = nextEntityId++;
     const size = opts.size || [0.8, 1.8, 0.8];
 
-    // Resolve mesh: create from color, use provided THREE.Mesh, or none
+    // Resolve mesh: create from color, use provided backend mesh, or none
     let mesh = null;
     if (opts.color !== undefined && gpu && gpu.scene) {
       // Auto-create a simple box mesh from color (material shared per color)
-      const geom = new THREE.BoxGeometry(size[0], size[1], size[2]);
       const colorKey = opts.color & 0xffffff;
       let mat = _entityMaterialCache.get(colorKey);
       if (!mat) {
-        mat = new THREE.MeshStandardMaterial({
-          color: colorKey,
-          roughness: 0.8,
-          metalness: 0.1,
-        });
+        mat = createEntityRenderMaterial(colorKey);
         _entityMaterialCache.set(colorKey, mat);
       }
-      mesh = new THREE.Mesh(geom, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      mesh = createEntityRenderMesh(size, mat);
     } else if (opts.mesh && typeof opts.mesh === 'object' && opts.mesh.position) {
-      // Raw THREE.Mesh provided (must have .position)
+      // Raw backend mesh provided (must have .position)
       mesh = opts.mesh;
     }
     // Ignore numeric mesh IDs — they don't have .position.set()
@@ -4129,7 +4340,9 @@ export function voxelApi(gpu) {
     // Position and add mesh to scene
     if (ent.mesh && gpu && gpu.scene) {
       ent.mesh.position.set(ent.x, ent.y + ent.height / 2, ent.z);
-      gpu.scene.add(ent.mesh);
+      if (!gpu?.createVoxelEntityMesh) {
+        gpu.scene.add(ent.mesh);
+      }
     }
 
     entities.set(id, ent);
@@ -4144,8 +4357,7 @@ export function voxelApi(gpu) {
     const ent = entities.get(id);
     if (!ent) return false;
     if (ent.mesh && gpu && gpu.scene) {
-      gpu.scene.remove(ent.mesh);
-      if (ent.mesh.geometry) ent.mesh.geometry.dispose();
+      disposeRenderMesh(ent.mesh);
       // Only dispose materials NOT in the shared cache
       if (ent.mesh.material && !_entityMaterialCache.has(ent.mesh.material.color?.getHex?.())) {
         ent.mesh.material.dispose();
@@ -5156,6 +5368,7 @@ export function voxelApi(gpu) {
   // Return current world configuration (useful for debug HUDs and perf tuning)
   function getWorldConfig() {
     return {
+      seed: worldSeed,
       chunkSize: CHUNK_SIZE,
       chunkHeight: CHUNK_HEIGHT,
       renderDistance: RENDER_DISTANCE,
@@ -5233,6 +5446,44 @@ export function voxelApi(gpu) {
     if (temperature > 0.4 && moisture > 0.4) return 'Forest';
     if (temperature < 0.35) return 'Snowy Hills';
     return 'Plains';
+  }
+
+  function getNoaPrototypeStatus() {
+    if (gpu?.getNoaPrototypeStatus) {
+      return gpu.getNoaPrototypeStatus();
+    }
+
+    return {
+      backend: gpu?.backendName ?? 'unknown',
+      requested: false,
+      available: false,
+      active: false,
+      mode: 'off',
+      source: 'runtime',
+      specifier: 'noa-engine',
+      reason: 'unsupported-backend',
+      error: null,
+      exportedKeys: [],
+      hasDefaultExport: false,
+      defaultExportType: 'undefined',
+      hasEngineFactory: false,
+      agentNotes: [
+        'NOA probing is only wired for the Babylon backend right now.',
+        'Keep runtime/api-voxel.js as the shared cart-facing layer while parity work continues.',
+      ],
+      nextStepFiles: [
+        'runtime/api-voxel.js',
+        'runtime/backends/babylon/noa-prototype.js',
+        'docs/BABYLON_NOA_PROTOTYPE.md',
+      ],
+    };
+  }
+
+  async function probeNoaPrototype(options = {}) {
+    if (gpu?.probeNoaPrototype) {
+      return await gpu.probeNoaPrototype(options);
+    }
+    return getNoaPrototypeStatus();
   }
 
   // ─── Public API ─────────────────────────────────────────────────────────
@@ -5318,6 +5569,36 @@ export function voxelApi(gpu) {
     // Noise (exposed for carts)
     noise,
 
+    // Babylon NOA prototype diagnostics
+    getNoaPrototypeStatus,
+    probeNoaPrototype,
+
+    // NOA adapter control (Babylon.js only)
+    enableNoaAdapter: async function (options = {}) {
+      if (gpu?.enableNoaAdapter) {
+        return await gpu.enableNoaAdapter(options);
+      }
+      return {
+        initialized: false,
+        active: false,
+        error: 'NOA adapter not available on this backend',
+      };
+    },
+    disableNoaAdapter: function () {
+      if (gpu?.disableNoaAdapter) {
+        gpu.disableNoaAdapter();
+      }
+    },
+    getNoaAdapterStatus: function () {
+      if (gpu?.getNoaAdapterStatus) {
+        return gpu.getNoaAdapterStatus();
+      }
+      return { initialized: false, active: false, error: 'NOA adapter not available' };
+    },
+    isNoaActive: function () {
+      return gpu?.isNoaActive?.() ?? false;
+    },
+
     // os9-shell compatibility aliases
     createVoxelEngine: configureWorld,
     voxelSet: setBlock,
@@ -5344,6 +5625,8 @@ export function voxelApi(gpu) {
       g.getVoxelBiome = getBiome;
       g.getVoxelLightLevel = getLightLevel;
       g.setVoxelDayTime = setDayTime;
+      g.getVoxelNoaPrototypeStatus = getNoaPrototypeStatus;
+      g.probeVoxelNoaPrototype = probeNoaPrototype;
       g.saveVoxelWorld = saveWorld;
       g.loadVoxelWorld = loadWorld;
       g.listVoxelWorlds = listWorlds;
@@ -5383,6 +5666,27 @@ export function voxelApi(gpu) {
       g.removeVoxelFluidSource = removeFluidSource;
       g.getVoxelFluidLevel = getFluidLevelWorld;
       g.importVoxModel = importVoxModel;
+      // NOA adapter control
+      g.enableVoxelNoaAdapter = async function (options = {}) {
+        if (gpu?.enableNoaAdapter) {
+          return await gpu.enableNoaAdapter(options);
+        }
+        return { initialized: false, active: false, error: 'NOA adapter not available' };
+      };
+      g.disableVoxelNoaAdapter = function () {
+        if (gpu?.disableNoaAdapter) {
+          gpu.disableNoaAdapter();
+        }
+      };
+      g.getVoxelNoaAdapterStatus = function () {
+        if (gpu?.getNoaAdapterStatus) {
+          return gpu.getNoaAdapterStatus();
+        }
+        return { initialized: false, active: false, error: 'NOA adapter not available' };
+      };
+      g.isVoxelNoaActive = function () {
+        return gpu?.isNoaActive?.() ?? false;
+      };
     },
   };
 }

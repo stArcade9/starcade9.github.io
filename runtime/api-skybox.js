@@ -2,10 +2,35 @@
 import * as THREE from 'three';
 
 export function skyboxApi(gpu) {
+  const backendSkybox =
+    typeof gpu.createSpaceSkybox === 'function' &&
+    typeof gpu.createGradientSkybox === 'function' &&
+    typeof gpu.createSolidSkybox === 'function' &&
+    typeof gpu.clearSkybox === 'function'
+      ? gpu
+      : null;
   let skyboxMesh = null;
   let starField = null;
   let _rotSpeed = 1.0; // multiplier for animateSkybox speed
   let _auto = false; // enableSkyboxAutoAnimate flag
+  let _unsupportedWarned = false;
+
+  function _supportsSkybox() {
+    if (backendSkybox) return true;
+    const caps = gpu.getBackendCapabilities?.();
+    if (caps && caps.skybox === false) return false;
+    return (
+      !!gpu.scene && typeof gpu.scene.add === 'function' && typeof gpu.scene.remove === 'function'
+    );
+  }
+
+  function _warnUnsupportedSkybox(name) {
+    if (_unsupportedWarned) return;
+    _unsupportedWarned = true;
+    console.warn(
+      `[Nova64:WARN] ${name} is not supported by the active backend yet; skipping skybox setup`
+    );
+  }
 
   // ── Space skybox ────────────────────────────────────────────────────────────
   /**
@@ -17,6 +42,13 @@ export function skyboxApi(gpu) {
    * @param {number} [options.nebulaColor=0x4422aa]
    */
   function createSpaceSkybox(options = {}) {
+    if (backendSkybox) {
+      return backendSkybox.createSpaceSkybox(options);
+    }
+    if (!_supportsSkybox()) {
+      _warnUnsupportedSkybox('createSpaceSkybox');
+      return null;
+    }
     const { starCount = 1000, starSize = 2, nebulae = true, nebulaColor = 0x4422aa } = options;
 
     _clearSky();
@@ -69,8 +101,20 @@ export function skyboxApi(gpu) {
    * @param {number} [bottomColor=0xf48c60] - hex colour at the horizon
    */
   function createGradientSkybox(topColor = 0x1a6aa8, bottomColor = 0xf48c60) {
+    if (topColor && typeof topColor === 'object') {
+      bottomColor = topColor.bottomColor ?? bottomColor;
+      topColor = topColor.topColor ?? 0x1a6aa8;
+    }
+    if (backendSkybox) {
+      return backendSkybox.createGradientSkybox(topColor, bottomColor);
+    }
+    if (!_supportsSkybox()) {
+      _warnUnsupportedSkybox('createGradientSkybox');
+      return null;
+    }
     _clearSky();
     skyboxMesh = _gradientSphere(topColor, bottomColor);
+    return skyboxMesh;
   }
 
   // ── Solid-colour skybox ──────────────────────────────────────────────────────
@@ -79,8 +123,16 @@ export function skyboxApi(gpu) {
    * @param {number} [color=0x000000]
    */
   function createSolidSkybox(color = 0x000000) {
+    if (backendSkybox) {
+      return backendSkybox.createSolidSkybox(color);
+    }
+    if (!_supportsSkybox()) {
+      _warnUnsupportedSkybox('createSolidSkybox');
+      return null;
+    }
     _clearSky();
     gpu.scene.background = new THREE.Color(color);
+    return gpu.scene.background;
   }
 
   // ── Image-based (cube map) skybox ────────────────────────────────────────────
@@ -101,6 +153,13 @@ export function skyboxApi(gpu) {
    * ]);
    */
   function createImageSkybox(urls) {
+    if (backendSkybox) {
+      return backendSkybox.createImageSkybox(urls);
+    }
+    if (!_supportsSkybox()) {
+      _warnUnsupportedSkybox('createImageSkybox');
+      return Promise.resolve(null);
+    }
     return new Promise((resolve, reject) => {
       if (!Array.isArray(urls) || urls.length !== 6) {
         reject(
@@ -187,29 +246,47 @@ export function skyboxApi(gpu) {
   // ── Animation controls ───────────────────────────────────────────────────────
   /** Rotate the star-field one frame. Call in update(dt). */
   function animateSkybox(dt) {
+    if (backendSkybox) {
+      return backendSkybox.animateSkybox(dt);
+    }
     if (starField) starField.rotation.y += dt * 0.01 * _rotSpeed;
   }
 
   /** Control star rotation speed (0 = frozen, 1 = default, -1 = reverse). */
   function setSkyboxSpeed(multiplier) {
+    if (backendSkybox) {
+      return backendSkybox.setSkyboxSpeed(multiplier);
+    }
     _rotSpeed = multiplier;
   }
 
   /** Auto-animate skybox in the engine loop — no need to call animateSkybox manually. */
   function enableSkyboxAutoAnimate(speed = 1) {
+    if (backendSkybox) {
+      return backendSkybox.enableSkyboxAutoAnimate(speed);
+    }
     _auto = true;
     _rotSpeed = speed;
   }
   function disableSkyboxAutoAnimate() {
+    if (backendSkybox) {
+      return backendSkybox.disableSkyboxAutoAnimate();
+    }
     _auto = false;
   }
 
   function clearSkybox() {
+    if (backendSkybox) {
+      return backendSkybox.clearSkybox();
+    }
     _clearSky();
   }
 
   // Internal: called by src/main.js every frame
   function _tick(dt) {
+    if (backendSkybox && typeof backendSkybox.tickSkybox === 'function') {
+      return backendSkybox.tickSkybox(dt);
+    }
     if (_auto) animateSkybox(dt);
   }
 

@@ -2,6 +2,40 @@
 // Nintendo 64 / PlayStation style 3D physics with full GPU acceleration
 
 // Game state
+const { cls, drawPanel, print, printCentered, rect, rgba8 } = nova64.draw;
+const {
+  createCone,
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  destroyMesh,
+  get3DStats,
+  getPosition,
+  rotateMesh,
+  setPosition,
+  setRotation,
+  setScale,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { setFog, setLightDirection } = nova64.light;
+const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignette } = nova64.fx;
+const { btnp, key, keyp } = nova64.input;
+const {
+  Screen,
+  centerX,
+  createButton,
+  createPanel,
+  drawAllButtons,
+  drawGradientRect,
+  drawText,
+  drawTextOutline,
+  drawTextShadow,
+  setFont,
+  setTextAlign,
+  uiColors,
+  updateAllButtons,
+} = nova64.ui;
 let gameTime = 0;
 let selectedDemo = 0;
 let showDebugInfo = true;
@@ -40,23 +74,23 @@ const BOUNCE_DAMPING = 0.8;
 const AIR_RESISTANCE = 0.995;
 
 export async function init() {
-  cls();
+  nova64.draw.cls();
 
   // Setup 3D scene with N64-style aesthetics
-  setCameraPosition(0, 15, 25);
-  setCameraTarget(0, 5, 0);
-  setCameraFOV(60);
+  nova64.camera.setCameraPosition(0, 15, 25);
+  nova64.camera.setCameraTarget(0, 5, 0);
+  nova64.camera.setCameraFOV(60);
 
   // Setup dramatic lighting
-  setLightDirection(-0.5, -1, -0.2);
-  setFog(0x1a1a2e, 40, 120);
+  nova64.light.setLightDirection(-0.5, -1, -0.2);
+  nova64.light.setFog(0x1a1a2e, 40, 120);
 
   // Enable retro effects
-  enablePixelation(1);
-  enableDithering(true);
-  enableBloom(1.0, 0.4, 0.3);
-  enableFXAA();
-  enableVignette(1.2, 0.9);
+  nova64.fx.enablePixelation(1);
+  nova64.fx.enableDithering(true);
+  nova64.fx.enableBloom(1.0, 0.4, 0.3);
+  nova64.fx.enableFXAA();
+  nova64.fx.enableVignette(1.2, 0.9);
 
   // Create world environment
   await createWorld();
@@ -75,8 +109,8 @@ function initStartScreen() {
   uiButtons = [];
 
   uiButtons.push(
-    createButton(
-      centerX(240),
+    nova64.ui.createButton(
+      nova64.ui.centerX(240),
       150,
       240,
       60,
@@ -87,16 +121,16 @@ function initStartScreen() {
         console.log('✅ gameState is now:', gameState);
       },
       {
-        normalColor: rgba8(50, 200, 100, 255),
-        hoverColor: rgba8(80, 230, 130, 255),
-        pressedColor: rgba8(30, 170, 80, 255),
+        normalColor: nova64.draw.rgba8(50, 200, 100, 255),
+        hoverColor: nova64.draw.rgba8(80, 230, 130, 255),
+        pressedColor: nova64.draw.rgba8(30, 170, 80, 255),
       }
     )
   );
 
   uiButtons.push(
-    createButton(
-      centerX(200),
+    nova64.ui.createButton(
+      nova64.ui.centerX(200),
       355,
       200,
       45,
@@ -105,9 +139,9 @@ function initStartScreen() {
         console.log('Physics demos: Bouncing, Pendulum, Fountain, Gravity, Cascade');
       },
       {
-        normalColor: rgba8(100, 150, 255, 255),
-        hoverColor: rgba8(130, 180, 255, 255),
-        pressedColor: rgba8(70, 120, 220, 255),
+        normalColor: nova64.draw.rgba8(100, 150, 255, 255),
+        hoverColor: nova64.draw.rgba8(130, 180, 255, 255),
+        pressedColor: nova64.draw.rgba8(70, 120, 220, 255),
       }
     )
   );
@@ -118,18 +152,18 @@ export function update(dt) {
 
   if (gameState === 'start') {
     startScreenTime += dt;
-    updateAllButtons();
+    nova64.ui.updateAllButtons();
 
     // Animate physics in background
     updatePhysics(dt);
-    updateParticles(dt);
+    _local_updateParticles(dt);
     updateForceFields(dt);
     return;
   }
 
   handleInput(dt);
   updatePhysics(dt);
-  updateParticles(dt);
+  _local_updateParticles(dt);
   updateForceFields(dt);
   updateCamera(dt);
 }
@@ -147,13 +181,21 @@ export function draw() {
 
 function drawStartScreen() {
   // Scientific gradient background
-  drawGradientRect(0, 0, 640, 360, rgba8(20, 40, 30, 230), rgba8(10, 20, 15, 245), true);
+  nova64.ui.drawGradientRect(
+    0,
+    0,
+    640,
+    360,
+    nova64.draw.rgba8(20, 40, 30, 230),
+    nova64.draw.rgba8(10, 20, 15, 245),
+    true
+  );
 
   // Animated title
-  setFont('huge');
-  setTextAlign('center');
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
   const pulse = Math.sin(startScreenTime * 3) * 0.3 + 0.7;
-  const sciColor = rgba8(
+  const sciColor = nova64.draw.rgba8(
     Math.floor(pulse * 100),
     Math.floor(pulse * 255),
     Math.floor(pulse * 150),
@@ -161,70 +203,104 @@ function drawStartScreen() {
   );
 
   const bounce = Math.abs(Math.sin(startScreenTime * 4)) * 15;
-  drawTextShadow('PHYSICS', 320, 50 + bounce, sciColor, rgba8(0, 0, 0, 255), 6, 1);
-  drawTextShadow('LAB 3D', 320, 105, rgba8(255, 255, 255, 255), rgba8(0, 0, 0, 255), 6, 1);
+  nova64.ui.drawTextShadow(
+    'PHYSICS',
+    320,
+    50 + bounce,
+    sciColor,
+    nova64.draw.rgba8(0, 0, 0, 255),
+    6,
+    1
+  );
+  nova64.ui.drawTextShadow(
+    'LAB 3D',
+    320,
+    105,
+    nova64.draw.rgba8(255, 255, 255, 255),
+    nova64.draw.rgba8(0, 0, 0, 255),
+    6,
+    1
+  );
 
   // Subtitle
-  setFont('large');
+  nova64.ui.setFont('large');
   const glow = Math.sin(startScreenTime * 4) * 0.2 + 0.8;
-  drawTextOutline(
+  nova64.ui.drawTextOutline(
     'Advanced 3D Physics Simulation',
     320,
     165,
-    rgba8(100, 255, 150, Math.floor(glow * 255)),
-    rgba8(0, 0, 0, 255),
+    nova64.draw.rgba8(100, 255, 150, Math.floor(glow * 255)),
+    nova64.draw.rgba8(0, 0, 0, 255),
     1
   );
 
   // Info panel
-  const panel = createPanel(centerX(480), 210, 480, 190, {
-    bgColor: rgba8(20, 35, 25, 210),
-    borderColor: rgba8(50, 200, 100, 255),
+  const panel = nova64.ui.createPanel(nova64.ui.centerX(480), 210, 480, 190, {
+    bgColor: nova64.draw.rgba8(20, 35, 25, 210),
+    borderColor: nova64.draw.rgba8(50, 200, 100, 255),
     borderWidth: 3,
     shadow: true,
     gradient: true,
-    gradientColor: rgba8(30, 50, 35, 210),
+    gradientColor: nova64.draw.rgba8(30, 50, 35, 210),
   });
-  drawPanel(panel);
+  nova64.draw.drawPanel(panel);
 
-  setFont('normal');
-  setTextAlign('center');
-  drawText('5 PHYSICS SIMULATIONS', 320, 230, rgba8(100, 255, 150, 255), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawText('5 PHYSICS SIMULATIONS', 320, 230, nova64.draw.rgba8(100, 255, 150, 255), 1);
 
-  setFont('small');
-  drawText('⚛ Bouncing Spheres - Realistic collision physics', 320, 255, uiColors.light, 1);
-  drawText('⚛ Pendulum Chain - Connected body dynamics', 320, 270, uiColors.light, 1);
-  drawText('⚛ Particle Fountain - Mass particle system', 320, 285, uiColors.light, 1);
-  drawText('⚛ Gravity Well - Force field simulation', 320, 300, uiColors.light, 1);
+  nova64.ui.setFont('small');
+  nova64.ui.drawText(
+    '⚛ Bouncing Spheres - Realistic collision physics',
+    320,
+    255,
+    uiColors.light,
+    1
+  );
+  nova64.ui.drawText('⚛ Pendulum Chain - Connected body dynamics', 320, 270, uiColors.light, 1);
+  nova64.ui.drawText('⚛ Particle Fountain - Mass particle system', 320, 285, uiColors.light, 1);
+  nova64.ui.drawText('⚛ Gravity Well - Force field simulation', 320, 300, uiColors.light, 1);
 
-  setFont('tiny');
-  drawText('Use LEFT/RIGHT arrows to cycle demos', 320, 320, uiColors.secondary, 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.drawText('Use LEFT/RIGHT arrows to cycle demos', 320, 320, uiColors.secondary, 1);
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
   // Pulsing prompt
   const alpha = Math.floor((Math.sin(startScreenTime * 6) * 0.5 + 0.5) * 255);
-  setFont('normal');
-  drawText('⚛ EXPERIENCE REAL-TIME 3D PHYSICS ⚛', 320, 430, rgba8(100, 255, 150, alpha), 1);
+  nova64.ui.setFont('normal');
+  nova64.ui.drawText(
+    '⚛ EXPERIENCE REAL-TIME 3D PHYSICS ⚛',
+    320,
+    430,
+    nova64.draw.rgba8(100, 255, 150, alpha),
+    1
+  );
 
   // Tech info
-  setFont('tiny');
-  drawText('Nintendo 64 / PlayStation Style Rendering', 320, 345, rgba8(150, 200, 150, 150), 1);
+  nova64.ui.setFont('tiny');
+  nova64.ui.drawText(
+    'Nintendo 64 / PlayStation Style Rendering',
+    320,
+    345,
+    nova64.draw.rgba8(150, 200, 150, 150),
+    1
+  );
 }
 
 async function createWorld() {
   // Create ground plane
-  const ground = createPlane(50, 50, 0x444466, [0, 0, 0]);
-  setRotation(ground, -Math.PI / 2, 0, 0);
+  const ground = nova64.scene.createPlane(50, 50, 0x444466, [0, 0, 0]);
+  nova64.scene.setRotation(ground, -Math.PI / 2, 0, 0);
 
   // Create invisible walls for physics boundaries
   const wallHeight = 20;
   const walls = [
-    createCube(1, wallHeight, 50, [-25, wallHeight / 2, 0]), // Left wall
-    createCube(1, wallHeight, 50, [25, wallHeight / 2, 0]), // Right wall
-    createCube(50, wallHeight, 1, [0, wallHeight / 2, -25]), // Back wall
-    createCube(50, wallHeight, 1, [0, wallHeight / 2, 25]), // Front wall
+    nova64.scene.createCube(1, wallHeight, 50, [-25, wallHeight / 2, 0]), // Left wall
+    nova64.scene.createCube(1, wallHeight, 50, [25, wallHeight / 2, 0]), // Right wall
+    nova64.scene.createCube(50, wallHeight, 1, [0, wallHeight / 2, -25]), // Back wall
+    nova64.scene.createCube(50, wallHeight, 1, [0, wallHeight / 2, 25]), // Front wall
   ];
 
   // Make walls transparent
@@ -234,47 +310,47 @@ async function createWorld() {
 
   // Add some decorative elements
   for (let i = 0; i < 8; i++) {
-    const pillar = createCube(2, 12, 0x666688, [
+    const pillar = nova64.scene.createCube(2, 12, 0x666688, [
       (Math.random() - 0.5) * 40,
       6,
       (Math.random() - 0.5) * 40,
     ]);
-    setScale(pillar, 0.8, 1, 0.8);
+    nova64.scene.setScale(pillar, 0.8, 1, 0.8);
   }
 }
 
 function handleInput(dt) {
   // Switch demos
-  if (btnp(0)) {
+  if (nova64.input.btnp(0)) {
     // Left
     selectedDemo = (selectedDemo - 1 + demos.length) % demos.length;
     resetDemo();
   }
-  if (btnp(1)) {
+  if (nova64.input.btnp(1)) {
     // Right
     selectedDemo = (selectedDemo + 1) % demos.length;
     resetDemo();
   }
 
   // Toggle debug info
-  if (btnp(2)) {
+  if (nova64.input.btnp(2)) {
     // Up
     showDebugInfo = !showDebugInfo;
   }
 
   // Interact with current demo
-  if (btnp(5) || keyp('Space')) {
+  if (nova64.input.btnp(5) || nova64.input.keyp('Space')) {
     // X or SPACE
     interactWithDemo();
   }
 
   // Chaos mode (G key) — only in sandbox
-  if (keyp('KeyG') && selectedDemo === 5) {
+  if (nova64.input.keyp('KeyG') && selectedDemo === 5) {
     spawnChaosBurst();
   }
 
   // Reset demo
-  if (btnp(4)) {
+  if (nova64.input.btnp(4)) {
     // Z
     resetDemo();
   }
@@ -282,8 +358,8 @@ function handleInput(dt) {
 
 function resetDemo() {
   // Clear existing objects
-  physicsObjects.forEach(obj => destroyMesh(obj.mesh));
-  particles.forEach(p => destroyMesh(p.mesh));
+  physicsObjects.forEach(obj => nova64.scene.destroyMesh(obj.mesh));
+  particles.forEach(p => nova64.scene.destroyMesh(p.mesh));
   physicsObjects = [];
   particles = [];
   forceFields = [];
@@ -312,7 +388,7 @@ function setupBouncingSpheres() {
   for (let i = 0; i < 12; i++) {
     const material = materials[i % materials.length];
     const sphere = createPhysicsObject({
-      mesh: createSphere(material.size, material.color, [
+      mesh: nova64.scene.createSphere(material.size, material.color, [
         (Math.random() - 0.5) * 20,
         5 + Math.random() * 10,
         (Math.random() - 0.5) * 20,
@@ -330,7 +406,7 @@ function setupBouncingSpheres() {
     });
 
     // Update position from mesh
-    const pos = getPosition(sphere.mesh);
+    const pos = nova64.scene.getPosition(sphere.mesh);
     sphere.x = pos[0];
     sphere.y = pos[1];
     sphere.z = pos[2];
@@ -346,7 +422,7 @@ function setupPendulumChain() {
 
   for (let i = 0; i < chainLength; i++) {
     const sphere = createPhysicsObject({
-      mesh: createSphere(0.5, 0xff6600 + i * 0x001100, [
+      mesh: nova64.scene.createSphere(0.5, 0xff6600 + i * 0x001100, [
         i * segmentLength,
         10 - i * segmentLength,
         0,
@@ -401,7 +477,11 @@ function setupGravityWell() {
     const radius = 8 + Math.random() * 4;
 
     const sphere = createPhysicsObject({
-      mesh: createSphere(0.6, 0x44ffff, [Math.cos(angle) * radius, 8, Math.sin(angle) * radius]),
+      mesh: nova64.scene.createSphere(0.6, 0x44ffff, [
+        Math.cos(angle) * radius,
+        8,
+        Math.sin(angle) * radius,
+      ]),
       x: Math.cos(angle) * radius,
       y: 8,
       z: Math.sin(angle) * radius,
@@ -432,7 +512,7 @@ function setupCollisionCascade() {
   // Create a domino-like cascade effect
   for (let i = 0; i < 10; i++) {
     const cube = createPhysicsObject({
-      mesh: createCube(1, 0x8844ff, [i * 2.5 - 12, 2, Math.sin(i * 0.5) * 3]),
+      mesh: nova64.scene.createCube(1, 0x8844ff, [i * 2.5 - 12, 2, Math.sin(i * 0.5) * 3]),
       x: i * 2.5 - 12,
       y: 2,
       z: Math.sin(i * 0.5) * 3,
@@ -445,13 +525,13 @@ function setupCollisionCascade() {
       type: 'domino',
     });
 
-    setScale(cube.mesh, 0.8, 3, 0.4);
+    nova64.scene.setScale(cube.mesh, 0.8, 3, 0.4);
     physicsObjects.push(cube);
   }
 
   // Add initial impulse object
   const impulse = createPhysicsObject({
-    mesh: createSphere(1, 0xff4444, [-20, 5, 0]),
+    mesh: nova64.scene.createSphere(1, 0xff4444, [-20, 5, 0]),
     x: -20,
     y: 5,
     z: 0,
@@ -473,11 +553,11 @@ function setupSandbox() {
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 3; col++) {
       const cube = createPhysicsObject({
-        mesh: createCube(1.2, [0xff4444, 0x44ff44, 0x4488ff, 0xffff44, 0xff88ff][row], [
-          (col - 1) * 1.5,
-          row * 1.5 + 1,
-          0,
-        ]),
+        mesh: nova64.scene.createCube(
+          1.2,
+          [0xff4444, 0x44ff44, 0x4488ff, 0xffff44, 0xff88ff][row],
+          [(col - 1) * 1.5, row * 1.5 + 1, 0]
+        ),
         x: (col - 1) * 1.5,
         y: row * 1.5 + 1,
         z: 0,
@@ -509,10 +589,10 @@ function sandboxSpawnObject() {
   const sy = 12 + Math.random() * 8;
   const sz = (Math.random() - 0.5) * 16;
   let mesh;
-  if (shape === 'sphere') mesh = createSphere(size, color, [sx, sy, sz]);
-  else if (shape === 'cube') mesh = createCube(size, color, [sx, sy, sz]);
-  else if (shape === 'cone') mesh = createCone(size, size * 2, color, [sx, sy, sz]);
-  else mesh = createCylinder(size * 0.5, size * 1.5, color, [sx, sy, sz]);
+  if (shape === 'sphere') mesh = nova64.scene.createSphere(size, color, [sx, sy, sz]);
+  else if (shape === 'cube') mesh = nova64.scene.createCube(size, color, [sx, sy, sz]);
+  else if (shape === 'cone') mesh = nova64.scene.createCone(size, size * 2, color, [sx, sy, sz]);
+  else mesh = nova64.scene.createCylinder(size * 0.5, size * 1.5, color, [sx, sy, sz]);
 
   physicsObjects.push(
     createPhysicsObject({
@@ -620,11 +700,11 @@ function updatePhysics(dt) {
     obj.vz *= AIR_RESISTANCE;
 
     // Update mesh position
-    setPosition(obj.mesh, obj.x, obj.y, obj.z);
+    nova64.scene.setPosition(obj.mesh, obj.x, obj.y, obj.z);
 
     // Add rotation for visual interest
     if (obj.type !== 'pendulum') {
-      rotateMesh(obj.mesh, obj.vx * dt * 0.1, obj.vy * dt * 0.1, obj.vz * dt * 0.1);
+      nova64.scene.rotateMesh(obj.mesh, obj.vx * dt * 0.1, obj.vy * dt * 0.1, obj.vz * dt * 0.1);
     }
   });
 
@@ -727,7 +807,7 @@ function checkCollision(objA, objB) {
   }
 }
 
-function updateParticles(dt) {
+function _local_updateParticles(dt) {
   // Handle particle fountain
   forceFields.forEach(field => {
     if (field.spawnRate) {
@@ -756,14 +836,14 @@ function updateParticles(dt) {
       particle.vy *= -0.3;
     }
 
-    setPosition(particle.mesh, particle.x, particle.y, particle.z);
+    nova64.scene.setPosition(particle.mesh, particle.x, particle.y, particle.z);
 
     // Fade out
     const scale = particle.life / particle.maxLife;
-    setScale(particle.mesh, scale);
+    nova64.scene.setScale(particle.mesh, scale);
 
     if (particle.life <= 0) {
-      destroyMesh(particle.mesh);
+      nova64.scene.destroyMesh(particle.mesh);
       particles.splice(i, 1);
     }
   }
@@ -782,8 +862,8 @@ function updateCamera(dt) {
   const x = Math.cos(angle) * radius;
   const z = Math.sin(angle) * radius;
 
-  setCameraPosition(x, height, z);
-  setCameraTarget(0, 5, 0);
+  nova64.camera.setCameraPosition(x, height, z);
+  nova64.camera.setCameraTarget(0, 5, 0);
 }
 
 function interactWithDemo() {
@@ -791,7 +871,7 @@ function interactWithDemo() {
     case 0: {
       // Bouncing spheres - add a new sphere
       const sphere = createPhysicsObject({
-        mesh: createSphere(1, 0xffffff, [0, 15, 0]),
+        mesh: nova64.scene.createSphere(1, 0xffffff, [0, 15, 0]),
         x: 0,
         y: 15,
         z: 0,
@@ -826,7 +906,7 @@ function interactWithDemo() {
         impulseObj.vx = 15;
         impulseObj.vy = 0;
         impulseObj.vz = 0;
-        setPosition(impulseObj.mesh, impulseObj.x, impulseObj.y, impulseObj.z);
+        nova64.scene.setPosition(impulseObj.mesh, impulseObj.x, impulseObj.y, impulseObj.z);
       }
       break;
     }
@@ -841,7 +921,7 @@ function interactWithDemo() {
 
 function spawnParticle(x, y, z) {
   const particle = {
-    mesh: createSphere(0.2, 0xff6600, [x, y, z]),
+    mesh: nova64.scene.createSphere(0.2, 0xff6600, [x, y, z]),
     x: x,
     y: y,
     z: z,
@@ -858,7 +938,7 @@ function spawnParticle(x, y, z) {
 function createBounceParticles(x, y, z) {
   for (let i = 0; i < 3; i++) {
     const particle = {
-      mesh: createSphere(0.1, 0xffaa44, [x, y, z]),
+      mesh: nova64.scene.createSphere(0.1, 0xffaa44, [x, y, z]),
       x: x,
       y: y,
       z: z,
@@ -875,7 +955,7 @@ function createBounceParticles(x, y, z) {
 function createCollisionParticles(x, y, z) {
   for (let i = 0; i < 5; i++) {
     const particle = {
-      mesh: createSphere(0.08, 0xff4444, [x, y, z]),
+      mesh: nova64.scene.createSphere(0.08, 0xff4444, [x, y, z]),
       x: x,
       y: y,
       z: z,
@@ -891,58 +971,83 @@ function createCollisionParticles(x, y, z) {
 
 function drawUI() {
   // HUD Background
-  rect(16, 16, 450, 105, rgba8(0, 0, 0, 150), true);
-  rect(16, 16, 450, 105, rgba8(100, 100, 200, 100), false);
+  nova64.draw.rect(16, 16, 450, 105, nova64.draw.rgba8(0, 0, 0, 150), true);
+  nova64.draw.rect(16, 16, 450, 105, nova64.draw.rgba8(100, 100, 200, 100), false);
 
   // Title and Demo Info
-  print('PHYSICS LAB 3D', 24, 24, rgba8(100, 200, 255, 255));
-  print(`DEMO: ${demos[selectedDemo].name}`, 24, 40, rgba8(255, 255, 255, 255));
+  nova64.draw.print('PHYSICS LAB 3D', 24, 24, nova64.draw.rgba8(100, 200, 255, 255));
+  nova64.draw.print(
+    `DEMO: ${demos[selectedDemo].name}`,
+    24,
+    40,
+    nova64.draw.rgba8(255, 255, 255, 255)
+  );
 
   // Stats
-  print(`OBJECTS: ${physicsObjects.length}`, 24, 56, rgba8(255, 215, 0, 255));
-  print(`PARTICLES: ${particles.length}`, 24, 72, rgba8(255, 100, 100, 255));
+  nova64.draw.print(
+    `OBJECTS: ${physicsObjects.length}`,
+    24,
+    56,
+    nova64.draw.rgba8(255, 215, 0, 255)
+  );
+  nova64.draw.print(
+    `PARTICLES: ${particles.length}`,
+    24,
+    72,
+    nova64.draw.rgba8(255, 100, 100, 255)
+  );
 
   // Destruction score — the fun metric!
   const scoreColor =
     destructionScore > 500
-      ? rgba8(255, 50, 50)
+      ? nova64.draw.rgba8(255, 50, 50)
       : destructionScore > 100
-        ? rgba8(255, 200, 50)
-        : rgba8(100, 255, 100);
-  print(`DESTRUCTION: ${destructionScore}`, 24, 88, scoreColor);
-  print(`COLLISIONS: ${collisionCount}`, 24, 104, rgba8(200, 150, 255));
+        ? nova64.draw.rgba8(255, 200, 50)
+        : nova64.draw.rgba8(100, 255, 100);
+  nova64.draw.print(`DESTRUCTION: ${destructionScore}`, 24, 88, scoreColor);
+  nova64.draw.print(`COLLISIONS: ${collisionCount}`, 24, 104, nova64.draw.rgba8(200, 150, 255));
 
   // Right side stats
-  print(`BIGGEST HIT: ${biggestImpact.toFixed(1)}`, 250, 56, rgba8(255, 150, 50));
+  nova64.draw.print(
+    `BIGGEST HIT: ${biggestImpact.toFixed(1)}`,
+    250,
+    56,
+    nova64.draw.rgba8(255, 150, 50)
+  );
   if (highScore > 0) {
-    print(`HIGH SCORE: ${highScore}`, 250, 72, rgba8(255, 215, 0));
+    nova64.draw.print(`HIGH SCORE: ${highScore}`, 250, 72, nova64.draw.rgba8(255, 215, 0));
   }
-  print(`SPAWNED: ${objectsCreated}`, 250, 88, rgba8(150, 200, 255));
+  nova64.draw.print(`SPAWNED: ${objectsCreated}`, 250, 88, nova64.draw.rgba8(150, 200, 255));
 
   // 3D Stats
-  const stats = get3DStats();
+  const stats = nova64.scene.get3DStats();
   if (stats) {
-    print(`3D MESHES: ${stats.meshes || 0}`, 250, 104, rgba8(150, 150, 255, 255));
+    nova64.draw.print(
+      `3D MESHES: ${stats.meshes || 0}`,
+      250,
+      104,
+      nova64.draw.rgba8(150, 150, 255, 255)
+    );
   }
 
   // Debug info
   if (showDebugInfo) {
-    print('DEBUG: ON', 250, 40, rgba8(100, 255, 100, 255));
+    nova64.draw.print('DEBUG: ON', 250, 40, nova64.draw.rgba8(100, 255, 100, 255));
   } else {
-    print('DEBUG: OFF', 250, 40, rgba8(255, 100, 100, 255));
+    nova64.draw.print('DEBUG: OFF', 250, 40, nova64.draw.rgba8(255, 100, 100, 255));
   }
 
   // Sandbox objectives hint
   if (selectedDemo === 5) {
     const hint = 'KNOCK DOWN THE TOWER! SPAM SPACE FOR CHAOS!';
-    printCentered(hint, 320, 135, rgba8(255, 200, 100, 200));
+    nova64.draw.printCentered(hint, 320, 135, nova64.draw.rgba8(255, 200, 100, 200));
   }
 
   // Controls
-  print(
+  nova64.draw.print(
     '←→ CHANGE DEMO  ↑ DEBUG  SPC/X INTERACT  Z RESET  G CHAOS(sandbox)',
     24,
     340,
-    rgba8(150, 150, 150, 200)
+    nova64.draw.rgba8(150, 150, 150, 200)
   );
 }

@@ -1,6 +1,11 @@
 // camera-platformer — side-scrolling platformer using cam2DFollow
 // Shows: createCamera2D, cam2DFollow, cam2DApply, cam2DReset, 2D parallax layers
 
+const { cls, line, print, rectfill, screenHeight, screenWidth } = nova64.draw;
+const { cam2DFollow, createCamera2D } = nova64.camera;
+const { key, keyp } = nova64.input;
+const { color } = nova64.util;
+
 let W = 640,
   H = 360;
 const GRAVITY = 500; // px/s²
@@ -41,14 +46,14 @@ function _tileAt(tx, ty) {
 }
 
 function _drawFlag(wx, wy, color) {
-  line(wx, wy, wx, wy - 30, 0xffffff);
-  rectfill(wx + 1, wy - 30, 14, 10, color);
+  nova64.draw.line(wx, wy, wx, wy - 30, 0xffffff);
+  nova64.draw.rectfill(wx + 1, wy - 30, 14, 10, color);
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? screenHeight() : 360;
-  cam = createCamera2D({ screenW: W, screenH: H });
+  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  cam = nova64.camera.createCamera2D({ screenW: W, screenH: H });
   cam.zoom = 1;
 
   player = { x: 40, y: 120, w: 12, h: 18 };
@@ -59,9 +64,10 @@ export function init() {
 
 export function update(dt) {
   // Input
-  const left = key('ArrowLeft') || key('KeyA');
-  const right = key('ArrowRight') || key('KeyD');
-  const jump = keyp('ArrowUp') || keyp('KeyW') || keyp('Space');
+  const left = nova64.input.key('ArrowLeft') || nova64.input.key('KeyA');
+  const right = nova64.input.key('ArrowRight') || nova64.input.key('KeyD');
+  const jump =
+    nova64.input.keyp('ArrowUp') || nova64.input.keyp('KeyW') || nova64.input.keyp('Space');
 
   vx = 0;
   if (left) vx = -RUN_SPD;
@@ -122,7 +128,7 @@ export function update(dt) {
   }
 
   // Camera follow
-  cam2DFollow(cam, player.x + player.w / 2, player.y + player.h / 2, dt, {
+  nova64.camera.cam2DFollow(cam, player.x + player.w / 2, player.y + player.h / 2, dt, {
     stiffness: 5,
     minX: W / 2,
     maxX: MAP_WIDTH * TILE - W / 2,
@@ -132,7 +138,7 @@ export function update(dt) {
 }
 
 export function draw() {
-  cls(0x87ceeb); // sky
+  nova64.draw.cls(0x87ceeb); // sky
 
   // Parallax mountains (layer 1 — moves at 0.3x camera)
   const camOffX = cam.x - W / 2;
@@ -141,7 +147,7 @@ export function draw() {
     const mh = 40 + ((mx * 37) % 35);
     for (let i = 0; i < 70; i++) {
       const fh = mh * Math.max(0, 1 - Math.abs(i - 35) / 35);
-      rectfill(px + i, H - MAP_HEIGHT * TILE - fh, 1, fh, 0x6699aa);
+      nova64.draw.rectfill(px + i, H - MAP_HEIGHT * TILE - fh, 1, fh, 0x6699aa);
     }
   }
 
@@ -149,12 +155,12 @@ export function draw() {
   for (let tx = 0; tx < MAP_WIDTH * TILE; tx += 30) {
     const px = tx - camOffX * 0.6;
     if (px < -20 || px > W + 20) continue;
-    rectfill(px + 10, H - MAP_HEIGHT * TILE - 22, 5, 22, 0x5a3e28);
-    ellipsefill(px + 12, H - MAP_HEIGHT * TILE - 30, 22, 22, 0x3a7a3a);
+    nova64.draw.rectfill(px + 10, H - MAP_HEIGHT * TILE - 22, 5, 22, 0x5a3e28);
+    nova64.util.ellipsefill(px + 12, H - MAP_HEIGHT * TILE - 30, 22, 22, 0x3a7a3a);
   }
 
   // Apply camera transform for world-space drawing
-  cam2DApply(cam);
+  nova64.camera.cam2DApply(cam);
 
   // Draw tilemap
   for (let ty = 0; ty < MAP_HEIGHT; ty++) {
@@ -162,9 +168,9 @@ export function draw() {
       if (MAP[ty][tx]) {
         const wx = tx * TILE,
           wy = ty * TILE;
-        rectfill(wx, wy, TILE, TILE, 0x5a8a3a);
-        rectfill(wx, wy, TILE, 4, 0x78c850);
-        rectfill(wx + 1, wy + 4, TILE - 2, 1, 0x3d6a28);
+        nova64.draw.rectfill(wx, wy, TILE, TILE, 0x5a8a3a);
+        nova64.draw.rectfill(wx, wy, TILE, 4, 0x78c850);
+        nova64.draw.rectfill(wx + 1, wy + 4, TILE - 2, 1, 0x3d6a28);
       }
     }
   }
@@ -173,13 +179,13 @@ export function draw() {
   _drawFlag(MAP_WIDTH * TILE - 30, MAP_HEIGHT * TILE - TILE, 0xff4444);
 
   // Player
-  rectfill(player.x, player.y, player.w, player.h, 0xff8844);
-  rectfill(player.x + 2, player.y + 2, 4, 4, 0xffd0a0); // face
-  rectfill(player.x + 3, player.y + 3, 1, 1, 0x000000); // eye
+  nova64.draw.rectfill(player.x, player.y, player.w, player.h, 0xff8844);
+  nova64.draw.rectfill(player.x + 2, player.y + 2, 4, 4, 0xffd0a0); // face
+  nova64.draw.rectfill(player.x + 3, player.y + 3, 1, 1, 0x000000); // eye
 
-  cam2DReset(cam);
+  nova64.camera.cam2DReset(cam);
 
   // HUD
-  print('CAMERA PLATFORMER', 4, 4, 0x000000);
-  print('Arrow/WASD + Space to jump', 4, H - 12, 0x33557799);
+  nova64.draw.print('CAMERA PLATFORMER', 4, 4, 0x000000);
+  nova64.draw.print('Arrow/WASD + Space to jump', 4, H - 12, 0x33557799);
 }

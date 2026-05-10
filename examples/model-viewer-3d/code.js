@@ -1,6 +1,13 @@
 // 🎮 GLB Model Showcase for Nova64
 // Demonstrates loading 3D models with animations and N64 PBR materials
 
+const { line, print, rect } = nova64.draw;
+const { clearScene, destroyMesh, loadModel, playAnimation, setRotation } = nova64.scene;
+const { setCameraPosition, setCameraTarget } = nova64.camera;
+const { createSpaceSkybox, setAmbientLight, setLightDirection } = nova64.light;
+const { enableRetroEffects } = nova64.fx;
+const { btnp, keyp } = nova64.input;
+
 let rotatingMesh = null;
 let currentModelIndex = 0;
 let models = [
@@ -30,10 +37,10 @@ let currentAnimName = 'Run';
 let isLoading = true;
 
 export async function init() {
-  clearScene();
+  nova64.scene.clearScene();
 
   if (globalThis.enableRetroEffects) {
-    enableRetroEffects({
+    nova64.fx.enableRetroEffects({
       bloomLength: 0.5,
       aberrationIntensity: 0.002,
       vignetteStrength: 0.4,
@@ -42,19 +49,19 @@ export async function init() {
 
   // Setup dynamic skybox
   if (globalThis.createSpaceSkybox) {
-    createSpaceSkybox({
+    nova64.light.createSpaceSkybox({
       starCount: 2000,
       nebulae: true,
       nebulaColor: 0x1a2f4c,
     });
   }
 
-  setCameraPosition(0, 1.5, 8);
-  setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraPosition(0, 1.5, 8);
+  nova64.camera.setCameraTarget(0, 0, 0);
 
   // Set dramatic lighting
-  setAmbientLight(0xffffff, 0.4);
-  setLightDirection(2, 5, 2);
+  nova64.light.setAmbientLight(0xffffff, 0.4);
+  nova64.light.setLightDirection(2, 5, 2);
 
   await switchModel(currentModelIndex);
 }
@@ -62,18 +69,18 @@ export async function init() {
 async function switchModel(index) {
   isLoading = true;
   if (rotatingMesh !== null) {
-    destroyMesh(rotatingMesh);
+    nova64.scene.destroyMesh(rotatingMesh);
     rotatingMesh = null;
   }
 
   const m = models[index];
   try {
-    const meshId = await loadModel(m.url, [0, m.yOffset, 0], m.scale);
+    const meshId = await nova64.scene.loadModel(m.url, [0, m.yOffset, 0], m.scale);
     rotatingMesh = meshId;
 
     // After loading, it starts the first animation automatically.
     // We can just increase the speed playfully
-    if (index === 0) playAnimation(meshId, 2, true, 1.5); // Fox Run
+    if (index === 0) nova64.scene.playAnimation(meshId, 2, true, 1.5); // Fox Run
   } catch (e) {
     console.error('Failed to load model', e);
   }
@@ -85,11 +92,11 @@ export function update(dt) {
   // Rotate smoothly
   if (rotatingMesh && !isLoading) {
     angle += dt * 0.5;
-    setRotation(rotatingMesh, 0, angle, 0);
+    nova64.scene.setRotation(rotatingMesh, 0, angle, 0);
   }
 
   // Press Space or Next/Z to cycle models
-  if (keyp('Space') || keyp('KeyZ') || btnp(13)) {
+  if (nova64.input.keyp('Space') || nova64.input.keyp('KeyZ') || nova64.input.btnp(13)) {
     currentModelIndex = (currentModelIndex + 1) % models.length;
     switchModel(currentModelIndex);
   }
@@ -97,18 +104,18 @@ export function update(dt) {
 
 export function draw() {
   if (isLoading) {
-    print('LOADING ASSET.GLB...', 120, 150, 0xffff00);
+    nova64.draw.print('LOADING ASSET.GLB...', 120, 150, 0xffff00);
     return;
   }
 
   // Draw cool text HUD overlays on the 3D container
-  print('✨ N64 3D MODEL LOADER ✨', 20, 20, 0xffffff);
+  nova64.draw.print('✨ N64 3D MODEL LOADER ✨', 20, 20, 0xffffff);
 
   const mName = models[currentModelIndex].name;
-  print(`Model: ${mName}`, 20, 50, 0x00ffff);
-  print('Press Space/Z to switch models', 20, 70, 0x88ccff);
+  nova64.draw.print(`Model: ${mName}`, 20, 50, 0x00ffff);
+  nova64.draw.print('Press Space/Z to switch models', 20, 70, 0x88ccff);
 
   // Custom bounding UI elements
-  rect(15, 15, 280, 80, 0xffffff);
-  line(18, 40, 280, 40, 0x444444);
+  nova64.draw.rect(15, 15, 280, 80, 0xffffff);
+  nova64.draw.line(18, 40, 280, 40, 0x444444);
 }

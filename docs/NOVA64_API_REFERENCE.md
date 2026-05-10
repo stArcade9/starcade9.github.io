@@ -1,6 +1,6 @@
 # 🎮 NOVA64 API REFERENCE
 
-**Version:** 0.4.8  
+**Version:** 0.4.9<br>
 **Date:** March 20, 2026  
 **Resolution:** 640×360 pixels  
 **Target:** Nintendo 64 / PlayStation aesthetic
@@ -417,13 +417,13 @@ setFog(0x000020, 30, 150); // Dark blue fog
 
 ### 3D Objects
 
-#### `createCube(size, color, position, options?)`
+#### `createCube(size, color, position, options?)` / `createCube(width, height, depth, color, position, options?)`
 
-Create a cube mesh.
+Create a cube or rectangular box mesh.
 
 ```javascript
 const cube = createCube(2, 0xff0000, [0, 0, 0]); // Red 2x2x2 cube
-const box = createCube(1, 0x00ff00, [5, 1, 0], {
+const box = createCube(4, 2, 1, 0x00ff00, [5, 1, 0], {
   flatShading: true,
 });
 ```
@@ -445,13 +445,13 @@ const neonCube = createAdvancedCube(
 );
 ```
 
-#### `createSphere(radius, color, position, segments?, options?)`
+#### `createSphere(radius, color, position, options?)` / `createSphere(radius, color, position, segments?, options?)`
 
 Create a sphere.
 
 ```javascript
 const sphere = createSphere(1, 0xff00ff, [0, 2, 0], 8); // Low-poly
-const glowSphere = createSphere(1, 0xffff00, [3, 1, 0], 12, {
+const glowSphere = createSphere(1, 0xffff00, [3, 1, 0], {
   emissive: 0xffff00,
   emissiveIntensity: 1.0,
 });

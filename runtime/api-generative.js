@@ -268,6 +268,11 @@ export function generativeApi(gpu) {
     }
   }
 
+  // Legacy helper used by older carts such as movie-clock and camera-platformer.
+  function ellipsefill(cx, cy, rx, ry, color) {
+    ellipse(cx, cy, rx, ry, color, true);
+  }
+
   /**
    * Draw an arc. arc(cx, cy, rx, ry, startAngle, endAngle, color, fill).
    * Angles in radians. Draws clockwise from start to end.
@@ -574,6 +579,7 @@ export function generativeApi(gpu) {
 
         // Shapes
         ellipse,
+        ellipsefill,
         arc,
         bezier,
         quadCurve,

@@ -213,6 +213,9 @@ export function camera2DApi(gpu) {
         createCamera2D,
         beginCamera2D: _begin,
         endCamera2D: _end,
+        // Legacy aliases kept for older carts.
+        cam2DApply: _begin,
+        cam2DReset: _end,
         cam2DFollow,
         cam2DShake,
         updateCamera2D,

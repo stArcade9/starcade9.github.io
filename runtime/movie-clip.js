@@ -138,8 +138,9 @@ function _drawClip(clip, x, y, opts, gpu) {
 
   if (typeof frame === 'string') {
     // Atlas frame name — delegate to sprByName global (exposed by spriteApi)
-    if (typeof globalThis.sprByName === 'function') {
-      globalThis.sprByName(frame, x, y, opts);
+    const sprByName = globalThis.sprByName ?? globalThis.nova64?.sprite?.sprByName;
+    if (typeof sprByName === 'function') {
+      sprByName(frame, x, y, opts);
     }
     return;
   }

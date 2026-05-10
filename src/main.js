@@ -1,7 +1,10 @@
 import { Nova64, NOVA64_VERSION } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
+import { GpuBabylon } from '../runtime/gpu-babylon.js';
 import { logger } from '../runtime/logger.js';
 globalThis.novaLogger = logger;
+import { createLogger } from '../runtime/debug-logger.js';
+globalThis._debugLogger = createLogger('API');
 import { stdApi } from '../runtime/api.js';
 import { spriteApi } from '../runtime/api-sprites.js';
 import { threeDApi } from '../runtime/api-3d.js';
@@ -19,6 +22,7 @@ import { effectsApi } from '../runtime/api-effects.js';
 import { voxelApi } from '../runtime/api-voxel.js';
 import { createFullscreenButton } from '../runtime/fullscreen-button.js';
 import { storeApi } from '../runtime/store.js';
+import { buildNamespace, NAMESPACE_MAP } from '../runtime/namespace.js';
 import { api2d } from '../runtime/api-2d.js';
 import { presetsApi } from '../runtime/api-presets.js';
 import { generativeApi } from '../runtime/api-generative.js';
@@ -38,6 +42,8 @@ import { camera2DApi } from '../runtime/camera-2d.js';
 import { particles2DApi } from '../runtime/api-particles-2d.js';
 import { tweenApi } from '../runtime/tween.js';
 import { DebugPanel } from '../runtime/debug-panel.js';
+import { registerCartResetHook } from '../runtime/cart-reset.js';
+import { createStudioCartFunction } from '../runtime/studio-executor.js';
 import * as THREE from 'three';
 
 const canvas = document.getElementById('screen');
@@ -57,29 +63,40 @@ const _paramClearColor = _qs.get('clearColor');
 canvas.width = _paramW;
 canvas.height = _paramH;
 
-// ONLY use Three.js renderer - Nintendo 64/PlayStation style 3D console
-let gpu;
-try {
-  gpu = new GpuThreeJS(canvas, _paramW, _paramH);
-  if (_paramClearColor) {
-    gpu.renderer.setClearColor(parseInt(_paramClearColor, 16), 1.0);
-  }
-  console.log(
-    `✅ Using Three.js renderer (${_paramW}x${_paramH}) - Nintendo 64/PlayStation GPU mode`
-  );
+const _requestedBackend = (_qs.get('backend') || '').toLowerCase();
+const _isBabylonPage = window.location.pathname.endsWith('/babylon_console.html');
+const _useBabylon = _requestedBackend === 'babylon' || _isBabylonPage;
 
-  // Expose Three.js internals for browser DevTools extension
-  globalThis.__THREE__ = THREE;
-  globalThis.__THREE_SCENE__ = gpu.scene;
-  globalThis.__THREE_RENDERER__ = gpu.renderer;
-  globalThis.__THREE_CAMERA__ = gpu.camera;
-  if (typeof window.__THREE_DEVTOOLS__ !== 'undefined') {
-    window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.scene }));
-    window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.renderer }));
+// Select renderer backend (default: Three.js)
+let gpu;
+let backendLabel = 'Three.js';
+try {
+  if (_useBabylon) {
+    gpu = new GpuBabylon(canvas, _paramW, _paramH);
+    backendLabel = 'Babylon.js';
+    console.log(`✅ Using Babylon.js renderer (${_paramW}x${_paramH}) - experimental backend`);
+  } else {
+    gpu = new GpuThreeJS(canvas, _paramW, _paramH);
+    if (_paramClearColor) {
+      gpu.renderer.setClearColor(parseInt(_paramClearColor, 16), 1.0);
+    }
+    console.log(
+      `✅ Using Three.js renderer (${_paramW}x${_paramH}) - Nintendo 64/PlayStation GPU mode`
+    );
+
+    // Expose Three.js internals for browser DevTools extension
+    globalThis.__THREE__ = THREE;
+    globalThis.__THREE_SCENE__ = gpu.scene;
+    globalThis.__THREE_RENDERER__ = gpu.renderer;
+    globalThis.__THREE_CAMERA__ = gpu.camera;
+    if (typeof window.__THREE_DEVTOOLS__ !== 'undefined') {
+      window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.scene }));
+      window.__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('observe', { detail: gpu.renderer }));
+    }
   }
 } catch (e) {
-  console.error('❌ Three.js renderer failed to initialize:', e);
-  throw new Error('Fantasy console requires 3D GPU support (Three.js)');
+  console.error(`❌ ${_useBabylon ? 'Babylon.js' : 'Three.js'} renderer failed to initialize:`, e);
+  throw new Error('Fantasy console requires 3D GPU support');
 }
 
 // Bake in responsive resize when no fixed ?w= param is provided.
@@ -107,7 +124,7 @@ if (_isResponsive) {
 
 const api = stdApi(gpu);
 const sApi = spriteApi(gpu);
-const threeDApi_instance = threeDApi(gpu);
+const threeDApi_instance = _useBabylon ? null : threeDApi(gpu);
 const eApi = editorApi(sApi);
 const pApi = physicsApi();
 const tApi = textInputApi();
@@ -145,7 +162,9 @@ let uiApiInstance;
 const nova64api = {};
 api.exposeTo(nova64api);
 sApi.exposeTo(nova64api);
-threeDApi_instance.exposeTo(nova64api);
+if (threeDApi_instance) threeDApi_instance.exposeTo(nova64api);
+// When using Babylon.js, expose its built-in 3D API
+if (_useBabylon && gpu.exposeTo) gpu.exposeTo(nova64api);
 eApi.exposeTo(nova64api);
 pApi.exposeTo(nova64api);
 tApi.exposeTo(nova64api);
@@ -189,23 +208,85 @@ canvasUIApi().exposeTo(nova64api);
 // Connect input system to UI system for mouse events
 iApi.connectUI(uiApiInstance.setMousePosition, uiApiInstance.setMouseButton);
 
-Object.assign(globalThis, nova64api);
+// Expose grouped-only namespace. Carts use nova64.draw.cls(), nova64.scene.createCube(), etc.
+globalThis.nova64 = buildNamespace(nova64api, NAMESPACE_MAP);
+
 // inject camera ref into sprite system
 if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
 
 const nova = new Nova64(gpu, manifestInst);
 globalThis.NOVA64_VERSION = NOVA64_VERSION;
+globalThis.__nova64Runtime = nova;
+globalThis.__nova64CartLoadState = {
+  path: '',
+  count: 0,
+  loading: false,
+  ready: false,
+  error: '',
+};
+
+registerCartResetHook('input', () => {
+  iApi.reset?.();
+});
+
+registerCartResetHook('ui', () => {
+  nova64api.clearButtons?.();
+  nova64api.clearPanels?.();
+});
+
+registerCartResetHook('screens', () => {
+  nova64api.screens?.reset?.();
+});
+
+registerCartResetHook('store', () => {
+  storeApiInst.reset?.();
+});
+
+registerCartResetHook('voxel', ({ modulePath }) => {
+  nova64api.resetVoxelWorld?.({ restoreDefaults: true, cartPath: modulePath });
+});
+
+registerCartResetHook('scene', () => {
+  nova64api.clearScene?.();
+  nova64api.clearSkybox?.();
+});
+
+registerCartResetHook('camera', () => {
+  nova64api.setCameraPosition?.(0, 5, 10);
+  nova64api.setCameraTarget?.(0, 0, 0);
+});
+
+registerCartResetHook('fog', () => {
+  nova64api.setFog?.(0x87ceeb, 50, 200);
+});
+
+registerCartResetHook('manifest', () => {
+  manifestInst._reset?.();
+});
 
 // ── Debug Panel ──────────────────────────────────────────────────────────────
-const _debugPanel = new DebugPanel(gpu);
-const _debugRequested = _qs.get('debug') === '1';
-if (_debugRequested) _debugPanel.toggle();
-window.addEventListener('keydown', e => {
-  if (e.code === 'F9') {
-    e.preventDefault();
-    _debugPanel.toggle();
-  }
-});
+const _debugPanel = _useBabylon
+  ? {
+      toggle() {},
+      setCallbacks() {},
+      setPaused() {},
+      getTimeScale() {
+        return 1;
+      },
+      update() {},
+    }
+  : new DebugPanel(gpu);
+
+if (!_useBabylon) {
+  const _debugRequested = _qs.get('debug') === '1';
+  if (_debugRequested) _debugPanel.toggle();
+  window.addEventListener('keydown', e => {
+    if (e.code === 'F9') {
+      e.preventDefault();
+      _debugPanel.toggle();
+    }
+  });
+}
 
 // Wire debug panel controls → game loop state
 _debugPanel.setCallbacks({
@@ -226,6 +307,13 @@ _debugPanel.setCallbacks({
 
 // Lifecycle: notify parent window when a cart finishes loading
 nova.onCartDidLoad = path => {
+  globalThis.__nova64CartLoadState = {
+    path,
+    count: (globalThis.__nova64CartLoadState?.count || 0) + 1,
+    loading: false,
+    ready: true,
+    error: '',
+  };
   if (window.parent && window.parent !== window) {
     window.parent.postMessage({ type: 'CART_LOADED', path }, '*');
   }
@@ -238,7 +326,25 @@ let _currentCartPath = '';
 
 async function loadCart(path) {
   _currentCartPath = path;
-  await nova.loadCart(path);
+  globalThis.__nova64CartLoadState = {
+    path,
+    count: globalThis.__nova64CartLoadState?.count || 0,
+    loading: true,
+    ready: false,
+    error: '',
+  };
+  try {
+    await nova.loadCart(path);
+  } catch (err) {
+    globalThis.__nova64CartLoadState = {
+      path,
+      count: globalThis.__nova64CartLoadState?.count || 0,
+      loading: false,
+      ready: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+    throw err;
+  }
 }
 
 function attachUI() {
@@ -304,7 +410,11 @@ let currentDt = 0;
 globalThis.getDeltaTime = () => currentDt;
 globalThis.getFPS = () => fps;
 
+let loopCount = 0;
 function loop() {
+  loopCount++;
+  if (loopCount === 1) console.log('[main.js] First loop() call - dt calculation starting');
+  if (loopCount % 60 === 0) console.log('[main.js] loop() called', loopCount, 'times');
   const now = performance.now();
   let dt = Math.min(0.1, (now - last) / 1000);
   dt *= _debugPanel.getTimeScale();
@@ -323,16 +433,16 @@ function loop() {
     // Update post-processing shader uniforms (time, etc.)
     fxApi.update(dt);
     // Update procedural TSL material time uniforms
-    if (typeof globalThis._updateTSLMaterials === 'function') {
-      globalThis._updateTSLMaterials(dt);
+    if (typeof nova64api._updateTSLMaterials === 'function') {
+      nova64api._updateTSLMaterials(dt);
     }
 
     // Update cart first (for manual screen management)
     // Check if cart exists to prevent errors during scene transitions
     if (nova.cart && nova.cart.update) {
       try {
-        if (typeof globalThis.updateAnimations === 'function') {
-          globalThis.updateAnimations(dt);
+        if (typeof nova64api.updateAnimations === 'function') {
+          nova64api.updateAnimations(dt);
         }
         nova.cart.update(dt);
       } catch (e) {
@@ -384,11 +494,11 @@ function loop() {
   _debugPanel.update();
 
   // 3D GPU stats
-  let statsText = `3D GPU (Three.js) • fps: ${fps}, update: ${uMs.toFixed(2)}ms, draw: ${dMs.toFixed(2)}ms`;
+  let statsText = `3D GPU (${backendLabel}) • fps: ${fps}, update: ${uMs.toFixed(2)}ms, draw: ${dMs.toFixed(2)}ms`;
 
   // Add 3D stats if available
-  if (typeof get3DStats === 'function') {
-    const stats3D = get3DStats();
+  if (typeof nova64api.get3DStats === 'function') {
+    const stats3D = nova64api.get3DStats();
     if (stats3D.render) {
       statsText += ` • triangles: ${stats3D.render.triangles}, calls: ${stats3D.render.calls}`;
     }
@@ -406,10 +516,24 @@ function loop() {
 
 let _useAnimationLoop = false;
 function startLoop() {
-  // renderer.setAnimationLoop is required for WebXR and is backward-
-  // compatible with normal rendering (acts like rAF when no XR session).
   _useAnimationLoop = true;
-  gpu.getRenderer().setAnimationLoop(loop);
+  const renderer = gpu.getRenderer();
+  if (renderer && typeof renderer.setAnimationLoop === 'function') {
+    // Three.js / WebXR path
+    renderer.setAnimationLoop(loop);
+    return;
+  }
+  console.log('[main.js] Babylon.js path: calling renderer.runRenderLoop');
+  console.log('[main.js] Babylon.js path: calling renderer.runRenderLoop');
+  if (renderer && typeof renderer.runRenderLoop === 'function') {
+    console.log('[main.js] Babylon.js path: calling renderer.runRenderLoop');
+    // Babylon.js path
+    console.log('[main.js] Babylon.js path: calling renderer.runRenderLoop');
+    renderer.runRenderLoop(loop);
+    return;
+  }
+  // Generic fallback
+  requestAnimationFrame(loop);
 }
 
 attachUI();
@@ -418,7 +542,10 @@ attachUI();
 const urlParams = new URLSearchParams(window.location.search);
 const gameParam = urlParams.get('game');
 const gamePathParam = urlParams.get('path'); // Allow direct path parameter
-const demoParam = urlParams.get('demo'); // Also handle ?demo= from console.html links
+// TODO: rename the URL param from 'demo' to 'cart' throughout (README links,
+// console.html pre-fill, and this file) — then remove the ?cart= alias below.
+// ?cart= is kept as an alias so any old bookmarks/links still resolve.
+const demoParam = urlParams.get('demo') || urlParams.get('cart');
 const studioMode = urlParams.get('studio') === '1'; // Game Studio embeds console.html?studio=1
 
 // Map game IDs to their paths
@@ -599,19 +726,8 @@ window.addEventListener('message', async event => {
       // Execute the new code
       const userCode = event.data.code;
 
-      // Dynamically build param list from nova64api so ALL Nova64 APIs are local variables
-      // in user code — avoids window.print and other globalThis clobbering issues.
-      const _apiNames = Object.keys(nova64api).filter(
-        k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) && k.length >= 3
-      );
-      const _apiValues = _apiNames.map(k => nova64api[k]);
-      const gameFunction = new Function(
-        ..._apiNames,
-        userCode +
-          '\n; return { init: typeof init !== "undefined" ? init : null, update: typeof update !== "undefined" ? update : null, draw: typeof draw !== "undefined" ? draw : null, render: typeof render !== "undefined" ? render : null };'
-      );
-
-      const gameFunctions = gameFunction(..._apiValues);
+      const gameFunction = createStudioCartFunction(userCode);
+      const gameFunctions = gameFunction();
 
       // Call init() if defined (modern Nova64 carts use init for one-time setup)
       if (gameFunctions.init && typeof gameFunctions.init === 'function') {

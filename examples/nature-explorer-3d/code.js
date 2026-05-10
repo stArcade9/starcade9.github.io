@@ -3,6 +3,57 @@
 // photograph creatures, and uncover all points of interest across biomes
 
 // ── World Constants ──
+const {
+  circle,
+  createMinimap,
+  drawGlowText,
+  drawMinimap,
+  drawPixelBorder,
+  drawProgressBar,
+  line,
+  print,
+  printCentered,
+  rect,
+  rectfill,
+  rgba8,
+} = nova64.draw;
+const {
+  clearScene,
+  createCapsule,
+  createCone,
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  loadModel,
+  removeMesh,
+  setMeshOpacity,
+  setPosition,
+  setRotation,
+  setScale,
+  updateAnimations,
+} = nova64.scene;
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const {
+  createGradientSkybox,
+  createPointLight,
+  setAmbientLight,
+  setFog,
+  setLightDirection,
+  setPointLightColor,
+} = nova64.light;
+const {
+  createParticleSystem,
+  enableBloom,
+  enableVignette,
+  removeParticleSystem,
+  setParticleEmitter,
+  updateParticles,
+} = nova64.fx;
+const { key, keyp } = nova64.input;
+const { sfx } = nova64.audio;
+const { color, createFloatingTextSystem, noise } = nova64.util;
+
 const WORLD_SIZE = 120;
 const TREE_COUNT = 50;
 const ROCK_COUNT = 30;
@@ -170,62 +221,86 @@ function createAnimalMesh(template, x, z) {
   switch (template.shape) {
     case 'tall': {
       // Deer / Stag
-      const body = createCapsule(s * 0.4, s * 0.8, c, [x, s * 0.8, z]);
-      setScale(body, 1, 1, 1.5);
-      const head = createSphere(s * 0.25, c, [x, s * 1.2, z - s * 0.6]);
+      const body = nova64.scene.createCapsule(s * 0.4, s * 0.8, c, [x, s * 0.8, z]);
+      nova64.scene.setScale(body, 1, 1, 1.5);
+      const head = nova64.scene.createSphere(s * 0.25, c, [x, s * 1.2, z - s * 0.6]);
       // Legs
-      createCylinder(s * 0.08, s * 0.6, c - 0x111111, [x - s * 0.2, s * 0.3, z - s * 0.3]);
-      createCylinder(s * 0.08, s * 0.6, c - 0x111111, [x + s * 0.2, s * 0.3, z - s * 0.3]);
-      createCylinder(s * 0.08, s * 0.6, c - 0x111111, [x - s * 0.2, s * 0.3, z + s * 0.3]);
-      createCylinder(s * 0.08, s * 0.6, c - 0x111111, [x + s * 0.2, s * 0.3, z + s * 0.3]);
+      nova64.scene.createCylinder(s * 0.08, s * 0.6, c - 0x111111, [
+        x - s * 0.2,
+        s * 0.3,
+        z - s * 0.3,
+      ]);
+      nova64.scene.createCylinder(s * 0.08, s * 0.6, c - 0x111111, [
+        x + s * 0.2,
+        s * 0.3,
+        z - s * 0.3,
+      ]);
+      nova64.scene.createCylinder(s * 0.08, s * 0.6, c - 0x111111, [
+        x - s * 0.2,
+        s * 0.3,
+        z + s * 0.3,
+      ]);
+      nova64.scene.createCylinder(s * 0.08, s * 0.6, c - 0x111111, [
+        x + s * 0.2,
+        s * 0.3,
+        z + s * 0.3,
+      ]);
       mesh = body;
       break;
     }
     case 'small': {
       // Rabbit
-      mesh = createSphere(s * 0.5, c, [x, s * 0.4, z]);
-      setScale(mesh, 1, 0.8, 1.2);
-      createSphere(s * 0.2, c, [x, s * 0.7, z - s * 0.2]);
+      mesh = nova64.scene.createSphere(s * 0.5, c, [x, s * 0.4, z]);
+      nova64.scene.setScale(mesh, 1, 0.8, 1.2);
+      nova64.scene.createSphere(s * 0.2, c, [x, s * 0.7, z - s * 0.2]);
       // Ears
-      createCylinder(s * 0.06, s * 0.4, 0xffccaa, [x - s * 0.08, s * 0.9, z - s * 0.2]);
-      createCylinder(s * 0.06, s * 0.4, 0xffccaa, [x + s * 0.08, s * 0.9, z - s * 0.2]);
+      nova64.scene.createCylinder(s * 0.06, s * 0.4, 0xffccaa, [
+        x - s * 0.08,
+        s * 0.9,
+        z - s * 0.2,
+      ]);
+      nova64.scene.createCylinder(s * 0.06, s * 0.4, 0xffccaa, [
+        x + s * 0.08,
+        s * 0.9,
+        z - s * 0.2,
+      ]);
       break;
     }
     case 'medium': {
       // Fox
-      mesh = createCapsule(s * 0.3, s * 0.5, c, [x, s * 0.5, z]);
-      setScale(mesh, 1, 0.9, 1.4);
-      const fHead = createSphere(s * 0.22, c, [x, s * 0.7, z - s * 0.4]);
-      createCone(s * 0.12, s * 0.2, 0xffffff, [x, s * 0.65, z - s * 0.6]); // Nose
+      mesh = nova64.scene.createCapsule(s * 0.3, s * 0.5, c, [x, s * 0.5, z]);
+      nova64.scene.setScale(mesh, 1, 0.9, 1.4);
+      const fHead = nova64.scene.createSphere(s * 0.22, c, [x, s * 0.7, z - s * 0.4]);
+      nova64.scene.createCone(s * 0.12, s * 0.2, 0xffffff, [x, s * 0.65, z - s * 0.6]); // Nose
       // Tail
-      createCapsule(s * 0.1, s * 0.4, 0xffffff, [x, s * 0.5, z + s * 0.5]);
+      nova64.scene.createCapsule(s * 0.1, s * 0.4, 0xffffff, [x, s * 0.5, z + s * 0.5]);
       break;
     }
     case 'large': {
       // Bear
-      mesh = createCapsule(s * 0.5, s * 0.7, c, [x, s * 0.7, z]);
-      setScale(mesh, 1.2, 1, 1.3);
-      createSphere(s * 0.35, c, [x, s * 1.1, z - s * 0.4]);
+      mesh = nova64.scene.createCapsule(s * 0.5, s * 0.7, c, [x, s * 0.7, z]);
+      nova64.scene.setScale(mesh, 1.2, 1, 1.3);
+      nova64.scene.createSphere(s * 0.35, c, [x, s * 1.1, z - s * 0.4]);
       // Ears
-      createSphere(s * 0.1, c, [x - s * 0.2, s * 1.35, z - s * 0.35]);
-      createSphere(s * 0.1, c, [x + s * 0.2, s * 1.35, z - s * 0.35]);
+      nova64.scene.createSphere(s * 0.1, c, [x - s * 0.2, s * 1.35, z - s * 0.35]);
+      nova64.scene.createSphere(s * 0.1, c, [x + s * 0.2, s * 1.35, z - s * 0.35]);
       break;
     }
     case 'bird': {
       // Flying bird
-      mesh = createSphere(s * 0.4, c, [x, 5 + Math.random() * 8, z]);
-      setScale(mesh, 1, 0.6, 1.5);
+      mesh = nova64.scene.createSphere(s * 0.4, c, [x, 5 + Math.random() * 8, z]);
+      nova64.scene.setScale(mesh, 1, 0.6, 1.5);
       // Wings
-      createPlane(s * 1.5, s * 0.4, c + 0x222222, [x, 5 + Math.random() * 8, z]);
+      nova64.scene.createPlane(s * 1.5, s * 0.4, c + 0x222222, [x, 5 + Math.random() * 8, z]);
       break;
     }
     case 'tiny': {
       // Crystal butterfly
-      mesh = createSphere(s * 0.3, c, [x, 2, z], 6, { material: 'holographic' });
+      mesh = nova64.scene.createSphere(s * 0.3, c, [x, 2, z], 6, { material: 'holographic' });
       break;
     }
     default:
-      mesh = createSphere(s * 0.5, c, [x, s, z]);
+      mesh = nova64.scene.createSphere(s * 0.5, c, [x, s, z]);
   }
   return mesh;
 }
@@ -235,27 +310,29 @@ function createCollectibleMesh(type, x, z) {
   let mesh;
   switch (type.shape) {
     case 'mushroom': {
-      const stem = createCylinder(0.1, 0.3, 0xeeddcc, [x, 0.15, z]);
-      mesh = createSphere(0.2, type.color, [x, 0.35, z]);
-      setScale(mesh, 1, 0.6, 1);
+      const stem = nova64.scene.createCylinder(0.1, 0.3, 0xeeddcc, [x, 0.15, z]);
+      mesh = nova64.scene.createSphere(0.2, type.color, [x, 0.35, z]);
+      nova64.scene.setScale(mesh, 1, 0.6, 1);
       break;
     }
     case 'crystal': {
-      mesh = createCone(0.15, 0.5, type.color, [x, 0.25, z], { material: 'holographic' });
+      mesh = nova64.scene.createCone(0.15, 0.5, type.color, [x, 0.25, z], {
+        material: 'holographic',
+      });
       break;
     }
     case 'flower': {
-      createCylinder(0.04, 0.3, 0x44aa22, [x, 0.15, z]);
-      mesh = createSphere(0.12, type.color, [x, 0.35, z]);
+      nova64.scene.createCylinder(0.04, 0.3, 0x44aa22, [x, 0.15, z]);
+      mesh = nova64.scene.createSphere(0.12, type.color, [x, 0.35, z]);
       break;
     }
     case 'feather': {
-      mesh = createPlane(0.3, 0.1, type.color, [x, 0.5, z]);
-      setRotation(mesh, 0.3, 0, 0.5);
+      mesh = nova64.scene.createPlane(0.3, 0.1, type.color, [x, 0.5, z]);
+      nova64.scene.setRotation(mesh, 0.3, 0, 0.5);
       break;
     }
     default:
-      mesh = createSphere(0.2, type.color, [x, 0.3, z]);
+      mesh = nova64.scene.createSphere(0.2, type.color, [x, 0.3, z]);
   }
   return mesh;
 }
@@ -270,10 +347,10 @@ function createPOIMesh(type, x, z) {
         const px = x + Math.cos(a) * 3;
         const pz = z + Math.sin(a) * 3;
         const h = 2 + Math.random() * 3;
-        const pillar = createCylinder(0.4, h, c, [px, h / 2, pz]);
-        if (Math.random() > 0.5) setScale(pillar, 1, 0.6, 1); // Broken
+        const pillar = nova64.scene.createCylinder(0.4, h, c, [px, h / 2, pz]);
+        if (Math.random() > 0.5) nova64.scene.setScale(pillar, 1, 0.6, 1); // Broken
       }
-      createPlane(6, 6, 0x777766, [x, 0.05, z]);
+      nova64.scene.createPlane(6, 6, 0x777766, [x, 0.05, z]);
       break;
     }
     case 'Fairy Ring': {
@@ -281,10 +358,10 @@ function createPOIMesh(type, x, z) {
         const a = (i / 12) * Math.PI * 2;
         const px = x + Math.cos(a) * 2.5;
         const pz = z + Math.sin(a) * 2.5;
-        createCylinder(0.08, 0.2, 0xeeddcc, [px, 0.1, pz]);
-        createSphere(0.12, 0x88ffaa, [px, 0.25, pz], 4, { material: 'emissive' });
+        nova64.scene.createCylinder(0.08, 0.2, 0xeeddcc, [px, 0.1, pz]);
+        nova64.scene.createSphere(0.12, 0x88ffaa, [px, 0.25, pz], 4, { material: 'emissive' });
       }
-      const glow = createParticleSystem(60, {
+      const glow = nova64.fx.createParticleSystem(60, {
         size: 0.08,
         color: 0x88ffaa,
         emissive: 0x44ff66,
@@ -311,10 +388,10 @@ function createPOIMesh(type, x, z) {
       // Fire pit
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
-        createCube(0.3, 0x555555, [x + Math.cos(a) * 1, 0.15, z + Math.sin(a) * 1]);
+        nova64.scene.createCube(0.3, 0x555555, [x + Math.cos(a) * 1, 0.15, z + Math.sin(a) * 1]);
       }
       // Campfire particles
-      const fire = createParticleSystem(80, {
+      const fire = nova64.fx.createParticleSystem(80, {
         size: 0.12,
         color: 0xff6622,
         emissive: 0xff4400,
@@ -335,19 +412,24 @@ function createPOIMesh(type, x, z) {
         endColor: 0x331100,
       });
       particleSystems.push(fire);
-      const light = createPointLight(0xff6622, 2, 12, [x, 2, z]);
+      const light = nova64.light.createPointLight(0xff6622, 2, 12, [x, 2, z]);
       campfireLights.push({ light, x, z, base: 2 });
       // Log seats
-      createCylinder(0.2, 1.5, 0x6b4226, [x + 2, 0.2, z]);
-      setRotation(createCylinder(0.2, 1.5, 0x6b4226, [x - 1.5, 0.2, z + 1.5]), 0, 0.8, 0);
+      nova64.scene.createCylinder(0.2, 1.5, 0x6b4226, [x + 2, 0.2, z]);
+      nova64.scene.setRotation(
+        nova64.scene.createCylinder(0.2, 1.5, 0x6b4226, [x - 1.5, 0.2, z + 1.5]),
+        0,
+        0.8,
+        0
+      );
       break;
     }
     case 'Waterfall': {
       // Rock wall
-      createCube(4, 0x666655, [x, 3, z - 1]);
-      setScale(createCube(3, 0x555544, [x, 5, z - 0.5]), 0.8, 1, 0.5);
+      nova64.scene.createCube(4, 0x666655, [x, 3, z - 1]);
+      nova64.scene.setScale(nova64.scene.createCube(3, 0x555544, [x, 5, z - 0.5]), 0.8, 1, 0.5);
       // Water particles
-      const waterfall = createParticleSystem(120, {
+      const waterfall = nova64.fx.createParticleSystem(120, {
         size: 0.1,
         color: 0x66bbee,
         emissive: 0x2288bb,
@@ -369,15 +451,15 @@ function createPOIMesh(type, x, z) {
       });
       particleSystems.push(waterfall);
       // Pool
-      const pool = createCylinder(3, 0.1, 0x2266aa, [x, 0.05, z + 2]);
-      setScale(pool, 1.5, 1, 1);
+      const pool = nova64.scene.createCylinder(3, 0.1, 0x2266aa, [x, 0.05, z + 2]);
+      nova64.scene.setScale(pool, 1.5, 1, 1);
       break;
     }
     case 'Hollow Tree': {
-      const trunk = createCylinder(2, 8, 0x6b4226, [x, 4, z]);
-      createSphere(5, 0x2e8b57, [x, 9, z]);
+      const trunk = nova64.scene.createCylinder(2, 8, 0x6b4226, [x, 4, z]);
+      nova64.scene.createSphere(5, 0x2e8b57, [x, 9, z]);
       // Hollow entrance
-      createCube(1.2, 0x332211, [x, 1, z + 2], { material: 'standard' });
+      nova64.scene.createCube(1.2, 0x332211, [x, 1, z + 2], { material: 'standard' });
       break;
     }
     case 'Stone Circle': {
@@ -385,11 +467,11 @@ function createPOIMesh(type, x, z) {
         const a = (i / 7) * Math.PI * 2;
         const px = x + Math.cos(a) * 4;
         const pz = z + Math.sin(a) * 4;
-        const stone = createCube(1, 0x889999, [px, 1.5, pz]);
-        setScale(stone, 0.5, 1 + Math.random(), 0.4);
+        const stone = nova64.scene.createCube(1, 0x889999, [px, 1.5, pz]);
+        nova64.scene.setScale(stone, 0.5, 1 + Math.random(), 0.4);
       }
       // Central energy
-      const energy = createParticleSystem(40, {
+      const energy = nova64.fx.createParticleSystem(40, {
         size: 0.06,
         color: 0xaaddff,
         emissive: 0x6699ff,
@@ -419,24 +501,26 @@ function createPOIMesh(type, x, z) {
         const fc = [0xff6699, 0xffaa33, 0xff44aa, 0xaa44ff, 0xffff44][
           Math.floor(Math.random() * 5)
         ];
-        createCylinder(0.03, 0.2 + Math.random() * 0.2, 0x44aa22, [fx, 0.1, fz]);
-        createSphere(0.08 + Math.random() * 0.06, fc, [fx, 0.3, fz]);
+        nova64.scene.createCylinder(0.03, 0.2 + Math.random() * 0.2, 0x44aa22, [fx, 0.1, fz]);
+        nova64.scene.createSphere(0.08 + Math.random() * 0.06, fc, [fx, 0.3, fz]);
       }
       break;
     }
     case 'Crystal Cave': {
       // Rock overhang
-      createSphere(4, 0x555544, [x, 0, z]);
-      setScale(createSphere(4, 0x555544, [x, 0, z]), 1.5, 0.6, 1.5);
+      nova64.scene.createSphere(4, 0x555544, [x, 0, z]);
+      nova64.scene.setScale(nova64.scene.createSphere(4, 0x555544, [x, 0, z]), 1.5, 0.6, 1.5);
       // Crystals inside
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
         const cx = x + Math.cos(a) * 2;
         const cz = z + Math.sin(a) * 2;
         const cc = [0x9944cc, 0x4499ff, 0x22ccaa][i % 3];
-        createCone(0.15, 0.5 + Math.random() * 0.5, cc, [cx, 0.3, cz], { material: 'holographic' });
+        nova64.scene.createCone(0.15, 0.5 + Math.random() * 0.5, cc, [cx, 0.3, cz], {
+          material: 'holographic',
+        });
       }
-      const crystGlow = createParticleSystem(30, {
+      const crystGlow = nova64.fx.createParticleSystem(30, {
         size: 0.05,
         color: 0xaabbff,
         emissive: 0x6677ff,
@@ -466,11 +550,11 @@ function generateWorld() {
   seed = 42;
 
   // Ground — layered for depth
-  createPlane(WORLD_SIZE * 2.5, WORLD_SIZE * 2.5, 0x4a8c3f, [0, 0, 0]);
+  nova64.scene.createPlane(WORLD_SIZE * 2.5, WORLD_SIZE * 2.5, 0x4a8c3f, [0, 0, 0]);
   // Dirt ring around world edge
-  createPlane(WORLD_SIZE * 4, WORLD_SIZE * 4, 0x8a7a5a, [0, -0.02, 0]);
+  nova64.scene.createPlane(WORLD_SIZE * 4, WORLD_SIZE * 4, 0x8a7a5a, [0, -0.02, 0]);
   // Water plane
-  const water = createPlane(WORLD_SIZE * 5, WORLD_SIZE * 5, 0x2266aa, [0, -0.8, 0]);
+  const water = nova64.scene.createPlane(WORLD_SIZE * 5, WORLD_SIZE * 5, 0x2266aa, [0, -0.8, 0]);
 
   // Hills with biome-colored grass
   for (let i = 0; i < 20; i++) {
@@ -479,8 +563,8 @@ function generateWorld() {
     const biome = getBiome(x, z);
     const height = 2 + seededRandom() * 10;
     const radius = 5 + seededRandom() * 12;
-    const hill = createSphere(radius, biome.ground, [x, -radius + height, z]);
-    setScale(hill, 1, 0.35, 1);
+    const hill = nova64.scene.createSphere(radius, biome.ground, [x, -radius + height, z]);
+    nova64.scene.setScale(hill, 1, 0.35, 1);
   }
 
   // Trees — biome-dependent styles
@@ -491,7 +575,7 @@ function generateWorld() {
     const height = 3 + seededRandom() * 5;
     const trunkColor = 0x8b5a2b + Math.floor(seededRandom() * 0x151515);
 
-    const trunk = createCylinder(0.25 + seededRandom() * 0.15, height, trunkColor, [
+    const trunk = nova64.scene.createCylinder(0.25 + seededRandom() * 0.15, height, trunkColor, [
       x,
       height / 2,
       z,
@@ -502,15 +586,19 @@ function generateWorld() {
       for (let layer = 0; layer < 3; layer++) {
         const ly = height * 0.5 + layer * 1.2;
         const lr = 2 - layer * 0.5;
-        createCone(lr, 2, biome.tree, [x, ly, z]);
+        nova64.scene.createCone(lr, 2, biome.tree, [x, ly, z]);
       }
     } else {
       // Round canopy
       const canopySize = 1.5 + seededRandom() * 2.5;
-      const canopy = createSphere(canopySize, biome.tree, [x, height + canopySize * 0.4, z]);
+      const canopy = nova64.scene.createSphere(canopySize, biome.tree, [
+        x,
+        height + canopySize * 0.4,
+        z,
+      ]);
       if (biome.name === 'Cherry Grove' && seededRandom() > 0.5) {
         // Cherry blossoms particle
-        const blossom = createParticleSystem(30, {
+        const blossom = nova64.fx.createParticleSystem(30, {
           size: 0.06,
           color: 0xff88aa,
           emissive: 0xff6688,
@@ -543,8 +631,13 @@ function generateWorld() {
     const z = (seededRandom() - 0.5) * WORLD_SIZE * 1.8;
     const size = 0.5 + seededRandom() * 2;
     const gray = 0x666666 + Math.floor(seededRandom() * 0x333333);
-    const rock = createCube(size, gray, [x, size / 2, z]);
-    setScale(rock, 1 + seededRandom() * 0.5, 0.5 + seededRandom() * 0.8, 1 + seededRandom() * 0.5);
+    const rock = nova64.scene.createCube(size, gray, [x, size / 2, z]);
+    nova64.scene.setScale(
+      rock,
+      1 + seededRandom() * 0.5,
+      0.5 + seededRandom() * 0.8,
+      1 + seededRandom() * 0.5
+    );
     rocks.push({ x, z, mesh: rock });
   }
 
@@ -558,8 +651,8 @@ function generateWorld() {
     for (let j = 0; j < 8; j++) {
       const fx = cx + (seededRandom() - 0.5) * 3;
       const fz = cz + (seededRandom() - 0.5) * 3;
-      createCylinder(0.03, 0.15 + seededRandom() * 0.15, 0x44aa22, [fx, 0.08, fz]);
-      const fm = createSphere(0.07, patchColor, [fx, 0.22, fz]);
+      nova64.scene.createCylinder(0.03, 0.15 + seededRandom() * 0.15, 0x44aa22, [fx, 0.08, fz]);
+      const fm = nova64.scene.createSphere(0.07, patchColor, [fx, 0.22, fz]);
       flowers.push({ x: fx, z: fz, mesh: fm, phase: seededRandom() * Math.PI * 2 });
     }
   }
@@ -569,7 +662,7 @@ function generateWorld() {
     const x = (seededRandom() - 0.5) * 60;
     const z = (seededRandom() - 0.5) * 60;
     const colors = [0xff44aa, 0xffaa00, 0x44aaff, 0xaaff44, 0xff88ff, 0xffdd44];
-    const mesh = createSphere(0.12, colors[i % colors.length], [x, 2, z]);
+    const mesh = nova64.scene.createSphere(0.12, colors[i % colors.length], [x, 2, z]);
     butterflies.push({
       x,
       z,
@@ -586,9 +679,14 @@ function generateWorld() {
     const x = (seededRandom() - 0.5) * 300;
     const z = (seededRandom() - 0.5) * 300;
     const y = 25 + seededRandom() * 20;
-    const mesh = createSphere(3 + seededRandom() * 5, 0xffffff, [x, y, z]);
-    setScale(mesh, 2 + seededRandom() * 2, 0.4 + seededRandom() * 0.3, 1 + seededRandom());
-    setMeshOpacity(mesh, 0.7 + seededRandom() * 0.3);
+    const mesh = nova64.scene.createSphere(3 + seededRandom() * 5, 0xffffff, [x, y, z]);
+    nova64.scene.setScale(
+      mesh,
+      2 + seededRandom() * 2,
+      0.4 + seededRandom() * 0.3,
+      1 + seededRandom()
+    );
+    nova64.scene.setMeshOpacity(mesh, 0.7 + seededRandom() * 0.3);
     clouds.push({ mesh, x, z, y, speed: 0.3 + seededRandom() * 1.2 });
   }
 
@@ -659,17 +757,17 @@ async function loadModels() {
   try {
     loadingText = 'Loading Fox model...';
     loadingProgress = 0.6;
-    models.fox = await loadModel(MODEL_URLS.fox, [5, 0, -5], 0.04);
+    models.fox = await nova64.scene.loadModel(MODEL_URLS.fox, [5, 0, -5], 0.04);
     loadingProgress = 0.75;
 
     loadingText = 'Loading Duck model...';
-    models.duck = await loadModel(MODEL_URLS.duck, [-10, -0.3, 5], 1.5);
+    models.duck = await nova64.scene.loadModel(MODEL_URLS.duck, [-10, -0.3, 5], 1.5);
     loadingProgress = 0.85;
 
     // Ducks in pond
     for (let i = 0; i < 3; i++) {
       const angle = (i / 3) * Math.PI * 2;
-      await loadModel(
+      await nova64.scene.loadModel(
         MODEL_URLS.duck,
         [-10 + Math.cos(angle) * 3, -0.3, 5 + Math.sin(angle) * 3],
         1.0
@@ -685,11 +783,11 @@ async function loadModels() {
 }
 
 function addNotification(text, color) {
-  notifications.push({ text, color: color || rgba8(200, 255, 200), timer: 4 });
+  notifications.push({ text, color: color || nova64.draw.rgba8(200, 255, 200), timer: 4 });
 }
 
 export async function init() {
-  clearScene();
+  nova64.scene.clearScene();
   trees = [];
   rocks = [];
   butterflies = [];
@@ -719,17 +817,17 @@ export async function init() {
   models = {};
 
   // Atmosphere
-  setAmbientLight(0xffeedd, 0.5);
-  setLightDirection(0.5, -1, 0.3);
-  setFog(0x88bbdd, 50, 150);
-  enableBloom(0.35, 0.3, 0.5);
-  enableVignette(0.8, 0.88);
+  nova64.light.setAmbientLight(0xffeedd, 0.5);
+  nova64.light.setLightDirection(0.5, -1, 0.3);
+  nova64.light.setFog(0x88bbdd, 50, 150);
+  nova64.fx.enableBloom(0.35, 0.3, 0.5);
+  nova64.fx.enableVignette(0.8, 0.88);
 
   if (typeof createGradientSkybox === 'function') {
-    createGradientSkybox(0x88ccee, 0x3366aa);
+    nova64.light.createGradientSkybox(0x88ccee, 0x3366aa);
   }
 
-  setCameraFOV(65);
+  nova64.camera.setCameraFOV(65);
 
   loadingText = 'Generating world...';
   loadingProgress = 0.1;
@@ -740,21 +838,21 @@ export async function init() {
   loadingProgress = 0.5;
   loadingText = 'Loading models...';
 
-  floatingTexts = createFloatingTextSystem();
+  floatingTexts = nova64.util.createFloatingTextSystem();
 
   // Minimap
-  minimap = createMinimap({
+  minimap = nova64.draw.createMinimap({
     x: 640 - 95,
     y: 10,
     width: 85,
     height: 85,
     shape: 'circle',
-    bgColor: rgba8(10, 20, 10, 180),
+    bgColor: nova64.draw.rgba8(10, 20, 10, 180),
     worldW: WORLD_SIZE * 2,
     worldH: WORLD_SIZE * 2,
-    player: { x: 0, y: 0, color: rgba8(255, 255, 100), blink: true },
+    player: { x: 0, y: 0, color: nova64.draw.rgba8(255, 255, 100), blink: true },
     gridLines: 4,
-    gridColor: rgba8(40, 80, 40, 60),
+    gridColor: nova64.draw.rgba8(40, 80, 40, 60),
   });
 
   await loadModels();
@@ -774,22 +872,22 @@ export function update(dt) {
   const daylight = Math.max(0.12, Math.cos(sunAngle) * 0.5 + 0.5);
   const nightTint = Math.max(0, 1 - daylight * 2);
 
-  setAmbientLight(0xffeedd, daylight * 0.5 + 0.05);
-  setLightDirection(Math.cos(sunAngle), -Math.abs(Math.cos(sunAngle)) - 0.3, 0.3);
+  nova64.light.setAmbientLight(0xffeedd, daylight * 0.5 + 0.05);
+  nova64.light.setLightDirection(Math.cos(sunAngle), -Math.abs(Math.cos(sunAngle)) - 0.3, 0.3);
 
   // Sky color shift with time of day
   if (typeof createGradientSkybox === 'function') {
     if (daylight > 0.6) {
-      createGradientSkybox(0x88ccee, 0x3366aa);
+      nova64.light.createGradientSkybox(0x88ccee, 0x3366aa);
     } else if (daylight > 0.3) {
-      createGradientSkybox(0xdd8844, 0x663322);
-      setFog(0xcc8855, 40, 130);
+      nova64.light.createGradientSkybox(0xdd8844, 0x663322);
+      nova64.light.setFog(0xcc8855, 40, 130);
     } else {
-      createGradientSkybox(0x112244, 0x000811);
-      setFog(0x112233, 30, 100);
+      nova64.light.createGradientSkybox(0x112244, 0x000811);
+      nova64.light.setFog(0x112233, 30, 100);
     }
   }
-  if (daylight > 0.6) setFog(0x88bbdd, 50, 150);
+  if (daylight > 0.6) nova64.light.setFog(0x88bbdd, 50, 150);
 
   // Weather system
   weatherTimer -= dt;
@@ -799,8 +897,8 @@ export function update(dt) {
       weatherState = r > 0.5 ? 'cloudy' : 'rain';
       weatherTimer = 20 + Math.random() * 40;
       if (weatherState === 'rain') {
-        addNotification('Rain begins to fall...', rgba8(100, 180, 255));
-        rainParticles = createParticleSystem(200, {
+        addNotification('Rain begins to fall...', nova64.draw.rgba8(100, 180, 255));
+        rainParticles = nova64.fx.createParticleSystem(200, {
           size: 0.05,
           color: 0x88bbee,
           emissive: 0x4488bb,
@@ -824,9 +922,9 @@ export function update(dt) {
       }
     } else {
       if (weatherState === 'rain' && rainParticles) {
-        removeParticleSystem(rainParticles);
+        nova64.fx.removeParticleSystem(rainParticles);
         rainParticles = null;
-        addNotification('The rain stops.', rgba8(200, 240, 200));
+        addNotification('The rain stops.', nova64.draw.rgba8(200, 240, 200));
       }
       weatherState = 'clear';
       weatherTimer = 30 + Math.random() * 60;
@@ -834,7 +932,7 @@ export function update(dt) {
   }
   // Move rain to follow player
   if (rainParticles) {
-    setParticleEmitter(rainParticles, { x: playerPos.x, z: playerPos.z });
+    nova64.fx.setParticleEmitter(rainParticles, { x: playerPos.x, z: playerPos.z });
   }
 
   // Wind
@@ -842,37 +940,38 @@ export function update(dt) {
 
   // ── Player movement ──
   if (!photoMode) {
-    const moveSpeed = key('ShiftLeft') || key('ShiftRight') ? 14 : 8;
+    const moveSpeed = nova64.input.key('ShiftLeft') || nova64.input.key('ShiftRight') ? 14 : 8;
     const turnSpeed = 2.5;
 
-    if (key('ArrowLeft') || key('KeyA')) playerAngle += turnSpeed * dt;
-    if (key('ArrowRight') || key('KeyD')) playerAngle -= turnSpeed * dt;
+    if (nova64.input.key('ArrowLeft') || nova64.input.key('KeyA')) playerAngle += turnSpeed * dt;
+    if (nova64.input.key('ArrowRight') || nova64.input.key('KeyD')) playerAngle -= turnSpeed * dt;
 
-    if (key('ArrowUp') || key('KeyW')) {
+    if (nova64.input.key('ArrowUp') || nova64.input.key('KeyW')) {
       playerPos.x -= Math.sin(playerAngle) * moveSpeed * dt;
       playerPos.z -= Math.cos(playerAngle) * moveSpeed * dt;
     }
-    if (key('ArrowDown') || key('KeyS')) {
+    if (nova64.input.key('ArrowDown') || nova64.input.key('KeyS')) {
       playerPos.x += Math.sin(playerAngle) * moveSpeed * dt * 0.5;
       playerPos.z += Math.cos(playerAngle) * moveSpeed * dt * 0.5;
     }
   }
 
   // Photo mode toggle
-  if (keyp('KeyP') || keyp('KeyC')) {
+  if (nova64.input.keyp('KeyP') || nova64.input.keyp('KeyC')) {
     photoMode = !photoMode;
     photoZoom = 1;
-    if (photoMode) addNotification('PHOTO MODE — Space to capture!', rgba8(255, 255, 150));
-    else addNotification('Photo mode off', rgba8(180, 180, 180));
+    if (photoMode)
+      addNotification('PHOTO MODE — Space to capture!', nova64.draw.rgba8(255, 255, 150));
+    else addNotification('Photo mode off', nova64.draw.rgba8(180, 180, 180));
   }
   if (photoMode) {
-    if (key('KeyQ')) photoZoom = Math.max(0.5, photoZoom - dt * 2);
-    if (key('KeyE')) photoZoom = Math.min(3, photoZoom + dt * 2);
-    setCameraFOV(65 / photoZoom);
+    if (nova64.input.key('KeyQ')) photoZoom = Math.max(0.5, photoZoom - dt * 2);
+    if (nova64.input.key('KeyE')) photoZoom = Math.min(3, photoZoom + dt * 2);
+    nova64.camera.setCameraFOV(65 / photoZoom);
     // Capture photo
-    if (keyp('Space')) {
+    if (nova64.input.keyp('Space')) {
       photoFlash = 1;
-      sfx('coin');
+      nova64.audio.sfx('coin');
       // Check what's in view (nearest animal)
       let nearest = null,
         nearDist = 30;
@@ -894,21 +993,21 @@ export function update(dt) {
         score += nearest.rare ? 100 : 30;
         addNotification(
           `Photographed: ${nearest.name}! +${nearest.rare ? 100 : 30}`,
-          rgba8(255, 220, 100)
+          nova64.draw.rgba8(255, 220, 100)
         );
         floatingTexts.spawn(`${nearest.name}!`, 320, 200, {
-          color: rgba8(255, 220, 100),
+          color: nova64.draw.rgba8(255, 220, 100),
           duration: 1.5,
           riseSpeed: 40,
         });
       } else if (nearest && nearest.photographed) {
-        addNotification(`Already photographed ${nearest.name}`, rgba8(150, 150, 150));
+        addNotification(`Already photographed ${nearest.name}`, nova64.draw.rgba8(150, 150, 150));
       } else {
-        addNotification('No wildlife in frame', rgba8(180, 120, 120));
+        addNotification('No wildlife in frame', nova64.draw.rgba8(180, 120, 120));
       }
     }
   } else {
-    setCameraFOV(65);
+    nova64.camera.setCameraFOV(65);
   }
 
   // ── Camera ── (smooth follow)
@@ -923,25 +1022,28 @@ export function update(dt) {
   camTarget.x += (playerPos.x - camTarget.x) * 6 * dt;
   camTarget.y += (playerPos.y + 1 - camTarget.y) * 6 * dt;
   camTarget.z += (playerPos.z - camTarget.z) * 6 * dt;
-  setCameraPosition(camPos.x, camPos.y, camPos.z);
-  setCameraTarget(camTarget.x, camTarget.y, camTarget.z);
+  nova64.camera.setCameraPosition(camPos.x, camPos.y, camPos.z);
+  nova64.camera.setCameraTarget(camTarget.x, camTarget.y, camTarget.z);
 
   // ── Collect nearby items ──
   for (const c of collectibles) {
     if (c.collected) continue;
     if (dist2D(playerPos.x, playerPos.z, c.x, c.z) < 2) {
       c.collected = true;
-      removeMesh(c.mesh);
+      nova64.scene.removeMesh(c.mesh);
       score += c.points;
-      sfx('coin');
+      nova64.audio.sfx('coin');
       if (!journal.collectibles.has(c.name)) {
         journal.collectibles.add(c.name);
-        addNotification(`NEW: ${c.name} discovered! +${c.points}`, rgba8(255, 220, 100));
+        addNotification(
+          `NEW: ${c.name} discovered! +${c.points}`,
+          nova64.draw.rgba8(255, 220, 100)
+        );
       } else {
-        addNotification(`${c.name} +${c.points}`, rgba8(200, 220, 200));
+        addNotification(`${c.name} +${c.points}`, nova64.draw.rgba8(200, 220, 200));
       }
       floatingTexts.spawn(`+${c.points}`, 320, 250, {
-        color: rgba8(255, 220, 100),
+        color: nova64.draw.rgba8(255, 220, 100),
         duration: 1,
         riseSpeed: 50,
       });
@@ -949,7 +1051,7 @@ export function update(dt) {
     // Bob animation
     if (!c.collected) {
       c.bobPhase += dt * 2;
-      setPosition(c.mesh, c.x, 0.3 + Math.sin(c.bobPhase) * 0.1, c.z);
+      nova64.scene.setPosition(c.mesh, c.x, 0.3 + Math.sin(c.bobPhase) * 0.1, c.z);
     }
   }
 
@@ -960,11 +1062,11 @@ export function update(dt) {
       poi.discovered = true;
       journal.pois.add(poi.name);
       score += 50;
-      sfx('explosion');
-      addNotification(`Discovered: ${poi.name}!`, rgba8(200, 255, 255));
-      addNotification(poi.desc, rgba8(150, 200, 200));
+      nova64.audio.sfx('explosion');
+      addNotification(`Discovered: ${poi.name}!`, nova64.draw.rgba8(200, 255, 255));
+      addNotification(poi.desc, nova64.draw.rgba8(150, 200, 200));
       floatingTexts.spawn(poi.name, 320, 180, {
-        color: rgba8(200, 255, 255),
+        color: nova64.draw.rgba8(200, 255, 255),
         duration: 2.5,
         riseSpeed: 25,
       });
@@ -983,10 +1085,10 @@ export function update(dt) {
         score += a.rare ? 50 : 15;
         addNotification(
           `Spotted: ${a.name}${a.rare ? ' (RARE!)' : ''}`,
-          a.rare ? rgba8(255, 200, 100) : rgba8(180, 255, 180)
+          a.rare ? nova64.draw.rgba8(255, 200, 100) : nova64.draw.rgba8(180, 255, 180)
         );
         floatingTexts.spawn(a.name, 320, 220, {
-          color: a.rare ? rgba8(255, 200, 100) : rgba8(180, 255, 180),
+          color: a.rare ? nova64.draw.rgba8(255, 200, 100) : nova64.draw.rgba8(180, 255, 180),
           duration: 1.5,
           riseSpeed: 30,
         });
@@ -1044,8 +1146,8 @@ export function update(dt) {
     // Position mesh
     const bobY = a.shape === 'bird' ? 5 + Math.sin(a.bobPhase + time * 2) * 2 : 0;
     a.bobPhase += dt;
-    setPosition(a.mesh, a.x, bobY, a.z);
-    setRotation(a.mesh, 0, a.angle, 0);
+    nova64.scene.setPosition(a.mesh, a.x, bobY, a.z);
+    nova64.scene.setRotation(a.mesh, 0, a.angle, 0);
   }
 
   // ── Animate butterflies ──
@@ -1058,26 +1160,26 @@ export function update(dt) {
     b.vz += (Math.random() - 0.5) * dt * 3;
     b.vx *= 0.99;
     b.vz *= 0.99;
-    setPosition(b.mesh, b.x, b.y, b.z);
+    nova64.scene.setPosition(b.mesh, b.x, b.y, b.z);
   }
 
   // ── Animate clouds ──
   for (const c of clouds) {
     c.x += (c.speed + windStrength * 0.3) * dt;
     if (c.x > 180) c.x = -180;
-    setPosition(c.mesh, c.x, c.y, c.z);
+    nova64.scene.setPosition(c.mesh, c.x, c.y, c.z);
   }
 
   // ── Flower sway ──
   for (const f of flowers) {
     f.phase += dt * 2;
-    setPosition(f.mesh, f.x + Math.sin(f.phase + windStrength) * 0.03, 0.22, f.z);
+    nova64.scene.setPosition(f.mesh, f.x + Math.sin(f.phase + windStrength) * 0.03, 0.22, f.z);
   }
 
   // ── Campfire light flicker ──
   for (const cf of campfireLights) {
     const flicker = cf.base + Math.sin(time * 8 + cf.x) * 0.5 + Math.sin(time * 13) * 0.3;
-    setPointLightColor(cf.light, 0xff6622, flicker, 12);
+    nova64.light.setPointLightColor(cf.light, 0xff6622, flicker, 12);
   }
 
   // ── GLB model animations ──
@@ -1085,13 +1187,13 @@ export function update(dt) {
     const foxAngle = time * 0.5;
     const foxX = playerPos.x + Math.cos(foxAngle) * 8;
     const foxZ = playerPos.z + Math.sin(foxAngle) * 8;
-    setPosition(models.fox, foxX, 0, foxZ);
-    setRotation(models.fox, 0, -foxAngle + Math.PI / 2, 0);
+    nova64.scene.setPosition(models.fox, foxX, 0, foxZ);
+    nova64.scene.setRotation(models.fox, 0, -foxAngle + Math.PI / 2, 0);
   }
-  if (typeof updateAnimations === 'function') updateAnimations(dt);
+  if (typeof updateAnimations === 'function') nova64.scene.updateAnimations(dt);
 
   // Update particles
-  updateParticles(dt);
+  nova64.fx.updateParticles(dt);
 
   // Update floating texts
   if (floatingTexts) floatingTexts.update(dt);
@@ -1117,7 +1219,7 @@ export function update(dt) {
       ents.push({
         x: a.x + WORLD_SIZE,
         y: a.z + WORLD_SIZE,
-        color: a.rare ? rgba8(255, 200, 80) : rgba8(100, 255, 100),
+        color: a.rare ? nova64.draw.rgba8(255, 200, 80) : nova64.draw.rgba8(100, 255, 100),
         size: a.rare ? 3 : 2,
       });
     }
@@ -1125,7 +1227,7 @@ export function update(dt) {
       ents.push({
         x: poi.x + WORLD_SIZE,
         y: poi.z + WORLD_SIZE,
-        color: poi.discovered ? rgba8(100, 200, 255) : rgba8(80, 80, 80),
+        color: poi.discovered ? nova64.draw.rgba8(100, 200, 255) : nova64.draw.rgba8(80, 80, 80),
         size: 3,
       });
     }
@@ -1137,41 +1239,53 @@ export function update(dt) {
 export function draw() {
   // ── Loading screen ──
   if (gameState === 'loading') {
-    rectfill(0, 0, 640, 360, rgba8(15, 30, 20));
-    drawGlowText('NATURE EXPLORER', 200, 60, rgba8(100, 220, 150), rgba8(50, 150, 80), 2);
-    printCentered(
+    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(15, 30, 20));
+    nova64.draw.drawGlowText(
+      'NATURE EXPLORER',
+      200,
+      60,
+      nova64.draw.rgba8(100, 220, 150),
+      nova64.draw.rgba8(50, 150, 80),
+      2
+    );
+    nova64.draw.printCentered(
       'Discover Wildlife  *  Collect Specimens  *  Photograph Creatures',
       320,
       110,
-      rgba8(120, 180, 140)
+      nova64.draw.rgba8(120, 180, 140)
     );
 
     // Loading bar
-    drawProgressBar(
+    nova64.draw.drawProgressBar(
       170,
       170,
       300,
       14,
       loadingProgress,
-      rgba8(80, 200, 100),
-      rgba8(30, 50, 30),
-      rgba8(100, 160, 100)
+      nova64.draw.rgba8(80, 200, 100),
+      nova64.draw.rgba8(30, 50, 30),
+      nova64.draw.rgba8(100, 160, 100)
     );
-    printCentered(loadingText, 320, 195, rgba8(160, 220, 160));
+    nova64.draw.printCentered(loadingText, 320, 195, nova64.draw.rgba8(160, 220, 160));
 
-    printCentered(
+    nova64.draw.printCentered(
       'WASD — Move   |   Shift — Run   |   P — Photo Mode',
       320,
       250,
-      rgba8(100, 150, 120)
+      nova64.draw.rgba8(100, 150, 120)
     );
-    printCentered('Explore, discover and collect everything!', 320, 270, rgba8(80, 120, 100));
+    nova64.draw.printCentered(
+      'Explore, discover and collect everything!',
+      320,
+      270,
+      nova64.draw.rgba8(80, 120, 100)
+    );
 
     // Draw decorative leaves
     for (let i = 0; i < 6; i++) {
       const lx = 80 + i * 100 + Math.sin(time * 1.5 + i) * 10;
       const ly = 310 + Math.sin(time * 2 + i * 1.3) * 8;
-      print('*', lx, ly, rgba8(80, 180, 100, 150));
+      nova64.draw.print('*', lx, ly, nova64.draw.rgba8(80, 180, 100, 150));
     }
     return;
   }
@@ -1179,7 +1293,7 @@ export function draw() {
   // ── Photo flash overlay ──
   if (photoFlash > 0) {
     const a = Math.min(255, Math.floor(photoFlash * 255));
-    rectfill(0, 0, 640, 360, rgba8(255, 255, 255, a));
+    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(255, 255, 255, a));
   }
 
   // ── Floating texts (3D spawned ones show as 2D) ──
@@ -1187,38 +1301,49 @@ export function draw() {
     const texts = floatingTexts.getTexts();
     for (const t of texts) {
       const alpha = Math.min(255, Math.floor((t.remaining / t.duration) * 255));
-      printCentered(t.text, Math.floor(t.x), Math.floor(t.y), t.color);
+      nova64.draw.printCentered(t.text, Math.floor(t.x), Math.floor(t.y), t.color);
     }
   }
 
   // ── Photo mode viewfinder ──
   if (photoMode) {
     // Viewfinder frame
-    rect(80, 40, 480, 280, rgba8(255, 255, 255, 100));
-    rect(81, 41, 478, 278, rgba8(0, 0, 0, 80));
+    nova64.draw.rect(80, 40, 480, 280, nova64.draw.rgba8(255, 255, 255, 100));
+    nova64.draw.rect(81, 41, 478, 278, nova64.draw.rgba8(0, 0, 0, 80));
     // Crosshairs
-    line(320, 40, 320, 320, rgba8(255, 255, 255, 60));
-    line(80, 180, 560, 180, rgba8(255, 255, 255, 60));
+    nova64.draw.line(320, 40, 320, 320, nova64.draw.rgba8(255, 255, 255, 60));
+    nova64.draw.line(80, 180, 560, 180, nova64.draw.rgba8(255, 255, 255, 60));
     // Corner brackets
     const bl = 20;
-    line(80, 40, 80 + bl, 40, rgba8(255, 255, 255, 200));
-    line(80, 40, 80, 40 + bl, rgba8(255, 255, 255, 200));
-    line(560, 40, 560 - bl, 40, rgba8(255, 255, 255, 200));
-    line(560, 40, 560, 40 + bl, rgba8(255, 255, 255, 200));
-    line(80, 320, 80 + bl, 320, rgba8(255, 255, 255, 200));
-    line(80, 320, 80, 320 - bl, rgba8(255, 255, 255, 200));
-    line(560, 320, 560 - bl, 320, rgba8(255, 255, 255, 200));
-    line(560, 320, 560, 320 - bl, rgba8(255, 255, 255, 200));
+    nova64.draw.line(80, 40, 80 + bl, 40, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(80, 40, 80, 40 + bl, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(560, 40, 560 - bl, 40, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(560, 40, 560, 40 + bl, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(80, 320, 80 + bl, 320, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(80, 320, 80, 320 - bl, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(560, 320, 560 - bl, 320, nova64.draw.rgba8(255, 255, 255, 200));
+    nova64.draw.line(560, 320, 560, 320 - bl, nova64.draw.rgba8(255, 255, 255, 200));
 
     // Zoom indicator
-    rectfill(90, 300, 100, 10, rgba8(0, 0, 0, 120));
-    rectfill(90, 300, Math.floor(100 * ((photoZoom - 0.5) / 2.5)), 10, rgba8(255, 200, 80));
-    print(`${photoZoom.toFixed(1)}x`, 195, 298, rgba8(255, 255, 255, 200));
+    nova64.draw.rectfill(90, 300, 100, 10, nova64.draw.rgba8(0, 0, 0, 120));
+    nova64.draw.rectfill(
+      90,
+      300,
+      Math.floor(100 * ((photoZoom - 0.5) / 2.5)),
+      10,
+      nova64.draw.rgba8(255, 200, 80)
+    );
+    nova64.draw.print(`${photoZoom.toFixed(1)}x`, 195, 298, nova64.draw.rgba8(255, 255, 255, 200));
 
-    print('SPACE: Capture   Q/E: Zoom   P: Exit', 90, 330, rgba8(200, 200, 200, 180));
+    nova64.draw.print(
+      'SPACE: Capture   Q/E: Zoom   P: Exit',
+      90,
+      330,
+      nova64.draw.rgba8(200, 200, 200, 180)
+    );
 
     // Photos taken count
-    print(`Photos: ${photos.length}`, 460, 330, rgba8(255, 220, 100));
+    nova64.draw.print(`Photos: ${photos.length}`, 460, 330, nova64.draw.rgba8(255, 220, 100));
 
     return; // Don't draw normal HUD in photo mode
   }
@@ -1231,12 +1356,19 @@ export function draw() {
     weatherState === 'rain' ? ' (Rain)' : weatherState === 'cloudy' ? ' (Cloudy)' : '';
 
   // Top-left info panel
-  drawPixelBorder(8, 8, 195, 52, rgba8(80, 120, 80), rgba8(30, 50, 30));
-  rectfill(10, 10, 191, 48, rgba8(10, 25, 15, 200));
-  print(`NATURE EXPLORER`, 16, 15, rgba8(100, 220, 150));
-  print(`${timeLabel}${weatherLabel}`, 16, 27, rgba8(150, 200, 150));
-  print(`Score: ${score}`, 16, 39, rgba8(255, 220, 100));
-  print(`Photos: ${photos.length}`, 110, 39, rgba8(200, 200, 255));
+  nova64.draw.drawPixelBorder(
+    8,
+    8,
+    195,
+    52,
+    nova64.draw.rgba8(80, 120, 80),
+    nova64.draw.rgba8(30, 50, 30)
+  );
+  nova64.draw.rectfill(10, 10, 191, 48, nova64.draw.rgba8(10, 25, 15, 200));
+  nova64.draw.print(`NATURE EXPLORER`, 16, 15, nova64.draw.rgba8(100, 220, 150));
+  nova64.draw.print(`${timeLabel}${weatherLabel}`, 16, 27, nova64.draw.rgba8(150, 200, 150));
+  nova64.draw.print(`Score: ${score}`, 16, 39, nova64.draw.rgba8(255, 220, 100));
+  nova64.draw.print(`Photos: ${photos.length}`, 110, 39, nova64.draw.rgba8(200, 200, 255));
 
   // Journal summary — bottom left
   const jCreatures = journal.creatures.size;
@@ -1246,25 +1378,42 @@ export function draw() {
   const totalPois = POI_COUNT;
   const totalCollTypes = COLLECTIBLES.length;
 
-  drawPixelBorder(8, 295, 160, 55, rgba8(80, 120, 80), rgba8(30, 50, 30));
-  rectfill(10, 297, 156, 51, rgba8(10, 25, 15, 200));
-  print('JOURNAL', 16, 302, rgba8(180, 220, 180));
-  print(`Creatures: ${jCreatures}/${totalCreatures}`, 16, 314, rgba8(150, 255, 150));
-  print(`Places: ${jPois}/${totalPois}`, 16, 326, rgba8(150, 200, 255));
-  print(`Items: ${jCollect}/${totalCollTypes}`, 16, 338, rgba8(255, 220, 150));
+  nova64.draw.drawPixelBorder(
+    8,
+    295,
+    160,
+    55,
+    nova64.draw.rgba8(80, 120, 80),
+    nova64.draw.rgba8(30, 50, 30)
+  );
+  nova64.draw.rectfill(10, 297, 156, 51, nova64.draw.rgba8(10, 25, 15, 200));
+  nova64.draw.print('JOURNAL', 16, 302, nova64.draw.rgba8(180, 220, 180));
+  nova64.draw.print(
+    `Creatures: ${jCreatures}/${totalCreatures}`,
+    16,
+    314,
+    nova64.draw.rgba8(150, 255, 150)
+  );
+  nova64.draw.print(`Places: ${jPois}/${totalPois}`, 16, 326, nova64.draw.rgba8(150, 200, 255));
+  nova64.draw.print(
+    `Items: ${jCollect}/${totalCollTypes}`,
+    16,
+    338,
+    nova64.draw.rgba8(255, 220, 150)
+  );
 
   // ── Compass ── (top center)
   const cx = 320,
     cy = 20;
-  rectfill(cx - 30, cy - 8, 60, 16, rgba8(0, 0, 0, 120));
+  nova64.draw.rectfill(cx - 30, cy - 8, 60, 16, nova64.draw.rgba8(0, 0, 0, 120));
   const compassAngle = playerAngle;
   const dirs = ['N', 'E', 'S', 'W'];
   for (let i = 0; i < 4; i++) {
     const a = (i * Math.PI) / 2 - compassAngle;
     const dx = Math.sin(a) * 24;
     if (Math.abs(dx) < 28) {
-      const col = i === 0 ? rgba8(255, 100, 100) : rgba8(180, 180, 180);
-      print(dirs[i], cx + dx - 3, cy - 4, col);
+      const col = i === 0 ? nova64.draw.rgba8(255, 100, 100) : nova64.draw.rgba8(180, 180, 180);
+      nova64.draw.print(dirs[i], cx + dx - 3, cy - 4, col);
     }
   }
 
@@ -1280,14 +1429,21 @@ export function draw() {
   }
   if (nearbyAnimal && nearDist < 15) {
     const alpha = Math.floor(Math.max(0, 1 - nearDist / 15) * 200);
-    const nameCol = nearbyAnimal.rare ? rgba8(255, 200, 80, alpha) : rgba8(200, 255, 200, alpha);
-    printCentered(nearbyAnimal.name + (nearbyAnimal.rare ? ' (RARE)' : ''), 320, 70, nameCol);
+    const nameCol = nearbyAnimal.rare
+      ? nova64.draw.rgba8(255, 200, 80, alpha)
+      : nova64.draw.rgba8(200, 255, 200, alpha);
+    nova64.draw.printCentered(
+      nearbyAnimal.name + (nearbyAnimal.rare ? ' (RARE)' : ''),
+      320,
+      70,
+      nameCol
+    );
     if (nearDist < 8) {
-      printCentered(
+      nova64.draw.printCentered(
         nearbyAnimal.photographed ? 'Already photographed' : 'P to enter Photo Mode',
         320,
         82,
-        rgba8(180, 180, 180, alpha)
+        nova64.draw.rgba8(180, 180, 180, alpha)
       );
     }
   }
@@ -1297,22 +1453,34 @@ export function draw() {
     const n = notifications[i];
     const alpha = Math.min(255, Math.floor(n.timer * 200));
     const ny = 100 + i * 14;
-    printCentered(n.text, 320, ny, n.color);
+    nova64.draw.printCentered(n.text, 320, ny, n.color);
   }
 
   // ── Minimap ──
-  if (minimap) drawMinimap(minimap, time);
+  if (minimap) nova64.draw.drawMinimap(minimap, time);
 
   // ── Sprint indicator ──
-  if (key('ShiftLeft') || key('ShiftRight')) {
-    print('SPRINT', 300, 345, rgba8(255, 200, 100, 200));
+  if (nova64.input.key('ShiftLeft') || nova64.input.key('ShiftRight')) {
+    nova64.draw.print('SPRINT', 300, 345, nova64.draw.rgba8(255, 200, 100, 200));
   }
 
   // ── Completion check ──
   const totalDisc = jCreatures + jPois + jCollect;
   const totalPossible = totalCreatures + totalPois + totalCollTypes;
   if (totalDisc >= totalPossible) {
-    drawGlowText('100% COMPLETE!', 220, 160, rgba8(255, 220, 100), rgba8(200, 150, 50), 2);
-    printCentered('You discovered everything!', 320, 195, rgba8(255, 255, 200));
+    nova64.draw.drawGlowText(
+      '100% COMPLETE!',
+      220,
+      160,
+      nova64.draw.rgba8(255, 220, 100),
+      nova64.draw.rgba8(200, 150, 50),
+      2
+    );
+    nova64.draw.printCentered(
+      'You discovered everything!',
+      320,
+      195,
+      nova64.draw.rgba8(255, 255, 200)
+    );
   }
 }

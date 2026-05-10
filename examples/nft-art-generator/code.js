@@ -2,6 +2,9 @@
 // Each seed produces a unique artwork. Same seed = same art, always.
 // Styles: Flow Field, Geometric Tiling, Organic Growth, Abstract Composition
 
+const { circle, cls, drawRect, line, prinrect } = nova64.draw;
+const { keyp } = nova64.input;
+const { createSeedFromHash, createSeedRNG, exportSeedMetadata, seedToTraits, t } = nova64.data;
 const STYLES = ['Flow Field', 'Geometric Tiling', 'Organic Growth', 'Abstract Composition'];
 const W = 640,
   H = 360;
@@ -38,25 +41,25 @@ export function update(dt) {
   time += dt;
 
   // N = next random seed
-  if (keyp('KeyN')) {
+  if (nova64.input.keyp('KeyN')) {
     currentSeed = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     pushSeed(currentSeed);
     generateArt(currentSeed);
   }
   // P = previous seed
-  if (keyp('KeyP') && historyIdx > 0) {
+  if (nova64.input.keyp('KeyP') && historyIdx > 0) {
     historyIdx--;
     currentSeed = seedHistory[historyIdx];
     generateArt(currentSeed);
   }
   // S = cycle style manually
-  if (keyp('KeyS')) {
+  if (nova64.input.keyp('KeyS')) {
     styleIdx = (styleIdx + 1) % STYLES.length;
     generateArt(currentSeed);
   }
   // M = export metadata
-  if (keyp('KeyM')) {
-    const meta = exportSeedMetadata(
+  if (nova64.input.keyp('KeyM')) {
+    const meta = nova64.data.exportSeedMetadata(
       currentSeed,
       {
         style: STYLES[styleIdx],
@@ -72,7 +75,7 @@ export function update(dt) {
   }
   // Number keys 1-4 to pick style
   for (let i = 0; i < 4; i++) {
-    if (keyp('Digit' + (i + 1))) {
+    if (nova64.input.keyp('Digit' + (i + 1))) {
       styleIdx = i;
       generateArt(currentSeed);
     }
@@ -89,8 +92,13 @@ function pushSeed(seed) {
 }
 
 function generateArt(seed) {
-  rng = createSeedRNG(typeof seed === 'string' ? createSeedFromHash(seed) : seed);
-  traits = seedToTraits(typeof seed === 'string' ? createSeedFromHash(seed) : seed, ART_SCHEMA);
+  rng = nova64.data.createSeedRNG(
+    typeof seed === 'string' ? nova64.data.createSeedFromHash(seed) : seed
+  );
+  traits = nova64.data.seedToTraits(
+    typeof seed === 'string' ? nova64.data.createSeedFromHash(seed) : seed,
+    ART_SCHEMA
+  );
   palette = rng.palette(6);
   time = 0;
 
@@ -301,7 +309,7 @@ function updateAbstract(dt) {
 // ─── Drawing ───────────────────────────────────────────────────────────
 export function draw() {
   // Background
-  cls(palette[palette.length - 1] || 0x0a0a1e);
+  nova64.draw.cls(palette[palette.length - 1] || 0x0a0a1e);
 
   switch (styleIdx) {
     case 0:
@@ -326,10 +334,10 @@ function drawFlowField() {
     const trail = p.trail;
     for (let i = 1; i < trail.length; i++) {
       const alpha = i / trail.length;
-      const c = lerpColor(0x000000, p.color, alpha);
-      line(trail[i - 1].x, trail[i - 1].y, trail[i].x, trail[i].y, c);
+      const c = _local_lerpColor(0x000000, p.color, alpha);
+      nova64.draw.line(trail[i - 1].x, trail[i - 1].y, trail[i].x, trail[i].y, c);
     }
-    circle(p.x, p.y, 2, p.color);
+    nova64.draw.circle(p.x, p.y, 2, p.color);
   }
 }
 
@@ -339,42 +347,42 @@ function drawGeometric() {
     const sz = s.size * pulse;
     switch (s.type) {
       case 0: // circle
-        circle(s.cx, s.cy, sz, s.color);
+        nova64.draw.circle(s.cx, s.cy, sz, s.color);
         break;
       case 1: // rect
-        drawRect(s.cx - sz / 2, s.cy - sz / 2, sz, sz, s.color);
+        nova64.draw.drawRect(s.cx - sz / 2, s.cy - sz / 2, sz, sz, s.color);
         break;
       case 2: // concentric circles
-        circle(s.cx, s.cy, sz, s.color);
-        circle(s.cx, s.cy, sz * 0.6, palette[0]);
-        circle(s.cx, s.cy, sz * 0.3, s.color);
+        nova64.draw.circle(s.cx, s.cy, sz, s.color);
+        nova64.draw.circle(s.cx, s.cy, sz * 0.6, palette[0]);
+        nova64.draw.circle(s.cx, s.cy, sz * 0.3, s.color);
         break;
       case 3: // diamond (rotated rect)
-        drawRect(s.cx - sz / 3, s.cy - sz / 3, sz * 0.66, sz * 0.66, s.color);
+        nova64.draw.drawRect(s.cx - sz / 3, s.cy - sz / 3, sz * 0.66, sz * 0.66, s.color);
         break;
     }
   }
   // Center mandala
   const mandalaPulse = 1 + Math.sin(time * 1.5) * 0.1;
   for (let r = 5; r > 0; r--) {
-    circle(W / 2, H / 2, r * 15 * mandalaPulse, palette[r % palette.length]);
+    nova64.draw.circle(W / 2, H / 2, r * 15 * mandalaPulse, palette[r % palette.length]);
   }
 }
 
 function drawOrganic() {
   for (const seed of growthPoints) {
     // Draw center
-    circle(seed.cx, seed.cy, 4, seed.color);
+    nova64.draw.circle(seed.cx, seed.cy, 4, seed.color);
     for (const branch of seed.branches) {
       const pts = branch.points;
       for (let i = 1; i < pts.length; i++) {
         const alpha = i / pts.length;
-        const c = lerpColor(branch.color, palette[0], alpha * 0.5);
-        line(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, c);
+        const c = _local_lerpColor(branch.color, palette[0], alpha * 0.5);
+        nova64.draw.line(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, c);
       }
       if (pts.length > 0) {
         const tip = pts[pts.length - 1];
-        circle(tip.x, tip.y, branch.growing ? 3 : 2, branch.color);
+        nova64.draw.circle(tip.x, tip.y, branch.growing ? 3 : 2, branch.color);
       }
     }
   }
@@ -385,22 +393,22 @@ function drawAbstract() {
     const wave = Math.sin(time + s.phase) * 10;
     switch (s.type) {
       case 0:
-        drawRect(s.x, s.y + wave, s.w, s.h * 0.3, s.color);
+        nova64.draw.drawRect(s.x, s.y + wave, s.w, s.h * 0.3, s.color);
         break;
       case 1:
-        circle(s.x + s.w / 2, s.y + s.h / 2 + wave, s.w / 3, s.color);
+        nova64.draw.circle(s.x + s.w / 2, s.y + s.h / 2 + wave, s.w / 3, s.color);
         break;
       case 2:
-        line(s.x, s.y, s.x + s.w, s.y + s.h + wave, s.color);
-        line(s.x + s.w, s.y, s.x, s.y + s.h + wave, s.color);
+        nova64.draw.line(s.x, s.y, s.x + s.w, s.y + s.h + wave, s.color);
+        nova64.draw.line(s.x + s.w, s.y, s.x, s.y + s.h + wave, s.color);
         break;
       case 3:
-        drawRect(s.x, s.y + wave, s.w, s.h, s.color);
-        drawRect(s.x + 3, s.y + wave + 3, s.w - 6, s.h - 6, palette[0]);
+        nova64.draw.drawRect(s.x, s.y + wave, s.w, s.h, s.color);
+        nova64.draw.drawRect(s.x + 3, s.y + wave + 3, s.w - 6, s.h - 6, palette[0]);
         break;
       case 4:
         for (let r = 3; r > 0; r--) {
-          circle(s.x + s.w / 2, s.y + s.h / 2 + wave, (r * s.w) / 8, s.color);
+          nova64.draw.circle(s.x + s.w / 2, s.y + s.h / 2 + wave, (r * s.w) / 8, s.color);
         }
         break;
     }
@@ -409,25 +417,25 @@ function drawAbstract() {
 
 function drawHUD() {
   // Top bar
-  print('SEED: ' + currentSeed, 10, 8, 0xffffff);
-  print(STYLES[styleIdx], 400, 8, 0x44ddff);
+  nova64.draw.print('SEED: ' + currentSeed, 10, 8, 0xffffff);
+  nova64.draw.print(STYLES[styleIdx], 400, 8, 0x44ddff);
 
   // Trait mini display
   const t = traits;
-  print('Complexity:' + (t.complexity * 100).toFixed(0) + '%', 10, 340, 0x888888);
-  print('Layers:' + t.layers, 200, 340, 0x888888);
-  print('Sym:' + t.symmetry, 300, 340, 0x888888);
+  nova64.draw.print('Complexity:' + (t.complexity * 100).toFixed(0) + '%', 10, 340, 0x888888);
+  nova64.draw.print('Layers:' + t.layers, 200, 340, 0x888888);
+  nova64.draw.print('Sym:' + t.symmetry, 300, 340, 0x888888);
 
   // Controls
-  print('[N]ew [P]rev [S]tyle [1-4] [M]eta', 360, 340, 0x555566);
+  nova64.draw.print('[N]ew [P]rev [S]tyle [1-4] [M]eta', 360, 340, 0x555566);
 
   // Palette preview
   for (let i = 0; i < palette.length; i++) {
-    drawRect(W - 80 + i * 12, 6, 10, 10, palette[i]);
+    nova64.draw.drawRect(W - 80 + i * 12, 6, 10, 10, palette[i]);
   }
 }
 
-function lerpColor(a, b, t) {
+function _local_lerpColor(a, b, t) {
   const ar = (a >> 16) & 0xff,
     ag = (a >> 8) & 0xff,
     ab = a & 0xff;

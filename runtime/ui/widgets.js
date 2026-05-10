@@ -112,7 +112,11 @@ export function uiWidgetsModule({
     mouse.y = y;
   }
   function setMouseButton(down) {
-    mouse.pressed = down && !mouse.down;
+    // Latch the press until updateAllButtons() consumes it so quick clicks/taps
+    // that begin and end between two frames still activate UI buttons.
+    if (down && !mouse.down) {
+      mouse.pressed = true;
+    }
     mouse.down = down;
   }
   function getMousePosition() {

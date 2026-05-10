@@ -26,6 +26,7 @@ const MODEL_CDN = 'https://storage.googleapis.com/mediapipe-models';
 
 export function mediapipeModule(gpu) {
   const scene = gpu.getScene();
+  const backendName = gpu.getBackendCapabilities?.().backend ?? gpu.backendName ?? 'unknown';
 
   // ── Shared state ───────────────────────────────────────────────────────────
   let vision = null; // FilesetResolver instance (shared)
@@ -34,6 +35,8 @@ export function mediapipeModule(gpu) {
   let videoTexture = null; // THREE.VideoTexture
   let cameraBackgroundActive = false;
   let prevBackground = null;
+  let prevClearColor = null;
+  let prevVideoStyle = null;
 
   // Per-tracker state
   let handLandmarker = null;
@@ -71,10 +74,16 @@ export function mediapipeModule(gpu) {
     videoEl.style.display = 'none';
     document.body.appendChild(videoEl);
 
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+    } catch (err) {
+      videoEl.remove();
+      videoEl = null;
+      throw err;
+    }
     videoEl.srcObject = videoStream;
     await videoEl.play();
     console.log('📷 Camera started:', facing);
@@ -82,6 +91,8 @@ export function mediapipeModule(gpu) {
   }
 
   function stopCamera() {
+    hideCameraBackground();
+
     if (videoStream) {
       videoStream.getTracks().forEach(t => t.stop());
       videoStream = null;
@@ -110,6 +121,39 @@ export function mediapipeModule(gpu) {
   }
 
   function showCameraBackground() {
+    if (cameraBackgroundActive) return;
+
+    if (backendName !== 'threejs') {
+      if (!videoEl) {
+        console.warn('Call startCamera() before showCameraBackground()');
+        return;
+      }
+
+      const canvas = gpu.canvas ?? gpu.getRenderer?.()?.domElement ?? null;
+      const container = canvas?.parentElement ?? document.body;
+      if (getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+      }
+
+      prevVideoStyle = videoEl.getAttribute('style') ?? '';
+      videoEl.style.cssText =
+        'display:block;position:absolute;inset:0;width:100%;height:100%;' +
+        'object-fit:cover;z-index:0;pointer-events:none;background:#000;';
+      if (canvas) {
+        container.insertBefore(videoEl, canvas);
+      } else if (!videoEl.parentElement) {
+        container.appendChild(videoEl);
+      }
+
+      if (scene?.clearColor?.clone) {
+        prevClearColor = scene.clearColor.clone();
+        if ('a' in scene.clearColor) scene.clearColor.a = 0;
+      }
+
+      cameraBackgroundActive = true;
+      return;
+    }
+
     const tex = getCameraTexture();
     if (!tex) {
       console.warn('⚠️ Call startCamera() before showCameraBackground()');
@@ -122,6 +166,20 @@ export function mediapipeModule(gpu) {
 
   function hideCameraBackground() {
     if (!cameraBackgroundActive) return;
+
+    if (backendName !== 'threejs') {
+      if (videoEl) {
+        videoEl.setAttribute('style', prevVideoStyle || 'display:none;');
+      }
+      if (prevClearColor) {
+        scene.clearColor = prevClearColor;
+      }
+      prevVideoStyle = null;
+      prevClearColor = null;
+      cameraBackgroundActive = false;
+      return;
+    }
+
     scene.background = prevBackground;
     prevBackground = null;
     cameraBackgroundActive = false;
@@ -188,8 +246,8 @@ export function mediapipeModule(gpu) {
 
   // ── Hand tracking ──────────────────────────────────────────────────────────
   async function initHandTracking(options = {}) {
-    const v = await ensureVision();
     await startCamera(options.facing || 'user');
+    const v = await ensureVision();
 
     const { HandLandmarker } = await import(
       /* webpackIgnore: true */
@@ -221,8 +279,8 @@ export function mediapipeModule(gpu) {
 
   // ── Face tracking ──────────────────────────────────────────────────────────
   async function initFaceTracking(options = {}) {
-    const v = await ensureVision();
     await startCamera(options.facing || 'user');
+    const v = await ensureVision();
 
     const { FaceLandmarker } = await import(
       /* webpackIgnore: true */
@@ -252,8 +310,8 @@ export function mediapipeModule(gpu) {
 
   // ── Pose tracking ──────────────────────────────────────────────────────────
   async function initPoseTracking(options = {}) {
-    const v = await ensureVision();
     await startCamera(options.facing || 'user');
+    const v = await ensureVision();
 
     const { PoseLandmarker } = await import(
       /* webpackIgnore: true */
