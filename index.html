@@ -1,1711 +1,1193 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NOVA64 // Disc 01 — The Browser Fantasy Console</title>
-  <meta name="description" content="A browser-native 3D fantasy console built on Three.js. Build N64/PS1-era games in JavaScript with zero WebGL boilerplate." />
-  <meta name="theme-color" content="#060810" />
-  <meta property="og:title" content="NOVA64 — Fantasy 3D Console" />
-  <meta property="og:description" content="Browser-native 3D games. Three.js power. Retro soul." />
-  <meta property="og:image" content="./assets/novaOS/nova64ConsoleBG.webp" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
-  <!-- GSAP + ScrollTrigger -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <style>
-    :root {
-      --bg-base:   #03010a;
-      --bg-mid:    #0a0518;
-      --bg-glass:  rgba(0,255,255,0.04);
-      --border:    rgba(157,0,255,0.15);
-      --border-el: rgba(0,255,255,0.30);
-      --electric:  #00ffff;
-      --neon-pink: #ff00ff;
-      --violet:    #9d00ff;
-      --lime:      #39ff14;
-      --chrome:    #c8d0e8;
-      --text:      #f0eeff;
-      --text-muted:#8878aa;
-      --glow-sm:   0 0 18px rgba(0,255,255,0.5);
-      --glow-lg:   0 0 40px rgba(0,255,255,0.25), 0 0 80px rgba(157,0,255,0.12);
-      --holo:      linear-gradient(135deg,#00ffff 0%,#ff00ff 50%,#9d00ff 100%);
-      --radius:    10px;
-      --trans:     all 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg-base);
-      color: var(--text);
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    /* CRT scanline overlay */
-    body::after {
-      content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
-      background-image: repeating-linear-gradient(
-        0deg, transparent 0px, transparent 2px,
-        rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px
-      );
-    }
-    a { color: inherit; text-decoration: none; }
-    img { display: block; max-width: 100%; }
-    button { cursor: pointer; border: none; background: none; font: inherit; }
-
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 48px; display:flex; flex: 1; flex-direction: row; }
-    footer .container,#cta .container, #demos .container, #install .container, #features .container, #press .container, #why .container{ flex-direction: column !important; }
-    @media (max-width: 768px) { .container { padding: 0 20px; } }
-
-    .stamp {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      letter-spacing: 0.15em;
-      color: var(--electric);
-      text-transform: uppercase;
-      display: inline-block;
-      margin-bottom: 20px;
-    }
-    .section-title {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: clamp(36px, 5vw, 56px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      margin-bottom: 16px;
-    }
-    .section-sub {
-      font-size: 17px;
-      color: var(--text-muted);
-      max-width: 560px;
-      line-height: 1.7;
-    }
-
-    /* Reveal base — GSAP animates these */
-    .reveal { opacity: 0; transform: translateY(48px); }
-    @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1 !important; transform: none !important; }
-      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-
-    /* ── NAV ── */
-    #nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(6,8,16,0.8);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(0,255,255,0.08);
-      height: 64px;
-      display: flex; align-items: center;
-      transition: border-color 0.3s;
-    }
-    #nav .container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-    .nav-brand {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.06em;
-    }
-    .nav-brand img { height: 28px; width: auto; }
-    .nav-links {
-      display: flex; align-items: center; gap: 32px;
-      font-size: 14px; font-weight: 500; color: var(--text-muted);
-    }
-    .nav-links a:hover { color: var(--text); }
-    @media (max-width: 900px) { .nav-links { display: none; } }
-    .nav-cta { display: flex; align-items: center; gap: 10px; }
-    .nav-trio { display: flex; align-items: center; gap: 6px; }
-    .nav-trio-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 13px; border-radius: 6px; font-size: 12px; font-weight: 700;
-      letter-spacing: 0.04em; transition: var(--trans); white-space: nowrap;
-      border: 1px solid var(--border); color: var(--text-muted);
-    }
-    .nav-trio-btn svg { flex-shrink: 0; }
-    .nav-trio-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
-    .nav-trio-btn.console { border-color: rgba(0,255,255,0.3); color: var(--electric); }
-    .nav-trio-btn.console:hover { background: rgba(0,255,255,0.08); box-shadow: 0 0 18px rgba(0,255,255,0.2); }
-    .nav-trio-btn.os { border-color: rgba(157,0,255,0.35); color: #c86fff; }
-    .nav-trio-btn.os:hover { background: rgba(157,0,255,0.09); box-shadow: 0 0 18px rgba(157,0,255,0.25); }
-    .nav-trio-btn.docs { border-color: rgba(255,238,0,0.3); color: #ffe566; }
-    .nav-trio-btn.docs:hover { background: rgba(255,238,0,0.07); box-shadow: 0 0 18px rgba(255,238,0,0.2); }
-    @media (max-width: 900px) { .nav-trio { display: none; } }
-    .drawer-trio { display: flex; flex-direction: column; gap: 6px; padding: 12px 0 4px; border-top: 1px solid var(--border); margin-top: 8px; }
-    .drawer-trio-btn {
-      display: flex; align-items: center; gap: 10px;
-      padding: 13px 16px; border-radius: 8px; font-size: 14px; font-weight: 700;
-      transition: var(--trans); border: 1px solid transparent;
-    }
-    .drawer-trio-btn.console { color: var(--electric); border-color: rgba(0,255,255,0.2); }
-    .drawer-trio-btn.console:hover { background: rgba(0,255,255,0.06); }
-    .drawer-trio-btn.os { color: #c86fff; border-color: rgba(157,0,255,0.2); }
-    .drawer-trio-btn.os:hover { background: rgba(157,0,255,0.06); }
-    .drawer-trio-btn.docs { color: #ffe566; border-color: rgba(255,238,0,0.2); }
-    .drawer-trio-btn.docs:hover { background: rgba(255,238,0,0.06); }
-    .lang-switcher {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-family: inherit;
-      padding: 5px 7px;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-    }
-    .lang-switcher:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-    .btn-primary {
-      background: var(--electric); color: #060810;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px;
-      padding: 10px 22px; border-radius: 4px; transition: var(--trans); white-space: nowrap;
-    }
-    .btn-primary:hover { box-shadow: var(--glow-sm); transform: translateY(-1px); }
-    .btn-ghost-sm {
-      font-size: 13px; font-weight: 500; color: var(--text-muted);
-      padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px;
-      transition: var(--trans); display: flex; align-items: center; gap: 6px;
-    }
-    .btn-ghost-sm:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .nav-hamburger {
-      display: none; flex-direction: column; gap: 5px; padding: 8px; cursor: pointer;
-    }
-    .nav-hamburger span { width: 22px; height: 2px; background: var(--chrome); border-radius: 2px; transition: var(--trans); }
-    @media (max-width: 900px) { .nav-hamburger { display: flex; } }
-    #nav-drawer {
-      position: fixed; top: 64px; left: 0; right: 0; z-index: 99;
-      background: rgba(6,8,16,0.97); backdrop-filter: blur(20px);
-      padding: 20px; display: flex; flex-direction: column; gap: 4px;
-      border-bottom: 1px solid var(--border);
-      transform: translateY(-100%); opacity: 0; pointer-events: none; transition: var(--trans);
-    }
-    #nav-drawer.open { transform: translateY(0); opacity: 1; pointer-events: all; }
-    #nav-drawer a {
-      padding: 14px 16px; font-size: 15px; font-weight: 500;
-      color: var(--text-muted); border-radius: 6px; transition: var(--trans);
-    }
-    #nav-drawer a:hover { color: var(--text); background: var(--bg-glass); }
-
-    /* ── HERO ── */
-    #hero {
-      position: relative; min-height: 100vh;
-      display: flex; align-items: center;
-      padding: 120px 0 80px; overflow: hidden;
-      background: linear-gradient(
-        180deg,
-        #000011 0%, #00001e 12%, #00003d 24%,
-        #110055 36%, #2b0066 46%,
-        #660066 54%, #880033 62%, #660022 70%,
-        #1a0033 82%, #06000f 100%
-      );
-    }
-    #hero-iframe {
-      position: absolute; inset: 0; z-index: 0;
-      pointer-events: none; width: 100%; height: 100%;
-      border: none; background: transparent;
-      opacity: 0; transition: opacity 0.8s ease;
-    }
-    #hero-iframe.loaded { opacity: 1; }
-    .no-webgl #hero-iframe { display: none; }
-
-    /* ── Hero Loader ── */
-    #hero-loader {
-      position: absolute; inset: 0; z-index: 2;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #03010a;
-      transition: opacity 0.6s ease, transform 0.6s ease;
-      overflow: hidden;
-      animation: flicker 4s ease-in-out infinite;
-    }
-    #hero-loader.loaded {
-      opacity: 0; transform: scale(1.03);
-      pointer-events: none;
-    }
-    .no-webgl #hero-loader { display: none; }
-    /* Scanline overlay */
-    #hero-loader::before {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px
-      );
-      animation: scanlineDrift 10s linear infinite;
-    }
-    .loader-content {
-      position: relative; z-index: 2; text-align: center;
-      animation: glitchPulse 5s ease-in-out infinite;
-    }
-    .loader-logo {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(26px, 5vw, 48px);
-      color: #fff; letter-spacing: 6px;
-      margin-bottom: 28px;
-      animation: glitchShift 4s steps(1) infinite, glitchColor 3s steps(1) infinite;
-    }
-    .loader-status {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(8px, 1.4vw, 12px);
-      color: #00ffcc; margin-bottom: 22px; min-height: 1.4em;
-    }
-    .loader-bar-wrap {
-      width: clamp(180px, 45vw, 380px); height: 10px;
-      border: 1px solid rgba(0,255,255,0.5); border-radius: 2px;
-      overflow: hidden; margin: 0 auto;
-      animation: barGlow 2s ease-in-out infinite;
-    }
-    .loader-bar-fill {
-      width: 0%; height: 100%;
-      background: linear-gradient(90deg, #00ffcc, #00ccff, #0088ff);
-      transition: width 0.12s linear;
-      box-shadow: 0 0 10px rgba(0,255,255,0.6);
-    }
-    .loader-percent {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(8px, 1.3vw, 11px);
-      color: #00ccff; margin-top: 10px;
-    }
-    @keyframes scanlineDrift {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(4px); }
-    }
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      5% { opacity: 0.94; }
-      10% { opacity: 1; }
-      35% { opacity: 0.97; }
-      40% { opacity: 0.92; }
-      45% { opacity: 1; }
-      70% { opacity: 0.96; }
-      75% { opacity: 0.93; }
-    }
-    @keyframes glitchShift {
-      0%, 89%, 100% { transform: translateX(0); clip-path: none; }
-      90% { transform: translateX(-6px); clip-path: inset(20% 0 60% 0); }
-      93% { transform: translateX(5px); clip-path: inset(50% 0 25% 0); }
-      96% { transform: translateX(-3px); clip-path: inset(10% 0 70% 0); }
-      98% { transform: translateX(2px); clip-path: none; }
-    }
-    @keyframes glitchColor {
-      0%, 84%, 100% { text-shadow: none; }
-      86% { text-shadow: 2px 0 #ff0040, -2px 0 #00ffff; }
-      90% { text-shadow: -3px 0 #ff0040, 3px 0 #00ffff; }
-      94% { text-shadow: 1px 0 #ff0040, -1px 0 #00ffff; }
-    }
-    @keyframes glitchPulse {
-      0%, 91%, 100% { transform: none; }
-      93% { transform: skewX(1.5deg) scale(1.008); }
-      95% { transform: skewX(-0.8deg) scale(1.004); }
-    }
-    @keyframes barGlow {
-      0%, 100% { box-shadow: 0 0 6px rgba(0,255,255,0.3); }
-      50% { box-shadow: 0 0 16px rgba(0,255,255,0.7), 0 0 32px rgba(0,255,255,0.2); }
-    }
-    /* Fallback sun for no-WebGL environments; hidden when canvas scene is active */
-    .hero-sun { display: none; }
-    .no-webgl .hero-sun { display: block; }
-    /* Left-side shadow: keeps text readable over bright sunset */
-    #hero::before {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(90deg,
-        rgba(3,1,10,0.75) 0%, rgba(3,1,10,0.44) 36%, transparent 60%);
-    }
-    /* Vignette: frames the scene cinematically */
-    #hero::after {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(3,1,10,0.55) 100%);
-    }
-    /* Outrun sun disc with iconic horizontal scan lines */
-    .hero-sun {
-      position: absolute;
-      width: 340px; height: 340px; border-radius: 50%; overflow: hidden;
-      left: 50%; top: 52%;
-      transform: translate(-50%, -50%);
-      z-index: 0; pointer-events: none;
-      background:
-        linear-gradient(180deg,
-          transparent 0%, transparent 50%,
-          rgba(8,0,22,0.84) 50%,   rgba(8,0,22,0.84) 55.5%,
-          transparent 55.5%,       transparent 59.5%,
-          rgba(8,0,22,0.75) 59.5%, rgba(8,0,22,0.75) 64%,
-          transparent 64%,         transparent 68%,
-          rgba(8,0,22,0.67) 68%,   rgba(8,0,22,0.67) 72%,
-          transparent 72%,         transparent 75.5%,
-          rgba(8,0,22,0.60) 75.5%, rgba(8,0,22,0.60) 78.5%,
-          transparent 78.5%,       transparent 81.5%,
-          rgba(8,0,22,0.54) 81.5%, rgba(8,0,22,0.54) 84.5%,
-          transparent 84.5%,       transparent 87%,
-          rgba(8,0,22,0.48) 87%,   rgba(8,0,22,0.48) 89.5%,
-          transparent 89.5%,       transparent 92%,
-          rgba(8,0,22,0.44) 92%,   rgba(8,0,22,0.44) 94%,
-          transparent 94%,         transparent 96%,
-          rgba(8,0,22,0.40) 96%,   rgba(8,0,22,0.40) 97.5%,
-          transparent 97.5%,       transparent 99%
-        ),
-        linear-gradient(180deg,
-          #ffffff 0%, #ddeeff 7%, #88aaff 18%,
-          #4444ff 34%, #6600cc 50%,
-          #bb00ff 65%, #ff00cc 79%,
-          #ff0066 90%, #330011 100%
-        );
-      box-shadow:
-        0 0 55px 22px rgba(0,80,255,0.42),
-        0 0 130px 65px rgba(170,0,255,0.24),
-        0 0 260px 130px rgba(255,0,128,0.14);
-    }
-    @media (max-width: 900px) { .hero-sun { width: 200px; height: 200px; } }
-    .hero-inner {
-      padding: 10px;
-      background-color: #00000057;
-      border-radius: var(--radius);
-      position: relative; z-index: 2;
-      display: grid; grid-template-columns: 1fr; gap: 0; width: 100%;
-      max-width: 1400px;
-    }
-    .hero-content { max-width: 680px; visibility: hidden; }
-    .hero-badge {
-      font-family: 'Press Start 2P', monospace; font-size: 9px;
-      color: var(--electric); border: 1px solid var(--border-el); border-radius: 3px;
-      padding: 8px 14px; display: inline-flex; align-items: center; gap: 8px;
-      margin-bottom: 28px; background: rgba(0,255,255,0.05);
-    }
-    /* PS1 boot bar */
-    .hero-boot {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: var(--text-muted); letter-spacing: 0.12em;
-    }
-    .hero-boot-bar {
-      flex: 1; max-width: 100px; height: 2px;
-      background: rgba(0,255,255,0.15); border-radius: 1px; overflow: hidden;
-    }
-    .hero-boot-fill {
-      height: 100%; width: 100%; background: var(--electric);
-      animation: bootLoad 1.8s cubic-bezier(0.4,0,0.2,1) 0.6s both;
-      transform-origin: left; transform: scaleX(0);
-    }
-    @keyframes bootLoad { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-    .hero-boot-ok { color: var(--electric); }
-    .hero-badge .badge-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--electric); box-shadow: 0 0 8px var(--electric);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-    .hero-h1 {
-      font-family: 'Orbitron', sans-serif; font-weight: 900;
-      font-size: clamp(36px, 5.5vw, 72px); line-height: 0.95;
-      letter-spacing: -0.01em; margin-bottom: 0px; color: var(--text);
-    }
-    .hero-h1 .line-accent {
-      background: var(--holo); -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero-sub {
-      font-size: clamp(16px, 2vw, 20px); color: #47ff00;
-      line-height: 1.6; margin-bottom: 40px; max-width: 480px;
-    }
-    .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .btn-hero-primary {
-      background: var(--electric); color: #060810;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px;
-      padding: 15px 32px; border-radius: 4px; transition: var(--trans);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-hero-primary:hover { box-shadow: var(--glow-sm), 0 8px 32px rgba(0,255,255,0.2); transform: translateY(-2px); }
-    .btn-hero-secondary {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 14px 24px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans);
-    }
-    .btn-hero-secondary:hover { background: rgba(0,255,255,0.06); border-color: var(--electric); }
-    .btn-hero-ghost {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 14px;
-      padding: 14px 20px; border: 1px solid var(--border); border-radius: 4px;
-      color: var(--text-muted); transition: var(--trans); display: flex; align-items: center; gap: 7px;
-    }
-    .btn-hero-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .hero-scroll {
-      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); z-index: 2;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: var(--text-muted); letter-spacing: 0.1em;
-      visibility: hidden;
-    }
-    .hero-scroll-line {
-      width: 1px; height: 48px; background: linear-gradient(var(--electric), transparent);
-      animation: scrollLine 2s ease-in-out infinite;
-    }
-    @keyframes scrollLine {
-      0%   { transform: scaleY(0); transform-origin: top; }
-      50%  { transform: scaleY(1); transform-origin: top; }
-      50.01% { transform: scaleY(1); transform-origin: bottom; }
-      100% { transform: scaleY(0); transform-origin: bottom; }
-    }
-
-    /* ── WHAT IS ── */
-    #what { padding: 120px 0; position: relative; overflow: hidden; }
-    .what-inner { display: grid; grid-template-columns: 1fr 440px; gap: 80px; align-items: center; }
-    @media (max-width: 1000px) { .what-inner { grid-template-columns: 1fr; } }
-    #what::before {
-      content: ''; position: absolute; width: 800px; height: 800px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(157,0,255,0.08) 0%, transparent 70%);
-      top: -200px; right: -200px; pointer-events: none;
-    }
-    .what-quote-mark {
-      font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 120px; line-height: 0.8;
-      background: var(--holo); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; display: block; margin-bottom: -20px; user-select: none;
-    }
-    .what-pull-quote {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(22px, 3.5vw, 36px); line-height: 1.2; letter-spacing: -0.01em;
-      margin-bottom: 28px; color: var(--text);
-    }
-    .what-body { font-size: 17px; color: var(--text-muted); line-height: 1.75; max-width: 580px; }
-    .what-body p + p { margin-top: 16px; }
-    .what-body strong { color: var(--chrome); font-weight: 600; }
-    .what-visual { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-    .what-logo { width: 220px; filter: drop-shadow(0 0 32px rgba(0,255,255,0.25)); }
-    .what-cart { width: 180px; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)); }
-    .code-block {
-      background: rgba(3,1,10,0.98); border: 1px solid var(--border); border-left: 3px solid var(--electric);
-      border-radius: 8px; padding: 24px 28px; font-family: 'Courier New', monospace;
-      font-size: 13px; line-height: 1.8; margin-top: 32px; overflow-x: auto;
-    }
-    .code-line     { color: var(--text-muted); }
-    .code-keyword  { color: #ff8a00; }
-    .code-fn       { color: var(--electric); }
-    .code-string   { color: #a8ff80; }
-    .code-comment  { color: #445; font-style: italic; }
-
-    /* ── FEATURES ── */
-    #features {
-      padding: 120px 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(15,10,12,0.6) 50%, transparent 100%);
-    }
-    .features-header { text-align: center; margin-bottom: 56px; }
-    .features-header .section-sub { max-width: 480px; margin: 0 auto; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .feat-card-large { grid-column: span 2; }
-    .feat-col-stack { display: flex; flex-direction: column; gap: 20px; }
-    @media (max-width: 1100px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .feat-card-large { grid-column: span 2; }
-    }
-    @media (max-width: 640px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .feat-card-large { grid-column: span 1; }
-    }
-    .feat-card {
-      background: rgba(15,11,13,0.88); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 32px; display: flex; flex-direction: column; gap: 16px;
-      transition: var(--trans); position: relative; overflow: hidden;
-    }
-    .feat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.12); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
-    .feat-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0;
-    }
-    .feat-3d::before    { background: linear-gradient(90deg, var(--electric), var(--violet)); }
-    .feat-voxel::before { background: linear-gradient(90deg, var(--lime), #0f3a1a); }
-    .feat-physics::before { background: linear-gradient(90deg, var(--neon-pink), var(--violet)); }
-    .feat-audio::before { background: linear-gradient(90deg, var(--violet), #1e0840); }
-    .feat-input::before { background: linear-gradient(90deg, var(--neon-pink), var(--electric)); }
-    .feat-fx::before    { background: linear-gradient(90deg, var(--violet), var(--electric)); }
-    .feat-os::before    { background: linear-gradient(90deg, var(--chrome), var(--violet)); }
-    .feat-dev::before   { background: linear-gradient(90deg, var(--electric), var(--lime)); }
-    .feat-card-large .feat-deco {
-      position: absolute; top: 0; right: 0; width: 300px; height: 200px;
-      background: radial-gradient(ellipse at top right, rgba(0,255,255,0.06) 0%, transparent 70%); pointer-events: none;
-    }
-    .feat-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px;
-      color: var(--text); display: flex; align-items: center; gap: 10px;
-    }
-    .feat-card-large .feat-title { font-size: 20px; }
-    .feat-badge {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-muted);
-      border: 1px solid var(--border); border-radius: 3px; padding: 4px 8px;
-      letter-spacing: 0.05em; margin-left: auto;
-    }
-    .feat-3d .feat-badge { color: var(--electric); border-color: var(--border-el); }
-    .feat-body { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
-    .feat-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .feat-list li {
-      font-size: 14px; color: var(--text-muted);
-      display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
-    }
-    .feat-list li::before { content: '›'; color: var(--electric); font-size: 16px; line-height: 1.3; flex-shrink: 0; }
-    .feat-card-large .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
-    @media (max-width: 640px) { .feat-card-large .feat-list { grid-template-columns: 1fr; } }
-
-    /* ── DEMOS ── */
-    #demos { padding: 120px 0; position: relative; }
-    .demos-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 48px; gap: 24px; flex-wrap: wrap; }
-    .demos-header-left { max-width: 540px; }
-    .btn-outline {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 12px 24px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans); white-space: nowrap; flex-shrink: 0;
-    }
-    .btn-outline:hover { background: rgba(0,255,255,0.06); }
-    .demos-sub { font-size: 15px; color: var(--text-muted); margin-top: 10px; line-height: 1.6; }
-    .demo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    @media (max-width: 1100px) { .demo-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px)  { .demo-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px)  { .demo-grid { grid-template-columns: 1fr; } }
-    .demo-featured { grid-column: span 2; }
-    @media (max-width: 768px) { .demo-featured { grid-column: span 1; } }
-    .demo-card {
-      position: relative; border-radius: var(--radius); border: 1px solid var(--border);
-      background: var(--bg-mid); overflow: hidden; cursor: pointer; transition: var(--trans);
-      display: flex; flex-direction: column;
-    }
-    .demo-card:hover { transform: translateY(-6px); border-color: rgba(10,255,237,0.25); box-shadow: 0 20px 56px rgba(0,0,0,0.5); }
-    .demo-visual { height: 140px; position: relative; overflow: hidden; }
-    .demo-featured .demo-visual { height: 180px; }
-    .demo-fps       .demo-visual { background: radial-gradient(ellipse at 30% 30%, #ff4500 0%, #b91c1c 40%, #0a0810 100%); }
-    .demo-noir      .demo-visual { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 60%, #111 100%); }
-    .demo-crystal   .demo-visual { background: conic-gradient(from 45deg at 50% 50%, #00ffff, #ff00ff, #9d00ff, #00ffff); }
-    .demo-fzero     .demo-visual { background: conic-gradient(from 90deg at 60% 50%, #ff00ff 0deg, #9d00ff 120deg, #030712 240deg, #00c8ff 360deg); }
-    .demo-space     .demo-visual { background: radial-gradient(circle at 20% 80%, #7c3aed 0%, transparent 50%), radial-gradient(circle at 80% 20%, #1e3a8a 0%, transparent 50%), #030712; }
-    .demo-voxel     .demo-visual { background: linear-gradient(160deg, #065f46 0%, #14532d 40%, #713f12 60%, #44403c 100%); }
-    .demo-plumber   .demo-visual { background: linear-gradient(160deg, #1d4ed8 0%, #2563eb 30%, #16a34a 55%, #15803d 100%); }
-    .demo-cyber     .demo-visual { background: radial-gradient(ellipse at 70% 30%, #ff00ff 0%, transparent 50%), radial-gradient(ellipse at 30% 70%, #9d00ff 0%, transparent 50%), #03010a; }
-    .demo-strider   .demo-visual { background: linear-gradient(135deg, #14532d 0%, #713f12 60%, #1c1917 100%); }
-    .demo-model     .demo-visual { background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); }
-    .demo-demoscene .demo-visual { background: conic-gradient(from 180deg at 50% 50%, #00ffff, #ff00ff, #9d00ff, #39ff14, #00ffff); }
-    .demo-pbr       .demo-visual { background: radial-gradient(circle at 50% 50%, #c4cbd8 0%, #64748b 40%, #1e293b 100%); }
-    .demo-visual::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
-      background-size: 20px 20px;
-    }
-    .demo-genre {
-      position: absolute; top: 10px; left: 12px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.45);
-      padding: 4px 8px; border-radius: 3px; letter-spacing: 0.06em;
-    }
-    .demo-play-btn {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.8); opacity: 0;
-      background: rgba(0,255,255,0.15); backdrop-filter: blur(8px);
-      border: 1px solid var(--electric); border-radius: 50%;
-      width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-      transition: var(--trans); color: var(--electric); font-size: 18px;
-    }
-    .demo-card:hover .demo-play-btn { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    .demo-info { padding: 16px 18px 18px; }
-    .demo-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; }
-    .demo-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-    /* ── NOVAOS ── */
-    #novaos { padding: 120px 0; position: relative; overflow: hidden; }
-    #novaos::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: url('./assets/novaOS/nova64ConsoleBG.webp');
-      background-size: cover; background-position: center; opacity: 0.06; z-index: 0;
-    }
-    #novaos::after {
-      content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
-    }
-    .novaos-inner {
-      position: relative; z-index: 1;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center;
-    }
-    @media (max-width: 900px) { .novaos-inner { grid-template-columns: 1fr; gap: 40px; } }
-    .novaos-visual { position: relative; }
-    .novaos-img {
-      width: 100%; border-radius: 12px; border: 1px solid rgba(0,255,255,0.15);
-      box-shadow: 0 0 0 1px rgba(157,0,255,0.10), 0 0 40px rgba(0,255,255,0.10), 0 0 80px rgba(157,0,255,0.06), 0 40px 80px rgba(0,0,0,0.7);
-    }
-    .novaos-visual::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-      border-radius: 12px 12px 0 0; pointer-events: none; z-index: 1;
-    }
-    .novaos-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(26px, 3.5vw, 42px); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 24px;
-    }
-    .novaos-body { font-size: 16px; color: var(--text-muted); line-height: 1.7; margin-bottom: 28px; }
-    .novaos-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
-    .novaos-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: var(--text-muted); line-height: 1.5; }
-    .novaos-list li .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--electric); box-shadow: 0 0 6px var(--electric); margin-top: 6px; flex-shrink: 0; }
-    .coming-soon {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--neon-pink);
-      border: 1px solid rgba(255,45,120,0.3); padding: 3px 7px; border-radius: 3px;
-      letter-spacing: 0.05em; vertical-align: middle; margin-left: 8px;
-    }
-    .btn-novaos {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 13px 26px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans);
-    }
-    .btn-novaos:hover { background: rgba(0,255,255,0.06); }
-
-    /* ── WHY ── */
-    #why {
-      padding: 140px 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(15,8,12,0.5) 50%, transparent 100%);
-    }
-    .why-header { text-align: center; margin-bottom: 72px; }
-    .why-phrases {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-      background: var(--border); border: 1px solid var(--border); border-radius: var(--radius);
-      overflow: hidden; margin-bottom: 80px;
-    }
-    @media (max-width: 768px) { .why-phrases { grid-template-columns: 1fr; } }
-    .why-phrase { background: var(--bg-base); padding: 52px 40px; text-align: center; transition: var(--trans); }
-    .why-phrase:hover { background: rgba(10,2,24,0.9); }
-    .why-phrase-text {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(20px, 2.5vw, 34px); line-height: 1.2; letter-spacing: -0.01em; white-space: pre-line;
-    }
-    .why-phrase:nth-child(1) .why-phrase-text { color: var(--electric); }
-    .why-phrase:nth-child(2) .why-phrase-text { color: var(--text); }
-    .why-phrase:nth-child(3) .why-phrase-text {
-      background: var(--holo); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .why-manifesto { max-width: 720px; margin: 0 auto; text-align: center; }
-    .why-manifesto blockquote {
-      font-size: clamp(16px, 2vw, 20px); font-style: italic; color: var(--text-muted);
-      line-height: 1.8; margin-bottom: 52px; border: none;
-    }
-    .why-manifesto blockquote strong { color: var(--chrome); font-style: normal; }
-    .tech-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; padding: 24px 0; border-top: 1px solid var(--border); }
-    .tech-item { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.08em; display: flex; align-items: center; gap: 10px; }
-    .tech-item::after { content: '·'; color: var(--border-el); }
-    .tech-item:last-child::after { display: none; }
-
-    /* ── PRESS KIT ── */
-    #press { padding: 120px 0; position: relative; }
-    .press-header { margin-bottom: 52px; }
-    .press-assets-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 56px; }
-    @media (max-width: 900px)  { .press-assets-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px)  { .press-assets-grid { grid-template-columns: 1fr; } }
-    .press-asset { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--trans); }
-    .press-asset:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-3px); }
-    .press-asset-thumb { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; background: var(--bg-base); padding: 20px; overflow: hidden; }
-    .press-asset-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .press-asset-info { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .press-asset-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-    .press-download {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--electric);
-      border: 1px solid var(--border-el); border-radius: 3px; padding: 5px 9px;
-      letter-spacing: 0.04em; transition: var(--trans); white-space: nowrap;
-    }
-    .press-download:hover { background: rgba(10,255,237,0.08); }
-    .press-copy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 768px) { .press-copy-grid { grid-template-columns: 1fr; } }
-    .press-copy-block { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; }
-    .press-copy-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; color: var(--chrome);
-      margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
-    }
-    .copy-btn {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-muted);
-      border: 1px solid var(--border); border-radius: 3px; padding: 5px 9px; transition: var(--trans); cursor: pointer;
-    }
-    .copy-btn:hover { color: var(--electric); border-color: var(--border-el); }
-    .copy-btn.copied { color: var(--electric); border-color: var(--border-el); }
-    .press-blurb { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
-    .press-specs { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .press-specs li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-muted); }
-    .press-specs li::before { content: '›'; color: var(--electric); font-size: 16px; line-height: 1.3; flex-shrink: 0; }
-    .press-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; }
-    .press-link-pill {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px;
-      padding: 9px 18px; border: 1px solid var(--border); border-radius: 20px;
-      color: var(--text-muted); transition: var(--trans); display: flex; align-items: center; gap: 6px;
-    }
-    .press-link-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-
-    /* ── INSTALL ── */
-    #install { padding: 120px 0; text-align: center; position: relative; overflow: hidden; }
-    #install::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0,255,255,0.04) 0%, transparent 70%);
-    }
-    .install-inner { position: relative; z-index: 1; }
-    .install-sub { font-size: 17px; color: var(--text-muted); max-width: 520px; margin: 0 auto 52px; line-height: 1.75; }
-    .install-win {
-      display: inline-block; text-align: left; border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--electric); max-width: 600px; width: 100%;
-      box-shadow: 0 0 40px rgba(0,255,255,0.15), 0 0 90px rgba(0,0,0,0.7);
-    }
-    .install-titlebar {
-      background: #1a1c22; display: flex; align-items: center; gap: 7px;
-      padding: 11px 16px; border-bottom: 1px solid #2a2e3e;
-    }
-    .win-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
-    .win-dot.r { background: #ff5f57; } .win-dot.y { background: #febc2e; } .win-dot.g { background: #28c840; }
-    .install-titlebar-label {
-      flex: 1; text-align: center; font-family: 'Press Start 2P', monospace;
-      font-size: 9px; color: #555; margin-right: 26px; letter-spacing: 0.05em;
-    }
-    .install-body {
-      background: #050810; padding: 24px 28px;
-      font-family: monospace; font-size: 14px; line-height: 2.1;
-    }
-    .iline { color: #7a8ba0; }
-    .iline.ok { color: var(--lime); }
-    .iline.cmd { color: var(--electric); }
-    .iline.final { color: var(--chrome); }
-    .icursor {
-      display: inline-block; width: 9px; height: 1.1em;
-      background: var(--electric); vertical-align: text-bottom;
-      animation: iblink 1.1s step-end infinite;
-    }
-    @keyframes iblink { 50% { opacity: 0; } }
-    .install-note { margin-top: 32px; font-size: 13px; color: var(--text-muted); }
-    .install-note a { color: var(--electric); border-bottom: 1px solid rgba(0,255,255,0.3); transition: var(--trans); }
-    .install-note a:hover { color: #fff; border-bottom-color: #fff; text-decoration: none; }
-
-    /* ── FINAL CTA ── */
-    #cta { padding: 160px 0; text-align: center; position: relative; overflow: hidden; }
-    #cta::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(157,0,255,0.06) 0%, transparent 70%),
-                  radial-gradient(ellipse 60% 40% at 30% 80%, rgba(0,255,255,0.05) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .cta-watermark {
-      position: absolute; width: 420px; height: auto; top: 50%; left: 50%;
-      transform: translate(-50%, -50%); opacity: 0.04; filter: grayscale(1); pointer-events: none; z-index: 0;
-    }
-    .cta-content { position: relative; z-index: 1; }
-    .cta-h2 {
-      font-family: 'Orbitron', sans-serif; font-weight: 900;
-      font-size: clamp(32px, 6vw, 68px); line-height: 1.0; letter-spacing: -0.01em;
-      margin-bottom: 20px; white-space: pre-line;
-    }
-    .cta-sub { font-size: 18px; color: var(--text-muted); margin-bottom: 44px; font-style: italic; }
-    .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 32px; }
-    .cta-note { font-size: 13px; color: #445; letter-spacing: 0.05em; }
-
-    /* ── FOOTER ── */
-    footer { border-top: 1px solid var(--border); padding: 48px 0 36px; }
-    .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 32px; margin-bottom: 40px; }
-    .footer-brand { display: flex; flex-direction: column; gap: 12px; }
-    .footer-brand img { width: auto; }
-    .footer-brand-tag { font-size: 13px; color: var(--text-muted); max-width: 260px; line-height: 1.6; }
-    .footer-links { display: flex; gap: 40px; flex-wrap: wrap; }
-    .footer-col { display: flex; flex-direction: column; gap: 12px; }
-    .footer-col-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 4px; }
-    .footer-col a { font-size: 14px; color: var(--text-muted); transition: var(--trans); line-height: 1.4; }
-    .footer-col a:hover { color: var(--text); }
-    .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-    .footer-bottom p { font-size: 12px; color: var(--text-muted); opacity: 0.6; }
-    .footer-bottom a { color: var(--text-muted); }
-    .footer-bottom a:hover { color: var(--electric); }
-    :focus-visible { outline: 2px solid var(--electric); outline-offset: 3px; border-radius: 2px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NOVA64 — Disc 01</title>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-B3RDWLFWVF');
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Google Fonts with display=swap so any FOUT falls back to the system stacks below.
+     Every CSS font-family below ends with platform-safe stacks that work on Win/macOS/Linux/iOS/Android. -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+:root{
+  --bg:        #07060d;
+  --bg-2:      #0c0a16;
+  --panel:     #110e1e;
+  --line:      rgba(232,230,240,0.08);
+  --line-2:    rgba(232,230,240,0.14);
+  --text:      #ece9f4;
+  --text-mute: #8a85a3;
+  --text-dim:  #5a5572;
+  --accent:    oklch(82% 0.16 200);   /* electric cyan, single accent */
+  --accent-2:  oklch(58% 0.18 305);   /* violet, used sparingly */
+  --warn:      oklch(80% 0.16 95);    /* amber, for status */
+  --radius:    4px;
+  --ease:      cubic-bezier(.4,0,.2,1);
+
+  /* Cross-platform font stacks. Display & body always degrade gracefully if Google Fonts is blocked or slow. */
+  --ff-display: 'Orbitron', 'Eurostile', 'Bank Gothic', 'Trebuchet MS', 'Helvetica Neue', Arial, sans-serif;
+  --ff-body:    'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --ff-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
+  --ff-pixel:   'Press Start 2P', 'Courier New', ui-monospace, monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--ff-body);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::after{
+  /* very subtle scanline, much lighter than original */
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);
+  mix-blend-mode:multiply;
+}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
+
+.wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+@media(max-width:720px){.wrap{padding:0 20px}}
+
+/* ─────── NAV ─────── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  height:78px;display:flex;align-items:center;
+  background:rgba(7,6,13,.78);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);
+  border-bottom:1px solid var(--line);
+}
+.nav::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent 0%, color-mix(in oklab, var(--accent) 30%, transparent) 50%, transparent 100%);opacity:.55}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;width:100%}
+.brand{display:flex;align-items:center;gap:14px;padding:6px 0}
+.brand-logo{
+  height:56px;width:auto;display:block;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.65));
+  transition:transform .35s var(--ease), filter .35s var(--ease);
+}
+.brand:hover .brand-logo{transform:translateY(-1px);filter:drop-shadow(0 5px 14px rgba(0,0,0,.85)) drop-shadow(0 0 20px rgba(122,217,255,.30))}
+.brand-tag{display:none}
+@media(min-width:1000px){
+  .brand-tag{
+    display:flex;flex-direction:column;gap:1px;
+    padding-left:14px;margin-left:2px;
+    border-left:1px solid var(--line-2);
+    font-family:var(--ff-mono);font-size:9.5px;line-height:1.35;
+    color:var(--text-dim);letter-spacing:.18em;text-transform:uppercase;
+  }
+  .brand-tag b{color:var(--text-mute);font-weight:500}
+}
+@media(max-width:720px){.brand-logo{height:42px}.nav{height:64px}}
+.nav-links{display:flex;gap:28px;font-size:13px;color:var(--text-mute);font-weight:500}
+.nav-links a{transition:color .2s var(--ease)}
+.nav-links a:hover{color:var(--text)}
+@media(max-width:840px){.nav-links{display:none}}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;border:1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+  border-radius:var(--radius);font-size:12px;font-weight:600;color:var(--accent);
+  font-family:var(--ff-mono);letter-spacing:.04em;
+  transition:all .2s var(--ease);
+}
+.nav-cta:hover{background:color-mix(in oklab, var(--accent) 8%, transparent);box-shadow:0 0 24px color-mix(in oklab, var(--accent) 25%, transparent)}
+.nav-cta::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+
+/* ─────── HERO ─────── */
+.hero{
+  position:relative;min-height:100vh;
+  padding:120px 0 80px;
+  display:flex;align-items:center;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, oklch(45% 0.15 320 / .55) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, oklch(55% 0.18 25 / .35) 0%, transparent 50%),
+    linear-gradient(180deg, #050410 0%, #0a071a 40%, #1a0f2e 70%, #2a0e35 100%);
+}
+/* sun */
+.hero-sun{
+  position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+  width:480px;height:480px;border-radius:50%;
+  z-index:0;pointer-events:none;
+  background:
+    linear-gradient(180deg,
+      transparent 0,transparent 56%,
+      rgba(8,4,20,.7) 56%,rgba(8,4,20,.7) 60%,transparent 60%,
+      transparent 64%,rgba(8,4,20,.62) 64%,rgba(8,4,20,.62) 68%,transparent 68%,
+      transparent 72%,rgba(8,4,20,.55) 72%,rgba(8,4,20,.55) 76%,transparent 76%,
+      transparent 80%,rgba(8,4,20,.48) 80%,rgba(8,4,20,.48) 84%,transparent 84%,
+      transparent 88%,rgba(8,4,20,.42) 88%,rgba(8,4,20,.42) 92%,transparent 92%,
+      transparent 95%,rgba(8,4,20,.36) 95%,rgba(8,4,20,.36) 98%,transparent 98%
+    ),
+    radial-gradient(circle, #fff 0%, #fde8a0 8%, #ff8a4a 28%, #d63878 50%, #6b1a8a 78%, #1a0a2e 100%);
+  box-shadow:
+    0 0 60px 20px oklch(70% 0.20 30 / .35),
+    0 0 160px 80px oklch(55% 0.20 320 / .25),
+    0 0 280px 140px oklch(45% 0.15 280 / .15);
+  filter:saturate(1.05);
+}
+@media(max-width:900px){.hero-sun{width:300px;height:300px;top:65%}}
+/* horizon plane */
+.hero-grid{
+  position:absolute;left:0;right:0;bottom:0;height:42%;
+  background-image:
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,.6) 90%),
+    linear-gradient(transparent 49%, color-mix(in oklab, var(--accent) 35%, transparent) 50%, transparent 51%),
+    linear-gradient(90deg, transparent 49%, color-mix(in oklab, var(--accent) 35%, transparent) 50%, transparent 51%);
+  background-size: 100% 100%, 100% 80px, 80px 100%;
+  transform:perspective(600px) rotateX(64deg);
+  transform-origin:50% 100%;
+  z-index:0;pointer-events:none;
+  mask-image:linear-gradient(180deg, transparent 0%, #000 25%, #000 100%);
+}
+/* left fade for legibility */
+.hero::before{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg, rgba(7,6,13,.85) 0%, rgba(7,6,13,.55) 35%, transparent 60%);
+}
+/* vignette */
+.hero::after{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 100% 90% at 50% 50%, transparent 40%, rgba(7,6,13,.6) 100%);
+}
+
+.hero-content{position:relative;z-index:2;width:100%;max-width:720px}
+.hero-inner{
+  position:relative;z-index:2;width:100%;
+  display:grid;grid-template-columns:1fr 520px;gap:64px;align-items:center;
+}
+@media(max-width:1080px){.hero-inner{grid-template-columns:1fr;gap:40px}}
+/* engine badges row in hero */
+.hero-engines{
+  display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;
+  font-family:var(--ff-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+}
+.hero-engines .eng-lbl{color:var(--text-dim);align-self:center}
+.hero-engines .eng{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 11px;border-radius:2px;
+  border:1px solid var(--line-2);background:rgba(7,6,13,.5);
+  color:var(--text-mute);font-weight:500;
+}
+.hero-engines .eng .pip{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.hero-engines .eng.threejs{color:#7ad9ff;border-color:rgba(122,217,255,.35)}
+.hero-engines .eng.babylon{color:#ffb547;border-color:rgba(255,181,71,.35)}
+.hero-engines .eng.godot{
+  color:#ffffff;border-color:rgba(125,219,255,.5);
+  background:linear-gradient(180deg, rgba(70,130,180,.18), rgba(70,130,180,.06));
+  box-shadow:0 0 0 1px rgba(125,219,255,.18) inset, 0 0 22px rgba(70,130,180,.18);
+}
+.hero-engines .eng.godot .pip{background:#5fc0ff;box-shadow:0 0 8px #5fc0ff}
+.hero-engines .eng.godot .new-tag{
+  margin-left:4px;padding:2px 5px;border-radius:2px;
+  background:#5fc0ff;color:#06141c;font-weight:700;font-size:9px;letter-spacing:.16em;
+}
+.hero-shot{
+  position:relative;
+  border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg, #0c0a16 0%, #060410 100%);
+  border:1px solid var(--line-2);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent) 14%, transparent),
+    0 30px 70px rgba(0,0,0,.55),
+    0 0 80px color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.hero-shot img{width:100%;display:block}
+.hero-shot::after{
+  /* subtle inner glow + scanline overlay scoped to image */
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px),
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 60%, rgba(0,0,0,.4) 100%);
+}
+.hero-shot-tag{
+  position:absolute;top:14px;left:14px;z-index:2;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:2px;
+  background:rgba(7,6,13,.7);backdrop-filter:blur(8px);
+  border:1px solid var(--line-2);
+  font-family:var(--ff-mono);font-size:10px;letter-spacing:.18em;
+  color:var(--accent);text-transform:uppercase;
+}
+.hero-shot-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 2s infinite}
+.hero-shot-meta{
+  position:absolute;left:14px;right:14px;bottom:14px;z-index:2;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;
+  color:var(--text-mute);text-transform:uppercase;
+}
+.hero-shot-meta strong{color:var(--text);font-weight:500}
+/* mascot pinned cleanly to the hero column, not over the console */
+.hero-mascot-wrap{
+  margin-top:18px;display:flex;align-items:center;gap:14px;
+  padding:10px 14px;border:1px solid var(--line-2);border-radius:6px;
+  background:linear-gradient(180deg, rgba(95,192,255,.06), rgba(7,6,13,.4));
+  max-width:340px;
+}
+.hero-mascot-wrap img{width:54px;height:54px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.hero-mascot-wrap .m-text{font-family:var(--ff-mono);font-size:11px;letter-spacing:.06em;line-height:1.5;color:var(--text-mute)}
+.hero-mascot-wrap .m-text b{color:var(--text);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:10.5px;display:block;margin-bottom:2px}
+.hero-stamp{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--ff-mono);font-size:11px;font-weight:500;
+  color:var(--accent);letter-spacing:.18em;text-transform:uppercase;
+  padding:7px 12px;border:1px solid color-mix(in oklab, var(--accent) 28%, transparent);
+  border-radius:2px;background:color-mix(in oklab, var(--accent) 5%, transparent);
+  margin-bottom:32px;
+}
+.hero-stamp .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 2s infinite}
+.hero-h1{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(44px,6.5vw,86px);line-height:.92;letter-spacing:-.02em;
+  margin-bottom:24px;
+}
+.hero-h1 .accent{
+  background:linear-gradient(135deg, var(--accent) 0%, oklch(82% 0.18 280) 60%, oklch(75% 0.20 340) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:clamp(16px,1.5vw,19px);line-height:1.6;color:var(--text-mute);
+  max-width:540px;margin-bottom:44px;
+}
+.hero-sub strong{color:var(--text);font-weight:500}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 26px;border-radius:var(--radius);
+  font-family:var(--ff-body);font-weight:600;font-size:14px;
+  letter-spacing:.02em;transition:all .25s var(--ease);
+  white-space:nowrap;
+}
+.btn-primary{background:var(--accent);color:#06141c}
+.btn-primary:hover{box-shadow:0 0 0 1px var(--accent), 0 8px 28px color-mix(in oklab, var(--accent) 40%, transparent);transform:translateY(-1px)}
+.btn-ghost{border:1px solid var(--line-2);color:var(--text-mute)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-mute)}
+.btn-outline{border:1px solid color-mix(in oklab, var(--accent) 40%, transparent);color:var(--accent)}
+.btn-outline:hover{background:color-mix(in oklab, var(--accent) 8%, transparent)}
+
+/* hero meta strip */
+.hero-meta{
+  position:absolute;left:0;right:0;bottom:32px;z-index:2;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 40px;
+  font-family:var(--ff-mono);font-size:11px;color:var(--text-dim);
+  letter-spacing:.14em;text-transform:uppercase;
+}
+.hero-meta .ok{color:var(--accent)}
+@media(max-width:720px){.hero-meta{padding:0 20px;font-size:10px;flex-direction:column;gap:6px;align-items:flex-start}}
+
+/* ─────── SECTION GENERICS ─────── */
+section{padding:120px 0;position:relative}
+.eyebrow{
+  display:inline-block;
+  font-family:var(--ff-mono);font-size:11px;font-weight:500;
+  color:var(--accent);letter-spacing:.22em;text-transform:uppercase;
+  margin-bottom:18px;
+}
+.eyebrow::before{content:'';display:inline-block;width:24px;height:1px;background:var(--accent);vertical-align:middle;margin-right:12px;transform:translateY(-2px)}
+.h2{
+  font-family:var(--ff-display);font-weight:800;
+  font-size:clamp(34px,4.5vw,56px);line-height:1.02;letter-spacing:-.02em;
+  margin-bottom:18px;
+}
+.lede{
+  font-size:18px;line-height:1.6;color:var(--text-mute);max-width:560px;
+}
+
+/* ─────── DISC VAULT ─────── */
+.vault{
+  background:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.4) 50%, transparent 100%);
+}
+.vault-head{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  gap:32px;flex-wrap:wrap;margin-bottom:64px;
+}
+.vault-meta{display:flex;gap:32px;align-items:center;font-family:var(--ff-mono);font-size:11px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase}
+.vault-meta span strong{color:var(--text);font-weight:500}
+
+.vault-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:36px 28px;
+}
+@media(max-width:1100px){.vault-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:780px){.vault-grid{grid-template-columns:repeat(2,1fr);gap:28px 18px}}
+@media(max-width:440px){.vault-grid{grid-template-columns:1fr}}
+
+/* ── CART OBJECT ── */
+.cart{
+  position:relative;cursor:pointer;
+  display:flex;flex-direction:column;
+  transition:transform .35s var(--ease);
+}
+.cart:hover{transform:translateY(-8px)}
+
+/* shell */
+.cart-shell{
+  position:relative;
+  aspect-ratio: 0.78 / 1;
+  border-radius:10px 10px 6px 6px;
+  background:
+    /* highlight along top edge */
+    linear-gradient(180deg, rgba(255,255,255,.10) 0%, transparent 6%),
+    /* vertical fluting */
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px,
+      transparent 1px, transparent 6px),
+    /* base plastic */
+    linear-gradient(180deg, #1d1928 0%, #14111e 50%, #0c0a14 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    inset 1px 0 0 rgba(255,255,255,.04),
+    inset -1px 0 0 rgba(0,0,0,.4),
+    0 18px 40px rgba(0,0,0,.55),
+    0 4px 10px rgba(0,0,0,.4);
+  overflow:hidden;
+  transition:box-shadow .35s var(--ease);
+}
+.cart:hover .cart-shell{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 28px 56px rgba(0,0,0,.65),
+    0 0 0 1px color-mix(in oklab, var(--accent) 30%, transparent),
+    0 0 30px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+/* top "handle" bar */
+.cart-top{
+  position:absolute;left:0;right:0;top:0;height:34px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08) 0%, transparent 50%),
+    linear-gradient(90deg,
+      transparent 0%, transparent 18%,
+      rgba(0,0,0,.4) 18%, rgba(0,0,0,.4) 22%,
+      transparent 22%, transparent 78%,
+      rgba(0,0,0,.4) 78%, rgba(0,0,0,.4) 82%,
+      transparent 82%);
+  border-bottom:1px solid rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-mono);font-size:9px;font-weight:700;
+  color:var(--text-dim);letter-spacing:.22em;
+}
+.cart-top::after{
+  content:'NV-64';
+}
+
+/* corner screws */
+.cart-screw{
+  position:absolute;width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #5a566f 0%, #1d1a28 70%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.05);
+}
+.cart-screw::after{
+  content:'';position:absolute;inset:1.5px;border-radius:50%;
+  background:linear-gradient(45deg, transparent 45%, rgba(0,0,0,.5) 45%, rgba(0,0,0,.5) 55%, transparent 55%);
+}
+.cart-screw.tl{left:8px;top:11px}
+.cart-screw.tr{right:8px;top:11px}
+.cart-screw.bl{left:8px;bottom:11px}
+.cart-screw.br{right:8px;bottom:11px}
+
+/* label window — holds the thumb image */
+.cart-label{
+  position:absolute;left:18px;right:18px;top:48px;
+  aspect-ratio: 4 / 3;
+  border-radius:3px;
+  overflow:hidden;
+  background:#000;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    inset 0 0 0 4px #0a0810,
+    inset 0 0 0 5px rgba(255,255,255,.04),
+    0 4px 12px rgba(0,0,0,.6);
+}
+.cart-label::before{
+  /* glossy highlight on label */
+  content:'';position:absolute;inset:5px;z-index:2;border-radius:1px;pointer-events:none;
+  background:linear-gradient(155deg, rgba(255,255,255,.18) 0%, transparent 35%, transparent 75%, rgba(255,255,255,.04) 100%);
+}
+.cart-label img{
+  position:absolute;inset:5px;width:calc(100% - 10px);height:calc(100% - 10px);
+  object-fit:cover;
+  filter:saturate(.95) contrast(1.05);
+  transition:transform .5s var(--ease);
+}
+.cart:hover .cart-label img{transform:scale(1.04)}
+
+/* cart accent stripe — color-coded per genre */
+.cart-stripe{
+  position:absolute;left:0;right:0;top:34px;height:3px;
+  background:var(--cart-color, var(--accent));
+  box-shadow:0 0 12px var(--cart-color, var(--accent));
+  opacity:.85;
+}
+
+/* nameplate area */
+.cart-plate{
+  position:absolute;left:18px;right:18px;bottom:18px;
+  padding:10px 12px;
+  border-radius:2px;
+  background:linear-gradient(180deg, #0d0b16 0%, #060509 100%);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), inset 0 -1px 0 rgba(0,0,0,.5);
+  display:flex;flex-direction:column;gap:3px;
+}
+.cart-plate-name{
+  font-family:var(--ff-display);font-weight:800;font-size:12px;
+  letter-spacing:.04em;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cart-plate-meta{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--ff-mono);font-size:8.5px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);
+}
+.cart-plate-meta .genre{color:var(--cart-color, var(--accent))}
+
+/* play affordance below cart */
+.cart-action{
+  margin-top:14px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--ff-mono);font-size:11px;
+  color:var(--text-mute);letter-spacing:.1em;text-transform:uppercase;
+  transition:color .25s var(--ease);
+}
+.cart-action .arrow{
+  display:inline-block;width:14px;height:1px;background:currentColor;position:relative;
+  transition:width .3s var(--ease);
+}
+.cart-action .arrow::after{
+  content:'';position:absolute;right:0;top:-3px;width:7px;height:7px;
+  border-top:1px solid currentColor;border-right:1px solid currentColor;
+  transform:rotate(45deg);
+}
+.cart:hover .cart-action{color:var(--accent)}
+.cart:hover .cart-action .arrow{width:24px}
+
+/* cart focus ring — featured cart */
+.cart.featured .cart-shell{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10) 0%, transparent 6%),
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px,
+      transparent 1px, transparent 6px),
+    linear-gradient(180deg, #2a2138 0%, #1a1428 50%, #0e0a18 100%);
+}
+.cart.featured .cart-stripe{height:4px}
+
+/* vault footer / browse all */
+.vault-foot{
+  margin-top:64px;display:flex;justify-content:center;align-items:center;
+}
+
+/* ─────── ENGINES ─────── */
+.engines-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:18px}
+@media(max-width:980px){.engines-grid{grid-template-columns:1fr}}
+.eng-card{
+  position:relative;padding:32px 28px 28px;
+  background:linear-gradient(180deg,#100d1c 0%,#0a0814 100%);
+  border:1px solid var(--line);border-radius:8px;
+  display:flex;flex-direction:column;gap:14px;
+  transition:transform .3s var(--ease), border-color .3s var(--ease);
+}
+.eng-card:hover{transform:translateY(-4px);border-color:var(--line-2)}
+.eng-card h3{font-family:var(--ff-display);font-weight:800;font-size:24px;letter-spacing:-.01em}
+.eng-card p{color:var(--text-mute);font-size:14.5px;line-height:1.65}
+.eng-card p strong{color:var(--text);font-weight:600}
+.eng-card-mark{
+  font-family:var(--ff-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--text-dim);
+}
+.eng-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.eng-list li{font-size:13.5px;color:var(--text-mute);padding-left:18px;position:relative}
+.eng-list li::before{content:'';position:absolute;left:0;top:9px;width:8px;height:1px;background:currentColor}
+.eng-card-three{border-top:2px solid #7ad9ff}
+.eng-card-three .eng-card-mark{color:#7ad9ff}
+.eng-card-babylon{border-top:2px solid #ffb547}
+.eng-card-babylon .eng-card-mark{color:#ffb547}
+.eng-card-godot{
+  border:1px solid rgba(125,219,255,.35);
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(95,192,255,.18) 0%, transparent 60%),
+    linear-gradient(180deg,#0e1628 0%,#0a0e1c 100%);
+  box-shadow:0 0 0 1px rgba(95,192,255,.10) inset, 0 30px 60px rgba(0,0,0,.4), 0 0 60px rgba(95,192,255,.10);
+}
+.eng-card-godot{border-top:2px solid #5fc0ff}
+.eng-card-godot .eng-card-mark{color:#5fc0ff}
+.eng-card-godot h3{
+  background:linear-gradient(135deg,#fff 0%,#5fc0ff 70%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.eng-card-flag{
+  position:absolute;top:14px;right:14px;
+  font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.18em;
+  padding:5px 9px;border-radius:2px;
+  background:#5fc0ff;color:#06141c;
+}
+.foot{
+  border-top:1px solid var(--line);
+  padding:36px 0;
+  font-family:var(--ff-mono);font-size:11px;
+  color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;
+}
+.foot .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.foot a{color:var(--text-mute)}
+.foot a:hover{color:var(--accent)}
+
+/* ─────── MARQUEE TICKER ─────── */
+.ticker{
+  position:relative;overflow:hidden;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, #08070f 0%, #0c0a16 50%, #08070f 100%);
+  height:64px;display:flex;align-items:center;
+}
+.ticker::before,.ticker::after{
+  content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none;
+}
+.ticker::before{left:0;background:linear-gradient(90deg, #08070f 0%, transparent 100%)}
+.ticker::after{right:0;background:linear-gradient(270deg, #08070f 0%, transparent 100%)}
+.ticker-track{display:flex;gap:0;animation:tickerScroll 60s linear infinite;white-space:nowrap}
+.ticker-track:hover{animation-play-state:paused}
+.ticker-item{
+  display:inline-flex;align-items:center;gap:14px;padding:0 28px;
+  font-family:var(--ff-display);font-weight:800;font-size:18px;letter-spacing:.04em;
+  color:var(--text-mute);text-transform:uppercase;
+}
+.ticker-item .star{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 10px var(--accent);flex-shrink:0;
+}
+.ticker-item.hot{color:var(--text)}
+.ticker-item.hot .star{background:#ff5577;box-shadow:0 0 10px #ff5577}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─────── ARCHITECTURE / POP THE HOOD ─────── */
+.hood{
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(95,192,255,.06) 0%, transparent 60%),
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,.3) 100%);
+}
+.hood-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:64px;align-items:start}
+@media(max-width:980px){.hood-grid{grid-template-columns:1fr;gap:40px}}
+.hood-stack{display:flex;flex-direction:column;gap:14px}
+.layer{
+  display:grid;grid-template-columns:120px 1fr auto;gap:18px;align-items:center;
+  padding:18px 22px;border:1px solid var(--line);border-radius:6px;
+  background:linear-gradient(180deg,#100d1c,#0a0814);
+  transition:border-color .25s var(--ease), transform .25s var(--ease);
+  position:relative;
+}
+.layer:hover{border-color:var(--line-2);transform:translateX(4px)}
+.layer-num{
+  font-family:var(--ff-mono);font-size:11px;letter-spacing:.18em;
+  color:var(--text-dim);text-transform:uppercase;display:flex;align-items:center;gap:8px;
+}
+.layer-num::before{content:'';width:24px;height:1px;background:currentColor}
+.layer-name{font-family:var(--ff-display);font-weight:700;font-size:18px;letter-spacing:-.005em}
+.layer-name span{display:block;font-family:var(--ff-mono);font-size:11px;font-weight:500;color:var(--text-mute);letter-spacing:.06em;margin-top:3px;text-transform:none}
+.layer-tag{font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);letter-spacing:.16em;text-transform:uppercase}
+.layer.hl{
+  border-color:rgba(95,192,255,.4);
+  background:linear-gradient(180deg,#0e1628,#0a0e1c);
+  box-shadow:0 0 0 1px rgba(95,192,255,.10) inset, 0 0 30px rgba(95,192,255,.10);
+}
+.layer.hl .layer-num{color:#5fc0ff}
+.layer.hl .layer-tag{color:#5fc0ff}
+
+/* code block */
+.code{
+  border:1px solid var(--line-2);border-radius:8px;overflow:hidden;
+  background:#06050c;
+  box-shadow:0 30px 60px rgba(0,0,0,.5), 0 0 60px rgba(95,192,255,.06);
+}
+.code-bar{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:#0c0a16;border-bottom:1px solid var(--line);
+  font-family:var(--ff-mono);font-size:11px;color:var(--text-dim);letter-spacing:.1em;
+}
+.code-bar .dot{width:9px;height:9px;border-radius:50%}
+.code-bar .dot.r{background:#ff5f57}
+.code-bar .dot.y{background:#febc2e}
+.code-bar .dot.g{background:#28c840}
+.code-bar .file{margin-left:14px;color:var(--text-mute)}
+.code-bar .badge{margin-left:auto;padding:3px 8px;border:1px solid var(--line-2);border-radius:2px;font-size:9px;color:#5fc0ff;border-color:rgba(95,192,255,.4)}
+.code pre{
+  margin:0;padding:22px 24px;
+  font-family:var(--ff-mono);font-size:13px;line-height:1.7;
+  color:#cfd2e4;overflow-x:auto;
+}
+.code .k{color:#c792ea}    /* keyword */
+.code .s{color:#c3e88d}    /* string */
+.code .c{color:#5a5572}    /* comment */
+.code .f{color:#82aaff}    /* function */
+.code .n{color:#ffcb6b}    /* number/literal */
+.code .t{color:#5fc0ff}    /* type/godot */
+.code .v{color:#eeffff}    /* variable */
+
+/* ─────── STATS BAND ─────── */
+.stats{
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:60px 0;
+  background:#06050c;
+}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+@media(max-width:780px){.stats-grid{grid-template-columns:repeat(2,1fr);gap:40px}}
+.stat{display:flex;flex-direction:column;gap:6px;position:relative;padding-left:20px}
+.stat::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--accent);box-shadow:0 0 12px var(--accent);opacity:.6}
+.stat-num{
+  font-family:var(--ff-display);font-weight:900;font-size:clamp(36px,4vw,52px);line-height:1;letter-spacing:-.02em;
+  color:var(--text);
+}
+.stat-num .unit{color:var(--accent);font-size:.5em;margin-left:6px;letter-spacing:0;font-weight:700}
+.stat-lbl{font-family:var(--ff-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-top:8px}
+.stat-sub{font-size:13px;color:var(--text-mute);line-height:1.5}
+
+/* ─────── GARAGE / INSTALL ─────── */
+.garage-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+@media(max-width:880px){.garage-grid{grid-template-columns:1fr}}
+.gar-card{
+  position:relative;padding:32px;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,#100d1c,#0a0814);
+  display:flex;flex-direction:column;gap:14px;
+}
+.gar-card .num{
+  position:absolute;top:24px;right:28px;
+  font-family:var(--ff-display);font-weight:900;font-size:64px;color:transparent;
+  -webkit-text-stroke:1px var(--line-2);line-height:1;
+}
+.gar-card h4{font-family:var(--ff-display);font-weight:800;font-size:22px;letter-spacing:-.005em}
+.gar-card p{color:var(--text-mute);font-size:14.5px;line-height:1.6}
+.gar-cmd{
+  margin-top:6px;padding:14px 18px;border-radius:4px;
+  background:#06050c;border:1px solid var(--line);
+  font-family:var(--ff-mono);font-size:13px;color:#c3e88d;
+  display:flex;align-items:center;gap:10px;
+}
+.gar-cmd::before{content:'$';color:var(--accent);font-weight:700}
+
+.cart-shape-slim .cart-shell{aspect-ratio:.7/1;border-radius:6px}
+.cart-shape-slim .cart-top{height:24px;font-size:8px}
+.cart-shape-slim .cart-label{top:36px}
+
+/* engine extras + matrix + why + cta + templates */
+.eng-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.eng-meta span{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--line-2);border-radius:2px;color:var(--text-dim)}
+.eng-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim)}
+.eng-foot .v{color:var(--text-mute)}
+.eng-card-godot .eng-foot{border-color:rgba(95,192,255,.18)}
+
+.matrix{margin-top:48px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:linear-gradient(180deg,#0c0a16,#08070f)}
+.matrix table{width:100%;border-collapse:collapse;font-size:14px}
+.matrix th,.matrix td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line)}
+.matrix th{font-family:var(--ff-mono);font-size:10.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);background:#06050c}
+.matrix th.col-three{color:#7ad9ff}
+.matrix th.col-babylon{color:#ffb547}
+.matrix th.col-godot{color:#5fc0ff;background:rgba(95,192,255,.04)}
+.matrix tr:last-child td{border-bottom:none}
+.matrix tbody td:first-child{color:var(--text-mute);font-family:var(--ff-mono);font-size:12px;letter-spacing:.04em}
+.matrix .yes{color:var(--accent)}
+.matrix .no{color:var(--text-dim)}
+.matrix .star{color:#5fc0ff;font-weight:700}
+.matrix td.col-godot{background:rgba(95,192,255,.03)}
+@media(max-width:720px){.matrix{font-size:12px}.matrix th,.matrix td{padding:10px 12px}}
+
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+@media(max-width:880px){.why-grid{grid-template-columns:1fr}}
+.why-card{position:relative;padding:32px 28px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,#100d1c,#0a0814);display:flex;flex-direction:column;gap:14px;transition:transform .3s var(--ease),border-color .3s var(--ease)}
+.why-card:hover{transform:translateY(-4px);border-color:var(--line-2)}
+.why-card .icon{width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:4px;background:linear-gradient(180deg,color-mix(in oklab,var(--accent) 18%, transparent),transparent);font-family:var(--ff-display);font-weight:900;font-size:22px;color:var(--accent);box-shadow:inset 0 0 18px color-mix(in oklab,var(--accent) 12%, transparent)}
+.why-card h4{font-family:var(--ff-display);font-weight:800;font-size:22px;letter-spacing:-.005em}
+.why-card p{color:var(--text-mute);font-size:14.5px;line-height:1.65}
+.why-card p strong{color:var(--text);font-weight:600}
+.why-quote{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-family:var(--ff-mono);font-size:11px;color:var(--text-dim);letter-spacing:.06em;line-height:1.5}
+
+/* CLI templates */
+.tpl{background:linear-gradient(180deg,transparent 0%, rgba(0,0,0,.3) 100%)}
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
+@media(max-width:980px){.tpl-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.tpl-grid{grid-template-columns:1fr}}
+.tpl-card{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:linear-gradient(180deg,#100d1c,#0a0814);transition:transform .3s var(--ease),border-color .3s var(--ease);display:flex;flex-direction:column}
+.tpl-card:hover{transform:translateY(-4px);border-color:var(--line-2)}
+.tpl-strip{height:4px;width:100%;background:var(--tpl-c, var(--accent));box-shadow:0 0 12px var(--tpl-c, var(--accent))}
+.tpl-head{padding:22px 22px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.tpl-head h4{font-family:var(--ff-display);font-weight:800;font-size:19px;letter-spacing:-.005em}
+.tpl-head .eng-pip{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tpl-c, var(--accent));padding:5px 9px;border:1px solid color-mix(in oklab, var(--tpl-c, var(--accent)) 35%, transparent);border-radius:2px;white-space:nowrap;flex-shrink:0}
+.tpl-card p{padding:0 22px;color:var(--text-mute);font-size:13.5px;line-height:1.6}
+.tpl-cmd{margin:14px 22px 0;padding:11px 14px;border-radius:4px;background:#06050c;border:1px solid var(--line);font-family:var(--ff-mono);font-size:12px;color:#c3e88d;display:flex;align-items:center;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpl-cmd::before{content:'$';color:var(--tpl-c, var(--accent));font-weight:700;flex-shrink:0}
+.tpl-foot{margin-top:auto;padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+.tpl-foot .files{color:var(--text-mute)}
+.tpl-card.featured{border-color:color-mix(in oklab, var(--tpl-c) 38%, transparent);box-shadow:0 0 0 1px color-mix(in oklab, var(--tpl-c) 12%, transparent) inset, 0 30px 60px rgba(0,0,0,.4), 0 0 60px color-mix(in oklab, var(--tpl-c) 18%, transparent)}
+.tpl-card.featured .tpl-strip{height:5px}
+.tpl-card .tpl-tag{position:absolute;top:14px;right:14px;font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.16em;padding:4px 7px;border-radius:2px;background:var(--tpl-c, var(--accent));color:#06141c}
+
+/* community / final CTA */
+.cta{position:relative;padding:120px 0;background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(95,192,255,.10) 0%, transparent 60%),radial-gradient(ellipse 60% 60% at 50% 100%, oklch(55% 0.18 25 / .25) 0%, transparent 60%),linear-gradient(180deg,#08070f 0%, #1a0f2e 100%);text-align:center;border-top:1px solid var(--line);overflow:hidden}
+.cta::before{content:'';position:absolute;inset:0;background-image:linear-gradient(transparent 49%, color-mix(in oklab,var(--accent) 14%, transparent) 50%, transparent 51%),linear-gradient(90deg, transparent 49%, color-mix(in oklab,var(--accent) 14%, transparent) 50%, transparent 51%);background-size:60px 60px,60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 50%, #000 30%, transparent 80%);opacity:.5;pointer-events:none}
+.cta .wrap{position:relative;z-index:2}
+.cta-mascot{width:180px;height:auto;margin:0 auto 24px;display:block;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6)) drop-shadow(0 0 32px rgba(95,192,255,.2))}
+.cta h2{font-family:var(--ff-display);font-weight:900;font-size:clamp(38px,5vw,72px);line-height:.95;letter-spacing:-.02em;margin-bottom:18px}
+.cta p{font-size:18px;color:var(--text-mute);max-width:560px;margin:0 auto 36px;line-height:1.6}
+.cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+.cart-shape-arcade .cart-shell{aspect-ratio:.86/1;border-radius:14px 14px 4px 4px}
+.cart-shape-arcade .cart-top{height:42px}
+.cart-shape-arcade .cart-label{top:56px}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+</style>
 </head>
 <body>
 
-<!-- ── I18N STRINGS ── -->
-<!-- To localize: create ./i18n/<lang>.json with key overrides, then add ?lang=<lang> to the URL -->
-<script type="application/json" id="nova64-i18n">
-{
-  "page.title": "NOVA64 // Disc 01 \u2014 The Browser Fantasy Console",
-  "nav.what": "What Is It",
-  "nav.features": "Features",
-  "nav.demos": "Demos",
-  "nav.novaos": "NovaOS",
-  "nav.press": "Press Kit",
-  "nav.github": "GitHub",
-  "nav.launch": "Launch Console",
-  "nav.drawer.launch": "Launch Console \u2192",
-  "hero.badge": "NOVA64 v0.4.8 // MEM CARD DETECTED",
-  "hero.boot.check": "DISC CHECK",
-  "hero.boot.ok": "OK",
-  "hero.h1.html": "Born From<br><span class=\"line-accent\">64-Bit Dreams.</span>",
-  "hero.sub": "The darkness between polygons. The hum of a disc loading. NOVA64 is the fantasy console that never shipped in 1997 \u2014 running live, in your browser, right now.",
-  "hero.cta.launch": "Launch Console",
-  "hero.cta.demo": "Load a Demo",
-  "hero.cta.docs": "Docs",
-  "hero.scroll": "SCROLL",
-  "what.h2": "Everything you remember. Everything they never shipped.",
-  "what.p1": "NOVA64 is the ghost of a console that should have shipped in 1997. Built entirely in JavaScript, it requires no install and runs anywhere a browser runs. Point it at a tab \u2014 and start making games.",
-  "what.p2.html": "Under the hood: <strong>Three.js 0.182.0</strong>, a hot-reloading cart system, voxel engine, physics, spatial audio, and a full sprite pipeline \u2014 all accessible through an API tight enough to fit in a memory card manual.",
-  "features.stamp": "MEM BLOCK 01",
-  "features.h2.html": "The specs they drew<br>on graph paper in \u201896.",
-  "features.sub": "35+ API functions. Every system accounted for. Every shortcut removed. If a 90s dev would have dreamed it, it\u2019s here.",
-  "features.3d.title": "3D Graphics Engine",
-  "features.3d.body": "Hardware-accelerated 3D built on Three.js 0.182.0. Advanced materials, cinematic lighting, 4K shadow maps \u2014 exposed through a dead-simple API.",
-  "features.voxel.title": "Voxel Engine",
-  "features.voxel.body": "Chunked voxel world with biomes, fluid simulation, raycasting, pathfinding, and a full entity-component system. Think Minecraft in 50 lines.",
-  "features.physics.title": "Physics & Collision",
-  "features.physics.body": "AABB collision, gravity, raycasting, and spatial partitioning. Plug in setCollisionMap() and your world becomes solid.",
-  "features.audio.title": "Spatial Audio",
-  "features.audio.body": "WebAudio with 3D positioning, named sound presets (jump, coin, explosion...), and a simple sfx() call to trigger any sound.",
-  "features.input.title": "Input System",
-  "features.input.body": "WASD + gamepad + mouse in a unified API. key(), btn(), btnp() \u2014 works the same across keyboard and controller.",
-  "features.gameutils.title": "Game Utils",
-  "features.gameutils.body": "Cooldowns, hit states, spawners, object pools, floating text, minimap, state machines, timers \u2014 the full toolkit.",
-  "features.novaos_s.title": "NovaOS Shell",
-  "features.novaos_s.body": "A retro operating system skin with a filesystem, app launcher, and terminal. Runs carts natively. Ships with the console.",
-  "features.dev.title": "Developer Tools",
-  "features.dev.body": "In-browser sprite editor, real-time cart hot reload, FPS counter, triangle count \u2014 all accessible without leaving the tab.",
-  "features.3d.list.1": "Cube, Sphere, Plane, Cylinder, Cone, Capsule, Torus primitives",
-  "features.3d.list.2": "Holographic, metallic, and emissive material presets",
-  "features.3d.list.3": "Dynamic camera: position, target, FOV, smooth transitions",
-  "features.3d.list.4": "Atmospheric fog, ambient light, point lights",
-  "features.3d.list.5": "Space, gradient, and solid skybox generators",
-  "features.3d.list.6": "Bloom, vignette, glitch, chromatic aberration post-FX",
-  "features.3d.list.7": "N64 low-poly mode, PSX dither mode",
-  "features.3d.list.8": "Hot-reloading cart system \u2014 save to reload",
-  "novaos.list.1": "Window manager with draggable apps & z-ordering",
-  "novaos.list.2": "Built-in file browser & text editor",
-  "novaos.list.3": "Native cart launcher with live preview",
-  "novaos.list.4": "Settings panel with display & audio controls",
-  "novaos.list.5": "Mobile-optimized shell variant",
-  "demos.fps.name": "FPS Combat",
-  "demos.fps.desc": "First-person shooter with raycasting & particle explosions",
-  "demos.crystal.name": "Crystal Cathedral",
-  "demos.crystal.desc": "Ultimate graphics showcase. Holographic architecture & dynamic lighting",
-  "demos.noir.name": "Noir Adventure",
-  "demos.noir.desc": "Comic-style adventure with cel-shading & dynamic panels",
-  "demos.fzero.name": "F-Zero Nova",
-  "demos.fzero.desc": "High-speed anti-grav racing through futuristic circuits",
-  "demos.starfox.name": "Star Fox Nova",
-  "demos.starfox.desc": "Epic rail shooter with squadron battles & boss fights",
-  "demos.cyber.name": "Cyberpunk City",
-  "demos.cyber.desc": "Neon-soaked open world with volumetric rain & atmosphere",
-  "demos.voxel.name": "Voxel World",
-  "demos.voxel.desc": "Procedural terrain, biomes & real-time block editing",
-  "demos.plumber.name": "Super Plumber 64",
-  "demos.plumber.desc": "3D platformer with coins, enemies & N64-era charm",
-  "demos.strider.name": "Knight Strider",
-  "demos.strider.desc": "Fantasy sword-fighter with spell effects & dungeon crawling",
-  "demos.demoscene.name": "Tron Demoscene",
-  "demos.demoscene.desc": "Audio-reactive visuals & real-time shader art",
-  "demos.model.name": "Model Viewer",
-  "demos.model.desc": "Rigged .glb model loaded with full skeletal animation",
-  "demos.pbr.name": "PBR Showcase",
-  "demos.pbr.desc": "Metalness & roughness grid with IBL reflections",
-  "press.github.link": "GitHub Repository",
-  "press.apidocs.link": "API Documentation",
-  "press.console.link": "Live Console",
-  "press.novaos.link": "NovaOS Shell",
-  "demos.stamp": "DISC VAULT",
-  "demos.h2": "Insert Disc. Begin.",
-  "demos.sub": "Every title in the vault loads cold. No waiting. No install. One click \u2014 and the dark fades to game.",
-  "demos.browse": "Browse All Demos \u2192",
-  "novaos.stamp": "BONUS DISC",
-  "novaos.h2.html": "System menu.<br>Dark as the disc.",
-  "novaos.body": "NovaOS is what happens when a love of Mac OS 9, PS1 system menus, and dark terminals converge at 2am. Boot it \u2014 and the past comes alive in your tab.",
-  "novaos.cta": "Boot NovaOS",
-  "why.stamp": "DEV.LOG",
-  "why.h2": "Why we built this.",
-  "why.phrase1": "No disc tray.\nJust the code.",
-  "why.phrase2": "Retro soul,\nmodern GPU.",
-  "why.phrase3": "Born in shadows.\nRuns in light.",
-  "why.quote.html": "\u201cEvery disc you ever loaded began the same way. A logo. A boot chime. The dark \u2014 then everything. <strong>NOVA64 rebuilds that ritual for the browser.</strong> One import. One tab. The game begins.\u201d",
-  "tech.threejs": "Three.js 0.182.0",
-  "tech.webgl2": "WebGL2",
-  "tech.webaudio": "Web Audio API",
-  "tech.esmodules": "ES Modules",
-  "tech.vite": "Vite 5.4",
-  "tech.gsap": "GSAP 3",
-  "tech.nodeps": "Zero Runtime Deps",
-  "press.stamp": "PRESS KIT",
-  "press.h2": "Assets & copy.",
-  "press.sub": "Everything you need to write about NOVA64. High-res assets, approved copy, and technical specs.",
-  "press.logo.label": "Primary Logo",
-  "press.console.label": "Console Render",
-  "press.cart.label": "Cart Art",
-  "press.mascot.label": "Mascot",
-  "press.blurb.title": "Brand Description",
-  "press.blurb.copy": "COPY",
-  "press.blurb.text": "NOVA64 is a browser-native 3D fantasy console built on Three.js. It lets developers build N64/PlayStation-era games in plain JavaScript with zero WebGL boilerplate. Over 35 API functions cover 3D graphics, audio, physics, input, voxel worlds, and a retro OS shell \u2014 all running live in the browser.",
-  "press.specs.title": "Technical Summary",
-  "press.spec.1": "Three.js 0.182.0 3D renderer (WebGL2 + Canvas2D fallbacks)",
-  "press.spec.2": "Chunked voxel engine with fluid, lighting & pathfinding",
-  "press.spec.3": "AABB physics with raycasting & spatial partitioning",
-  "press.spec.4": "WebAudio spatial sound with named preset library",
-  "press.spec.5": "Hot-reloading ES module cart system via Vite 5.4",
-  "press.spec.6": "NovaOS shell: window manager, file browser, cart launcher",
-  "cta.stamp": "BOOT SEQUENCE",
-  "cta.h2.html": "One more game.<br><span class=\"line-accent\">Press start.</span>",
-  "cta.sub": "No install disc. No memory card. Just the code and the dark.",
-  "cta.launch": "Launch Console",
-  "cta.docs": "Read the Docs",
-  "cta.github": "Star on GitHub",
-  "cta.note": "MIT License \u2014 fork it, ship it, make something weird.",
-  "footer.brand": "The browser console built from \u201997 dreams. Zero boilerplate. Zero compromise.",
-  "footer.col.product": "PRODUCT",
-  "footer.col.develop": "DEVELOP",
-  "footer.col.links": "LINKS",
-  "footer.tagline": "No memory cards were corrupted in the making of this project."
-}
-</script>
-
-<!-- ── NAV ── -->
-<nav id="nav">
-  <div class="container">
-    <a href="#" class="nav-brand">
-      <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64" />
-      NOVA64
+<!-- ─────── NAV ─────── -->
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="./index.html">
+      <img class="brand-logo" src="public/assets/novaOS/nova64Logo.png" alt="stArcade9 NOVA64" />
+      <span class="brand-tag"><span><b>FANTASY CONSOLE</b></span><span>v0.4.8 · DISC 01</span></span>
     </a>
     <div class="nav-links">
-      <a href="#what" data-i18n="nav.what">What Is It</a>
-      <a href="#features" data-i18n="nav.features">Features</a>
-      <a href="#demos" data-i18n="nav.demos">Demos</a>
-      <a href="#novaos" data-i18n="nav.novaos">NovaOS</a>
-      <a href="#install">Install</a>
-      <a href="#press" data-i18n="nav.press">Press Kit</a>
+      <a href="#vault">Disc Vault</a>
+      <a href="#engines">Features</a>
+      <a href="./os9-shell/index.html">NovaOS</a>
+      <a href="./docs/index.html">Docs</a>
+      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">GitHub</a>
     </div>
-    <div class="nav-cta">
-      <div class="nav-trio">
-        <a href="./console.html" class="nav-trio-btn console">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8M12 18v2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7 11l3-3-3-3M13 12h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-          Console
-        </a>
-        <a href="./os9-shell/index.html" class="nav-trio-btn os">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 7h18M7 5h.01M9 5h.01M11 5h.01"/><path d="M8 21h8M12 17v4" stroke-width="1.5"/></svg>
-          OS
-        </a>
-        <a href="./docs/index.html" class="nav-trio-btn docs">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-          Docs
-        </a>
-      </div>
-      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="btn-ghost-sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span data-i18n="nav.github">GitHub</span>
-      </a>
-      <select id="lang-select" class="lang-switcher" aria-label="Language">
-        <option value="en">EN</option>
-        <option value="es">ES</option>
-        <option value="ja">JA</option>
-      </select>
-    </div>
-    <button class="nav-hamburger" id="nav-toggle" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <a class="nav-cta" href="./console.html">Launch Console</a>
   </div>
 </nav>
-<div id="nav-drawer">
-  <a href="#what" data-i18n="nav.what">What Is It</a>
-  <a href="#features" data-i18n="nav.features">Features</a>
-  <a href="#demos" data-i18n="nav.demos">Demos</a>
-  <a href="#novaos" data-i18n="nav.novaos">NovaOS</a>
-  <a href="#install">Install</a>
-  <a href="#press" data-i18n="nav.press">Press Kit</a>
-  <div class="drawer-trio">
-    <a href="./console.html" class="drawer-trio-btn console">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M7 11l3-3-3-3M13 12h4" stroke="#060810" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-      Console
-    </a>
-    <a href="./os9-shell/index.html" class="drawer-trio-btn os">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 7h18M7 5h.01M9 5h.01M11 5h.01"/><path d="M8 21h8M12 17v4" stroke-width="1.5"/></svg>
-      NovaOS
-    </a>
-    <a href="./docs/index.html" class="drawer-trio-btn docs">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-      Documentation
-    </a>
+
+<!-- ─────── HERO ─────── -->
+<header class="hero">
+  <div class="hero-sun"></div>
+  <div class="hero-grid"></div>
+  <div class="wrap">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <span class="hero-stamp"><span class="dot"></span>NOVA64 · DISC 01 · v0.4.8</span>
+        <h1 class="hero-h1">
+          Born from<br>
+          <span class="accent">64-bit dreams.</span>
+        </h1>
+        <p class="hero-sub">
+          The darkness between polygons. The hum of a disc loading.<br>
+          <strong>NOVA64</strong> is the fantasy console that never shipped in 1997 —
+          running live, in your browser, right now.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="./console.html">Launch Console →</a>
+          <a class="btn btn-outline" href="#vault">Browse the Vault</a>
+          <a class="btn btn-ghost" href="./docs/index.html">Read the Docs</a>
+        </div>
+        <div class="hero-engines">
+          <span class="eng-lbl">Runs on:</span>
+          <span class="eng threejs"><span class="pip"></span>Three.js</span>
+          <span class="eng babylon"><span class="pip"></span>Babylon.js</span>
+          <span class="eng godot"><span class="pip"></span>Godot 4 <span class="new-tag">NEW</span></span>
+        </div>
+        <div class="hero-mascot-wrap">
+          <img src="public/assets/novaOS/novaMascot.png" alt="The Nova — '64 Chevy II SS" />
+          <span class="m-text"><b>Meet The Nova</b>'64 Chevy II SS · the official mascot. The 64 isn't an accident.</span>
+        </div>
+      </div>
+      <figure class="hero-shot">
+        <span class="hero-shot-tag"><span class="dot"></span>HERO PROTOTYPE · V2</span>
+        <img src="public/assets/novaOS/nova64-console.png" alt="NOVA64 Hero Prototype V2 — Magnetic Exoshell System" />
+        <div class="hero-shot-meta">
+          <span><strong>Magnetic Exoshell</strong> · CNC Aluminum</span>
+          <span>100 × 107 mm</span>
+        </div>
+      </figure>
+    </div>
+  </div>
+  <div class="hero-meta">
+    <span>SYS · <span class="ok">DISC CHECK ✓</span></span>
+    <span>POLYGON HUM ENGAGED</span>
+    <span>SCROLL ↓</span>
+  </div>
+</header>
+
+<!-- ─────── TICKER ─────── -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span class="ticker-item hot"><span class="star"></span>NEW · GODOT 4 RUNTIME</span>
+    <span class="ticker-item"><span class="star"></span>QUICKJS BRIDGE</span>
+    <span class="ticker-item"><span class="star"></span>WRITE JAVASCRIPT · RUN NATIVE</span>
+    <span class="ticker-item"><span class="star"></span>70+ DEMOS IN THE VAULT</span>
+    <span class="ticker-item"><span class="star"></span>THREE.JS · BABYLON · GODOT</span>
+    <span class="ticker-item hot"><span class="star"></span>v0.4.8 · OUT NOW</span>
+    <span class="ticker-item"><span class="star"></span>ZERO INSTALL</span>
+    <span class="ticker-item"><span class="star"></span>BORN FROM 64-BIT DREAMS</span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item hot"><span class="star"></span>NEW · GODOT 4 RUNTIME</span>
+    <span class="ticker-item"><span class="star"></span>QUICKJS BRIDGE</span>
+    <span class="ticker-item"><span class="star"></span>WRITE JAVASCRIPT · RUN NATIVE</span>
+    <span class="ticker-item"><span class="star"></span>70+ DEMOS IN THE VAULT</span>
+    <span class="ticker-item"><span class="star"></span>THREE.JS · BABYLON · GODOT</span>
+    <span class="ticker-item hot"><span class="star"></span>v0.4.8 · OUT NOW</span>
+    <span class="ticker-item"><span class="star"></span>ZERO INSTALL</span>
+    <span class="ticker-item"><span class="star"></span>BORN FROM 64-BIT DREAMS</span>
   </div>
 </div>
 
-<!-- ── HERO ── -->
-<section id="hero">
-  <div class="hero-sun" aria-hidden="true"></div>
-  <div id="hero-loader">
-    <div class="loader-content">
-      <div class="loader-logo">NOVA64</div>
-      <div class="loader-status" id="loader-status">INITIALIZING GPU...</div>
-      <div class="loader-bar-wrap">
-        <div class="loader-bar-fill" id="loader-bar"></div>
-      </div>
-      <div class="loader-percent" id="loader-percent">0%</div>
+<!-- ─────── WHY ─────── -->
+<section id="why" style="padding-top:0">
+  <div class="wrap">
+    <div style="max-width:680px;margin-bottom:0">
+      <span class="eyebrow">Why NOVA64</span>
+      <h2 class="h2">A console for builders<br>who miss the weight of plastic.</h2>
+      <p class="lede">The web has every API except the one that mattered: a tiny, self-contained machine you can fill with games. NOVA64 is that machine — a cabinet you can ship in a URL.</p>
     </div>
-  </div>
-  <iframe id="hero-iframe" src="./hero-embed.html?path=/examples/hero-demo/code.js" loading="eager" title="Nova64 Hero Demo"></iframe>
-  <div class="container">
-    <div class="hero-inner">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="badge-dot"></span>
-          <span data-i18n="hero.badge">NOVA64 v0.4.8 // MEM CARD DETECTED</span>
-        </div>
-        <div class="hero-boot">
-          <span data-i18n="hero.boot.check">DISC CHECK</span>
-          <div class="hero-boot-bar"><div class="hero-boot-fill"></div></div>
-          <span class="hero-boot-ok" data-i18n="hero.boot.ok">OK</span>
-        </div>
-        <h1 class="hero-h1" data-i18n-html="hero.h1.html">
-          Born From<br>
-          <span class="line-accent">64-Bit Dreams.</span>
-        </h1>
-        <img src="./assets/novaOS/novaMascot.png" alt="NOVA64" />
-        <p class="hero-sub" data-i18n="hero.sub">The darkness between polygons. The hum of a disc loading. NOVA64 is the fantasy console that never shipped in 1997 &mdash; running live, in your browser, right now.</p>
-        
-        <div class="hero-ctas">
-          <a href="./console.html" class="btn-hero-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            <span data-i18n="hero.cta.launch">Launch Console</span>
-          </a>
-          <a href="#demos" class="btn-hero-secondary" data-i18n="hero.cta.demo">Load a Demo</a>
-          <a href="./docs/index.html" class="btn-hero-ghost">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span data-i18n="hero.cta.docs">Docs</span>
-          </a>
-          
-        </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="icon">⊕</div>
+        <h4>One file. One cart.</h4>
+        <p>A cart is a single JavaScript file plus a thumbnail. <strong>No bundler, no build step</strong>, no service worker dance. Drop it in <code style="font-family:var(--ff-mono);color:var(--accent)">/carts</code> and the console finds it.</p>
+        <div class="why-quote">One file. Hot-reload. Done.</div>
       </div>
-    </div>
-  </div>
-  <div class="hero-scroll" id="hero-scroll">
-    <div class="hero-scroll-line"></div>
-    <span data-i18n="hero.scroll">SCROLL</span>
-  </div>
-</section>
-
-<!-- ── WHAT IS ── -->
-<section id="what">
-  <div class="container">
-    <div class="what-inner">
-      <div class="reveal">
-        <span class="what-quote-mark">&ldquo;</span>
-        <h2 class="what-pull-quote" data-i18n="what.h2">Everything you remember. Everything they never shipped.</h2>
-        <div class="what-body">
-          <p data-i18n="what.p1">NOVA64 is the ghost of a console that should have shipped in 1997. Built entirely in JavaScript, it requires no install and runs anywhere a browser runs. Point it at a tab &mdash; and start making games.</p>
-          <p data-i18n-html="what.p2.html">Under the hood: <strong>Three.js 0.182.0</strong>, a hot-reloading cart system, voxel engine, physics, spatial audio, and a full sprite pipeline &mdash; all accessible through an API tight enough to fit in a memory card manual.</p>
-        </div>
-        <div class="code-block">
-          <div class="code-comment">// Your entire game in three functions</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">init</span>() {</div>
-          <div class="code-line">&nbsp;&nbsp;cube = <span class="code-fn">createCube</span>(<span class="code-string">2</span>, <span class="code-string">0x0affed</span>, [<span class="code-string">0,0,-5</span>]);</div>
-          <div class="code-line">}</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">update</span>(dt) {</div>
-          <div class="code-line">&nbsp;&nbsp;<span class="code-fn">rotateMesh</span>(cube, <span class="code-string">0</span>, dt, <span class="code-string">0</span>);</div>
-          <div class="code-line">}</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">draw</span>() {</div>
-          <div class="code-line">&nbsp;&nbsp;<span class="code-fn">print</span>(<span class="code-string">&apos;Score: 1000&apos;</span>, <span class="code-string">10</span>, <span class="code-string">10</span>);</div>
-          <div class="code-line">}</div>
-          <div class="code-comment">// That&apos;s it. Insert disc.</div>
-          <span class="cursor"></span>
-        </div>
+      <div class="why-card">
+        <div class="icon">▶</div>
+        <h4>Boots in zero milliseconds.</h4>
+        <p>The vault streams thumbnails as discs. Click a disc and the cart is on screen — no install, no account, no paywall. <strong>Cold start is the whole point.</strong></p>
+        <div class="why-quote">URL → gameplay. No splash.</div>
       </div>
-      <div class="what-visual reveal">
-        <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64 Logo" class="what-logo" />
-        <img src="./assets/novaOS/nova64Cart2.png" alt="Nova Cart" class="what-cart" />
+      <div class="why-card">
+        <div class="icon">◇</div>
+        <h4>Three engines, one API.</h4>
+        <p>Switch a header from <code style="font-family:var(--ff-mono);color:var(--accent)">three</code> to <code style="font-family:var(--ff-mono);color:var(--accent)">babylon</code> to <code style="font-family:var(--ff-mono);color:var(--accent)">godot</code>. Same cart shape, same loader, same hot-reload. <strong>Pick the renderer that fits the game.</strong></p>
+        <div class="why-quote">Prototype in Three. Ship in Godot.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── FEATURES ── -->
-<section id="features">
-  <div class="container">
-    <div class="features-header reveal">
-      <span class="stamp" data-i18n="features.stamp">MEM BLOCK 01</span>
-      <h2 class="section-title" data-i18n-html="features.h2.html">The specs they drew<br>on graph paper in &rsquo;96.</h2>
-      <p class="section-sub" data-i18n="features.sub">35+ API functions. Every system accounted for. Every shortcut removed. If a 90s dev would have dreamed it, it&rsquo;s here.</p>
+<!-- ─────── CLI TEMPLATES ─────── -->
+<section class="tpl" id="templates">
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:0">
+      <div style="max-width:560px">
+        <span class="eyebrow">CLI Templates</span>
+        <h2 class="h2">Scaffold a cart in one line.</h2>
+        <p class="lede">Every template is a working cart with thumbnail, manifest, and a hot-reloading dev loop. Pick a template, name it, start coding.</p>
+      </div>
+      <div class="gar-cmd" style="font-size:13px;max-width:340px">nova64 new my-cart --template &lt;name&gt;</div>
     </div>
-    <div class="features-grid">
-      <div class="feat-card feat-3d feat-card-large reveal">
-        <div class="feat-deco"></div>
-        <div class="feat-title">
-          <span data-i18n="features.3d.title">3D Graphics Engine</span>
-          <span class="feat-badge">THREE.JS</span>
-        </div>
-        <p class="feat-body" data-i18n="features.3d.body">Hardware-accelerated 3D built on Three.js 0.182.0. Advanced materials, cinematic lighting, 4K shadow maps &mdash; exposed through a dead-simple API.</p>
-        <ul class="feat-list">
-          <li data-i18n="features.3d.list.1">Cube, Sphere, Plane, Cylinder, Cone, Capsule, Torus primitives</li>
-          <li data-i18n="features.3d.list.2">Holographic, metallic, and emissive material presets</li>
-          <li data-i18n="features.3d.list.3">Dynamic camera: position, target, FOV, smooth transitions</li>
-          <li data-i18n="features.3d.list.4">Atmospheric fog, ambient light, point lights</li>
-          <li data-i18n="features.3d.list.5">Space, gradient, and solid skybox generators</li>
-          <li data-i18n="features.3d.list.6">Bloom, vignette, glitch, chromatic aberration post-FX</li>
-          <li data-i18n="features.3d.list.7">N64 low-poly mode, PSX dither mode</li>
-          <li data-i18n="features.3d.list.8">Hot-reloading cart system &mdash; save to reload</li>
+    <div class="tpl-grid">
+
+      <div class="tpl-card" style="--tpl-c:#7ad9ff">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>hello-world</h4><span class="eng-pip">three.js</span></div>
+        <p>The classic spinning cube. The smallest possible cart — manifest, default export, one mesh.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template hello-world</div>
+        <div class="tpl-foot"><span>Beginner</span><span class="files">3 files</span></div>
+      </div>
+
+      <div class="tpl-card" style="--tpl-c:#7ad9ff">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>hello-3d</h4><span class="eng-pip">three.js</span></div>
+        <p>Lit scene with orbit controls, a ground plane, and a cube. The starting point for most 3D carts.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template hello-3d</div>
+        <div class="tpl-foot"><span>Beginner</span><span class="files">5 files</span></div>
+      </div>
+
+      <div class="tpl-card" style="--tpl-c:#7ad9ff">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>camera-platformer</h4><span class="eng-pip">three.js</span></div>
+        <p>Side-scrolling platformer with input handling, AABB collision, and a camera that follows the player.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template camera-platformer</div>
+        <div class="tpl-foot"><span>Game</span><span class="files">9 files</span></div>
+      </div>
+
+      <div class="tpl-card" style="--tpl-c:#7ad9ff">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>voxel-world</h4><span class="eng-pip">three.js</span></div>
+        <p>Greedy-meshed voxel chunks, place/break blocks, infinite world streaming. Minecraft starter.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template voxel-world</div>
+        <div class="tpl-foot"><span>Game</span><span class="files">12 files</span></div>
+      </div>
+
+      <div class="tpl-card" style="--tpl-c:#7ad9ff">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>shader-lab</h4><span class="eng-pip">three.js</span></div>
+        <p>Live GLSL editor that recompiles on save. CRT, bloom, glitch, N64 affine, PSX vertex-snap.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template shader-lab</div>
+        <div class="tpl-foot"><span>Tool</span><span class="files">6 files</span></div>
+      </div>
+
+      <div class="tpl-card" style="--tpl-c:#ffb547">
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>pbr-showcase</h4><span class="eng-pip">babylon.js</span></div>
+        <p>Full PBR pipeline with IBL, GPU particles, and WebGPU rendering. The high-end visual baseline.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template pbr-showcase</div>
+        <div class="tpl-foot"><span>Visual</span><span class="files">8 files</span></div>
+      </div>
+
+      <div class="tpl-card featured" style="--tpl-c:#5fc0ff">
+        <span class="tpl-tag">NEW</span>
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>godot-hello</h4><span class="eng-pip">godot 4 · quickjs</span></div>
+        <p>Native Godot scene driven by a JavaScript cart through QuickJS. <strong style="color:var(--text)">The starting point for the new runtime.</strong></p>
+        <div class="tpl-cmd">nova64 new my-cart --template godot-hello</div>
+        <div class="tpl-foot"><span>Beginner · Godot</span><span class="files">4 files</span></div>
+      </div>
+
+      <div class="tpl-card featured" style="--tpl-c:#5fc0ff">
+        <span class="tpl-tag">NEW</span>
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>godot-2d-platformer</h4><span class="eng-pip">godot 4 · quickjs</span></div>
+        <p>Tilemap-based platformer using Godot's physics server. JS controls the player, Godot does the rest.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template godot-2d-platformer</div>
+        <div class="tpl-foot"><span>Game · Godot</span><span class="files">11 files</span></div>
+      </div>
+
+      <div class="tpl-card featured" style="--tpl-c:#5fc0ff">
+        <span class="tpl-tag">NEW</span>
+        <div class="tpl-strip"></div>
+        <div class="tpl-head"><h4>godot-fps</h4><span class="eng-pip">godot 4 · quickjs</span></div>
+        <p>First-person controller with mouselook, weapon swap, and a small test arena. Native physics.</p>
+        <div class="tpl-cmd">nova64 new my-cart --template godot-fps</div>
+        <div class="tpl-foot"><span>Game · Godot</span><span class="files">14 files</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─────── ENGINES ─────── -->
+<section id="engines">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:48px">
+      <span class="eyebrow">Multi-Engine Runtime</span>
+      <h2 class="h2">Three engines.<br><span style="background:linear-gradient(135deg,#5fc0ff,#7ad9ff 50%,#ffffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">One console.</span></h2>
+      <p class="lede" style="margin:0 auto">Carts ship with their preferred runtime. Three.js for the lean web stack, Babylon.js for high-end PBR, and a <strong style="color:var(--text)">native Godot 4 build</strong> with a <strong style="color:var(--text)">QuickJS</strong> bridge — write JavaScript, run on the real engine.</p>
+    </div>
+    <div class="engines-grid">
+      <div class="eng-card eng-card-three">
+        <div class="eng-card-mark">three.js</div>
+        <h3>Three.js 0.182</h3>
+        <p>The lean default. Hot-reload carts, holographic materials, N64/PSX shader modes. Tight enough to fit in a memory-card manual.</p>
+        <ul class="eng-list">
+          <li>35+ API helpers</li>
+          <li>Voxel + physics + audio</li>
+          <li>Bloom · vignette · glitch FX</li>
         </ul>
       </div>
-      <div class="feat-col-stack">
-        <div class="feat-card feat-voxel reveal">
-          <div class="feat-title" data-i18n="features.voxel.title">Voxel Engine</div>
-          <p class="feat-body" data-i18n="features.voxel.body">Chunked voxel world with biomes, fluid simulation, raycasting, pathfinding, and a full entity-component system. Think Minecraft in 50 lines.</p>
-        </div>
-        <div class="feat-card feat-physics reveal">
-          <div class="feat-title" data-i18n="features.physics.title">Physics &amp; Collision</div>
-          <p class="feat-body" data-i18n="features.physics.body">AABB collision, gravity, raycasting, and spatial partitioning. Plug in setCollisionMap() and your world becomes solid.</p>
-        </div>
-      </div>
-      <div class="feat-card feat-audio reveal">
-        <div class="feat-title" data-i18n="features.audio.title">Spatial Audio</div>
-        <p class="feat-body" data-i18n="features.audio.body">WebAudio with 3D positioning, named sound presets (jump, coin, explosion...), and a simple sfx() call to trigger any sound.</p>
-      </div>
-      <div class="feat-card feat-input reveal">
-        <div class="feat-title" data-i18n="features.input.title">Input System</div>
-        <p class="feat-body" data-i18n="features.input.body">WASD + gamepad + mouse in a unified API. key(), btn(), btnp() &mdash; works the same across keyboard and controller.</p>
-      </div>
-      <div class="feat-card feat-fx reveal">
-        <div class="feat-title" data-i18n="features.gameutils.title">Game Utils</div>
-        <p class="feat-body" data-i18n="features.gameutils.body">Cooldowns, hit states, spawners, object pools, floating text, minimap, state machines, timers &mdash; the full toolkit.</p>
-      </div>
-      <div class="feat-card feat-os reveal">
-        <div class="feat-title" data-i18n="features.novaos_s.title">NovaOS Shell</div>
-        <p class="feat-body" data-i18n="features.novaos_s.body">A retro operating system skin with a filesystem, app launcher, and terminal. Runs carts natively. Ships with the console.</p>
-      </div>
-      <div class="feat-card feat-dev reveal">
-        <div class="feat-title" data-i18n="features.dev.title">Developer Tools</div>
-        <p class="feat-body" data-i18n="features.dev.body">In-browser sprite editor, real-time cart hot reload, FPS counter, triangle count &mdash; all accessible without leaving the tab.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── DEMOS ── -->
-<section id="demos">
-  <div class="container">
-    <div class="demos-header">
-      <div class="demos-header-left reveal">
-        <span class="stamp" data-i18n="demos.stamp">DISC VAULT</span>
-        <h2 class="section-title" data-i18n="demos.h2">Insert Disc. Begin.</h2>
-        <p class="demos-sub" data-i18n="demos.sub">Every title in the vault loads cold. No waiting. No install. One click &mdash; and the dark fades to game.</p>
-      </div>
-      <a href="./console.html" class="btn-outline reveal" data-i18n="demos.browse">Browse All Demos &rarr;</a>
-    </div>
-    <div class="demo-grid">
-      <div class="demo-card demo-fps reveal" onclick="location.href='./console.html?demo=fps-demo-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">FPS / SHOOTER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.fps.name">FPS Combat</div>
-          <div class="demo-desc" data-i18n="demos.fps.desc">First-person shooter with raycasting &amp; particle explosions</div>
-        </div>
-      </div>
-      <div class="demo-card demo-crystal demo-featured reveal" onclick="location.href='./console.html?demo=crystal-cathedral-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">SHOWCASE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.crystal.name">Crystal Cathedral</div>
-          <div class="demo-desc" data-i18n="demos.crystal.desc">Ultimate graphics showcase. Holographic architecture &amp; dynamic lighting</div>
-        </div>
-      </div>
-      <div class="demo-card demo-noir reveal" onclick="location.href='./console.html?demo=adventure-comic-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">ADVENTURE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.noir.name">Noir Adventure</div>
-          <div class="demo-desc" data-i18n="demos.noir.desc">Comic-style adventure with cel-shading &amp; dynamic panels</div>
-        </div>
-      </div>
-      <div class="demo-card demo-fzero demo-featured reveal" onclick="location.href='./console.html?demo=f-zero-nova-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">RACING</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.fzero.name">F-Zero Nova</div>
-          <div class="demo-desc" data-i18n="demos.fzero.desc">High-speed anti-grav racing through futuristic circuits</div>
-        </div>
-      </div>
-      <div class="demo-card demo-space reveal" onclick="location.href='./console.html?demo=star-fox-nova-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">SPACE COMBAT</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.starfox.name">Star Fox Nova</div>
-          <div class="demo-desc" data-i18n="demos.starfox.desc">Epic rail shooter with squadron battles &amp; boss fights</div>
-        </div>
-      </div>
-      <div class="demo-card demo-cyber demo-featured reveal" onclick="location.href='./console.html?demo=cyberpunk-city-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">OPEN WORLD</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.cyber.name">Cyberpunk City</div>
-          <div class="demo-desc" data-i18n="demos.cyber.desc">Neon-soaked open world with volumetric rain &amp; atmosphere</div>
-        </div>
-      </div>
-      <div class="demo-card demo-voxel reveal" onclick="location.href='./console.html?demo=minecraft-demo'">
-        <div class="demo-visual">
-          <span class="demo-genre">VOXEL / BUILD</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.voxel.name">Voxel World</div>
-          <div class="demo-desc" data-i18n="demos.voxel.desc">Procedural terrain, biomes &amp; real-time block editing</div>
-        </div>
-      </div>
-      <div class="demo-card demo-plumber reveal" onclick="location.href='./console.html?demo=super-plumber-64'">
-        <div class="demo-visual">
-          <span class="demo-genre">PLATFORMER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.plumber.name">Super Plumber 64</div>
-          <div class="demo-desc" data-i18n="demos.plumber.desc">3D platformer with coins, enemies &amp; N64-era charm</div>
-        </div>
-      </div>
-      <div class="demo-card demo-strider reveal" onclick="location.href='./console.html?demo=strider-demo-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">ACTION RPG</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.strider.name">Knight Strider</div>
-          <div class="demo-desc" data-i18n="demos.strider.desc">Fantasy sword-fighter with spell effects &amp; dungeon crawling</div>
-        </div>
-      </div>
-      <div class="demo-card demo-demoscene demo-featured reveal" onclick="location.href='./console.html?demo=demoscene'">
-        <div class="demo-visual">
-          <span class="demo-genre">DEMOSCENE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.demoscene.name">Tron Demoscene</div>
-          <div class="demo-desc" data-i18n="demos.demoscene.desc">Audio-reactive visuals &amp; real-time shader art</div>
-        </div>
-      </div>
-      <div class="demo-card demo-model reveal" onclick="location.href='./console.html?demo=model-viewer-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">3D VIEWER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.model.name">Model Viewer</div>
-          <div class="demo-desc" data-i18n="demos.model.desc">Rigged .glb model loaded with full skeletal animation</div>
-        </div>
-      </div>
-      <div class="demo-card demo-pbr reveal" onclick="location.href='./console.html?demo=pbr-showcase'">
-        <div class="demo-visual">
-          <span class="demo-genre">PBR / MATERIALS</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.pbr.name">PBR Showcase</div>
-          <div class="demo-desc" data-i18n="demos.pbr.desc">Metalness &amp; roughness grid with IBL reflections</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── NOVAOS ── -->
-<section id="novaos">
-  <div class="container">
-    <div class="novaos-inner">
-      <div class="novaos-visual reveal">
-        <img src="./assets/novaOS/nova64console-v1notxt.png" alt="NovaOS Shell" class="novaos-img" id="novaos-img" />
-      </div>
-      <div class="novaos-content reveal">
-        <span class="stamp" data-i18n="novaos.stamp">BONUS DISC</span>
-        <h2 class="novaos-title" data-i18n-html="novaos.h2.html">System menu.<br>Dark as the disc.</h2>
-        <p class="novaos-body" data-i18n="novaos.body">NovaOS is what happens when a love of Mac OS 9, PS1 system menus, and dark terminals converge at 2am. Boot it &mdash; and the past comes alive in your tab.</p>
-        <ul class="novaos-list">
-          <li><span class="dot"></span><span data-i18n="novaos.list.1">Window manager with draggable apps &amp; z-ordering</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.2">Built-in file browser &amp; text editor</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.3">Native cart launcher with live preview</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.4">Settings panel with display &amp; audio controls</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.5">Mobile-optimized shell variant</span> <span class="coming-soon">BETA</span></li>
-        </ul>
-        <a href="./os9-shell/index.html" class="btn-novaos">
-          <span data-i18n="novaos.cta">Boot NovaOS</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── WHY ── -->
-<section id="why">
-  <div class="container">
-    <div class="why-header reveal">
-      <span class="stamp" data-i18n="why.stamp">DEV.LOG</span>
-      <h2 class="section-title" data-i18n="why.h2">Why we built this.</h2>
-    </div>
-    <div class="why-phrases">
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase1">No disc tray.&#10;Just the code.</div>
-      </div>
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase2">Retro soul,&#10;modern GPU.</div>
-      </div>
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase3">Born in shadows.&#10;Runs in light.</div>
-      </div>
-    </div>
-    <div class="why-manifesto reveal">
-      <blockquote data-i18n-html="why.quote.html">
-        &ldquo;Every disc you ever loaded began the same way. A logo. A boot chime. The dark &mdash; then everything. <strong>NOVA64 rebuilds that ritual for the browser.</strong> One import. One tab. The game begins.&rdquo;
-      </blockquote>
-      <div class="tech-strip">
-        <span class="tech-item" data-i18n="tech.threejs">Three.js 0.182.0</span>
-        <span class="tech-item" data-i18n="tech.webgl2">WebGL2</span>
-        <span class="tech-item" data-i18n="tech.webaudio">Web Audio API</span>
-        <span class="tech-item" data-i18n="tech.esmodules">ES Modules</span>
-        <span class="tech-item" data-i18n="tech.vite">Vite 5.4</span>
-        <span class="tech-item" data-i18n="tech.gsap">GSAP 3</span>
-        <span class="tech-item" data-i18n="tech.nodeps">Zero Runtime Deps</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── PRESS KIT ── -->
-<section id="press">
-  <div class="container">
-    <div class="press-header reveal">
-      <span class="stamp" data-i18n="press.stamp">PRESS KIT</span>
-      <h2 class="section-title" data-i18n="press.h2">Assets &amp; copy.</h2>
-      <p class="section-sub" data-i18n="press.sub">Everything you need to write about NOVA64. High-res assets, approved copy, and technical specs.</p>
-    </div>
-    <div class="press-assets-grid">
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64 Logo" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.logo.label">Primary Logo</span>
-          <a href="./assets/novaOS/nova64Logo.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Console1.webp" alt="Console Render" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.console.label">Console Render</span>
-          <a href="./assets/novaOS/nova64Console1.webp" download class="press-download">&#8595; WEBP</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Cart.png" alt="Cartridge Art" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.cart.label">Cart Art</span>
-          <a href="./assets/novaOS/nova64Cart.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/novaMascot.png" alt="Nova Mascot" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.mascot.label">Mascot</span>
-          <a href="./assets/novaOS/novaMascot.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-    </div>
-    <div class="press-copy-grid">
-      <div class="press-copy-block reveal">
-        <div class="press-copy-title">
-          <span data-i18n="press.blurb.title">Brand Description</span>
-          <button class="copy-btn" id="copy-blurb-btn" data-i18n="press.blurb.copy">COPY</button>
-        </div>
-        <p class="press-blurb" id="press-blurb-text" data-i18n="press.blurb.text">NOVA64 is a browser-native 3D fantasy console built on Three.js. It lets developers build N64/PlayStation-era games in plain JavaScript with zero WebGL boilerplate. Over 35 API functions cover 3D graphics, audio, physics, input, voxel worlds, and a retro OS shell &mdash; all running live in the browser.</p>
-      </div>
-      <div class="press-copy-block reveal">
-        <div class="press-copy-title" data-i18n="press.specs.title">Technical Summary</div>
-        <ul class="press-specs">
-          <li data-i18n="press.spec.1">Three.js 0.182.0 3D renderer (WebGL2 + Canvas2D fallbacks)</li>
-          <li data-i18n="press.spec.2">Chunked voxel engine with fluid, lighting &amp; pathfinding</li>
-          <li data-i18n="press.spec.3">AABB physics with raycasting &amp; spatial partitioning</li>
-          <li data-i18n="press.spec.4">WebAudio spatial sound with named preset library</li>
-          <li data-i18n="press.spec.5">Hot-reloading ES module cart system via Vite 5.4</li>
-          <li data-i18n="press.spec.6">NovaOS shell: window manager, file browser, cart launcher</li>
+      <div class="eng-card eng-card-babylon">
+        <div class="eng-card-mark">babylon.js</div>
+        <h3>Babylon.js</h3>
+        <p>When you need the full PBR pipeline. IBL reflections, GPU particles, WebGPU rendering — drop a Babylon scene straight into a NOVA64 cart.</p>
+        <ul class="eng-list">
+          <li>WebGPU-ready</li>
+          <li>Native PBR materials</li>
+          <li>Shared cart loader</li>
         </ul>
       </div>
-    </div>
-    <div class="press-links">
-      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="press-link-pill">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span data-i18n="press.github.link">GitHub Repository</span>
-      </a>
-      <a href="./docs/index.html" class="press-link-pill">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span data-i18n="press.apidocs.link">API Documentation</span>
-      </a>
-      <a href="./console.html" class="press-link-pill">&#9654; <span data-i18n="press.console.link">Live Console</span></a>
-      <a href="./os9-shell/index.html" class="press-link-pill">&#9632; <span data-i18n="press.novaos.link">NovaOS Shell</span></a>
+      <div class="eng-card eng-card-godot">
+        <span class="eng-card-flag">NEW IN v0.4.8</span>
+        <div class="eng-card-mark">godot 4 · quickjs</div>
+        <h3>Godot 4, embedded.</h3>
+        <p>A <strong>native Godot 4 runtime</strong> with a <strong>QuickJS</strong> bridge baked in. Carts are written in <strong>JavaScript</strong> — not GDScript, not C# — and call straight into the Godot scene graph through QuickJS bindings. No exports, no WASM round-trip, no engine startup tax.</p>
+        <ul class="eng-list">
+          <li><b>JavaScript carts</b> via QuickJS</li>
+          <li>Native build, native performance</li>
+          <li>Direct scene-graph access</li>
+          <li>Single-process cart hot-swap</li>
+        </ul>
+        <a class="btn btn-primary" href="https://github.com/seacloud9/nova64/blob/main/GODOT.md" target="_blank" rel="noopener" style="margin-top:18px">Read the Godot guide →</a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ── FINAL CTA ── -->
-<!-- ── INSTALL ── -->
-<section id="install">
-  <div class="container">
-    <div class="install-inner reveal">
-      <span class="stamp">ONE COMMAND</span>
-      <h2 class="section-title" style="margin-bottom:18px">Install in seconds.<br><span style="color:var(--electric)">Ship forever.</span></h2>
-      <p class="install-sub">Global CLI. No config. No compile step. One command and you're running a 3D fantasy console with a live demo &mdash; straight from your terminal.</p>
-      <div class="install-win">
-        <div class="install-titlebar">
-          <span class="win-dot r"></span><span class="win-dot y"></span><span class="win-dot g"></span>
-          <span class="install-titlebar-label">nova64 &mdash; zsh</span>
-        </div>
-        <div class="install-body">
-          <div class="iline cmd">$ pnpm add -g nova64</div>
-          <div class="iline ok">&#10003; GPU acceleration initialized</div>
-          <div class="iline ok">&#10003; 3D engine loaded (with actual lighting!)</div>
-          <div class="iline ok">&#10003; Voxel renderer standing by</div>
-          <div class="iline ok">&#10003; Physics engine activated</div>
-          <div class="iline ok">&#10003; NovaOS shell... wait what?</div>
-          <div class="iline cmd">$ nova64 --start-demo</div>
-          <div class="iline final">&gt;&gt;&gt; Let's make something cool <span class="icursor"></span></div>
+<!-- ─────── ARCHITECTURE / POP THE HOOD ─────── -->
+<section class="hood" id="hood">
+  <div class="wrap">
+    <div class="hood-grid">
+      <div>
+        <span class="eyebrow">Pop the hood</span>
+        <h2 class="h2">A native runtime,<br>not a sandbox.</h2>
+        <p class="lede" style="margin-bottom:32px">NOVA64 isn't a wrapper. The Godot build links the engine, embeds <strong style="color:var(--text)">QuickJS</strong>, and exposes the scene graph as plain JavaScript objects. Carts are JS files. The console is the engine.</p>
+        <div class="hood-stack">
+          <div class="layer"><span class="layer-num">L01</span><div class="layer-name">Cart<span>your code · hot-reload · plain JS</span></div><span class="layer-tag">.js</span></div>
+          <div class="layer hl"><span class="layer-num">L02</span><div class="layer-name">QuickJS Bridge<span>bindings to nodes, signals, resources</span></div><span class="layer-tag">QUICKJS</span></div>
+          <div class="layer hl"><span class="layer-num">L03</span><div class="layer-name">Godot 4 Runtime<span>native scene graph · native renderer</span></div><span class="layer-tag">GODOT 4</span></div>
+          <div class="layer"><span class="layer-num">L04</span><div class="layer-name">Hardware<span>GPU · audio · input · the metal</span></div><span class="layer-tag">METAL</span></div>
         </div>
       </div>
-      <p class="install-note">Requires Node 18+. Also works with <a href="https://npmjs.com/package/nova64" target="_blank" rel="noopener">npm</a> or <a href="https://yarnpkg.com" target="_blank" rel="noopener">yarn</a>. &nbsp;&middot;&nbsp; <a href="./docs/index.html">Read the docs &rarr;</a></p>
+      <div>
+        <div class="code">
+          <div class="code-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="file">carts/hello-godot.js</span>
+            <span class="badge">QUICKJS → GODOT</span>
+          </div>
+<pre><span class="c">// A NOVA64 cart. JavaScript only — no GDScript.</span>
+<span class="k">import</span> { Scene, Node3D, Camera3D, MeshInstance3D } <span class="k">from</span> <span class="s">'nova64/godot'</span>;
+<span class="k">import</span> { mesh, color } <span class="k">from</span> <span class="s">'nova64/gfx'</span>;
+
+<span class="k">export default</span> <span class="k">function</span> <span class="f">cart</span>() {
+  <span class="k">const</span> <span class="v">scene</span> = <span class="k">new</span> <span class="t">Scene</span>();
+  <span class="k">const</span> <span class="v">cam</span>   = <span class="v">scene</span>.<span class="f">add</span>(<span class="k">new</span> <span class="t">Camera3D</span>({ z: <span class="n">5</span> }));
+  <span class="k">const</span> <span class="v">cube</span>  = <span class="v">scene</span>.<span class="f">add</span>(<span class="k">new</span> <span class="t">MeshInstance3D</span>({
+    mesh:     <span class="f">mesh</span>.<span class="f">box</span>(<span class="n">1</span>, <span class="n">1</span>, <span class="n">1</span>),
+    material: <span class="f">color</span>(<span class="s">'#5fc0ff'</span>),
+  }));
+
+  <span class="c">// Runs on the native Godot main loop. No WASM. No export.</span>
+  scene.<span class="f">onTick</span>((<span class="v">dt</span>) =&gt; {
+    <span class="v">cube</span>.<span class="v">rotation</span>.<span class="v">y</span> += <span class="n">1.2</span> * <span class="v">dt</span>;
+  });
+
+  <span class="k">return</span> <span class="v">scene</span>;
+}</pre>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="cta">
-  <img src="./assets/novaOS/nova64Logo.png" alt="" class="cta-watermark" aria-hidden="true" />
-  <div class="container">
-    <div class="cta-content reveal">
-      <span class="stamp" data-i18n="cta.stamp">BOOT SEQUENCE</span>
-      <h2 class="cta-h2" data-i18n-html="cta.h2.html">One more game.<br><span class="line-accent">Press start.</span></h2>
-      <p class="cta-sub" data-i18n="cta.sub">No install disc. No memory card. Just the code and the dark.</p>
-      <div class="cta-buttons">
-        <a href="./console.html" class="btn-hero-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          <span data-i18n="cta.launch">Launch Console</span>
-        </a>
-        <a href="./docs/index.html" class="btn-hero-secondary" data-i18n="cta.docs">Read the Docs</a>
-        <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="btn-hero-ghost">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span data-i18n="cta.github">Star on GitHub</span>
-        </a>
+<!-- ─────── STATS BAND ─────── -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num">70<span class="unit">+</span></div>
+        <div class="stat-lbl">Demo carts</div>
+        <div class="stat-sub">Loadable from the vault, source on GitHub.</div>
       </div>
-      <p class="cta-note" data-i18n="cta.note">MIT License &mdash; fork it, ship it, make something weird.</p>
+      <div class="stat">
+        <div class="stat-num">3</div>
+        <div class="stat-lbl">Runtimes</div>
+        <div class="stat-sub">Three.js, Babylon.js, native Godot 4.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0<span class="unit">ms</span></div>
+        <div class="stat-lbl">Install time</div>
+        <div class="stat-sub">Open URL. Cart is on screen. Done.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">'97</div>
+        <div class="stat-lbl">Year of Origin</div>
+        <div class="stat-sub">The console that never shipped — until now.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ── FOOTER ── -->
-<footer>
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64" />
-        <p class="footer-brand-tag" data-i18n="footer.brand">The browser console built from &rsquo;97 dreams. Zero boilerplate. Zero compromise.</p>
+<!-- ─────── DISC VAULT ─────── -->
+<section class="vault" id="vault">
+  <div class="wrap">
+    <div class="vault-head">
+      <div>
+        <span class="eyebrow">Disc Vault</span>
+        <h2 class="h2">Insert Disc. Begin.</h2>
+        <p class="lede">
+          Every title in the vault loads cold. No waiting. No install.
+          One click — and the dark fades to game.
+        </p>
       </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.product">PRODUCT</span>
-          <a href="./console.html">Launch Console</a>
-          <a href="./os9-shell/index.html">NovaOS Shell</a>
-          <a href="#demos">Demo Gallery</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.develop">DEVELOP</span>
-          <a href="./docs/index.html">API Reference</a>
-          <a href="./docs/NOVA64_3D_API.md">3D API Guide</a>
-          <a href="./docs/CHEATSHEET.md">Cheat Sheet</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.links">LINKS</span>
-          <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">GitHub</a>
-          <a href="#press">Press Kit</a>
-          <a href="#what">About</a>
-        </div>
+      <div class="vault-meta">
+        <span><strong>12</strong> &nbsp; titles</span>
+        <span><strong>0</strong> &nbsp; ms install</span>
+        <span><strong>v0.4.8</strong></span>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>&copy; 2024 NOVA64. MIT License. <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">seacloud9/nova64</a></p>
-      <p data-i18n="footer.tagline">No memory cards were corrupted in the making of this project.</p>
+
+    <div id="cart-grid" class="vault-grid"></div>
+
+    <div class="vault-foot">
+      <a class="btn btn-outline" href="./console.html">Browse all 70+ titles →</a>
     </div>
+  </div>
+</section>
+
+<!-- ─────── GARAGE / INSTALL ─────── -->
+<section id="garage">
+  <div class="wrap">
+    <div style="margin-bottom:48px;max-width:680px">
+      <span class="eyebrow">Get started</span>
+      <h2 class="h2">From zero to disc<br>in under a minute.</h2>
+      <p class="lede">Three commands. No accounts. No build pipeline. The console boots in your browser and the carts hot-reload as you save.</p>
+    </div>
+    <div class="garage-grid">
+      <div class="gar-card">
+        <span class="num">01</span>
+        <h4>Install the CLI</h4>
+        <p>Global install gets you the <code style="color:var(--accent);font-family:var(--ff-mono)">nova64</code> command anywhere on your machine.</p>
+        <div class="gar-cmd">pnpm add -g nova64</div>
+      </div>
+      <div class="gar-card">
+        <span class="num">02</span>
+        <h4>Boot the console</h4>
+        <p>Opens a local server and launches the console in your default browser. The disc vault loads immediately.</p>
+        <div class="gar-cmd">nova64 --start-demo</div>
+      </div>
+      <div class="gar-card">
+        <span class="num">03</span>
+        <h4>Drop in a cart</h4>
+        <p>Drop a JavaScript cart into <code style="color:var(--accent);font-family:var(--ff-mono)">/carts</code>. The console picks it up. Save and it hot-reloads.</p>
+        <div class="gar-cmd">nova64 new my-cart --engine godot</div>
+      </div>
+      <div class="gar-card">
+        <span class="num">04</span>
+        <h4>Ship a disc</h4>
+        <p>Bundle the cart and a thumbnail into a single signed disc. Share the URL or the file — anyone with NOVA64 can run it.</p>
+        <div class="gar-cmd">nova64 disc build ./my-cart</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────── FINAL CTA ─────── -->
+<section class="cta">
+  <div class="wrap">
+    <img class="cta-mascot" src="public/assets/novaOS/novaMascot.png" alt="The Nova" />
+    <h2>Drop in.<br>The disc is already loading.</h2>
+    <p>NOVA64 v0.4.8 is live. Boot the console, browse the vault, ship a cart. The polygons are humming.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="./console.html">Launch Console →</a>
+      <a class="btn btn-outline" href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────── FOOT ─────── -->
+<footer class="foot">
+  <div class="wrap">
+    <span>NOVA64 © 2026 · The Browser Fantasy Console</span>
+    <span>Built with three.js · Powered by stArcade9</span>
   </div>
 </footer>
 
-<!-- ── HERO LOADER LOGIC ── -->
+<!-- editmode defaults -->
 <script>
-(function() {
-  var loader = document.getElementById('hero-loader');
-  var iframe = document.getElementById('hero-iframe');
-  if (!loader || !iframe) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    loader.remove();
-    iframe.classList.add('loaded');
-    return;
-  }
-  var bar = document.getElementById('loader-bar');
-  var status = document.getElementById('loader-status');
-  var pct = document.getElementById('loader-percent');
-  var stages = [
-    [0,'INITIALIZING GPU...'],[20,'LOADING SHADERS...'],[45,'COMPILING TSL...'],
-    [70,'MOUNTING SCENE...'],[95,'READY']
-  ];
-  var progress = 0, iframeReady = false, timerDone = false;
-  var iv = setInterval(function() {
-    progress = Math.min(progress + 1, 100);
-    bar.style.width = progress + '%';
-    pct.textContent = progress + '%';
-    for (var i = 0; i < stages.length; i++) {
-      if (progress >= stages[i][0]) status.textContent = stages[i][1];
-    }
-    if (progress >= 100) { clearInterval(iv); timerDone = true; dismiss(); }
-  }, 35);
-  iframe.addEventListener('load', function() { iframeReady = true; dismiss(); });
-  function dismiss() {
-    if (!timerDone || !iframeReady) return;
-    setTimeout(function() {
-      loader.classList.add('loaded');
-      iframe.classList.add('loaded');
-      setTimeout(function() {
-        loader.remove();
-        window._heroLoaderDismissed = true;
-        window.dispatchEvent(new CustomEvent('hero-loader-dismissed'));
-      },800);
-    }, 300);
-  }
-})();
+  window.__TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "shape": "classic",
+    "accent": "#5cd9ff",
+    "showStripes": true
+  }/*EDITMODE-END*/;
 </script>
 
-<!-- ── GSAP ANIMATIONS ── -->
-<script>
-window.addEventListener('load', () => {
-  if (!window.gsap || !window.ScrollTrigger) return;
-  gsap.registerPlugin(ScrollTrigger);
-
-  // Hero text reveal — triggered when the hero cart finishes loading
-  var heroRevealed = false;
-  function revealHeroText() {
-    if (heroRevealed) return;
-    heroRevealed = true;
-    var hc = document.querySelector('.hero-content');
-    var hs = document.getElementById('hero-scroll');
-    if (hc) hc.style.visibility = 'visible';
-    if (hs) hs.style.visibility = 'visible';
-    gsap.timeline({ defaults: { ease: 'power3.out' } })
-      .from('.hero-badge',   { opacity:0, y:20, duration:0.7, delay:0.15 })
-      .from('.hero-h1',      { opacity:0, y:40, duration:0.8 }, '-=0.3')
-      .from('.hero-sub',     { opacity:0, y:30, duration:0.7 }, '-=0.5')
-      .from('.hero-ctas',    { opacity:0, y:24, duration:0.6 }, '-=0.4')
-      .from('#hero-scroll',  { opacity:0, duration:0.5 }, '-=0.2');
-  }
-
-  // Reveal text after the loader overlay has been dismissed
-  if (window._heroLoaderDismissed) {
-    revealHeroText();
-  } else {
-    window.addEventListener('hero-loader-dismissed', revealHeroText);
-  }
-
-  // Safety timeout — reveal text even if loader/cart fails
-  setTimeout(revealHeroText, 8000);
-
-  // ScrollTrigger animations for the rest of the page
-  ScrollTrigger.batch('.reveal', {
-    onEnter: b => gsap.to(b, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out' }),
-    start: 'top 88%',
-  });
-  gsap.to('#novaos-img', { yPercent:-10, ease:'none',
-    scrollTrigger:{ trigger:'#novaos', start:'top bottom', end:'bottom top', scrub:1.5 }});
-});
-</script>
-
-<!-- ── INTERACTIONS ── -->
-<script>
-  const navToggle = document.getElementById('nav-toggle');
-  const navDrawer = document.getElementById('nav-drawer');
-  navToggle.addEventListener('click', () => {
-    const open = navDrawer.classList.toggle('open');
-    navToggle.setAttribute('aria-expanded', String(open));
-  });
-  navDrawer.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    navDrawer.classList.remove('open');
-    navToggle.setAttribute('aria-expanded', 'false');
-  }));
-  window.addEventListener('scroll', () => {
-    document.getElementById('nav').style.borderBottomColor =
-      window.scrollY > 20 ? 'rgba(0,255,255,0.22)' : 'rgba(0,255,255,0.08)';
-  }, { passive: true });
-  const copyBtn = document.getElementById('copy-blurb-btn');
-  const blurbText = document.getElementById('press-blurb-text');
-  if (copyBtn && blurbText) {
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(blurbText.textContent);
-        copyBtn.textContent = 'COPIED!';
-        copyBtn.classList.add('copied');
-        setTimeout(() => { copyBtn.textContent = 'COPY'; copyBtn.classList.remove('copied'); }, 2000);
-      } catch(e) {}
-    });
-  }
-</script>
-
-<!-- ── I18N HYDRATION ── -->
-<script>(function () {
-  var el = document.getElementById('nova64-i18n');
-  if (!el) return;
-  var strings = JSON.parse(el.textContent);
-  function apply(map) {
-    document.querySelectorAll('[data-i18n]').forEach(function (n) {
-      var v = map[n.dataset.i18n];
-      if (v !== undefined) n.textContent = v;
-    });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (n) {
-      var v = map[n.dataset.i18nHtml];
-      if (v !== undefined) n.innerHTML = v;
-    });
-    if (map['page.title']) document.title = map['page.title'];
-  }
-  apply(strings);
-  /* Resolve language: URL param overrides stored preference */
-  var urlLang = new URLSearchParams(location.search).get('lang');
-  var storedLang = localStorage.getItem('nova64-lang');
-  var lang = urlLang || storedLang || 'en';
-  if (urlLang && urlLang !== storedLang) localStorage.setItem('nova64-lang', urlLang);
-  /* Wire up language picker */
-  var sel = document.getElementById('lang-select');
-  if (sel) {
-    sel.value = lang;
-    sel.addEventListener('change', function () {
-      var l = sel.value;
-      localStorage.setItem('nova64-lang', l);
-      var u = new URL(location.href);
-      if (l === 'en') { u.searchParams.delete('lang'); } else { u.searchParams.set('lang', l); }
-      location.href = u.toString();
-    });
-  }
-  /* Load locale file for non-English languages */
-  if (lang && lang !== 'en') {
-    fetch('./i18n/' + encodeURIComponent(lang) + '.json')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (data) {
-          apply(Object.assign({}, strings, data));
-          if (sel) sel.value = lang;
-        }
-      })
-      .catch(function () {});
-  }
-}());
-</script>
-
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="cart-grid.jsx"></script>
 </body>
 </html>
