@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova64 — Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #040309; }
+    /* Full-bleed, responsive canvas. NOTE: we deliberately do NOT inject a
+       ?w=/?h= param — that would lock main.js into fixed-size mode and stop
+       it from filling/resizing. Leaving them out keeps the ResizeObserver
+       (responsive) path in src/main.js active so the cart covers the frame. */
+    canvas { display: block; width: 100%; height: 100%; }
+    #nova64-fullscreen-btn { display: none !important; }
+  </style>
+  <script>
+    // Pass through ?demo= (and an optional clearColor) but never w/h.
+    (function () {
+      var qs = new URLSearchParams(window.location.search);
+      var changed = false;
+      if (!qs.has('clearColor')) { qs.set('clearColor', '0x040309'); changed = true; }
+      if (!qs.has('demo') && !qs.has('cart')) { qs.set('demo', 'hello-3d'); changed = true; }
+      if (changed) window.history.replaceState(null, '', '?' + qs.toString());
+    })();
+  </script>
+</head>
+<body>
+  <canvas id="screen"></canvas>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.182.0",
+      "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+      "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+      "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

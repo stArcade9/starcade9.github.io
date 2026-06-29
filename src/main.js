@@ -1,6 +1,5 @@
 import { Nova64, NOVA64_VERSION } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
-import { GpuBabylon } from '../runtime/gpu-babylon.js';
 import { logger } from '../runtime/logger.js';
 globalThis.novaLogger = logger;
 import { createLogger } from '../runtime/debug-logger.js';
@@ -72,6 +71,7 @@ let gpu;
 let backendLabel = 'Three.js';
 try {
   if (_useBabylon) {
+    const { GpuBabylon } = await import('../runtime/gpu-babylon.js');
     gpu = new GpuBabylon(canvas, _paramW, _paramH);
     backendLabel = 'Babylon.js';
     console.log(`✅ Using Babylon.js renderer (${_paramW}x${_paramH}) - experimental backend`);

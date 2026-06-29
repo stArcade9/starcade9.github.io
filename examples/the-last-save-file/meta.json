@@ -1,0 +1,9 @@
+{
+  "name": "the-last-save-file",
+  "title": "The Last Save File",
+  "description": "A haunted Nova64 campaign cart about finding a memory card from another timeline.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "campaign",
+  "source": "examples/the-last-save-file"
+}
