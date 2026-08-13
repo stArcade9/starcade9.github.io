@@ -447,7 +447,7 @@
         <div style="position:absolute; top:-1px; right:-1px; width:16px; height:16px; border-top:2px solid #46f0a0; border-right:2px solid #46f0a0;"></div>
         <div style="position:absolute; bottom:-1px; left:-1px; width:16px; height:16px; border-bottom:2px solid #46f0a0; border-left:2px solid #46f0a0;"></div>
       </div>
-      <p style="text-align:center; font-family:'Space Mono',monospace; font-size:11px; color:rgba(236,231,219,0.4); margin-top:18px;">License delivery + download handled automatically after checkout · see config block below</p>
+      <p style="text-align:center; font-family:'Space Mono',monospace; font-size:11px; color:rgba(236,231,219,0.4); margin-top:18px;">License delivery + download handled automatically after checkout · secured by Lemon Squeezy</p>
     </div>
   </section>
 
@@ -491,30 +491,19 @@
         <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 28px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 · {{ priceStr }}</button>
       </div>
 
-      <!-- CONFIG / PRE-LAUNCH CHECKLIST -->
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:32px; padding:44px 0;">
-        <div>
-          <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#46f0a0; margin-bottom:14px;">◆ LEMON SQUEEZY / ENV CONFIG</div>
-          <p style="font-size:12.5px; color:rgba(236,231,219,0.5); margin:0 0 16px; line-height:1.5;">Set these before launch. Public <span style="color:#a35bff;">NEXT_PUBLIC_*</span> values are safe on the client; keep the API key + webhook secret server-side only. Never hardcode secrets.</p>
-          <div style="font-family:'Space Mono',monospace; font-size:11.5px; line-height:1.9; background:#0c0e15; border:1px solid rgba(236,231,219,0.16); padding:16px 18px; overflow:auto;">
-            <sc-for list="{{ envVars }}" as="e" hint-placeholder-count="6">
-              <div style="display:flex; gap:10px;">
-                <span style="color:#22e0c8;">{{ e.pub }}</span><span style="color:rgba(236,231,219,0.82);">{{ e.name }}</span>
-              </div>
-            </sc-for>
-          </div>
+      <!-- SHIP MANIFEST — what every buyer gets -->
+      <div style="padding:44px 0;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#46f0a0; margin-bottom:20px;">◆ SHIP MANIFEST / EVERY COPY INCLUDES</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:14px;">
+          <sc-for list="{{ manifest }}" as="m" hint-placeholder-count="4">
+            <div style="background:#0c0e15; border:1px solid rgba(236,231,219,0.16); padding:20px 18px; clip-path:polygon(0 0,100% 0,100% 82%,92% 100%,0 100%);" style-hover="border-color:{{ m.color }};">
+              <div style="font-family:'Space Mono',monospace; font-size:20px; color:{{ m.color }}; line-height:1; margin-bottom:12px;">{{ m.glyph }}</div>
+              <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:15px; letter-spacing:0.02em; margin-bottom:6px;">{{ m.title }}</div>
+              <div style="font-size:12.5px; line-height:1.5; color:rgba(236,231,219,0.6);">{{ m.desc }}</div>
+            </div>
+          </sc-for>
         </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#46f0a0; margin-bottom:14px;">◆ PRE-FLIGHT CHECKLIST</div>
-          <div style="display:flex; flex-direction:column; gap:11px;">
-            <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="6">
-              <div style="display:flex; gap:12px; align-items:flex-start; font-size:13px; line-height:1.45;">
-                <span style="width:15px; height:15px; border:1.5px solid rgba(236,231,219,0.4); flex-shrink:0; margin-top:2px;"></span>
-                <span style="color:rgba(236,231,219,0.78);">{{ c }}</span>
-              </div>
-            </sc-for>
-          </div>
-        </div>
+        <p style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.04em; color:rgba(236,231,219,0.42); margin:20px 0 0; line-height:1.6;">Secure checkout by <span style="color:#46f0a0;">Lemon Squeezy</span> — cards &amp; PayPal, trusted merchant of record. Your license and download arrive automatically the moment payment clears.</p>
       </div>
 
       <!-- socials / patreon -->
@@ -558,6 +547,12 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;headline&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Make tiny 3D games with retro soul.&quot;,&quot;The fantasy console for low-poly dreamers.&quot;,&quot;Build PS1/N64-inspired games in your browser.&quot;],&quot;default&quot;:&quot;Make tiny 3D games with retro soul.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;price&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:14.99,&quot;min&quot;:0,&quot;max&quot;:200,&quot;step&quot;:1,&quot;unit&quot;:&quot;USD&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Pricing&quot;},&quot;showStickyCTA&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+// ============================================================================
+//  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
+//  change every "Buy" button on the page.
+// ============================================================================
+const CHECKOUT_URL = 'https://nova64.lemonsqueezy.com/checkout/buy/cc794be3-4e71-4cad-bed9-0248233631b4';
+
 class Component extends DCLogic {
   // ============================================================================
   //  LEMON SQUEEZY CONFIG  —  fill these in before launch
@@ -577,8 +572,8 @@ class Component extends DCLogic {
     regularPrice: 19.99,   // normal price (shown struck-through)
     onSale: true,
     priceNote: 'Buy once. Create forever.',
-    // process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL
-    checkoutUrl: 'https://YOUR_STORE.lemonsqueezy.com/checkout/buy/YOUR_VARIANT_ID',
+    // Update CHECKOUT_URL (top of this script) to change every Buy button.
+    checkoutUrl: CHECKOUT_URL,
     demoUrl: 'https://nova64.io/demo',
     storeId: 'YOUR_STORE_ID',
     productId: 'YOUR_PRODUCT_ID',
@@ -769,28 +764,15 @@ class Component extends DCLogic {
     }));
     const vaultCount = vault.length;
 
-    const envVars = [
-      { pub: 'NEXT_PUBLIC_', name: 'LEMON_SQUEEZY_CHECKOUT_URL' },
-      { pub: 'NEXT_PUBLIC_', name: 'LEMON_SQUEEZY_STORE_ID' },
-      { pub: 'NEXT_PUBLIC_', name: 'LEMON_SQUEEZY_PRODUCT_ID' },
-      { pub: 'NEXT_PUBLIC_', name: 'LEMON_SQUEEZY_VARIANT_ID' },
-      { pub: '# server ', name: 'LEMON_SQUEEZY_API_KEY' },
-      { pub: '# server ', name: 'LEMON_SQUEEZY_WEBHOOK_SECRET' },
-    ];
-
-    const checklist = [
-      'Create the Nova64 product + Launch License variant in Lemon Squeezy',
-      'Paste the variant checkout URL into NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL',
-      'Add store / product / variant IDs to the public env vars',
-      'Store LEMON_SQUEEZY_API_KEY server-side (API routes only)',
-      'Set LEMON_SQUEEZY_WEBHOOK_SECRET and verify signatures on the webhook route',
-      'Wire the webhook to deliver the license / download on order_created',
-      'Replace the Play Demo URL with your live demo build',
-      'Confirm the launch price, then run one real test checkout',
+    const manifest = [
+      { glyph: '⬇', color: '#22e0c8', title: 'Instant access', desc: 'Download + license land in your inbox the second checkout clears.' },
+      { glyph: '▶', color: '#46f0a0', title: 'Runs in-browser', desc: 'No install. WebGPU-powered. Plays on desktop and mobile alike.' },
+      { glyph: '∞', color: '#a35bff', title: 'Free updates', desc: 'Every launch-era update baked in — buy once, create forever.' },
+      { glyph: '◈', color: '#f0c94a', title: 'Own your work', desc: 'Ship your carts anywhere. No royalties, no lock-in, no strings.' },
     ];
 
     return { headline, priceStr, regularStr, onSale, priceNote: this.cfg.priceNote, buy: this.buy, play: this.play,
-      features, whyBuy, included, faqs, envVars, checklist, showSticky,
+      features, whyBuy, included, faqs, manifest, showSticky,
       demos, demoSrc, heroSrc, activeDemoLabel: activeMeta.label,
       // hero viewport (deferred)
       heroPlaying, heroIdle: !heroPlaying, startHero: this.startHero,
