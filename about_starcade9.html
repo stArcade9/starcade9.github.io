@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>NOVA64 × stArcade9 — Nova Rail</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="description" content="Nova Rail — an interactive Nova64 demo built for stArcade9. Nova64 is a JavaScript 3D fantasy console." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #07061a; }
+  body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+  #stage { position: fixed; inset: 0; overflow: hidden; background: #07061a; }
+  #screen, #hud { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+  #hud { pointer-events: none; }
+
+  /* CRT dressing — cheap, no post-processing cost */
+  #scanlines, #vignette { position: absolute; inset: 0; pointer-events: none; }
+  #scanlines {
+    background:
+      linear-gradient(rgba(10, 8, 24, 0) 50%, rgba(4, 2, 12, 0.22) 50%),
+      linear-gradient(90deg, rgba(255, 0, 255, 0.03), rgba(0, 191, 255, 0.02), rgba(255, 0, 255, 0.03));
+    background-size: 100% 3px, 4px 100%;
+    z-index: 6;
+  }
+  #vignette {
+    background: radial-gradient(125% 105% at 50% 45%, rgba(0, 0, 0, 0) 42%, rgba(3, 2, 10, 0.72) 100%);
+    z-index: 7;
+  }
+
+  /* Chrome */
+  .mark {
+    position: absolute; z-index: 9; display: flex; align-items: baseline; gap: 8px;
+    top: 14px; left: 16px;
+    font-family: 'Press Start 2P', monospace; font-size: 11px; letter-spacing: 0.06em;
+    color: #33c9ff; text-shadow: 0 0 12px rgba(51, 201, 255, 0.55);
+  }
+  .mark small { font-family: 'VT323', monospace; font-size: 17px; letter-spacing: 0.08em; color: #fa0a42; text-shadow: 0 0 10px rgba(250, 10, 66, 0.5); }
+  .out {
+    position: absolute; z-index: 9; top: 12px; right: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 11px; border: 1px solid rgba(51, 201, 255, 0.35); border-radius: 3px;
+    background: rgba(7, 6, 26, 0.6); backdrop-filter: blur(2px);
+    font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0.05em;
+    color: #a9c7e8; text-decoration: none; transition: color .16s, border-color .16s, background .16s;
+  }
+  .out:hover { color: #fff; border-color: #ff00ff; background: rgba(255, 0, 255, 0.12); }
+
+  #touch { position: absolute; inset: 0; z-index: 8; display: none; }
+  #touch.on { display: block; }
+  #fire {
+    position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom));
+    width: 92px; height: 92px; border-radius: 50%;
+    border: 2px solid rgba(255, 0, 255, 0.55); background: rgba(255, 0, 255, 0.14);
+    color: #ffd9ff; font-family: 'Press Start 2P', monospace; font-size: 11px;
+    display: grid; place-items: center;
+  }
+  #fire:active { background: rgba(255, 0, 255, 0.34); }
+  #steer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+  #fatal {
+    position: absolute; inset: 0; z-index: 20; display: none; place-items: center; padding: 28px;
+    background: #07061a; color: #cfd6e6; text-align: center;
+    font-family: 'VT323', monospace; font-size: 22px; line-height: 1.5;
+  }
+  #fatal a { color: #33c9ff; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="screen"></canvas>
+  <canvas id="hud"></canvas>
+  <div id="scanlines"></div>
+  <div id="vignette"></div>
+
+  <div class="mark">NOVA64<small>for stArcade9</small></div>
+  <a class="out" href="https://nova64.io/console.html" target="_blank" rel="noopener">FULL CONSOLE →</a>
+
+  <div id="touch">
+    <div id="steer"></div>
+    <button id="fire" type="button" aria-label="Fire">FIRE</button>
+  </div>
+
+  <div id="fatal">
+    <div>
+      WEBGL UNAVAILABLE<br />
+      <span style="color:#8a85a3">This demo needs hardware 3D. Try a desktop browser, or visit
+      <a href="https://nova64.io" target="_blank" rel="noopener">nova64.io</a>.</span>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.182.0",
+    "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+    "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+    "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOVA64 — inline host (a trimmed, single-file build of the console runtime).
+   Exposes the same cart-facing API shape as nova64/runtime: init/update/draw,
+   create*(), setCamera*(), key()/keyp(), print()/rectfill(), sfx(), saveData().
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const CANVAS = document.getElementById('screen');
+const HUDC   = document.getElementById('hud');
+const STAGE  = document.getElementById('stage');
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: CANVAS, antialias: true, powerPreference: 'high-performance' });
+} catch (e) {
+  document.getElementById('fatal').style.display = 'grid';
+  throw e;
+}
+renderer.setClearColor(0x07061a, 1);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(68, 2, 0.1, 400);
+const hud    = HUDC.getContext('2d');
+
+let vw = 1, vh = 1;
+function resize() {
+  const r = STAGE.getBoundingClientRect();
+  vw = Math.max(1, Math.round(r.width));
+  vh = Math.max(1, Math.round(r.height));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(vw, vh, false);
+  camera.aspect = vw / vh;
+  camera.updateProjectionMatrix();
+  HUDC.width = Math.round(vw * dpr);
+  HUDC.height = Math.round(vh * dpr);
+  hud.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+new ResizeObserver(resize).observe(STAGE);
+resize();
+
+/* ── 3D API ─────────────────────────────────────────────────────────────── */
+const flat = (color, opts = {}) => new THREE.MeshBasicMaterial({
+  color, transparent: opts.opacity !== undefined, opacity: opts.opacity ?? 1,
+  wireframe: !!opts.wireframe, side: opts.side ?? THREE.FrontSide, fog: opts.fog !== false,
+  blending: opts.additive ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: opts.depthWrite !== false,
+});
+function add(mesh, pos) { if (pos) mesh.position.set(pos[0], pos[1], pos[2]); scene.add(mesh); return mesh; }
+const createCube     = (s, c, p, o) => add(new THREE.Mesh(new THREE.BoxGeometry(s, s, s), flat(c, o)), p);
+const createBox      = (w, h, d, c, p, o) => add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), flat(c, o)), p);
+const createCone     = (r, h, c, p, o) => add(new THREE.Mesh(new THREE.ConeGeometry(r, h, o?.seg ?? 4), flat(c, o)), p);
+const createTorus    = (r, t, c, p, o) => add(new THREE.Mesh(new THREE.TorusGeometry(r, t, 8, o?.seg ?? 16), flat(c, o)), p);
+const createOcta     = (r, c, p, o) => add(new THREE.Mesh(new THREE.OctahedronGeometry(r), flat(c, o)), p);
+const createPlane    = (w, h, c, p, o) => add(new THREE.Mesh(new THREE.PlaneGeometry(w, h), flat(c, o)), p);
+const setPosition    = (m, x, y, z) => m.position.set(x, y, z);
+const setRotation    = (m, x, y, z) => m.rotation.set(x, y, z);
+const rotateMesh     = (m, x, y, z) => { m.rotation.x += x; m.rotation.y += y; m.rotation.z += z; };
+const setScale       = (m, x, y, z) => m.scale.set(x, y ?? x, z ?? x);
+const removeMesh     = (m) => { scene.remove(m); m.geometry?.dispose?.(); m.material?.dispose?.(); };
+const setCameraPosition = (x, y, z) => camera.position.set(x, y, z);
+const setCameraTarget   = (x, y, z) => camera.lookAt(x, y, z);
+const setFog = (c, near, far) => { scene.fog = new THREE.Fog(c, near, far); };
+
+/* ── Input ──────────────────────────────────────────────────────────────── */
+const held = new Set(), pressed = new Set();
+const key  = (c) => held.has(c);
+const keyp = (c) => pressed.has(c);
+const GAME_KEYS = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','Enter']);
+let lastInput = 0;
+const poke = () => { lastInput = performance.now(); };
+addEventListener('keydown', (e) => {
+  if (GAME_KEYS.has(e.code)) e.preventDefault();
+  if (!held.has(e.code)) pressed.add(e.code);
+  held.add(e.code); poke();
+}, { passive: false });
+addEventListener('keyup', (e) => held.delete(e.code));
+addEventListener('blur', () => held.clear());
+
+const pointer = { x: 0.5, y: 0.5, active: false, down: false };
+function movePointer(cx, cy) {
+  const r = STAGE.getBoundingClientRect();
+  pointer.x = (cx - r.left) / r.width;
+  pointer.y = (cy - r.top) / r.height;
+  pointer.active = true; poke();
+}
+STAGE.addEventListener('pointermove', (e) => movePointer(e.clientX, e.clientY));
+STAGE.addEventListener('pointerdown', (e) => { movePointer(e.clientX, e.clientY); pointer.down = true; pressed.add('Space'); });
+addEventListener('pointerup', () => { pointer.down = false; });
+STAGE.addEventListener('pointerleave', () => { pointer.active = false; });
+
+const isTouch = matchMedia('(pointer: coarse)').matches;
+if (isTouch) {
+  document.getElementById('touch').classList.add('on');
+  const fire = document.getElementById('fire');
+  const steer = document.getElementById('steer');
+  const start = (e) => { pointer.down = true; pressed.add('Space'); poke(); e.preventDefault(); };
+  fire.addEventListener('touchstart', start, { passive: false });
+  fire.addEventListener('touchend', (e) => { pointer.down = false; e.preventDefault(); }, { passive: false });
+  const drag = (e) => { const t = e.touches[0]; if (t) movePointer(t.clientX, t.clientY); e.preventDefault(); };
+  steer.addEventListener('touchstart', drag, { passive: false });
+  steer.addEventListener('touchmove', drag, { passive: false });
+}
+
+/* ── 2D overlay API ─────────────────────────────────────────────────────── */
+const PIXEL = "'Press Start 2P', monospace";
+const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+function setFont(size) { hud.font = size + "px " + PIXEL; }
+function print(t, x, y, c, size = 12) { setFont(size); hud.textAlign = 'left'; hud.textBaseline = 'top'; hud.fillStyle = hex(c); hud.fillText(t, x, y); }
+function printRight(t, x, y, c, size = 12) { setFont(size); hud.textAlign = 'right'; hud.textBaseline = 'top'; hud.fillStyle = hex(c); hud.fillText(t, x, y); }
+function printCentered(t, y, c, size = 12) { setFont(size); hud.textAlign = 'center'; hud.textBaseline = 'top'; hud.fillStyle = hex(c); hud.fillText(t, vw / 2, y); }
+function glowCentered(t, y, c, size, glow) {
+  hud.save(); hud.shadowColor = hex(glow); hud.shadowBlur = 18; printCentered(t, y, c, size);
+  hud.shadowBlur = 0; hud.restore();
+}
+function rectfill(x, y, w, h, c, a = 1) { hud.globalAlpha = a; hud.fillStyle = hex(c); hud.fillRect(x, y, w, h); hud.globalAlpha = 1; }
+function rect(x, y, w, h, c, a = 1) { hud.globalAlpha = a; hud.strokeStyle = hex(c); hud.lineWidth = 1; hud.strokeRect(x + .5, y + .5, w, h); hud.globalAlpha = 1; }
+const cls = () => hud.clearRect(0, 0, vw, vh);
+
+/* ── Audio ──────────────────────────────────────────────────────────────── */
+let ac = null;
+const PRESETS = {
+  laser:     { wave: 'square',   freq: 880, dur: 0.09, vol: 0.16, sweep: -520 },
+  explosion: { wave: 'noise',    freq: 180, dur: 0.34, vol: 0.24, sweep: -140 },
+  coin:      { wave: 'sine',     freq: 660, dur: 0.16, vol: 0.20, sweep: 700 },
+  hit:       { wave: 'sawtooth', freq: 220, dur: 0.30, vol: 0.24, sweep: -180 },
+  select:    { wave: 'square',   freq: 520, dur: 0.07, vol: 0.14, sweep: 240 },
+};
+function sfx(name) {
+  const p = typeof name === 'string' ? PRESETS[name] : name;
+  if (!p) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    const t = ac.currentTime, g = ac.createGain();
+    g.gain.setValueAtTime(p.vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + p.dur);
+    g.connect(ac.destination);
+    if (p.wave === 'noise') {
+      const len = Math.ceil(ac.sampleRate * p.dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const s = ac.createBufferSource(); s.buffer = buf;
+      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(1400, t);
+      f.frequency.exponentialRampToValueAtTime(220, t + p.dur);
+      s.connect(f); f.connect(g); s.start(t);
+    } else {
+      const o = ac.createOscillator(); o.type = p.wave; o.frequency.setValueAtTime(p.freq, t);
+      o.frequency.linearRampToValueAtTime(Math.max(40, p.freq + p.sweep), t + p.dur);
+      o.connect(g); o.start(t); o.stop(t + p.dur);
+    }
+  } catch (e) { /* audio is optional */ }
+}
+
+/* ── Storage ────────────────────────────────────────────────────────────── */
+const saveData = (k, v) => { try { localStorage.setItem('nova64:' + k, JSON.stringify(v)); } catch (e) {} };
+const loadData = (k, fb) => { try { const v = localStorage.getItem('nova64:' + k); return v == null ? fb : JSON.parse(v); } catch (e) { return fb; } };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CART — "Nova Rail" · stArcade9 edition
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const C = {
+  bg: 0x07061a, grid: 0x00bfff, lane: 0xff00ff, ridge: 0x8a2be2,
+  ship: 0xf2f7ff, thrust: 0x33c9ff, foe: 0xff00ff, ring: 0x8a2be2,
+  hudA: 0x33c9ff, hudB: 0xfa0a42, hudC: 0xd6d2e8,
+};
+const FAR = -150, SPAWN_Z = -145;
+const BOUND = { x: 5.2, yLo: -0.55, yHi: 3.4 };
+
+let ship, thrust, wingL, wingR, grid, gridB, sun, sky, stars;
+const ridges = [], foes = [], rings = [], shots = [], bursts = [];
+const S = {
+  mode: 'attract',        // attract | play | over
+  score: 0, best: 0, lives: 3, speed: 30,
+  x: 0, y: 1.1, bank: 0, pitch: 0,
+  cool: 0, spawn: 0.9, ringT: 2.4, shake: 0, invuln: 0, t: 0,
+  flash: '', flashT: 0, aiX: 0, aiY: 1.1, aiT: 0,
+};
+
+function gradientSky() {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d').createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0.00, '#050416');
+  g.addColorStop(0.42, '#1a0b3d');
+  g.addColorStop(0.68, '#4b1060');
+  g.addColorStop(0.86, '#a41a6b');
+  g.addColorStop(1.00, '#ff2d95');
+  const ctx = c.getContext('2d'); ctx.fillStyle = g; ctx.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+function sunTexture() {
+  const n = 256, c = document.createElement('canvas'); c.width = c.height = n;
+  const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, n);
+  g.addColorStop(0, '#ffe27a'); g.addColorStop(0.45, '#ff8a3d'); g.addColorStop(1, '#ff1f7a');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(n / 2, n / 2, n / 2 - 2, 0, Math.PI * 2); ctx.fill();
+  ctx.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 9; i++) {
+    const y = n * 0.52 + i * 13;
+    ctx.fillRect(0, y, n, 2 + i * 1.1);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+function makeStars() {
+  const n = 700, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3]     = (Math.random() - 0.5) * 260;
+    pos[i * 3 + 1] = Math.random() * 60 + 2;
+    pos[i * 3 + 2] = -Math.random() * 260 - 20;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xbfe9ff, size: 0.55, sizeAttenuation: true, transparent: true, opacity: 0.85, fog: false }));
+  scene.add(p); return p;
+}
+function makeGrid(z) {
+  const g = new THREE.GridHelper(320, 64, C.grid, 0x1b3f7a);
+  g.material.transparent = true; g.material.opacity = 0.85;
+  g.position.set(0, BOUND.yLo - 1.15, z);
+  scene.add(g); return g;
+}
+function makeRidge(side) {
+  const h = 6 + Math.random() * 12;
+  const m = createCone(4 + Math.random() * 5, h, 0x120a33, [side * (16 + Math.random() * 26), BOUND.yLo - 1.15 + h / 2, SPAWN_Z * Math.random()], { seg: 4 });
+  const wire = new THREE.Mesh(m.geometry, flat(C.ridge, { wireframe: true, opacity: 0.5 }));
+  m.add(wire);
+  ridges.push(m); return m;
+}
+function burst(x, y, z, color) {
+  const n = 26, pos = new Float32Array(n * 3), vel = [];
+  for (let i = 0; i < n; i++) {
+    pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+    vel.push(new THREE.Vector3((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14));
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color, size: 0.32, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(p); bursts.push({ p, vel, life: 0.6 });
+}
+
+function init() {
+  setFog(C.bg, 40, 148);
+  scene.background = null;
+
+  sky = new THREE.Mesh(new THREE.SphereGeometry(300, 24, 16), new THREE.MeshBasicMaterial({ map: gradientSky(), side: THREE.BackSide, fog: false }));
+  scene.add(sky);
+
+  sun = new THREE.Mesh(new THREE.PlaneGeometry(88, 88), new THREE.MeshBasicMaterial({ map: sunTexture(), transparent: true, fog: false, depthWrite: false }));
+  sun.position.set(0, 21, -230);
+  scene.add(sun);
+
+  stars = makeStars();
+
+  // Opaque deck under the grid so the sky sphere's magenta band can't bleed through it
+  const deck = createPlane(700, 700, 0x0a0722, [0, BOUND.yLo - 1.18, -120], { fog: false });
+  deck.rotation.x = -Math.PI / 2;
+
+  grid  = makeGrid(0);
+  gridB = makeGrid(-160);
+
+  const lane = createPlane(0.9, 320, C.lane, [0, BOUND.yLo - 1.14, -140], { opacity: 0.22, additive: true, depthWrite: false });
+  lane.rotation.x = -Math.PI / 2;
+
+  for (let i = 0; i < 9; i++) { makeRidge(-1); makeRidge(1); }
+
+  // Ship: a group whose forward is -z
+  ship = new THREE.Group();
+  ship.position.set(0, S.y, 0);
+  scene.add(ship);
+  const body = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.5, 4), flat(C.ship));
+  body.rotation.x = Math.PI / 2;                    // nose points -z
+  body.add(new THREE.Mesh(body.geometry, flat(C.thrust, { wireframe: true, opacity: 0.7 })));
+  ship.add(body);
+  wingL = createBox(1.15, 0.08, 0.42, 0x9ad9ff, [-0.58, -0.04, 0.34]);
+  wingR = createBox(1.15, 0.08, 0.42, 0x9ad9ff, [0.58, -0.04, 0.34]);
+  wingL.rotation.set(0, 0.22, 0.16); wingR.rotation.set(0, -0.22, -0.16);
+  ship.add(wingL); ship.add(wingR);
+  const finL = createBox(0.07, 0.34, 0.3, 0x33c9ff, [-0.42, 0.16, 0.5]);
+  const finR = createBox(0.07, 0.34, 0.3, 0x33c9ff, [0.42, 0.16, 0.5]);
+  ship.add(finL); ship.add(finR);
+  thrust = createCube(0.3, C.thrust, [0, -0.02, 0.78], { additive: true, opacity: 0.9 });
+  ship.add(thrust);
+  ship.scale.setScalar(0.9);
+
+  S.best = loadData('sc9-best', 0);
+  reset(true);
+}
+
+function reset(attract) {
+  for (const f of foes.splice(0)) removeMesh(f.m);
+  for (const r of rings.splice(0)) removeMesh(r.m);
+  for (const s of shots.splice(0)) removeMesh(s.m);
+  S.score = 0; S.lives = 3; S.speed = 30; S.x = 0; S.y = 1.1;
+  S.cool = 0; S.spawn = 0.8; S.ringT = 2.2; S.invuln = 1.2; S.shake = 0;
+  S.mode = attract ? 'attract' : 'play';
+  S.flash = ''; S.flashT = 0;
+}
+
+function spawnFoe() {
+  const m = createOcta(0.95, 0xff2d95, [(Math.random() - 0.5) * 9, BOUND.yLo + 0.4 + Math.random() * 2.9, SPAWN_Z]);
+  m.add(new THREE.Mesh(m.geometry, flat(0x9ff6ff, { wireframe: true, opacity: 0.9 })));
+  m.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.42), flat(0xffe27a, { additive: true, opacity: 0.9, depthWrite: false })));
+  foes.push({ m, drift: (Math.random() - 0.5) * 2.2, spin: 1 + Math.random() * 2, homing: Math.random() < 0.55 });
+}
+function spawnRing() {
+  const m = createTorus(2.2, 0.14, 0xb14cff, [(Math.random() - 0.5) * 7, BOUND.yLo + 1.1 + Math.random() * 1.8, SPAWN_Z], { seg: 20 });
+  const inner = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.03, 6, 20), flat(0x33c9ff, { additive: true, opacity: 0.8, depthWrite: false }));
+  m.add(inner);
+  rings.push({ m, scored: false });
+}
+function fire() {
+  if (S.cool > 0) return;
+  S.cool = 0.14;
+  for (const s of [-0.62, 0.62]) {
+    const m = createBox(0.09, 0.09, 2.6, 0x9ff6ff, [S.x + s, S.y + 0.1, -1.2], { additive: true, depthWrite: false });
+    shots.push({ m });
+  }
+  sfx('laser');
+}
+function flash(t) { S.flash = t; S.flashT = 1.1; }
+
+function update(dt) {
+  S.t += dt;
+  const idle = performance.now() - lastInput > 6000;
+  if (S.mode === 'play' && idle) S.mode = 'attract';
+
+  if (S.mode !== 'play' && (keyp('Space') || keyp('Enter') || pointer.down)) {
+    reset(false); sfx('select'); poke();
+  }
+
+  /* ── steering ── */
+  let tx = S.x, ty = S.y;
+  if (S.mode === 'attract') {
+    S.aiT -= dt;
+    let target = null, bestZ = -999;
+    for (const f of foes) if (f.m.position.z > bestZ && f.m.position.z < -12) { bestZ = f.m.position.z; target = f.m.position; }
+    for (const r of rings) if (!r.scored && r.m.position.z < -14 && Math.random() < 0.02) target = r.m.position;
+    if (target) { S.aiX = THREE.MathUtils.clamp(target.x, -BOUND.x, BOUND.x); S.aiY = THREE.MathUtils.clamp(target.y, BOUND.yLo, BOUND.yHi); }
+    else if (S.aiT <= 0) { S.aiT = 1.4; S.aiX = (Math.random() - 0.5) * 7; S.aiY = 0.6 + Math.random() * 2.2; }
+    tx = S.aiX; ty = S.aiY;
+    if (Math.abs(S.x - tx) < 1.4 && S.cool <= 0 && Math.random() < 0.5) fire();
+  } else {
+    const kx = (key('ArrowRight') || key('KeyD') ? 1 : 0) - (key('ArrowLeft') || key('KeyA') ? 1 : 0);
+    const ky = (key('ArrowUp') || key('KeyW') ? 1 : 0) - (key('ArrowDown') || key('KeyS') ? 1 : 0);
+    if (kx || ky) { tx = S.x + kx * 12 * dt * 3; ty = S.y + ky * 8 * dt * 3; }
+    else if (pointer.active) { tx = (pointer.x - 0.5) * 2 * BOUND.x; ty = BOUND.yHi - pointer.y * (BOUND.yHi - BOUND.yLo) * 1.35; }
+    if (key('Space') || pointer.down) fire();
+  }
+  tx = THREE.MathUtils.clamp(tx, -BOUND.x, BOUND.x);
+  ty = THREE.MathUtils.clamp(ty, BOUND.yLo, BOUND.yHi);
+  const k = 1 - Math.pow(0.0015, dt);
+  const px = S.x, py = S.y;
+  S.x += (tx - S.x) * k; S.y += (ty - S.y) * k;
+  const vx = (S.x - px) / Math.max(dt, 0.0001), vy = (S.y - py) / Math.max(dt, 0.0001);
+  const bankT  = THREE.MathUtils.clamp(-vx * 0.055, -0.6, 0.6);
+  const pitchT = THREE.MathUtils.clamp(vy * 0.035, -0.3, 0.3);
+  S.bank  += (bankT - S.bank) * Math.min(1, dt * 7);
+  S.pitch += (pitchT - S.pitch) * Math.min(1, dt * 7);
+
+  setPosition(ship, S.x, S.y, 0);
+  ship.rotation.set(-S.pitch, 0, S.bank);
+  const pulse = 0.8 + Math.sin(S.t * 30) * 0.25;
+  setScale(thrust, pulse, pulse, 1.15 + Math.sin(S.t * 22) * 0.4);
+  thrust.material.opacity = 0.65 + Math.random() * 0.35;
+
+  S.cool -= dt; S.invuln -= dt; S.flashT -= dt;
+  S.speed = 30 + Math.min(34, S.score / 260);
+  const adv = S.speed * dt;
+
+  /* ── world scroll ── */
+  for (const g of [grid, gridB]) { g.position.z += adv; if (g.position.z > 160) g.position.z -= 320; }
+  for (const r of ridges) { r.position.z += adv * 0.85; if (r.position.z > 30) { r.position.z = SPAWN_Z - Math.random() * 30; r.position.x = Math.sign(r.position.x) * (16 + Math.random() * 26); } }
+  stars.position.z += adv * 0.12; if (stars.position.z > 120) stars.position.z = 0;
+
+  /* ── spawns ── */
+  S.spawn -= dt;
+  if (S.spawn <= 0 && foes.length < 16) { spawnFoe(); S.spawn = Math.max(0.28, 1.05 - S.score / 9000); }
+  S.ringT -= dt;
+  if (S.ringT <= 0 && rings.length < 3) { spawnRing(); S.ringT = 3.4 + Math.random() * 2.6; }
+
+  /* ── shots ── */
+  for (let i = shots.length - 1; i >= 0; i--) {
+    const s = shots[i];
+    s.m.position.z -= 120 * dt;
+    if (s.m.position.z < FAR) { removeMesh(s.m); shots.splice(i, 1); }
+  }
+
+  /* ── foes ── */
+  for (let i = foes.length - 1; i >= 0; i--) {
+    const f = foes[i], p = f.m.position;
+    p.z += adv * 1.5;
+    p.x += f.drift * dt;
+    if (f.homing) p.x += THREE.MathUtils.clamp(S.x - p.x, -1, 1) * dt * 1.4;
+    rotateMesh(f.m, f.spin * dt, f.spin * dt * 0.7, 0);
+
+    let killed = false;
+    for (let j = shots.length - 1; j >= 0; j--) {
+      const sp = shots[j].m.position;
+      if (Math.abs(sp.z - p.z) < 2.4 && Math.abs(sp.x - p.x) < 1.15 && Math.abs(sp.y - p.y) < 1.15) {
+        removeMesh(shots[j].m); shots.splice(j, 1);
+        killed = true; break;
+      }
+    }
+    if (killed) {
+      burst(p.x, p.y, p.z, C.foe); sfx('explosion');
+      S.score += 100; removeMesh(f.m); foes.splice(i, 1); continue;
+    }
+    if (p.z > -1.4 && p.z < 1.4 && S.invuln <= 0 && Math.abs(p.x - S.x) < 1.15 && Math.abs(p.y - S.y) < 1.15) {
+      burst(p.x, p.y, p.z, 0xff5a3c); sfx('hit');
+      S.shake = 0.55; S.invuln = 1.6;
+      removeMesh(f.m); foes.splice(i, 1);
+      if (S.mode === 'play') {
+        S.lives--;
+        if (S.lives <= 0) {
+          S.mode = 'over';
+          if (S.score > S.best) { S.best = S.score; saveData('sc9-best', S.best); }
+        }
+      }
+      continue;
+    }
+    if (p.z > 12) { removeMesh(f.m); foes.splice(i, 1); }
+  }
+
+  /* ── rings ── */
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i], p = r.m.position;
+    p.z += adv * 1.5;
+    rotateMesh(r.m, 0, 0, dt * 0.8);
+    if (!r.scored && p.z > -0.8) {
+      r.scored = true;
+      if (Math.hypot(p.x - S.x, p.y - S.y) < 2.0) {
+        S.score += 250; sfx('coin'); flash('PERFECT  +250');
+      }
+    }
+    if (p.z > 10) { removeMesh(r.m); rings.splice(i, 1); }
+  }
+
+  /* ── bursts ── */
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    const b = bursts[i]; b.life -= dt;
+    const arr = b.p.geometry.attributes.position;
+    for (let n = 0; n < b.vel.length; n++) {
+      arr.array[n * 3]     += b.vel[n].x * dt;
+      arr.array[n * 3 + 1] += b.vel[n].y * dt;
+      arr.array[n * 3 + 2] += b.vel[n].z * dt + adv;
+    }
+    arr.needsUpdate = true;
+    b.p.material.opacity = Math.max(0, b.life / 0.6);
+    if (b.life <= 0) { scene.remove(b.p); b.p.geometry.dispose(); b.p.material.dispose(); bursts.splice(i, 1); }
+  }
+
+  /* ── camera ── */
+  S.shake = Math.max(0, S.shake - dt * 1.6);
+  const sh = S.shake * 0.35;
+  setCameraPosition(S.x * 0.35 + (Math.random() - 0.5) * sh, S.y * 0.32 + 2.1 + (Math.random() - 0.5) * sh, 8.4);
+  setCameraTarget(S.x * 0.6, S.y * 0.55 + 0.6, -18);
+  sun.position.x = S.x * 1.2;
+}
+
+function draw() {
+  cls();
+  const small = vw < 620;
+  const s1 = small ? 9 : 12, pad = small ? 12 : 18;
+  const top = pad + (small ? 26 : 32);   // clear of the NOVA64 corner mark
+
+  print('SCORE ' + String(S.score).padStart(6, '0'), pad, top, C.hudA, s1);
+  printRight('BEST ' + String(S.best).padStart(6, '0'), vw - pad, vh - pad - s1 - 2, C.hudC, small ? 8 : 10);
+
+  for (let i = 0; i < 3; i++) {
+    const on = i < S.lives, x = pad + i * (small ? 14 : 18), y = top + s1 + 12;
+    rectfill(x, y, small ? 9 : 12, small ? 9 : 12, on ? C.hudB : 0x2a2740, on ? 1 : 0.6);
+  }
+
+  if (S.flashT > 0) glowCentered(S.flash, vh * 0.66, 0xffffff, small ? 10 : 14, C.ring);
+
+  if (S.mode === 'attract') {
+    const y = vh * (small ? 0.1 : 0.12);
+    glowCentered('NOVA64', y, C.hudA, small ? 22 : 34, C.hudA);
+    printCentered('A JAVASCRIPT 3D FANTASY CONSOLE', y + (small ? 32 : 48), C.hudC, small ? 7 : 10);
+    printCentered('NOVA RAIL  ·  STARCADE9 EDITION', y + (small ? 46 : 68), C.hudB, small ? 7 : 10);
+    if (Math.sin(S.t * 3) > -0.2) {
+      printCentered(isTouch ? 'TAP TO PLAY' : 'CLICK OR PRESS SPACE TO PLAY', vh - (small ? 54 : 74), 0xffffff, small ? 8 : 11);
+    }
+    printCentered(isTouch ? 'DRAG TO STEER  ·  FIRE BUTTON' : 'WASD / ARROWS OR MOUSE TO STEER  ·  SPACE TO FIRE', vh - (small ? 36 : 50), 0x6f7ba6, small ? 7 : 9);
+  } else if (S.mode === 'over') {
+    rectfill(0, vh * 0.3, vw, small ? 92 : 116, 0x07061a, 0.62);
+    glowCentered('GAME OVER', vh * 0.32, C.hudB, small ? 18 : 28, C.hudB);
+    printCentered('SCORE ' + S.score + '   BEST ' + S.best, vh * 0.32 + (small ? 28 : 44), C.hudC, small ? 8 : 11);
+    if (Math.sin(S.t * 3) > -0.2) printCentered(isTouch ? 'TAP TO RETRY' : 'PRESS SPACE TO RETRY', vh * 0.32 + (small ? 48 : 72), 0xffffff, small ? 8 : 11);
+  }
+}
+
+/* ── loop ───────────────────────────────────────────────────────────────── */
+let paused = false, last = performance.now();
+window.__nova64SetPaused = (v) => { paused = !!v; if (!v) last = performance.now(); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) last = performance.now(); });
+
+init();
+document.fonts?.ready?.then(() => { /* HUD repaints every frame; nothing to do */ });
+
+renderer.setAnimationLoop(() => {
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (!paused && !document.hidden) {
+    update(dt);
+    draw();
+  }
+  pressed.clear();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
