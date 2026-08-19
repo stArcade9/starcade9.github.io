@@ -19,7 +19,7 @@ let root,
 
 function _makeCard(value, suit, suitColor, cx, cy) {
   // Each card: a graphics node that draws itself based on node.flip (0=face-down, 1=face-up)
-  const node = nova64.ui.createGraphicsNode((ctx, n) => {
+  const node = createGraphicsNode((ctx, n) => {
     const hw = (CARD_W * Math.abs(n.flip || 0)) / 2;
     if (hw < 1) return;
 
@@ -72,9 +72,9 @@ function _makeCard(value, suit, suitColor, cx, cy) {
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
-  root = nova64.ui.createContainer();
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  root = createContainer();
   cards = [];
 
   const cols = 8,
@@ -91,7 +91,7 @@ export function init() {
       const x = startX + c * (CARD_W + 8);
       const y = startY + r * (CARD_H + 12);
       const node = _makeCard(val, suit, sCol, x, y);
-      nova64.ui.addChild(root, node);
+      addChild(root, node);
       cards.push({ node, delay: idx * 0.08 });
     }
   }
@@ -109,19 +109,19 @@ export function init() {
 
 export function update(dt) {
   time += dt;
-  nova64.tween.updateTweens(dt);
+  updateTweens(dt);
 }
 
 export function draw() {
-  nova64.draw.cls(0x2c5f2e);
+  cls(0x2c5f2e);
 
   // Felt pattern
   for (let y = 0; y < H; y += 20) {
-    nova64.draw.line(0, y, W, y, 0x274e28);
+    line(0, y, W, y, 0x274e28);
   }
 
-  nova64.ui.drawStage(root);
+  drawStage(root);
 
-  nova64.draw.print('STAGE CARDS', 4, 4, 0xffffff);
-  nova64.draw.print('Stage nodes • tweenTo • easeInOutBack', 4, H - 12, 0x88aa88);
+  print('STAGE CARDS', 4, 4, 0xffffff);
+  print('Stage nodes • tweenTo • easeInOutBack', 4, H - 12, 0x88aa88);
 }

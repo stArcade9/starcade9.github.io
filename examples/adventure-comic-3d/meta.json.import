@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c2xvyuml4mtgq"
+path="res://.godot/imported/meta.json-ce3c85ab8196268ea41dd1f150ec51f0.res"
+
+[deps]
+
+source_file="res://carts/adventure-comic-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-ce3c85ab8196268ea41dd1f150ec51f0.res"]
+
+[params]
+

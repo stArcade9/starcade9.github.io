@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://djlu764yqh1j1"
+path="res://.godot/imported/meta.json-d6d94c3b10cbfdffc43ce0430b4ed872.res"
+
+[deps]
+
+source_file="res://carts/nature-explorer-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-d6d94c3b10cbfdffc43ce0430b4ed872.res"]
+
+[params]
+

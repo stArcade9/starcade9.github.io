@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://l0f0u45akuvg"
+path="res://.godot/imported/meta.json-cb8351c22fd80366162493ac706ef4a1.res"
+
+[deps]
+
+source_file="res://carts/cyberpunk-city-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-cb8351c22fd80366162493ac706ef4a1.res"]
+
+[params]
+

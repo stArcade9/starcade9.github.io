@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://3mhp33agtpfb"
+path="res://.godot/imported/meta.json-eb353fce3987707c4e933b447bc3ab28.res"
+
+[deps]
+
+source_file="res://carts/voxel-terrain/meta.json"
+dest_files=["res://.godot/imported/meta.json-eb353fce3987707c4e933b447bc3ab28.res"]
+
+[params]
+

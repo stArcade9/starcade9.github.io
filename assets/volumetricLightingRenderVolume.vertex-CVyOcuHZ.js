@@ -1,0 +1,2 @@
+import{w$ as e}from"./main-B94wM1bV.js";const o="volumetricLightingRenderVolumeVertexShader",r="#include<__decl__sceneVertex>\n#include<__decl__meshVertex>\nattribute vec3 position;varying vec4 vWorldPos;void main(void) {vec4 worldPos=world*vec4(position,1.0);vWorldPos=worldPos;gl_Position=viewProjection*worldPos;}\n";e.ShadersStore[o]||(e.ShadersStore[o]=r);const i={name:o,shader:r};export{i as volumetricLightingRenderVolumeVertexShader};
+//# sourceMappingURL=volumetricLightingRenderVolume.vertex-CVyOcuHZ.js.map

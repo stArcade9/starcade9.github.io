@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://b4huogffc0weg"
+path="res://.godot/imported/meta.json-94cf2b44c16cff6be71c4148616345a1.res"
+
+[deps]
+
+source_file="res://carts/blend-aurora/meta.json"
+dest_files=["res://.godot/imported/meta.json-94cf2b44c16cff6be71c4148616345a1.res"]
+
+[params]
+

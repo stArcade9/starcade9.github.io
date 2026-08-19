@@ -1,0 +1,7 @@
+{
+  "name": "Capabilities",
+  "description": "G3 conformance — verifies adapter contract version and required feature list.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "test"
+}

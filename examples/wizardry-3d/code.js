@@ -210,6 +210,7 @@ const {
   noiseMap,
   noiseSeed,
   popMatrix,
+  pulse,
   pushMatrix,
   quadCurve,
   rad2deg,
@@ -661,7 +662,7 @@ let animatedMeshes; // meshes that bob/rotate
 let particleSystems; // track active particle system IDs
 let explored; // Set of "x,y" strings for fog-of-war minimap
 let bossDefeated; // Set of floor numbers where boss was killed
-let minimap; // nova64.draw.createMinimap() object for dungeon map
+let minimap; // createMinimap() object for dungeon map
 let stateMachine; // createStateMachine for game flow
 
 // Shop state
@@ -885,21 +886,21 @@ function buildTitleScene() {
   // Stone corridor walls (left and right, extending into the distance)
   for (let i = 0; i < 8; i++) {
     const z = -3 - i * 3;
-    const wL = nova64.scene.createCube(TILE, wallColor, [-TILE, 0, z], { roughness: 0.9 });
-    const wR = nova64.scene.createCube(TILE, wallColor, [TILE, 0, z], { roughness: 0.9 });
-    nova64.scene.setCastShadow(wL, true);
-    nova64.scene.setCastShadow(wR, true);
-    nova64.scene.setReceiveShadow(wL, true);
-    nova64.scene.setReceiveShadow(wR, true);
+    const wL = createCube(TILE, wallColor, [-TILE, 0, z], { roughness: 0.9 });
+    const wR = createCube(TILE, wallColor, [TILE, 0, z], { roughness: 0.9 });
+    setCastShadow(wL, true);
+    setCastShadow(wR, true);
+    setReceiveShadow(wL, true);
+    setReceiveShadow(wR, true);
     titleMeshes.push(wL, wR);
   }
 
   // Floor and ceiling planes
-  const fl = nova64.scene.createPlane(TILE * 2.2, 30, floorColor, [0, -1.5, -14]);
-  nova64.scene.setReceiveShadow(fl, true);
+  const fl = createPlane(TILE * 2.2, 30, floorColor, [0, -1.5, -14]);
+  setReceiveShadow(fl, true);
   titleMeshes.push(fl);
-  const ceil = nova64.scene.createPlane(TILE * 2.2, 30, ceilColor, [0, 1.5, -14]);
-  nova64.scene.setRotation(ceil, Math.PI, 0, 0);
+  const ceil = createPlane(TILE * 2.2, 30, ceilColor, [0, 1.5, -14]);
+  setRotation(ceil, Math.PI, 0, 0);
   titleMeshes.push(ceil);
 
   // Torches along the corridor (alternating left/right)
@@ -913,36 +914,36 @@ function buildTitleScene() {
   ];
   for (const [tx, ty, tz] of torchPositions) {
     // Torch cone (emissive flame)
-    const torch = nova64.scene.createCone(0.12, 0.35, 0xffaa33, [tx, ty, tz], {
+    const torch = createCone(0.12, 0.35, 0xffaa33, [tx, ty, tz], {
       material: 'emissive',
       emissive: 0xff8800,
       intensity: 2,
     });
     titleMeshes.push(torch);
     // Warm point light
-    const light = nova64.light.createPointLight(0xff8833, 2.5, 10, tx, ty + 0.5, tz);
+    const light = createPointLight(0xff8833, 2.5, 10, tx, ty + 0.5, tz);
     titleLights.push(light);
   }
 
   // Glowing portal at the far end
-  const portal = nova64.scene.createTorus(1.5, 0.12, 0x8844ff, [0, 0, -24], {
+  const portal = createTorus(1.5, 0.12, 0x8844ff, [0, 0, -24], {
     material: 'emissive',
     emissive: 0x8844ff,
     intensity: 3,
   });
   titleMeshes.push(portal);
-  const portalGlow = nova64.scene.createSphere(0.7, 0x6622cc, [0, 0, -24], {
+  const portalGlow = createSphere(0.7, 0x6622cc, [0, 0, -24], {
     material: 'emissive',
     emissive: 0x6622ff,
     intensity: 2,
   });
   titleMeshes.push(portalGlow);
   // Portal light
-  const portalLight = nova64.light.createPointLight(0x7733ff, 3, 12, 0, 0, -24);
+  const portalLight = createPointLight(0x7733ff, 3, 12, 0, 0, -24);
   titleLights.push(portalLight);
 
   // Particle system for floating embers
-  const ps = nova64.fx.createParticleSystem({
+  const ps = createParticleSystem({
     max: 60,
     size: 0.08,
     color: 0xffaa44,
@@ -952,9 +953,9 @@ function buildTitleScene() {
 }
 
 function clearTitleScene() {
-  for (const id of titleMeshes) nova64.scene.destroyMesh(id);
-  for (const id of titleLights) nova64.light.removeLight(id);
-  for (const id of titleParticles) nova64.fx.removeParticleSystem(id);
+  for (const id of titleMeshes) destroyMesh(id);
+  for (const id of titleLights) removeLight(id);
+  for (const id of titleParticles) removeParticleSystem(id);
   titleMeshes = [];
   titleLights = [];
   titleParticles = [];
@@ -965,27 +966,27 @@ function clearTitleScene() {
 // ═══════════════════════════════════════════════════════════════════════
 
 function clearLevel() {
-  for (const id of currentLevelMeshes) nova64.scene.destroyMesh(id);
+  for (const id of currentLevelMeshes) destroyMesh(id);
   currentLevelMeshes = [];
-  nova64.light.clearSkybox(); // clean up old skybox before rebuilding
+  clearSkybox(); // clean up old skybox before rebuilding
   if (torchLights) {
-    for (const id of torchLights) nova64.light.removeLight(id);
+    for (const id of torchLights) removeLight(id);
   }
   torchLights = [];
   // Clean up particle systems
   if (particleSystems) {
-    for (const id of particleSystems) nova64.fx.removeParticleSystem(id);
+    for (const id of particleSystems) removeParticleSystem(id);
   }
   particleSystems = [];
   // Clean up instanced decorations before rebuilding
   if (instancedDecor) {
-    nova64.scene.removeInstancedMesh(instancedDecor);
+    removeInstancedMesh(instancedDecor);
     instancedDecor = null;
   }
   floorNoiseMap = null; // regenerate noiseMap fog per floor
   // Clean up LOD torches
   if (lodTorches) {
-    for (const id of lodTorches) nova64.scene.removeLODMesh(id);
+    for (const id of lodTorches) removeLODMesh(id);
   }
   lodTorches = [];
   waterShaders = [];
@@ -993,7 +994,7 @@ function clearLevel() {
 }
 
 function clearMonsterMeshes() {
-  for (const id of monsterMeshes) nova64.scene.destroyMesh(id);
+  for (const id of monsterMeshes) destroyMesh(id);
   monsterMeshes = [];
 }
 
@@ -1003,19 +1004,19 @@ function buildLevel() {
   const theme = FLOOR_THEMES[Math.min(floor - 1, FLOOR_THEMES.length - 1)];
 
   // Update atmosphere per floor
-  nova64.light.setAmbientLight(theme.ambColor, theme.ambInt);
-  nova64.light.setFog(theme.fogColor, 2, 20 - floor);
+  setAmbientLight(theme.ambColor, theme.ambInt);
+  setFog(theme.fogColor, 2, 20 - floor);
   // Dragon's Lair gets a dramatic space skybox; other floors use gradient
   if (floor === 5) {
-    nova64.light.createSpaceSkybox({ starCount: 600, nebula: true });
+    createSpaceSkybox({ starCount: 600, nebula: true });
   } else {
-    nova64.light.createGradientSkybox(theme.skyTop, theme.skyBot);
+    createGradientSkybox(theme.skyTop, theme.skyBot);
   }
   // Set directional light angle per floor for varied shadow casting
   const lightAngle = -0.8 - floor * 0.1;
-  nova64.light.setDirectionalLight([0.3, lightAngle, -0.5], theme.ambColor, 0.6 + floor * 0.08);
+  setDirectionalLight([0.3, lightAngle, -0.5], theme.ambColor, 0.6 + floor * 0.08);
   // Vary skybox rotation speed per floor depth
-  nova64.light.setSkyboxSpeed(0.2 + floor * 0.1);
+  setSkyboxSpeed(0.2 + floor * 0.1);
 
   for (let y = 0; y < dungeonH; y++) {
     for (let x = 0; x < dungeonW; x++) {
@@ -1035,41 +1036,37 @@ function buildLevel() {
           }
         }
         if (visible) {
-          const m = nova64.scene.createCube(TILE, theme.wallColor, [wx, TILE / 2, wz], {
-            roughness: 0.9,
-          });
+          const m = createCube(TILE, theme.wallColor, [wx, TILE / 2, wz], { roughness: 0.9 });
           currentLevelMeshes.push(m);
         }
       } else {
         // Floor — receives shadows from walls, objects, and monsters
-        const f = nova64.scene.createPlane(TILE, TILE, theme.floorColor, [wx, 0.01, wz]);
-        nova64.scene.rotateMesh(f, -HALF_PI, 0, 0);
-        nova64.scene.setReceiveShadow(f, true);
+        const f = createPlane(TILE, TILE, theme.floorColor, [wx, 0.01, wz]);
+        rotateMesh(f, -HALF_PI, 0, 0);
+        setReceiveShadow(f, true);
         currentLevelMeshes.push(f);
 
         // Ceiling
-        const c = nova64.scene.createPlane(TILE, TILE, theme.ceilColor, [wx, TILE, wz]);
-        nova64.scene.rotateMesh(c, HALF_PI, 0, 0);
+        const c = createPlane(TILE, TILE, theme.ceilColor, [wx, TILE, wz]);
+        rotateMesh(c, HALF_PI, 0, 0);
         currentLevelMeshes.push(c);
 
         // Special tiles
         if (tile === T.DOOR) {
           // Wooden door frame
-          const d = nova64.scene.createCube(TILE * 0.1, 0x886622, [wx, TILE / 2, wz], {
-            roughness: 0.7,
-          });
-          nova64.scene.setScale(d, 1, 1, 0.3);
+          const d = createCube(TILE * 0.1, 0x886622, [wx, TILE / 2, wz], { roughness: 0.7 });
+          setScale(d, 1, 1, 0.3);
           currentLevelMeshes.push(d);
           // Door handle
-          const handle = nova64.scene.createSphere(0.08, 0xccaa44, [wx + 0.3, TILE * 0.45, wz], 4, {
+          const handle = createSphere(0.08, 0xccaa44, [wx + 0.3, TILE * 0.45, wz], 4, {
             material: 'emissive',
             emissive: 0xccaa44,
             emissiveIntensity: 0.3,
           });
           currentLevelMeshes.push(handle);
-          nova64.scene.setPBRProperties(handle, { metalness: 0.9, roughness: 0.2 });
+          setPBRProperties(handle, { metalness: 0.9, roughness: 0.2 });
         } else if (tile === T.STAIRS_DOWN) {
-          const s = nova64.scene.createCone(0.5, 1, 0x44aaff, [wx, 0.5, wz], {
+          const s = createCone(0.5, 1, 0x44aaff, [wx, 0.5, wz], {
             material: 'emissive',
             emissive: 0x44aaff,
             emissiveIntensity: 0.8,
@@ -1077,7 +1074,7 @@ function buildLevel() {
           currentLevelMeshes.push(s);
           animatedMeshes.push({ id: s, type: 'bob', baseY: 0.5, speed: 2, range: 0.2 });
           // Stair glow particles
-          const ps = nova64.fx.createParticleSystem(20, {
+          const ps = createParticleSystem(20, {
             size: 0.08,
             emissive: true,
             gravity: 0.2,
@@ -1090,12 +1087,12 @@ function buildLevel() {
             endColor: 0x0044aa,
             spread: 0.8,
           });
-          nova64.fx.setParticleEmitter(ps, { position: [wx, 0.5, wz] });
+          setParticleEmitter(ps, { position: [wx, 0.5, wz] });
           particleSystems.push(ps);
-          const l = nova64.light.createPointLight(0x44aaff, 1.5, 8, wx, 1.5, wz);
+          const l = createPointLight(0x44aaff, 1.5, 8, wx, 1.5, wz);
           torchLights.push(l);
         } else if (tile === T.STAIRS_UP) {
-          const s = nova64.scene.createCone(0.5, 1, 0xffaa44, [wx, 0.5, wz], {
+          const s = createCone(0.5, 1, 0xffaa44, [wx, 0.5, wz], {
             material: 'emissive',
             emissive: 0xffaa44,
             emissiveIntensity: 0.8,
@@ -1104,25 +1101,22 @@ function buildLevel() {
           animatedMeshes.push({ id: s, type: 'bob', baseY: 0.5, speed: 2, range: 0.2 });
         } else if (tile === T.CHEST) {
           // Chest body
-          const ch = nova64.scene.createCube(0.6, 0xddaa33, [wx, 0.35, wz], {
-            roughness: 0.4,
-            metallic: true,
-          });
-          nova64.scene.setScale(ch, 1, 0.7, 0.7);
+          const ch = createCube(0.6, 0xddaa33, [wx, 0.35, wz], { roughness: 0.4, metallic: true });
+          setScale(ch, 1, 0.7, 0.7);
           currentLevelMeshes.push(ch);
           // Glowing lock
-          const lock = nova64.scene.createSphere(0.06, 0xffee66, [wx, 0.5, wz - 0.22], 4, {
+          const lock = createSphere(0.06, 0xffee66, [wx, 0.5, wz - 0.22], 4, {
             material: 'emissive',
             emissive: 0xffee66,
             emissiveIntensity: 0.6,
           });
           currentLevelMeshes.push(lock);
-          nova64.scene.setPBRProperties(lock, { metalness: 1.0, roughness: 0.1 });
+          setPBRProperties(lock, { metalness: 1.0, roughness: 0.1 });
           animatedMeshes.push({ id: lock, type: 'pulse', baseScale: 1, speed: 3, range: 0.3 });
         } else if (tile === T.FOUNTAIN) {
-          const fb = nova64.scene.createCylinder(0.6, 0.6, 0x667788, 8, [wx, 0.2, wz]);
+          const fb = createCylinder(0.6, 0.6, 0x667788, 8, [wx, 0.2, wz]);
           currentLevelMeshes.push(fb);
-          const fw = nova64.scene.createSphere(0.3, 0x3388ff, [wx, 0.5, wz], 6, {
+          const fw = createSphere(0.3, 0x3388ff, [wx, 0.5, wz], 6, {
             material: 'emissive',
             emissive: 0x3388ff,
             emissiveIntensity: 0.6,
@@ -1130,14 +1124,14 @@ function buildLevel() {
           currentLevelMeshes.push(fw);
           animatedMeshes.push({ id: fw, type: 'bob', baseY: 0.5, speed: 1.5, range: 0.15 });
           // Apply animated water shader via createShaderMaterial
-          const wShader = nova64.shader.createShaderMaterial('water');
+          const wShader = createShaderMaterial('water');
           if (wShader) {
-            const rawMesh = nova64.scene.getMesh(fw);
+            const rawMesh = getMesh(fw);
             if (rawMesh) rawMesh.material = wShader.material;
             waterShaders.push({ shaderId: wShader.id, meshId: fw });
           }
           // Water particles
-          const ps = nova64.fx.createParticleSystem(15, {
+          const ps = createParticleSystem(15, {
             size: 0.05,
             emissive: true,
             gravity: -0.3,
@@ -1150,30 +1144,30 @@ function buildLevel() {
             endColor: 0x1144aa,
             spread: 0.4,
           });
-          nova64.fx.setParticleEmitter(ps, { position: [wx, 0.6, wz] });
+          setParticleEmitter(ps, { position: [wx, 0.6, wz] });
           particleSystems.push(ps);
-          const l = nova64.light.createPointLight(0x3388ff, 1, 6, wx, 1, wz);
+          const l = createPointLight(0x3388ff, 1, 6, wx, 1, wz);
           torchLights.push(l);
         } else if (tile === T.TRAP) {
           // Trap - subtle floor glyph
-          const trap = nova64.scene.createPlane(1.2, 1.2, 0x662222, [wx, 0.02, wz]);
-          nova64.scene.rotateMesh(trap, -HALF_PI, 0, 0);
+          const trap = createPlane(1.2, 1.2, 0x662222, [wx, 0.02, wz]);
+          rotateMesh(trap, -HALF_PI, 0, 0);
           currentLevelMeshes.push(trap);
           // Warning rune
-          const rune = nova64.scene.createTorus(0.3, 0.04, 0x881111, 6, [wx, 0.03, wz]);
-          nova64.scene.rotateMesh(rune, HALF_PI, 0, 0);
+          const rune = createTorus(0.3, 0.04, 0x881111, 6, [wx, 0.03, wz]);
+          rotateMesh(rune, HALF_PI, 0, 0);
           currentLevelMeshes.push(rune);
           animatedMeshes.push({ id: rune, type: 'spin', speed: 1 });
         } else if (tile === T.BOSS) {
           // Boss marker — advanced pillar with full PBR (createAdvancedCube)
-          const pillar = nova64.scene.createAdvancedCube(
+          const pillar = createAdvancedCube(
             0.8,
             { color: 0x440022, metalness: 0.7, roughness: 0.3 },
             [wx, 1.25, wz]
           );
-          nova64.scene.setScale(pillar, 0.5, 3.1, 0.5);
+          setScale(pillar, 0.5, 3.1, 0.5);
           currentLevelMeshes.push(pillar);
-          const orb = nova64.scene.createAdvancedSphere(
+          const orb = createAdvancedSphere(
             0.3,
             { color: 0xff0044, emissive: 0xff0044, emissiveIntensity: 1.2 },
             [wx, 2.6, wz],
@@ -1181,16 +1175,16 @@ function buildLevel() {
           );
           currentLevelMeshes.push(orb);
           animatedMeshes.push({ id: orb, type: 'pulse', baseScale: 1, speed: 2, range: 0.4 });
-          const l = nova64.light.createPointLight(0xff0044, 2, 10, wx, 2, wz);
+          const l = createPointLight(0xff0044, 2, 10, wx, 2, wz);
           torchLights.push(l);
         }
 
         // Scatter torches with particle fire + LOD variants
         if (tile === T.FLOOR && Math.random() < 0.08) {
-          const l = nova64.light.createPointLight(0xffaa44, 2.5, 12, wx, 2.2, wz);
+          const l = createPointLight(0xffaa44, 2.5, 12, wx, 2.2, wz);
           torchLights.push({ lightId: l, baseIntensity: 1.2, wx, wz });
           // Create LOD torch: high detail close, low detail far
-          const lod = nova64.scene.createLODMesh(
+          const lod = createLODMesh(
             [
               { shape: 'cone', size: 0.3, color: 0xff6600, distance: 0 },
               { shape: 'cube', size: 0.15, color: 0xff6600, distance: 12 },
@@ -1198,14 +1192,14 @@ function buildLevel() {
             [wx, 2.5, wz]
           );
           if (lod) lodTorches.push(lod);
-          const torch = nova64.scene.createCone(0.1, 0.3, 0xff6600, [wx, 2.5, wz], {
+          const torch = createCone(0.1, 0.3, 0xff6600, [wx, 2.5, wz], {
             material: 'emissive',
             emissive: 0xff6600,
             emissiveIntensity: 1.0,
           });
           currentLevelMeshes.push(torch);
           // Fire particles
-          const ps = nova64.fx.createParticleSystem(12, {
+          const ps = createParticleSystem(12, {
             size: 0.06,
             emissive: true,
             gravity: -0.5,
@@ -1218,7 +1212,7 @@ function buildLevel() {
             endColor: 0xff2200,
             spread: 0.2,
           });
-          nova64.fx.setParticleEmitter(ps, { position: [wx, 2.6, wz] });
+          setParticleEmitter(ps, { position: [wx, 2.6, wz] });
           particleSystems.push(ps);
           // Track light for flickering
           torchLights.push({ lightId: l, baseIntensity: 1.2, wx, wz });
@@ -1237,21 +1231,16 @@ function buildLevel() {
     }
   }
   if (crystalPositions.length > 0) {
-    instancedDecor = nova64.scene.createInstancedMesh(
-      'cone',
-      crystalPositions.length,
-      theme.wallColor,
-      {
-        size: 0.2,
-      }
-    );
+    instancedDecor = createInstancedMesh('cone', crystalPositions.length, theme.wallColor, {
+      size: 0.2,
+    });
     for (let i = 0; i < crystalPositions.length; i++) {
       const [cx, cy, cz] = crystalPositions[i];
       const rot = Math.random() * TWO_PI;
-      nova64.scene.setInstanceTransform(instancedDecor, i, cx, cy, cz, 0, rot, 0, 0.12, 0.25, 0.12);
-      nova64.scene.setInstanceColor(instancedDecor, i, theme.ambColor);
+      setInstanceTransform(instancedDecor, i, cx, cy, cz, 0, rot, 0, 0.12, 0.25, 0.12);
+      setInstanceColor(instancedDecor, i, theme.ambColor);
     }
-    nova64.scene.finalizeInstances(instancedDecor);
+    finalizeInstances(instancedDecor);
   }
 }
 
@@ -1361,12 +1350,12 @@ function startCombat(isBoss) {
       encounterSpawner.totalSpawned++;
     }
     const waveBonus = encounterSpawner ? Math.min(encounterSpawner.wave, 3) : 0;
-    count = 1 + nova64.util.randInt(0, Math.min(3, floor) - 1) + Math.floor(waveBonus / 2);
+    count = 1 + randInt(0, Math.min(3, floor) - 1) + Math.floor(waveBonus / 2);
     count = Math.min(count, 4); // cap at 4 enemies
     enemies = [];
     for (let i = 0; i < count; i++) {
-      const template = pool[nova64.util.randInt(0, pool.length - 1)];
-      const scale = nova64.util.randRange(0.8, 1.2);
+      const template = pool[randInt(0, pool.length - 1)];
+      const scale = randRange(0.8, 1.2);
       enemies.push({
         ...template,
         hp: Math.floor(template.hp * scale * (1 + floor * 0.1)),
@@ -1390,7 +1379,7 @@ function startCombat(isBoss) {
     const mz = py * TILE + dz * 4 + perpZ * offset;
 
     // Use dist3d to compute monster distance from player for combat info
-    e.distFromPlayer = nova64.util.dist3d(px * TILE, 1.6, py * TILE, mx, 1, mz);
+    e.distFromPlayer = dist3d(px * TILE, 1.6, py * TILE, mx, 1, mz);
 
     const meshIds = createMonsterMesh(e, mx, mz, dx, dz);
     monsterMeshes.push(...meshIds);
@@ -1409,18 +1398,18 @@ function startCombat(isBoss) {
   combatAction = 'choose';
   selectedTarget = 0;
   switchState('combat');
-  nova64.audio.setVolume(0.8); // louder for combat intensity
+  setVolume(0.8); // louder for combat intensity
 
   if (enemies[0].isBoss) {
-    nova64.util.triggerShake(shake, 0.8);
+    triggerShake(shake, 0.8);
     triggerScreenFlash(255, 0, 50, 200);
-    nova64.fx.enableChromaticAberration(0.006);
-    nova64.fx.setBloomStrength(1.8); // intensify bloom for boss encounter
-    nova64.fx.setBloomRadius(0.6); // wider bloom spread for boss drama
+    enableChromaticAberration(0.006);
+    setBloomStrength(1.8); // intensify bloom for boss encounter
+    setBloomRadius(0.6); // wider bloom spread for boss drama
     // Burst particles on all visible particle systems for boss entrance
-    for (const psId of particleSystems) nova64.fx.burstParticles(psId, 12);
+    for (const psId of particleSystems) burstParticles(psId, 12);
     // Generate flow field energy pattern for boss room visualization
-    bossFlowField = nova64.util.flowField(16, 12, 0.08, animTimer);
+    bossFlowField = flowField(16, 12, 0.08, animTimer);
   }
 }
 
@@ -1432,15 +1421,15 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
 
   if (shape === 'beast') {
     // Low, wide body with ears
-    const body = nova64.scene.createCube(0.8 * s, e.color, [mx, 0.5 * s, mz], { roughness: 0.8 });
-    nova64.scene.setScale(body, 1.3, 0.7, 1);
-    const ear1 = nova64.scene.createCone(0.15 * s, 0.4 * s, e.color, [mx - 0.3 * s, 0.9 * s, mz], {
+    const body = createCube(0.8 * s, e.color, [mx, 0.5 * s, mz], { roughness: 0.8 });
+    setScale(body, 1.3, 0.7, 1);
+    const ear1 = createCone(0.15 * s, 0.4 * s, e.color, [mx - 0.3 * s, 0.9 * s, mz], {
       roughness: 0.8,
     });
-    const ear2 = nova64.scene.createCone(0.15 * s, 0.4 * s, e.color, [mx + 0.3 * s, 0.9 * s, mz], {
+    const ear2 = createCone(0.15 * s, 0.4 * s, e.color, [mx + 0.3 * s, 0.9 * s, mz], {
       roughness: 0.8,
     });
-    const eye1 = nova64.scene.createSphere(
+    const eye1 = createSphere(
       0.08 * s,
       0xff0000,
       [mx - 0.2 * s, 0.6 * s, mz - dz * 0.4 - dx * 0.4],
@@ -1451,7 +1440,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.08 * s,
       0xff0000,
       [mx + 0.2 * s, 0.6 * s, mz - dz * 0.4 - dx * 0.4],
@@ -1465,12 +1454,10 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     ids.push(body, ear1, ear2, eye1, eye2);
   } else if (shape === 'undead') {
     // Tall thin body with skull-like head
-    const body = nova64.scene.createCube(0.6 * s, e.color, [mx, 0.8 * s, mz], { roughness: 0.9 });
-    nova64.scene.setScale(body, 0.7, 1.3, 0.5);
-    const head = nova64.scene.createSphere(0.35 * s, e.color, [mx, 1.6 * s, mz], 6, {
-      roughness: 0.9,
-    });
-    const eye1 = nova64.scene.createSphere(
+    const body = createCube(0.6 * s, e.color, [mx, 0.8 * s, mz], { roughness: 0.9 });
+    setScale(body, 0.7, 1.3, 0.5);
+    const head = createSphere(0.35 * s, e.color, [mx, 1.6 * s, mz], 6, { roughness: 0.9 });
+    const eye1 = createSphere(
       0.1 * s,
       0x44ff00,
       [mx - 0.12 * s, 1.7 * s, mz - dz * 0.3 - dx * 0.3],
@@ -1481,7 +1468,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.1 * s,
       0x44ff00,
       [mx + 0.12 * s, 1.7 * s, mz - dz * 0.3 - dx * 0.3],
@@ -1495,20 +1482,12 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     ids.push(body, head, eye1, eye2);
   } else if (shape === 'brute') {
     // Large bulky body with thick arms
-    const body = nova64.scene.createCube(1.0 * s, e.color, [mx, 0.9 * s, mz], { roughness: 0.7 });
-    nova64.scene.setScale(body, 1.2, 1.4, 0.9);
-    const head = nova64.scene.createSphere(0.4 * s, e.color, [mx, 1.8 * s, mz], 6);
-    const arm1 = nova64.scene.createCylinder(0.2 * s, 1.0 * s, e.color, 6, [
-      mx - 0.8 * s,
-      1.0 * s,
-      mz,
-    ]);
-    const arm2 = nova64.scene.createCylinder(0.2 * s, 1.0 * s, e.color, 6, [
-      mx + 0.8 * s,
-      1.0 * s,
-      mz,
-    ]);
-    const eye1 = nova64.scene.createSphere(
+    const body = createCube(1.0 * s, e.color, [mx, 0.9 * s, mz], { roughness: 0.7 });
+    setScale(body, 1.2, 1.4, 0.9);
+    const head = createSphere(0.4 * s, e.color, [mx, 1.8 * s, mz], 6);
+    const arm1 = createCylinder(0.2 * s, 1.0 * s, e.color, 6, [mx - 0.8 * s, 1.0 * s, mz]);
+    const arm2 = createCylinder(0.2 * s, 1.0 * s, e.color, 6, [mx + 0.8 * s, 1.0 * s, mz]);
+    const eye1 = createSphere(
       0.12 * s,
       0xff2200,
       [mx - 0.15 * s, 1.9 * s, mz - dz * 0.35 - dx * 0.35],
@@ -1519,7 +1498,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.12 * s,
       0xff2200,
       [mx + 0.15 * s, 1.9 * s, mz - dz * 0.35 - dx * 0.35],
@@ -1533,15 +1512,15 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     ids.push(body, head, arm1, arm2, eye1, eye2);
   } else if (shape === 'ghost') {
     // Translucent floating form — capsule body for ethereal silhouette
-    const body = nova64.scene.createCapsule(0.5 * s, 0.8 * s, e.color, [mx, 1.2 * s, mz], {
+    const body = createCapsule(0.5 * s, 0.8 * s, e.color, [mx, 1.2 * s, mz], {
       material: 'emissive',
       emissive: e.color,
       emissiveIntensity: 0.4,
     });
-    nova64.scene.setMeshOpacity(body, 0.6);
-    const tail = nova64.scene.createCone(0.5 * s, 1.2 * s, e.color, [mx, 0.3 * s, mz]);
-    nova64.scene.setMeshOpacity(tail, 0.4);
-    const eye1 = nova64.scene.createSphere(
+    setMeshOpacity(body, 0.6);
+    const tail = createCone(0.5 * s, 1.2 * s, e.color, [mx, 0.3 * s, mz]);
+    setMeshOpacity(tail, 0.4);
+    const eye1 = createSphere(
       0.15 * s,
       0xaabbff,
       [mx - 0.2 * s, 1.4 * s, mz - dz * 0.4 - dx * 0.4],
@@ -1552,7 +1531,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1.5,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.15 * s,
       0xaabbff,
       [mx + 0.2 * s, 1.4 * s, mz - dz * 0.4 - dx * 0.4],
@@ -1565,25 +1544,19 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     );
     ids.push(body, tail, eye1, eye2);
     // Ghosts shouldn't cast shadows — ethereal beings
-    for (const id of ids) nova64.scene.setCastShadow(id, false);
+    for (const id of ids) setCastShadow(id, false);
     animatedMeshes.push({ id: body, type: 'bob', baseY: 1.2 * s, speed: 1.5, range: 0.3 });
   } else if (shape === 'caster') {
     // Robed figure with glowing staff
-    const body = nova64.scene.createCone(0.5 * s, 1.8 * s, e.color, [mx, 0.9 * s, mz], {
-      roughness: 0.8,
-    });
-    const head = nova64.scene.createSphere(0.3 * s, e.color, [mx, 2.0 * s, mz], 6);
-    const staff = nova64.scene.createCylinder(0.05 * s, 2.2 * s, 0x886633, 4, [
-      mx + 0.5 * s,
-      1.1 * s,
-      mz,
-    ]);
-    const orb = nova64.scene.createSphere(0.15 * s, 0xff44ff, [mx + 0.5 * s, 2.3 * s, mz], 6, {
+    const body = createCone(0.5 * s, 1.8 * s, e.color, [mx, 0.9 * s, mz], { roughness: 0.8 });
+    const head = createSphere(0.3 * s, e.color, [mx, 2.0 * s, mz], 6);
+    const staff = createCylinder(0.05 * s, 2.2 * s, 0x886633, 4, [mx + 0.5 * s, 1.1 * s, mz]);
+    const orb = createSphere(0.15 * s, 0xff44ff, [mx + 0.5 * s, 2.3 * s, mz], 6, {
       material: 'emissive',
       emissive: 0xff44ff,
       emissiveIntensity: 1.2,
     });
-    const eye1 = nova64.scene.createSphere(
+    const eye1 = createSphere(
       0.08 * s,
       0xff00ff,
       [mx - 0.1 * s, 2.1 * s, mz - dz * 0.25 - dx * 0.25],
@@ -1594,7 +1567,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.08 * s,
       0xff00ff,
       [mx + 0.1 * s, 2.1 * s, mz - dz * 0.25 - dx * 0.25],
@@ -1609,23 +1582,23 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     animatedMeshes.push({ id: orb, type: 'pulse', baseScale: 1, speed: 2, range: 0.3 });
   } else if (shape === 'dragon') {
     // Multi-part dragon: body, neck, head, wings, tail
-    const body = nova64.scene.createCube(1.2 * s, e.color, [mx, 1.0 * s, mz], { roughness: 0.6 });
-    nova64.scene.setScale(body, 1.4, 0.8, 1.8);
-    const neck = nova64.scene.createCylinder(0.25 * s, 0.8 * s, e.color, 6, [
+    const body = createCube(1.2 * s, e.color, [mx, 1.0 * s, mz], { roughness: 0.6 });
+    setScale(body, 1.4, 0.8, 1.8);
+    const neck = createCylinder(0.25 * s, 0.8 * s, e.color, 6, [
       mx,
       1.6 * s,
       mz - dz * 0.6 - dx * 0.6,
     ]);
-    nova64.scene.rotateMesh(neck, 0.4, 0, 0);
-    const head = nova64.scene.createCube(0.5 * s, e.color, [mx, 2.0 * s, mz - dz * 1.0 - dx * 1.0]);
-    nova64.scene.setScale(head, 1, 0.6, 1.5);
+    rotateMesh(neck, 0.4, 0, 0);
+    const head = createCube(0.5 * s, e.color, [mx, 2.0 * s, mz - dz * 1.0 - dx * 1.0]);
+    setScale(head, 1, 0.6, 1.5);
     // Wings
-    const wing1 = nova64.scene.createPlane(1.5 * s, 1.0 * s, e.color, [mx - 1.0 * s, 1.5 * s, mz]);
-    nova64.scene.rotateMesh(wing1, 0, 0, -0.3);
-    const wing2 = nova64.scene.createPlane(1.5 * s, 1.0 * s, e.color, [mx + 1.0 * s, 1.5 * s, mz]);
-    nova64.scene.rotateMesh(wing2, 0, 0, 0.3);
+    const wing1 = createPlane(1.5 * s, 1.0 * s, e.color, [mx - 1.0 * s, 1.5 * s, mz]);
+    rotateMesh(wing1, 0, 0, -0.3);
+    const wing2 = createPlane(1.5 * s, 1.0 * s, e.color, [mx + 1.0 * s, 1.5 * s, mz]);
+    rotateMesh(wing2, 0, 0, 0.3);
     // Eyes
-    const eye1 = nova64.scene.createSphere(
+    const eye1 = createSphere(
       0.12 * s,
       0xffaa00,
       [mx - 0.15 * s, 2.15 * s, mz - dz * 1.3 - dx * 1.3],
@@ -1636,7 +1609,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1.5,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.12 * s,
       0xffaa00,
       [mx + 0.15 * s, 2.15 * s, mz - dz * 1.3 - dx * 1.3],
@@ -1650,10 +1623,10 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
     ids.push(body, neck, head, wing1, wing2, eye1, eye2);
   } else {
     // Default: small humanoid (kobold, etc.)
-    const body = nova64.scene.createCube(0.8 * s, e.color, [mx, 0.7 * s, mz], { roughness: 0.8 });
-    nova64.scene.setScale(body, 0.8, 1.0, 0.6);
-    const head = nova64.scene.createSphere(0.25 * s, e.color, [mx, 1.3 * s, mz], 6);
-    const eye1 = nova64.scene.createSphere(
+    const body = createCube(0.8 * s, e.color, [mx, 0.7 * s, mz], { roughness: 0.8 });
+    setScale(body, 0.8, 1.0, 0.6);
+    const head = createSphere(0.25 * s, e.color, [mx, 1.3 * s, mz], 6);
+    const eye1 = createSphere(
       0.1 * s,
       0xff0000,
       [mx - 0.1 * s, 1.4 * s, mz - dz * 0.2 - dx * 0.2],
@@ -1664,7 +1637,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
         emissiveIntensity: 1,
       }
     );
-    const eye2 = nova64.scene.createSphere(
+    const eye2 = createSphere(
       0.1 * s,
       0xff0000,
       [mx + 0.1 * s, 1.4 * s, mz - dz * 0.2 - dx * 0.2],
@@ -1679,7 +1652,7 @@ function createMonsterMesh(e, mx, mz, dx, dz) {
   }
 
   // Apply N64-style flat shading to monster body mesh for retro low-poly look
-  if (ids.length > 0) nova64.scene.setFlatShading(ids[0], true);
+  if (ids.length > 0) setFlatShading(ids[0], true);
 
   return ids;
 }
@@ -1768,7 +1741,7 @@ function doSpell(caster, spell, target) {
       const dmg = spell.dmg + Math.floor(Math.random() * 4);
       target.hp = Math.max(0, target.hp - dmg);
       triggerScreenFlash(80, 150, 255, 150);
-      nova64.audio.sfx({ wave: 'triangle', freq: 800, dur: 0.3, sweep: -400 }); // icy descend
+      sfx({ wave: 'triangle', freq: 800, dur: 0.3, sweep: -400 }); // icy descend
       return { type: 'damage', dmg, targets: [target] };
     }
     if (spell.name === 'Lightning Bolt') {
@@ -1783,7 +1756,7 @@ function doSpell(caster, spell, target) {
         totalDmg += chain;
       }
       triggerScreenFlash(200, 200, 255, 180);
-      nova64.audio.sfx({ wave: 'square', freq: 1200, dur: 0.15, sweep: -800 }); // electric zap
+      sfx({ wave: 'square', freq: 1200, dur: 0.15, sweep: -800 }); // electric zap
       return { type: 'damage', dmg: totalDmg, targets: [target, ...others] };
     }
     if (spell.name === 'Backstab' || spell.name === 'Smite') {
@@ -1796,9 +1769,7 @@ function doSpell(caster, spell, target) {
         spell.name === 'Smite' ? 180 : 200,
         140
       );
-      nova64.audio.sfx(
-        spell.name === 'Smite' ? { wave: 'sine', freq: 500, dur: 0.3, sweep: 300 } : 'hit'
-      );
+      sfx(spell.name === 'Smite' ? { wave: 'sine', freq: 500, dur: 0.3, sweep: 300 } : 'hit');
       return { type: 'damage', dmg, targets: [target] };
     }
     // AoE
@@ -1811,24 +1782,16 @@ function doSpell(caster, spell, target) {
     }
     if (spell.name === 'Fireball') {
       triggerScreenFlash(255, 120, 30, 180);
-      nova64.audio.sfx({ wave: 'sawtooth', freq: 200, dur: 0.5, sweep: 100 }); // fire roar
+      sfx({ wave: 'sawtooth', freq: 200, dur: 0.5, sweep: 100 }); // fire roar
     } else if (spell.name === 'Turn Undead') {
       triggerScreenFlash(255, 255, 180, 150);
-      nova64.audio.sfx({ wave: 'sine', freq: 600, dur: 0.4, sweep: 200 }); // holy chime
+      sfx({ wave: 'sine', freq: 600, dur: 0.4, sweep: 200 }); // holy chime
     }
     // Use circleCollision for AoE range validation log
     const aoeRange = 3;
     const inAoE = enemies.filter(
       e =>
-        e.hp > 0 &&
-        nova64.physics.circleCollision(
-          px,
-          py,
-          aoeRange,
-          px + Math.random(),
-          py + Math.random(),
-          0.5
-        )
+        e.hp > 0 && circleCollision(px, py, aoeRange, px + Math.random(), py + Math.random(), 0.5)
     );
     return { type: 'damage', dmg: totalDmg, targets, aoeHits: inAoE.length };
   }
@@ -1846,38 +1809,20 @@ function castSpellInCombat(member, spell) {
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name} on ${target.name}! +${spell.amount} HP`);
       triggerScreenFlash(50, 255, 100, 80);
-      nova64.audio.sfx({ wave: 'sine', freq: 400, dur: 0.5, sweep: 200 }); // gentle heal chime
-      spellVFX = {
-        type: 'radial',
-        x: 320,
-        y: 180,
-        timer: 0.5,
-        color: nova64.draw.rgba8(50, 255, 100, 160),
-      };
+      sfx({ wave: 'sine', freq: 400, dur: 0.5, sweep: 200 }); // gentle heal chime
+      spellVFX = { type: 'radial', x: 320, y: 180, timer: 0.5, color: rgba8(50, 255, 100, 160) };
     }
   } else if (spell.type === 'buff') {
     const result = doSpell(member, spell, null);
     if (result) combatLog.push(`${member.name} casts ${spell.name}! Party ATK +${spell.amount}`);
     triggerScreenFlash(255, 220, 80, 80);
-    nova64.audio.sfx({ wave: 'square', freq: 300, dur: 0.3, sweep: 150 }); // power-up buff
-    spellVFX = {
-      type: 'radial',
-      x: 320,
-      y: 100,
-      timer: 0.6,
-      color: nova64.draw.rgba8(255, 220, 80, 180),
-    };
+    sfx({ wave: 'square', freq: 300, dur: 0.3, sweep: 150 }); // power-up buff
+    spellVFX = { type: 'radial', x: 320, y: 100, timer: 0.6, color: rgba8(255, 220, 80, 180) };
   } else if (spell.type === 'buff_def') {
     const result = doSpell(member, spell, null);
     if (result) combatLog.push(`${member.name} casts ${spell.name}! Party DEF +${spell.amount}`);
     triggerScreenFlash(80, 150, 255, 80);
-    spellVFX = {
-      type: 'radial',
-      x: 320,
-      y: 100,
-      timer: 0.6,
-      color: nova64.draw.rgba8(80, 150, 255, 180),
-    };
+    spellVFX = { type: 'radial', x: 320, y: 100, timer: 0.6, color: rgba8(80, 150, 255, 180) };
   } else if (spell.type === 'revive') {
     const result = doSpell(member, spell, null);
     if (result) {
@@ -1892,86 +1837,38 @@ function castSpellInCombat(member, spell) {
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name}! All allies +${spell.amount} HP`);
       triggerScreenFlash(80, 255, 150, 100);
-      nova64.audio.sfx({ wave: 'sine', freq: 500, dur: 0.6, sweep: 250 });
-      spellVFX = {
-        type: 'radial',
-        x: 320,
-        y: 180,
-        timer: 0.7,
-        color: nova64.draw.rgba8(80, 255, 150, 180),
-      };
+      sfx({ wave: 'sine', freq: 500, dur: 0.6, sweep: 250 });
+      spellVFX = { type: 'radial', x: 320, y: 180, timer: 0.7, color: rgba8(80, 255, 150, 180) };
     }
   } else if (spell.type === 'debuff_def') {
     const result = doSpell(member, spell, null);
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name}! Enemy DEF -${spell.amount}`);
       triggerScreenFlash(150, 100, 255, 80);
-      nova64.audio.sfx({ wave: 'triangle', freq: 300, dur: 0.3, sweep: -150 });
-      spellVFX = {
-        type: 'radial',
-        x: 320,
-        y: 80,
-        timer: 0.5,
-        color: nova64.draw.rgba8(150, 100, 255, 160),
-      };
+      sfx({ wave: 'triangle', freq: 300, dur: 0.3, sweep: -150 });
+      spellVFX = { type: 'radial', x: 320, y: 80, timer: 0.5, color: rgba8(150, 100, 255, 160) };
     }
   } else {
     const target = enemies.find(e => e.hp > 0);
     const result = doSpell(member, spell, target);
     if (result) {
       combatLog.push(`${member.name} casts ${spell.name}! ${result.dmg} damage!`);
-      nova64.fx.setBloomStrength(2.0); // spike bloom during spell VFX
+      setBloomStrength(2.0); // spike bloom during spell VFX
       // Burst particles for spell visual impact
-      for (const psId of particleSystems) nova64.fx.burstParticles(psId, 6);
+      for (const psId of particleSystems) burstParticles(psId, 6);
       // Starburst VFX for attack spells
       if (spell.name === 'Fireball') {
-        spellVFX = {
-          type: 'star',
-          x: 320,
-          y: 80,
-          timer: 0.8,
-          color: nova64.draw.rgba8(255, 120, 30, 220),
-        };
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.8, color: rgba8(255, 120, 30, 220) };
       } else if (spell.name === 'Ice Bolt') {
-        spellVFX = {
-          type: 'star',
-          x: 200,
-          y: 80,
-          timer: 0.6,
-          color: nova64.draw.rgba8(80, 180, 255, 220),
-        };
+        spellVFX = { type: 'star', x: 200, y: 80, timer: 0.6, color: rgba8(80, 180, 255, 220) };
       } else if (spell.name === 'Turn Undead') {
-        spellVFX = {
-          type: 'star',
-          x: 320,
-          y: 80,
-          timer: 0.7,
-          color: nova64.draw.rgba8(255, 255, 180, 220),
-        };
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.7, color: rgba8(255, 255, 180, 220) };
       } else if (spell.name === 'Lightning Bolt') {
-        spellVFX = {
-          type: 'star',
-          x: 320,
-          y: 80,
-          timer: 0.6,
-          color: nova64.draw.rgba8(200, 200, 255, 230),
-        };
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.6, color: rgba8(200, 200, 255, 230) };
       } else if (spell.name === 'Backstab') {
-        spellVFX = {
-          type: 'star',
-          x: 280,
-          y: 80,
-          timer: 0.4,
-          color: nova64.draw.rgba8(180, 80, 200, 200),
-        };
+        spellVFX = { type: 'star', x: 280, y: 80, timer: 0.4, color: rgba8(180, 80, 200, 200) };
       } else if (spell.name === 'Smite') {
-        spellVFX = {
-          type: 'star',
-          x: 320,
-          y: 80,
-          timer: 0.6,
-          color: nova64.draw.rgba8(255, 255, 200, 220),
-        };
+        spellVFX = { type: 'star', x: 320, y: 80, timer: 0.6, color: rgba8(255, 255, 200, 220) };
       }
     }
   }
@@ -1988,18 +1885,18 @@ function advanceCombatTurn() {
     }
     totalGold += totalGoldGain;
     combatLog.push(`Victory! +${totalXP} XP, +${totalGoldGain} Gold`);
-    nova64.audio.sfx('powerup');
+    sfx('powerup');
     triggerScreenFlash(255, 220, 100, 100);
 
     // Disable boss effects when combat ends
     if (enemies.some(e => e.isBoss)) {
       bossDefeated.add(floor);
       combatLog.push('The boss has been slain!');
-      nova64.fx.disableChromaticAberration();
+      disableChromaticAberration();
       bossFlowField = null; // clear boss energy field
     }
-    nova64.fx.setBloomStrength(1.0); // restore normal bloom after combat
-    nova64.fx.setBloomRadius(0.4); // restore normal bloom radius
+    setBloomStrength(1.0); // restore normal bloom after combat
+    setBloomRadius(0.4); // restore normal bloom radius
 
     // Distribute XP and check level ups
     for (const m of party) {
@@ -2009,14 +1906,14 @@ function advanceCombatTurn() {
         m.xp -= m.xpNext;
         levelUp(m);
         combatLog.push(`${m.name} leveled up to ${m.level}!`);
-        nova64.audio.sfx('coin');
+        sfx('coin');
       }
     }
 
     // Remove dead monster meshes
     for (const e of enemies) {
       if (e.allMeshes) {
-        for (const id of e.allMeshes) nova64.scene.destroyMesh(id);
+        for (const id of e.allMeshes) destroyMesh(id);
         e.allMeshes = null;
         e.meshBody = null;
       }
@@ -2053,42 +1950,42 @@ function doEnemyTurn() {
   for (const e of enemies) {
     if (e.hp <= 0) continue;
     // Lunge forward animation using moveMesh
-    if (e.meshBody) nova64.scene.moveMesh(e.meshBody, -dx * 0.5, 0, -dz * 0.5);
+    if (e.meshBody) moveMesh(e.meshBody, -dx * 0.5, 0, -dz * 0.5);
     // Pick random alive party member
     const alive = party.filter(m => m.alive);
     if (alive.length === 0) break;
     const target = alive[Math.floor(Math.random() * alive.length)];
     const dmg = doAttack(e, target);
     combatLog.push(`${e.name} hits ${target.name} for ${dmg}!`);
-    nova64.util.triggerShake(shake, e.isBoss ? 0.5 : 0.3);
+    triggerShake(shake, e.isBoss ? 0.5 : 0.3);
     // Glitch effect on all damage hits (stronger for bosses)
-    nova64.fx.enableGlitch(e.isBoss ? 0.7 : 0.4);
+    enableGlitch(e.isBoss ? 0.7 : 0.4);
     glitchTimer = e.isBoss ? 0.5 : 0.25;
     // Varied screen flash and sfx based on monster type
     const shape = e.shape || 'brute';
     if (shape === 'caster' || shape === 'ghost') {
       triggerScreenFlash(120, 50, 255, 120); // purple for magic
-      nova64.audio.sfx({ wave: 'sine', freq: 250, dur: 0.2, sweep: -100 });
+      sfx({ wave: 'sine', freq: 250, dur: 0.2, sweep: -100 });
     } else if (shape === 'dragon') {
       triggerScreenFlash(255, 120, 30, 140); // orange for fire breath
-      nova64.audio.sfx({ wave: 'sawtooth', freq: 100, dur: 0.3, vol: 0.4 });
+      sfx({ wave: 'sawtooth', freq: 100, dur: 0.3, vol: 0.4 });
     } else if (shape === 'undead') {
       triggerScreenFlash(100, 200, 100, 100); // sickly green for undead
-      nova64.audio.sfx('hit');
+      sfx('hit');
     } else {
       triggerScreenFlash(255, 50, 50, 100); // red for physical
-      nova64.audio.sfx('hit');
+      sfx('hit');
     }
     const ti = party.indexOf(target);
     // Trigger hit state (invulnerability flash)
-    if (hitStates && hitStates[ti]) nova64.util.triggerHit(hitStates[ti]);
+    if (hitStates && hitStates[ti]) triggerHit(hitStates[ti]);
     // Boss hits trigger chromatic aberration
     if (e.isBoss) {
-      nova64.fx.enableChromaticAberration(0.008);
+      enableChromaticAberration(0.008);
       chromaTimer = 0.4;
     }
     floatingTexts.spawn(`-${dmg}`, W - 180 + ti * 10, H - 80 + ti * 18, {
-      color: nova64.draw.rgba8(255, 50, 50, 255),
+      color: rgba8(255, 50, 50, 255),
       scale: 2,
       vy: -30,
     });
@@ -2096,10 +1993,10 @@ function doEnemyTurn() {
     if (target.hp <= 0) {
       target.alive = false;
       combatLog.push(`${target.name} falls!`);
-      nova64.audio.sfx('death');
+      sfx('death');
     }
     // Lunge back after attack
-    if (e.meshBody) nova64.scene.moveMesh(e.meshBody, dx * 0.5, 0, dz * 0.5);
+    if (e.meshBody) moveMesh(e.meshBody, dx * 0.5, 0, dz * 0.5);
   }
 
   // Tick buffs
@@ -2140,7 +2037,7 @@ function tryMove(dx, dz) {
   px = nx;
   py = nz;
   stepAnim = 1.0;
-  nova64.audio.sfx({ wave: 'noise', freq: 80, dur: 0.08, vol: 0.15 });
+  sfx({ wave: 'noise', freq: 80, dur: 0.08, vol: 0.15 });
   revealAround(px, py);
   // Track steps in game store
   if (gameStats) gameStats.setState({ steps: gameStats.getState().steps + 1 });
@@ -2149,7 +2046,7 @@ function tryMove(dx, dz) {
   if (tile === T.DOOR) {
     dungeon[nz][nx] = T.FLOOR;
     showFloorMessage('Door opened!');
-    nova64.audio.sfx('select');
+    sfx('select');
   } else if (tile === T.STAIRS_DOWN) {
     // Open merchant shop before descending (floor 2+)
     if (floor >= 1) {
@@ -2157,22 +2054,22 @@ function tryMove(dx, dz) {
     } else {
       enterFloor(floor + 1);
     }
-    nova64.audio.sfx('powerup');
+    sfx('powerup');
     return true;
   } else if (tile === T.STAIRS_UP) {
     if (floor > 1) {
       enterFloor(floor - 1);
-      nova64.audio.sfx('powerup');
+      sfx('powerup');
     } else {
       showFloorMessage('The surface is sealed...');
-      nova64.audio.sfx('error');
+      sfx('error');
     }
     return true;
   } else if (tile === T.CHEST) {
     dungeon[nz][nx] = T.FLOOR;
     // Burst particles on chest open for satisfying feedback
     if (particleSystems.length > 0) {
-      nova64.fx.burstParticles(particleSystems[0], 8, { position: [nx * TILE, 1, nz * TILE] });
+      burstParticles(particleSystems[0], 8, { position: [nx * TILE, 1, nz * TILE] });
     }
     // Chance for equipment drop based on floor tier
     if (Math.random() < 0.4) {
@@ -2187,12 +2084,12 @@ function tryMove(dx, dz) {
           equipItem(target, item);
           showFloorMessage(`${target.name} found ${item.name}!`);
           triggerScreenFlash(255, 220, 50, 120);
-          nova64.audio.sfx('powerup');
+          sfx('powerup');
         } else {
           const goldAmount = 10 + Math.floor(Math.random() * 10 * floor);
           totalGold += goldAmount;
           showFloorMessage(`Found chest: +${goldAmount} Gold!`);
-          nova64.audio.sfx('coin');
+          sfx('coin');
         }
       }
     } else {
@@ -2208,7 +2105,7 @@ function tryMove(dx, dz) {
           showFloorMessage(`Found potion: ${healTarget.name} +${heal} HP`);
         }
       }
-      nova64.audio.sfx('coin');
+      sfx('coin');
     }
   } else if (tile === T.FOUNTAIN) {
     // Restore party AND revive dead members
@@ -2225,20 +2122,20 @@ function tryMove(dx, dz) {
       }
     }
     // Fountain cleansing — briefly disable vignette for a "refreshed" visual
-    nova64.fx.disableVignette();
-    setTimeout(() => nova64.fx.enableVignette(1.4, 0.8), 1200);
+    disableVignette();
+    setTimeout(() => enableVignette(1.4, 0.8), 1200);
     showFloorMessage(
       revived ? 'Fountain revives and restores the party!' : 'Fountain restores the party!'
     );
     triggerScreenFlash(50, 130, 255, 100);
-    nova64.audio.sfx('coin');
+    sfx('coin');
   } else if (tile === T.TRAP) {
     dungeon[nz][nx] = T.FLOOR;
     // Thief can detect and disarm
     const thief = party.find(m => m.alive && m.class === 'Thief');
     if (thief && Math.random() < 0.5 + thief.level * 0.1) {
       showFloorMessage(`${thief.name} disarmed a trap!`);
-      nova64.audio.sfx('select');
+      sfx('select');
     } else {
       const trapDmg = 3 + floor * 2;
       for (const m of party) {
@@ -2248,24 +2145,24 @@ function tryMove(dx, dz) {
       }
       showFloorMessage(`Trap! Party takes ${trapDmg} damage each!`);
       triggerScreenFlash(255, 50, 50, 180);
-      nova64.util.triggerShake(shake, 0.5);
-      nova64.audio.sfx('explosion');
+      triggerShake(shake, 0.5);
+      sfx('explosion');
     }
   } else if (tile === T.BOSS) {
     dungeon[nz][nx] = T.FLOOR;
     startCombat(true);
-    nova64.audio.sfx('error');
+    sfx('error');
     return true;
   }
 
-  // Random encounter — use nova64.util.dist() for distance-based scaling from start
-  const startDist = nova64.util.dist(px, py, dungeonW / 2, dungeonH / 2);
-  const distFactor = nova64.util.remap(Math.min(startDist, 15), 0, 15, 0.5, 1.5);
+  // Random encounter — use dist() for distance-based scaling from start
+  const startDist = dist(px, py, dungeonW / 2, dungeonH / 2);
+  const distFactor = remap(Math.min(startDist, 15), 0, 15, 0.5, 1.5);
   encounterChance += (0.08 + floor * 0.02) * distFactor;
   if (Math.random() < encounterChance) {
     encounterChance = 0;
     startCombat(false);
-    nova64.audio.sfx('error');
+    sfx('error');
   }
 
   return true;
@@ -2281,27 +2178,27 @@ function enterFloor(newFloor) {
     // Victory!
     switchState('victory');
     showFloorMessage('You conquered the dungeon!');
-    nova64.audio.sfx('powerup');
+    sfx('powerup');
     return;
   }
 
   floorTransition = 1.2; // checkerboard wipe effect when entering new floor
-  nova64.util.noiseSeed(floor * 42 + 7); // consistent noise patterns per floor
+  noiseSeed(floor * 42 + 7); // consistent noise patterns per floor
   dungeon = generateDungeon(18 + floor * 2, 18 + floor * 2);
   buildLevel();
 
   // Subtle pixelation effect on deep floors only
-  if (floor >= 7) nova64.fx.enablePixelation(1);
-  else nova64.fx.enablePixelation(0);
+  if (floor >= 7) enablePixelation(1);
+  else enablePixelation(0);
 
   // Richer noise detail on deeper floors for more complex fog wisps
-  nova64.util.noiseDetail(Math.min(2 + floor, 6), 0.5);
+  noiseDetail(Math.min(2 + floor, 6), 0.5);
 
   // Dynamic bloom tuning per floor — deeper = tighter, more intense bloom
-  const bloomRad = nova64.util.remap(floor, 1, 5, 0.5, 0.25);
-  const bloomThresh = nova64.util.remap(floor, 1, 5, 0.3, 0.15);
-  nova64.fx.setBloomRadius(bloomRad);
-  nova64.fx.setBloomThreshold(bloomThresh);
+  const bloomRad = remap(floor, 1, 5, 0.5, 0.25);
+  const bloomThresh = remap(floor, 1, 5, 0.3, 0.15);
+  setBloomRadius(bloomRad);
+  setBloomThreshold(bloomThresh);
   targetYaw = facing * HALF_PI;
   currentYaw = targetYaw;
   updateCamera3D();
@@ -2311,7 +2208,7 @@ function enterFloor(newFloor) {
   showFloorMessage(`Floor ${floor} — ${theme.name}`);
 
   // Create encounter spawner for this floor (scales enemy count per wave)
-  encounterSpawner = nova64.util.createSpawner({
+  encounterSpawner = createSpawner({
     waveInterval: 999, // wave count scales encounters, timer is supplemental
     baseCount: 1 + Math.floor(floor / 2),
     countGrowth: 1,
@@ -2324,7 +2221,7 @@ function enterFloor(newFloor) {
 }
 
 function rebuildMinimap() {
-  minimap = nova64.draw.createMinimap({
+  minimap = createMinimap({
     x: W - 90,
     y: 4,
     width: 82,
@@ -2332,9 +2229,9 @@ function rebuildMinimap() {
     tileW: dungeonW,
     tileH: dungeonH,
     tileScale: Math.max(1, Math.floor(80 / Math.max(dungeonW, dungeonH))),
-    bgColor: nova64.draw.rgba8(0, 0, 0, 200),
-    borderLight: nova64.draw.rgba8(50, 40, 30, 200),
-    borderDark: nova64.draw.rgba8(20, 15, 10, 200),
+    bgColor: rgba8(0, 0, 0, 200),
+    borderLight: rgba8(50, 40, 30, 200),
+    borderDark: rgba8(20, 15, 10, 200),
     fogOfWar: 4,
     follow: {
       get x() {
@@ -2351,19 +2248,19 @@ function rebuildMinimap() {
       get y() {
         return py;
       },
-      color: nova64.draw.rgba8(255, 60, 60, 255),
+      color: rgba8(255, 60, 60, 255),
       blink: true,
     },
     tiles(tx, ty) {
       if (!explored.has(`${tx},${ty}`)) return null;
       const tile = dungeon[ty][tx];
-      if (tile === T.WALL) return nova64.draw.rgba8(60, 50, 40, 220);
-      if (tile === T.STAIRS_DOWN) return nova64.draw.rgba8(50, 100, 200, 255);
-      if (tile === T.STAIRS_UP) return nova64.draw.rgba8(200, 150, 50, 255);
-      if (tile === T.CHEST) return nova64.draw.rgba8(200, 180, 50, 255);
-      if (tile === T.FOUNTAIN) return nova64.draw.rgba8(50, 120, 255, 255);
-      if (tile === T.BOSS) return nova64.draw.rgba8(200, 0, 50, 255);
-      return nova64.draw.rgba8(30, 28, 22, 180);
+      if (tile === T.WALL) return rgba8(60, 50, 40, 220);
+      if (tile === T.STAIRS_DOWN) return rgba8(50, 100, 200, 255);
+      if (tile === T.STAIRS_UP) return rgba8(200, 150, 50, 255);
+      if (tile === T.CHEST) return rgba8(200, 180, 50, 255);
+      if (tile === T.FOUNTAIN) return rgba8(50, 120, 255, 255);
+      if (tile === T.BOSS) return rgba8(200, 0, 50, 255);
+      return rgba8(30, 28, 22, 180);
     },
   });
 }
@@ -2390,7 +2287,7 @@ function showFloorMessage(msg) {
 // ═══════════════════════════════════════════════════════════════════════
 
 function hasSave() {
-  return nova64.data.loadData('wizardry-save') !== null;
+  return loadData('wizardry-save') !== null;
 }
 
 function saveGame() {
@@ -2427,11 +2324,11 @@ function saveGame() {
     explored: [...explored],
     encounterChance,
   };
-  nova64.data.saveData('wizardry-save', data);
+  saveData('wizardry-save', data);
 }
 
 function loadGameSave() {
-  const data = nova64.data.loadData('wizardry-save');
+  const data = loadData('wizardry-save');
   if (!data) return false;
   party = data.party;
   floor = data.floor;
@@ -2453,12 +2350,12 @@ function loadGameSave() {
   rebuildMinimap();
   switchState('explore');
   showFloorMessage(`Floor ${floor} — Game Loaded`);
-  nova64.audio.sfx('confirm');
+  sfx('confirm');
   return true;
 }
 
 function deleteSave() {
-  nova64.data.deleteData('wizardry-save');
+  deleteData('wizardry-save');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -2475,13 +2372,13 @@ function updateCamera3D() {
   const bobX = Math.cos(stepAnim * TWO_PI) * 0.04 * bobAmt;
   const eyeY = 1.6 + bobY;
 
-  const [shakeX, shakeY] = nova64.util.getShakeOffset(shake);
+  const [shakeX, shakeY] = getShakeOffset(shake);
 
   // Apply lateral bob perpendicular to facing direction
   const perpX = -dz * bobX;
   const perpZ = dx * bobX;
-  nova64.camera.setCameraPosition(wx + perpX + shakeX * 0.02, eyeY + shakeY * 0.02, wz + perpZ);
-  nova64.camera.setCameraLookAt([dx * 10, 0, dz * 10]);
+  setCameraPosition(wx + perpX + shakeX * 0.02, eyeY + shakeY * 0.02, wz + perpZ);
+  setCameraLookAt([dx * 10, 0, dz * 10]);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -2490,32 +2387,32 @@ function updateCamera3D() {
 
 export function init() {
   gameState = 'title';
-  stateMachine = nova64.util.createStateMachine('title');
+  stateMachine = createStateMachine('title');
   animTimer = 0;
   enemyDelay = 0;
   autoPlay = false;
 
-  nova64.light.setAmbientLight(0x332222, 0.5);
-  nova64.light.setLightDirection(0, -1, 0);
-  nova64.light.setLightColor(0xaa8866);
-  nova64.light.setFog(0x050308, 3, 25);
-  nova64.camera.setCameraFOV(75);
+  setAmbientLight(0x332222, 0.5);
+  setLightDirection(0, -1, 0);
+  setLightColor(0xaa8866);
+  setFog(0x050308, 3, 25);
+  setCameraFOV(75);
 
-  nova64.audio.setVolume(0.6);
-  nova64.fx.enableRetroEffects({
+  setVolume(0.6);
+  enableRetroEffects({
     bloom: { strength: 1.2, radius: 0.5, threshold: 0.2 },
     vignette: { darkness: 0.9, offset: 0.85 },
     fxaa: true,
     dithering: true,
   });
-  nova64.fx.setBloomRadius(0.5);
-  nova64.fx.setBloomThreshold(0.2);
-  nova64.light.createGradientSkybox(0x0a0515, 0x020108);
-  nova64.light.enableSkyboxAutoAnimate(0.3);
+  setBloomRadius(0.5);
+  setBloomThreshold(0.2);
+  createGradientSkybox(0x0a0515, 0x020108);
+  enableSkyboxAutoAnimate(0.3);
 
-  shake = nova64.util.createShake({ decay: 5 });
-  cooldowns = nova64.util.createCooldownSet({ input: 0.15, move: 0.18 });
-  floatingTexts = nova64.util.createFloatingTextSystem();
+  shake = createShake({ decay: 5 });
+  cooldowns = createCooldownSet({ input: 0.15, move: 0.18 });
+  floatingTexts = createFloatingTextSystem();
 
   // Start new game data but stay on title
   party = createParty();
@@ -2532,22 +2429,22 @@ export function init() {
   particleSystems = [];
   explored = new Set();
   bossDefeated = new Set();
-  hitStates = party.map(() => nova64.util.createHitState({ invulnDuration: 0.6, blinkRate: 8 }));
+  hitStates = party.map(() => createHitState({ invulnDuration: 0.6, blinkRate: 8 }));
   combatFOV = 75; // smooth FOV for combat zoom
   floorTransition = 0; // timer for checkerboard floor entry effect
   chromaTimer = 0;
   glitchTimer = 0;
   spellVFX = null;
   visualPreset = null;
-  msgTimer = nova64.util.createTimer(3.0);
+  msgTimer = createTimer(3.0);
   msgTimer.done = true; // start inactive
-  sparkPool = nova64.util.createPool(30, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: 0 }));
-  floatingTexts3D = nova64.util.createFloatingTextSystem();
+  sparkPool = createPool(30, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: 0 }));
+  floatingTexts3D = createFloatingTextSystem();
   instancedDecor = null;
   bossFlowField = null;
   floorNoiseMap = null;
-  restartButton = nova64.ui.createButton(
-    nova64.ui.centerX(160),
+  restartButton = createButton(
+    centerX(160),
     250,
     160,
     24,
@@ -2558,19 +2455,14 @@ export function init() {
       switchState('explore');
     },
     {
-      normalColor: nova64.draw.rgba8(120, 30, 30, 200),
-      hoverColor: nova64.draw.rgba8(180, 50, 50, 220),
-      textColor: nova64.draw.rgba8(255, 220, 200, 255),
-      borderColor: nova64.draw.rgba8(200, 80, 80, 200),
+      normalColor: rgba8(120, 30, 30, 200),
+      hoverColor: rgba8(180, 50, 50, 220),
+      textColor: rgba8(255, 220, 200, 255),
+      borderColor: rgba8(200, 80, 80, 200),
       rounded: true,
     }
   );
-  gameStats = nova64.data.createGameStore({
-    kills: 0,
-    steps: 0,
-    chestsOpened: 0,
-    fountainsUsed: 0,
-  });
+  gameStats = createGameStore({ kills: 0, steps: 0, chestsOpened: 0, fountainsUsed: 0 });
   lodTorches = [];
   waterShaders = [];
   currentLevelMeshes = [];
@@ -2583,29 +2475,29 @@ export function init() {
 export function update(dt) {
   animTimer += dt;
   if (stateMachine) stateMachine.update(dt);
-  nova64.util.updateCooldowns(cooldowns, dt);
+  updateCooldowns(cooldowns, dt);
   floatingTexts.update(dt);
   if (floatingTexts3D) floatingTexts3D.update(dt);
-  nova64.util.updateShake(shake, dt);
-  nova64.fx.updateParticles(dt);
+  updateShake(shake, dt);
+  updateParticles(dt);
   // Manually animate skybox rotation (animateSkybox API)
-  nova64.light.animateSkybox(dt);
+  animateSkybox(dt);
   // Update LOD levels based on camera distance
-  nova64.scene.updateLODs();
+  updateLODs();
   // Tick encounter spawner timer (updateSpawner API)
   if (encounterSpawner && gameState === 'explore') {
-    nova64.util.updateSpawner(encounterSpawner, dt);
+    updateSpawner(encounterSpawner, dt);
   }
 
   // Tick hit state timers (invulnerability + flash)
   if (hitStates) {
-    for (const hs of hitStates) nova64.util.updateHitState(hs, dt);
+    for (const hs of hitStates) updateHitState(hs, dt);
   }
 
   // Smooth FOV transitions (lerp toward target)
   const targetFOV = gameState === 'combat' && enemies && enemies[0] && enemies[0].isBoss ? 65 : 75;
-  combatFOV = nova64.util.lerp(combatFOV, targetFOV, Math.min(1, dt * 3));
-  nova64.camera.setCameraFOV(combatFOV);
+  combatFOV = lerp(combatFOV, targetFOV, Math.min(1, dt * 3));
+  setCameraFOV(combatFOV);
 
   // Floor transition timer
   if (floorTransition > 0) floorTransition -= dt;
@@ -2636,7 +2528,7 @@ export function update(dt) {
       chromaTimer = 0;
       // Only disable if not in active boss combat
       if (gameState !== 'combat' || !enemies || !enemies.some(e => e.isBoss && e.hp > 0)) {
-        nova64.fx.disableChromaticAberration();
+        disableChromaticAberration();
       }
     }
   }
@@ -2646,10 +2538,10 @@ export function update(dt) {
     glitchTimer -= dt;
     if (glitchTimer <= 0) {
       glitchTimer = 0;
-      nova64.fx.disableGlitch();
+      disableGlitch();
     } else {
       // Fade intensity as timer runs down for smooth decay
-      nova64.fx.setGlitchIntensity(glitchTimer * 2.0);
+      setGlitchIntensity(glitchTimer * 2.0);
     }
   }
 
@@ -2658,16 +2550,16 @@ export function update(dt) {
     for (const am of animatedMeshes) {
       if (am.type === 'bob') {
         const y = am.baseY + Math.sin(animTimer * am.speed) * am.range;
-        const pos = nova64.scene.getPosition(am.id);
-        if (pos) nova64.scene.setPosition(am.id, pos[0], y, pos[2]);
+        const pos = getPosition(am.id);
+        if (pos) setPosition(am.id, pos[0], y, pos[2]);
       } else if (am.type === 'pulse') {
         const s = am.baseScale + Math.sin(animTimer * am.speed) * am.range;
-        nova64.scene.setScale(am.id, s, s, s);
+        setScale(am.id, s, s, s);
       } else if (am.type === 'spin') {
-        nova64.scene.rotateMesh(am.id, 0, dt * am.speed, 0);
+        rotateMesh(am.id, 0, dt * am.speed, 0);
         // Use getRotation to query spin state — reverse direction when past full rotation
-        const rot = nova64.scene.getRotation(am.id);
-        if (rot && rot.y > TWO_PI) nova64.scene.setRotation(am.id, rot.x, 0, rot.z);
+        const rot = getRotation(am.id);
+        if (rot && rot.y > TWO_PI) setRotation(am.id, rot.x, 0, rot.z);
       }
     }
   }
@@ -2677,16 +2569,11 @@ export function update(dt) {
     for (const t of torchLights) {
       if (t && t.lightId) {
         // Flicker by randomly varying color temperature
-        nova64.light.setPointLightColor(t.lightId, Math.random() > 0.9 ? 0xff6600 : 0xff8833);
+        setPointLightColor(t.lightId, Math.random() > 0.9 ? 0xff6600 : 0xff8833);
         // Subtle position sway for living flame feel
         const swayX = t.wx + Math.sin(animTimer * 3 + t.wz) * 0.08;
         const swayZ = t.wz + Math.cos(animTimer * 2.5 + t.wx) * 0.08;
-        nova64.light.setPointLightPosition(
-          t.lightId,
-          swayX,
-          2.2 + Math.sin(animTimer * 4) * 0.05,
-          swayZ
-        );
+        setPointLightPosition(t.lightId, swayX, 2.2 + Math.sin(animTimer * 4) * 0.05, swayZ);
       }
     }
   }
@@ -2694,18 +2581,14 @@ export function update(dt) {
   // Animate water shader uniforms (createShaderMaterial + updateShaderUniform)
   if (waterShaders) {
     for (const ws of waterShaders) {
-      nova64.shader.updateShaderUniform(ws.shaderId, 'time', animTimer);
+      updateShaderUniform(ws.shaderId, 'time', animTimer);
     }
   }
 
   // Ambient single-particle emission — occasional dust motes near player
   if (gameState === 'explore' && particleSystems.length > 0 && Math.random() < 0.03) {
-    nova64.fx.emitParticle(particleSystems[0], {
-      position: [
-        px * TILE + nova64.util.randRange(-2, 2),
-        nova64.util.randRange(0.5, 2.5),
-        py * TILE + nova64.util.randRange(-2, 2),
-      ],
+    emitParticle(particleSystems[0], {
+      position: [px * TILE + randRange(-2, 2), randRange(0.5, 2.5), py * TILE + randRange(-2, 2)],
     });
   }
 
@@ -2727,13 +2610,13 @@ export function update(dt) {
   } else if (gameState === 'shop') {
     updateShop(dt);
   } else if (gameState === 'gameover') {
-    if (nova64.input.keyp('Space') && nova64.util.cooldownReady(cooldowns.input)) {
-      nova64.util.useCooldown(cooldowns.input);
+    if (keyp('Space') && cooldownReady(cooldowns.input)) {
+      useCooldown(cooldowns.input);
       init();
     }
   } else if (gameState === 'victory') {
-    if (nova64.input.keyp('Space') && nova64.util.cooldownReady(cooldowns.input)) {
-      nova64.util.useCooldown(cooldowns.input);
+    if (keyp('Space') && cooldownReady(cooldowns.input)) {
+      useCooldown(cooldowns.input);
       init();
     }
   }
@@ -2745,7 +2628,7 @@ export function update(dt) {
     spellVFX.timer -= dt;
     if (spellVFX.timer <= 0) {
       spellVFX = null;
-      nova64.fx.setBloomStrength(1.0); // restore bloom after spell VFX fades
+      setBloomStrength(1.0); // restore bloom after spell VFX fades
     }
   }
 
@@ -2760,49 +2643,49 @@ function updateTitle(dt) {
   const camZ = -2 + Math.sin(t * 0.15) * -8;
   const camX = Math.sin(t * 0.4) * 1.2;
   const camY = 0.8 + Math.sin(t * 0.6) * 0.25;
-  nova64.camera.setCameraPosition(camX, camY, camZ);
-  nova64.camera.setCameraTarget(Math.sin(t * 0.2) * 0.5, 0.6, camZ - 8);
+  setCameraPosition(camX, camY, camZ);
+  setCameraTarget(Math.sin(t * 0.2) * 0.5, 0.6, camZ - 8);
 
   // Animate portal (spin the torus — second-to-last title mesh)
   if (titleMeshes.length >= 2) {
     const portalId = titleMeshes[titleMeshes.length - 2];
-    nova64.scene.rotateMesh(portalId, dt * 0.3, dt * 0.7, 0);
+    rotateMesh(portalId, dt * 0.3, dt * 0.7, 0);
     // Pulse the glow sphere
     const glowId = titleMeshes[titleMeshes.length - 1];
     const s = 0.7 + Math.sin(t * 2) * 0.15;
-    nova64.scene.setScale(glowId, s, s, s);
+    setScale(glowId, s, s, s);
   }
 
   // Flickering torch lights
   for (let i = 0; i < titleLights.length - 1; i++) {
-    nova64.light.setPointLightColor(titleLights[i], Math.random() > 0.85 ? 0xff6600 : 0xff8833);
+    setPointLightColor(titleLights[i], Math.random() > 0.85 ? 0xff6600 : 0xff8833);
   }
 
   // Emit floating ember particles from torch positions
   if (titleParticles.length > 0 && Math.random() < 0.15) {
     const side = Math.random() > 0.5 ? 2.2 : -2.2;
     const z = -4 - Math.random() * 16;
-    nova64.fx.emitParticle(titleParticles[0], {
+    emitParticle(titleParticles[0], {
       position: [side + (Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 1.5, z],
     });
   }
 
-  if (nova64.input.keyp('KeyC') && hasSave()) {
+  if (keyp('KeyC') && hasSave()) {
     clearTitleScene();
     loadGameSave();
-  } else if (nova64.input.keyp('Space') || nova64.input.keyp('Enter')) {
+  } else if (keyp('Space') || keyp('Enter')) {
     clearTitleScene();
     deleteSave();
     enterFloor(1);
     switchState('explore');
-    nova64.audio.sfx('confirm');
+    sfx('confirm');
   }
 }
 
 function updateExplore(dt) {
-  if (!nova64.util.cooldownReady(cooldowns.move)) {
+  if (!cooldownReady(cooldowns.move)) {
     // still in cooldown, but check non-move inputs
-    if (nova64.input.keyp('KeyI') || nova64.input.keyp('Tab')) switchState('inventory');
+    if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
     updateCamera3D();
     return;
   }
@@ -2811,57 +2694,43 @@ function updateExplore(dt) {
 
   // Movement (keyboard + gamepad left stick)
   let moved = false;
-  const stickY = nova64.input.leftStickY();
-  const stickX = nova64.input.leftStickX();
-  if (
-    nova64.input.key('KeyW') ||
-    nova64.input.key('ArrowUp') ||
-    stickY < -0.5 ||
-    nova64.input.btn(2)
-  ) {
+  const stickY = leftStickY();
+  const stickX = leftStickX();
+  if (key('KeyW') || key('ArrowUp') || stickY < -0.5 || btn(2)) {
     moved = tryMove(dx, dz);
-  } else if (
-    nova64.input.key('KeyS') ||
-    nova64.input.key('ArrowDown') ||
-    stickY > 0.5 ||
-    nova64.input.btn(3)
-  ) {
+  } else if (key('KeyS') || key('ArrowDown') || stickY > 0.5 || btn(3)) {
     moved = tryMove(-dx, -dz);
-  } else if (nova64.input.key('KeyA') || stickX < -0.5) {
+  } else if (key('KeyA') || stickX < -0.5) {
     // Strafe left
     moved = tryMove(dz, -dx);
-  } else if (nova64.input.key('KeyD') || stickX > 0.5) {
+  } else if (key('KeyD') || stickX > 0.5) {
     // Strafe right
     moved = tryMove(-dz, dx);
   }
 
   // Turning (keyp for discrete 90° snaps, or right stick for gamepad)
-  const rStickX = nova64.input.rightStickX();
-  if (
-    nova64.input.keyp('ArrowLeft') ||
-    nova64.input.keyp('KeyQ') ||
-    (rStickX < -0.5 && nova64.util.cooldownReady(cooldowns.input))
-  ) {
+  const rStickX = rightStickX();
+  if (keyp('ArrowLeft') || keyp('KeyQ') || (rStickX < -0.5 && cooldownReady(cooldowns.input))) {
     facing = (facing + 3) % 4; // turn left
     targetYaw = facing * HALF_PI;
     cooldowns.move.remaining = cooldowns.move.duration;
-    if (rStickX < -0.5) nova64.util.useCooldown(cooldowns.input);
+    if (rStickX < -0.5) useCooldown(cooldowns.input);
   } else if (
-    nova64.input.keyp('ArrowRight') ||
-    nova64.input.keyp('KeyE') ||
-    (rStickX > 0.5 && nova64.util.cooldownReady(cooldowns.input))
+    keyp('ArrowRight') ||
+    keyp('KeyE') ||
+    (rStickX > 0.5 && cooldownReady(cooldowns.input))
   ) {
     facing = (facing + 1) % 4; // turn right
     targetYaw = facing * HALF_PI;
     cooldowns.move.remaining = cooldowns.move.duration;
-    if (rStickX > 0.5) nova64.util.useCooldown(cooldowns.input);
+    if (rStickX > 0.5) useCooldown(cooldowns.input);
   }
 
-  if (nova64.input.keyp('KeyI') || nova64.input.keyp('Tab')) switchState('inventory');
+  if (keyp('KeyI') || keyp('Tab')) switchState('inventory');
 
   // Click-to-inspect: raycast from camera on mouse click to identify tile ahead
-  if (nova64.input.mousePressed() && nova64.input.mouseDown()) {
-    const hit = nova64.scene.raycastFromCamera(nova64.input.mouseX(), nova64.input.mouseY());
+  if (mousePressed() && mouseDown()) {
+    const hit = raycastFromCamera(mouseX(), mouseY());
     if (hit && hit.distance < TILE * 3) {
       const tileX = Math.round(hit.point.x / TILE);
       const tileZ = Math.round(hit.point.z / TILE);
@@ -2878,9 +2747,9 @@ function updateExplore(dt) {
 
   // Ambient dungeon sounds (occasional drips and distant rumbles)
   if (Math.random() < 0.004) {
-    nova64.audio.sfx({ wave: 'sine', freq: 800 + Math.random() * 400, dur: 0.06, vol: 0.08 }); // water drip
+    sfx({ wave: 'sine', freq: 800 + Math.random() * 400, dur: 0.06, vol: 0.08 }); // water drip
   } else if (Math.random() < 0.002) {
-    nova64.audio.sfx({ wave: 'noise', freq: 40, dur: 0.3, vol: 0.06 }); // distant rumble
+    sfx({ wave: 'noise', freq: 40, dur: 0.3, vol: 0.06 }); // distant rumble
   }
 
   updateCamera3D();
@@ -2896,9 +2765,9 @@ function updateCombat(dt) {
   }
 
   if (combatAction === 'result') {
-    if (nova64.input.keyp('Space') && nova64.util.useCooldown(cooldowns.input)) {
+    if (keyp('Space') && useCooldown(cooldowns.input)) {
       clearMonsterMeshes();
-      nova64.audio.setVolume(0.6); // quieter in exploration
+      setVolume(0.6); // quieter in exploration
       if (party.every(m => !m.alive)) {
         switchState('gameover');
       } else {
@@ -2910,27 +2779,27 @@ function updateCombat(dt) {
   }
 
   // Toggle auto-play
-  if (nova64.input.keyp('KeyA')) {
+  if (keyp('KeyA')) {
     autoPlay = !autoPlay;
     combatLog.push(autoPlay ? 'AUTO-COMBAT ON' : 'AUTO-COMBAT OFF');
   }
 
-  if (combatAction === 'choose' && nova64.util.cooldownReady(cooldowns.input)) {
+  if (combatAction === 'choose' && cooldownReady(cooldowns.input)) {
     const member = party[combatTurn];
 
     // Auto-play: automatically attack a random living enemy
     if (autoPlay) {
-      nova64.util.useCooldown(cooldowns.input);
+      useCooldown(cooldowns.input);
       const target = enemies.filter(e => e.hp > 0);
       if (target.length > 0) {
         const t = target[Math.floor(Math.random() * target.length)];
         const dmg = doAttack(member, t);
         combatLog.push(`${member.name} hits ${t.name} for ${dmg}!`);
-        nova64.util.triggerShake(shake, 0.2);
+        triggerShake(shake, 0.2);
         const sparkX = 100 + t.id * 160;
-        spawnSparks(sparkX, 30, nova64.draw.rgba8(255, 200, 80, 255), 5);
+        spawnSparks(sparkX, 30, rgba8(255, 200, 80, 255), 5);
         floatingTexts.spawn(`-${dmg}`, sparkX, 40, {
-          color: nova64.draw.rgba8(255, 80, 80, 255),
+          color: rgba8(255, 80, 80, 255),
           scale: 2,
           vy: -40,
         });
@@ -2938,10 +2807,10 @@ function updateCombat(dt) {
           combatLog.push(`${t.name} defeated!`);
           if (gameStats) gameStats.setState({ kills: gameStats.getState().kills + 1 });
           if (t.allMeshes) {
-            for (const id of t.allMeshes) nova64.scene.setMeshVisible(id, false);
+            for (const id of t.allMeshes) setMeshVisible(id, false);
             const meshesToDestroy = [...t.allMeshes];
             setTimeout(() => {
-              for (const id of meshesToDestroy) nova64.scene.destroyMesh(id);
+              for (const id of meshesToDestroy) destroyMesh(id);
             }, 400);
             t.allMeshes = null;
             t.meshBody = null;
@@ -2949,19 +2818,19 @@ function updateCombat(dt) {
         }
       }
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Digit1') || nova64.input.keyp('KeyZ') || nova64.input.btnp(4)) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit1') || keyp('KeyZ') || btnp(4)) {
+      useCooldown(cooldowns.input);
       // Attack
       combatAction = 'target';
       selectedTarget = enemies.findIndex(e => e.hp > 0);
-    } else if (nova64.input.keyp('Digit2') || nova64.input.keyp('KeyX') || nova64.input.btnp(5)) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit2') || keyp('KeyX') || btnp(5)) {
+      useCooldown(cooldowns.input);
       // Cast spell (if caster)
       if (member.maxMp > 0) {
         combatAction = 'spell';
       }
-    } else if (nova64.input.keyp('Digit3') || nova64.input.keyp('KeyC') || nova64.input.btnp(6)) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit3') || keyp('KeyC') || btnp(6)) {
+      useCooldown(cooldowns.input);
       // Defend — skip turn, boost def temporarily
       member.buffDef += 3;
       member.buffTimer = Math.max(member.buffTimer, 2);
@@ -2970,11 +2839,11 @@ function updateCombat(dt) {
     }
   }
 
-  if (combatAction === 'target' && nova64.util.cooldownReady(cooldowns.input)) {
+  if (combatAction === 'target' && cooldownReady(cooldowns.input)) {
     // Mouse click targeting — click on enemy name area at top
-    if (nova64.input.mousePressed()) {
-      const mx = nova64.input.mouseX(),
-        my = nova64.input.mouseY();
+    if (mousePressed()) {
+      const mx = mouseX(),
+        my = mouseY();
       if (my < 40) {
         for (let i = 0; i < enemies.length; i++) {
           const ex = 20 + i * 200;
@@ -2985,8 +2854,8 @@ function updateCombat(dt) {
         }
       }
     }
-    if (nova64.input.keyp('ArrowUp') || nova64.input.keyp('KeyW')) {
-      nova64.util.useCooldown(cooldowns.input);
+    if (keyp('ArrowUp') || keyp('KeyW')) {
+      useCooldown(cooldowns.input);
       // Prev enemy
       for (let i = selectedTarget - 1; i >= 0; i--) {
         if (enemies[i].hp > 0) {
@@ -2994,8 +2863,8 @@ function updateCombat(dt) {
           break;
         }
       }
-    } else if (nova64.input.keyp('ArrowDown') || nova64.input.keyp('KeyS')) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('ArrowDown') || keyp('KeyS')) {
+      useCooldown(cooldowns.input);
       // Next enemy
       for (let i = selectedTarget + 1; i < enemies.length; i++) {
         if (enemies[i].hp > 0) {
@@ -3003,12 +2872,8 @@ function updateCombat(dt) {
           break;
         }
       }
-    } else if (
-      nova64.input.keyp('Space') ||
-      nova64.input.keyp('Enter') ||
-      nova64.input.keyp('KeyZ')
-    ) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
+      useCooldown(cooldowns.input);
       // Confirm attack
       const member = party[combatTurn];
       const target = enemies[selectedTarget];
@@ -3019,23 +2884,23 @@ function updateCombat(dt) {
           ? `${member.name} CRITS ${target.name} for ${dmg}!`
           : `${member.name} hits ${target.name} for ${dmg}!`
       );
-      nova64.util.triggerShake(shake, isCrit ? 0.35 : 0.2);
-      nova64.audio.sfx(isCrit ? 'explosion' : 'hit');
+      triggerShake(shake, isCrit ? 0.35 : 0.2);
+      sfx(isCrit ? 'explosion' : 'hit');
       const tgtX = 100 + selectedTarget * 160;
       spawnSparks(
         tgtX,
         30,
-        isCrit ? nova64.draw.rgba8(255, 255, 100, 255) : nova64.draw.rgba8(255, 200, 80, 255),
+        isCrit ? rgba8(255, 255, 100, 255) : rgba8(255, 200, 80, 255),
         isCrit ? 10 : 6
       );
       floatingTexts.spawn(isCrit ? `CRIT -${dmg}` : `-${dmg}`, tgtX, 40, {
-        color: isCrit ? nova64.draw.rgba8(255, 255, 80, 255) : nova64.draw.rgba8(255, 80, 80, 255),
+        color: isCrit ? rgba8(255, 255, 80, 255) : rgba8(255, 80, 80, 255),
         scale: isCrit ? 3 : 2,
         vy: -40,
       });
       // 3D floating damage above monster in world space (drawFloatingTexts3D)
       if (floatingTexts3D && target.meshBody) {
-        const mpos = nova64.scene.getPosition(target.meshBody);
+        const mpos = getPosition(target.meshBody);
         if (mpos) {
           floatingTexts3D.spawn(`-${dmg}`, mpos[0], mpos[1] + 1.5, {
             z: mpos[2],
@@ -3048,117 +2913,117 @@ function updateCombat(dt) {
 
       if (target.hp <= 0) {
         combatLog.push(`${target.name} defeated!`);
-        nova64.audio.sfx('explosion');
+        sfx('explosion');
         triggerScreenFlash(255, 200, 50, 120);
         if (gameStats) gameStats.setState({ kills: gameStats.getState().kills + 1 });
         if (target.allMeshes) {
           // Blink out death animation: hide meshes, then destroy after delay
-          for (const id of target.allMeshes) nova64.scene.setMeshVisible(id, false);
+          for (const id of target.allMeshes) setMeshVisible(id, false);
           const meshesToDestroy = [...target.allMeshes];
           setTimeout(() => {
-            for (const id of meshesToDestroy) nova64.scene.destroyMesh(id);
+            for (const id of meshesToDestroy) destroyMesh(id);
           }, 400);
           target.allMeshes = null;
           target.meshBody = null;
         }
       }
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Escape') || nova64.input.keyp('Backspace')) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Escape') || keyp('Backspace')) {
+      useCooldown(cooldowns.input);
       combatAction = 'choose';
     }
   }
 
-  if (combatAction === 'spell' && nova64.util.cooldownReady(cooldowns.input)) {
+  if (combatAction === 'spell' && cooldownReady(cooldowns.input)) {
     const member = party[combatTurn];
     const available = Object.values(SPELLS).filter(
       s => s.class === member.class && member.mp >= s.cost
     );
 
-    if (nova64.input.keyp('Digit1') && available.length > 0) {
-      nova64.util.useCooldown(cooldowns.input);
+    if (keyp('Digit1') && available.length > 0) {
+      useCooldown(cooldowns.input);
       const spell = available[0];
-      nova64.audio.sfx('laser');
+      sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Digit2') && available.length > 1) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit2') && available.length > 1) {
+      useCooldown(cooldowns.input);
       const spell = available[1];
-      nova64.audio.sfx('laser');
+      sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Digit3') && available.length > 2) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit3') && available.length > 2) {
+      useCooldown(cooldowns.input);
       const spell = available[2];
-      nova64.audio.sfx('laser');
+      sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Digit4') && available.length > 3) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit4') && available.length > 3) {
+      useCooldown(cooldowns.input);
       const spell = available[3];
-      nova64.audio.sfx('laser');
+      sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Digit5') && available.length > 4) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Digit5') && available.length > 4) {
+      useCooldown(cooldowns.input);
       const spell = available[4];
-      nova64.audio.sfx('laser');
+      sfx('laser');
       castSpellInCombat(member, spell);
       advanceCombatTurn();
-    } else if (nova64.input.keyp('Escape') || nova64.input.keyp('Backspace')) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Escape') || keyp('Backspace')) {
+      useCooldown(cooldowns.input);
       combatAction = 'choose';
     }
   }
 }
 
 function updateInventory(dt) {
-  if (nova64.input.keyp('KeyI') || nova64.input.keyp('Tab') || nova64.input.keyp('Escape')) {
-    nova64.audio.setVolume(0.6); // restore exploration volume
+  if (keyp('KeyI') || keyp('Tab') || keyp('Escape')) {
+    setVolume(0.6); // restore exploration volume
     switchState('explore');
   }
-  if (nova64.input.keyp('KeyS')) {
+  if (keyp('KeyS')) {
     saveGame();
     showFloorMessage('Game saved!');
-    nova64.audio.sfx('confirm');
+    sfx('confirm');
   }
   // Toggle visual preset mode: V cycles null → n64 → psx → minimal → null
-  if (nova64.input.keyp('KeyV')) {
+  if (keyp('KeyV')) {
     if (!visualPreset) {
       visualPreset = 'n64';
-      nova64.fx.enableN64Mode();
-      nova64.fx.enableFXAA();
+      enableN64Mode();
+      enableFXAA();
       showFloorMessage('N64 Mode enabled');
     } else if (visualPreset === 'n64') {
       visualPreset = 'psx';
-      nova64.fx.disablePresetMode();
-      nova64.fx.enablePSXMode();
-      nova64.fx.enableFXAA();
+      disablePresetMode();
+      enablePSXMode();
+      enableFXAA();
       showFloorMessage('PSX Mode enabled');
     } else if (visualPreset === 'psx') {
       visualPreset = 'lowpoly';
-      nova64.fx.disablePresetMode();
-      nova64.fx.enableLowPolyMode();
-      nova64.fx.enableFXAA();
+      disablePresetMode();
+      enableLowPolyMode();
+      enableFXAA();
       showFloorMessage('Low-Poly Mode enabled');
     } else if (visualPreset === 'lowpoly') {
       visualPreset = 'dithered';
-      nova64.fx.disablePresetMode();
-      nova64.fx.enableDithering(true);
+      disablePresetMode();
+      enableDithering(true);
       showFloorMessage('Dithered Mode enabled');
     } else if (visualPreset === 'dithered') {
       visualPreset = 'minimal';
-      nova64.fx.enableDithering(false);
-      nova64.fx.disablePresetMode();
-      nova64.fx.disableBloom();
-      nova64.fx.disableFXAA();
-      if (nova64.fx.isEffectsEnabled()) showFloorMessage('Minimal Mode — effects disabled');
+      enableDithering(false);
+      disablePresetMode();
+      disableBloom();
+      disableFXAA();
+      if (isEffectsEnabled()) showFloorMessage('Minimal Mode — effects disabled');
       else showFloorMessage('Minimal Mode — no post-FX');
     } else {
       visualPreset = null;
-      nova64.fx.disablePresetMode();
-      nova64.fx.enableBloom(1.0, 0.4, 0.25); // explicitly re-enable bloom
-      nova64.fx.enableRetroEffects({
+      disablePresetMode();
+      enableBloom(1.0, 0.4, 0.25); // explicitly re-enable bloom
+      enableRetroEffects({
         bloom: { strength: 1.0, radius: 0.4, threshold: 0.25 },
         vignette: { darkness: 1.4, offset: 0.8 },
         fxaa: true,
@@ -3166,7 +3031,7 @@ function updateInventory(dt) {
       });
       showFloorMessage('Default mode restored');
     }
-    nova64.audio.sfx('select');
+    sfx('select');
   }
 }
 
@@ -3183,13 +3048,13 @@ function openShop(nextFloor) {
   shopCursor = 0;
   shopTarget = -1; // -1 = browsing, 0+ = selecting party member
   switchState('shop');
-  nova64.audio.setVolume(0.5); // quieter in shop
-  nova64.fx.setBloomRadius(0.6); // softer bloom in shop atmosphere
-  nova64.fx.setBloomThreshold(0.35);
-  nova64.light.clearFog(); // no fog in the merchant area — bright and welcoming
-  nova64.light.createSolidSkybox(0x1a1020); // dark merchant atmosphere
-  nova64.light.disableSkyboxAutoAnimate(); // still skybox in shop
-  nova64.audio.sfx('coin');
+  setVolume(0.5); // quieter in shop
+  setBloomRadius(0.6); // softer bloom in shop atmosphere
+  setBloomThreshold(0.35);
+  clearFog(); // no fog in the merchant area — bright and welcoming
+  createSolidSkybox(0x1a1020); // dark merchant atmosphere
+  disableSkyboxAutoAnimate(); // still skybox in shop
+  sfx('coin');
 }
 
 function applyShopItem(item, target) {
@@ -3226,147 +3091,108 @@ function applyShopItem(item, target) {
 }
 
 function updateShop(dt) {
-  if (!nova64.util.cooldownReady(cooldowns.input)) return;
+  if (!cooldownReady(cooldowns.input)) return;
 
   if (shopTarget >= 0) {
     // Selecting party member target (keyboard + right stick Y)
-    const tgtStickY = nova64.input.rightStickY();
-    if (
-      nova64.input.keyp('ArrowUp') ||
-      nova64.input.keyp('KeyW') ||
-      (tgtStickY < -0.5 && nova64.util.cooldownReady(cooldowns.input))
-    ) {
-      nova64.util.useCooldown(cooldowns.input);
+    const tgtStickY = rightStickY();
+    if (keyp('ArrowUp') || keyp('KeyW') || (tgtStickY < -0.5 && cooldownReady(cooldowns.input))) {
+      useCooldown(cooldowns.input);
       shopTarget = (shopTarget + party.length - 1) % party.length;
     } else if (
-      nova64.input.keyp('ArrowDown') ||
-      nova64.input.keyp('KeyS') ||
-      (tgtStickY > 0.5 && nova64.util.cooldownReady(cooldowns.input))
+      keyp('ArrowDown') ||
+      keyp('KeyS') ||
+      (tgtStickY > 0.5 && cooldownReady(cooldowns.input))
     ) {
-      nova64.util.useCooldown(cooldowns.input);
+      useCooldown(cooldowns.input);
       shopTarget = (shopTarget + 1) % party.length;
-    } else if (
-      nova64.input.keyp('Space') ||
-      nova64.input.keyp('Enter') ||
-      nova64.input.keyp('KeyZ')
-    ) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
+      useCooldown(cooldowns.input);
       const item = shopItems[shopCursor];
       const target = party[shopTarget];
       // Validate: revive only on dead, hp/mp/buff only on alive
       if (item.effect === 'revive' && target.alive) {
         showFloorMessage(`${target.name} is already alive!`);
-        nova64.audio.sfx('error');
+        sfx('error');
       } else if (item.effect !== 'revive' && item.effect !== 'party_hp' && !target.alive) {
         showFloorMessage(`${target.name} has fallen...`);
-        nova64.audio.sfx('error');
+        sfx('error');
       } else {
         if (applyShopItem(item, target)) {
           totalGold -= item.cost;
-          nova64.audio.sfx('coin');
+          sfx('coin');
           triggerScreenFlash(50, 200, 100, 80);
         }
       }
       shopTarget = -1;
-    } else if (nova64.input.keyp('Escape') || nova64.input.keyp('Backspace')) {
-      nova64.util.useCooldown(cooldowns.input);
+    } else if (keyp('Escape') || keyp('Backspace')) {
+      useCooldown(cooldowns.input);
       shopTarget = -1;
     }
     return;
   }
 
   // Browsing items (keyboard + gamepad via gamepadAxis)
-  const shopStickY = nova64.input.gamepadAxis('leftY');
-  if (
-    nova64.input.keyp('ArrowUp') ||
-    nova64.input.keyp('KeyW') ||
-    (shopStickY < -0.5 && nova64.util.cooldownReady(cooldowns.input))
-  ) {
-    nova64.util.useCooldown(cooldowns.input);
+  const shopStickY = gamepadAxis('leftY');
+  if (keyp('ArrowUp') || keyp('KeyW') || (shopStickY < -0.5 && cooldownReady(cooldowns.input))) {
+    useCooldown(cooldowns.input);
     shopCursor = (shopCursor + shopItems.length - 1) % shopItems.length;
   } else if (
-    nova64.input.keyp('ArrowDown') ||
-    nova64.input.keyp('KeyS') ||
-    (shopStickY > 0.5 && nova64.util.cooldownReady(cooldowns.input))
+    keyp('ArrowDown') ||
+    keyp('KeyS') ||
+    (shopStickY > 0.5 && cooldownReady(cooldowns.input))
   ) {
-    nova64.util.useCooldown(cooldowns.input);
+    useCooldown(cooldowns.input);
     shopCursor = (shopCursor + 1) % shopItems.length;
-  } else if (
-    nova64.input.keyp('Space') ||
-    nova64.input.keyp('Enter') ||
-    nova64.input.keyp('KeyZ')
-  ) {
-    nova64.util.useCooldown(cooldowns.input);
+  } else if (keyp('Space') || keyp('Enter') || keyp('KeyZ')) {
+    useCooldown(cooldowns.input);
     const item = shopItems[shopCursor];
     if (totalGold < item.cost) {
       showFloorMessage('Not enough gold!');
-      nova64.audio.sfx('error');
+      sfx('error');
     } else if (item.effect === 'party_hp') {
       // Party-wide items apply immediately, no target needed
       if (applyShopItem(item, null)) {
         totalGold -= item.cost;
-        nova64.audio.sfx('coin');
+        sfx('coin');
         triggerScreenFlash(50, 200, 100, 80);
       }
     } else {
       // Need to pick a target
       shopTarget = 0;
     }
-  } else if (
-    nova64.input.keyp('Escape') ||
-    nova64.input.keyp('Backspace') ||
-    nova64.input.keyp('KeyX')
-  ) {
-    nova64.util.useCooldown(cooldowns.input);
+  } else if (keyp('Escape') || keyp('Backspace') || keyp('KeyX')) {
+    useCooldown(cooldowns.input);
     // Leave shop → continue to next floor
-    nova64.audio.setVolume(0.6); // restore exploration volume
-    nova64.fx.setBloomRadius(0.4); // restore exploration bloom
-    nova64.fx.setBloomThreshold(0.25);
+    setVolume(0.6); // restore exploration volume
+    setBloomRadius(0.4); // restore exploration bloom
+    setBloomThreshold(0.25);
     // Fog will be restored in enterFloor → buildLevel
     const nextFloor = floor + 1;
     enterFloor(nextFloor);
     switchState('explore');
-    nova64.audio.sfx('confirm');
+    sfx('confirm');
   }
 }
 
 function drawShopUI() {
-  nova64.draw.drawGradient(
-    0,
-    0,
-    W,
-    H,
-    nova64.draw.rgba8(8, 5, 20, 200),
-    nova64.draw.rgba8(20, 15, 5, 200)
-  );
+  drawGradient(0, 0, W, H, rgba8(8, 5, 20, 200), rgba8(20, 15, 5, 200));
 
-  nova64.draw.drawPanel(60, 20, W - 120, H - 40, {
-    bgColor: nova64.draw.rgba8(15, 12, 25, 240),
-    borderLight: nova64.draw.rgba8(120, 100, 50, 255),
-    borderDark: nova64.draw.rgba8(40, 30, 15, 255),
+  drawPanel(60, 20, W - 120, H - 40, {
+    bgColor: rgba8(15, 12, 25, 240),
+    borderLight: rgba8(120, 100, 50, 255),
+    borderDark: rgba8(40, 30, 15, 255),
   });
 
-  nova64.draw.drawGlowText(
-    'MERCHANT',
-    320,
-    32,
-    nova64.draw.rgba8(220, 180, 50, 255),
-    nova64.draw.rgba8(140, 100, 0, 100),
-    3
-  );
-  nova64.draw.drawDiamond(472, 40, 4, 5, nova64.draw.rgba8(255, 220, 50, 255));
+  drawGlowText('MERCHANT', 320, 32, rgba8(220, 180, 50, 255), rgba8(140, 100, 0, 100), 3);
+  drawDiamond(472, 40, 4, 5, rgba8(255, 220, 50, 255));
   // Use setTextAlign + setTextBaseline + drawText for gold display
-  nova64.ui.setTextAlign('right');
-  nova64.ui.setTextBaseline('top');
-  nova64.ui.drawText(`${totalGold}g`, 560, 36, nova64.draw.rgba8(255, 220, 50, 255));
-  nova64.ui.setTextAlign('left');
-  nova64.ui.setTextBaseline('top');
-  nova64.draw.printCentered(
-    `Floor ${floor} → ${floor + 1}`,
-    320,
-    68,
-    nova64.draw.rgba8(150, 140, 120, 200)
-  );
+  setTextAlign('right');
+  setTextBaseline('top');
+  drawText(`${totalGold}g`, 560, 36, rgba8(255, 220, 50, 255));
+  setTextAlign('left');
+  setTextBaseline('top');
+  printCentered(`Floor ${floor} → ${floor + 1}`, 320, 68, rgba8(150, 140, 120, 200));
 
   // Item list with gradient rect backgrounds
   for (let i = 0; i < shopItems.length; i++) {
@@ -3377,38 +3203,29 @@ function drawShopUI() {
 
     // Gradient highlight for selected/affordable items
     if (sel) {
-      nova64.ui.drawGradientRect(
-        72,
-        y - 2,
-        488,
-        18,
-        nova64.draw.rgba8(60, 40, 20, 150),
-        nova64.draw.rgba8(30, 20, 10, 50)
-      );
+      drawGradientRect(72, y - 2, 488, 18, rgba8(60, 40, 20, 150), rgba8(30, 20, 10, 50));
     }
 
     const nameColor = sel
-      ? nova64.draw.rgba8(255, 255, 200, 255)
+      ? rgba8(255, 255, 200, 255)
       : canAfford
-        ? nova64.draw.rgba8(200, 200, 220, 220)
-        : nova64.draw.rgba8(100, 100, 110, 150);
-    const costColor = canAfford
-      ? nova64.draw.rgba8(220, 180, 50, 220)
-      : nova64.draw.rgba8(120, 80, 40, 150);
+        ? rgba8(200, 200, 220, 220)
+        : rgba8(100, 100, 110, 150);
+    const costColor = canAfford ? rgba8(220, 180, 50, 220) : rgba8(120, 80, 40, 150);
 
-    nova64.draw.print(`${sel ? '►' : ' '} ${item.name}`, 80, y, nameColor);
-    nova64.draw.print(`${item.cost}g`, 320, y, costColor);
-    nova64.draw.print(item.desc, 370, y, nova64.draw.rgba8(140, 140, 160, 180));
+    print(`${sel ? '►' : ' '} ${item.name}`, 80, y, nameColor);
+    print(`${item.cost}g`, 320, y, costColor);
+    print(item.desc, 370, y, rgba8(140, 140, 160, 180));
   }
 
   // Target selection overlay
   if (shopTarget >= 0) {
-    nova64.draw.drawPanel(180, 120, 280, 140, {
-      bgColor: nova64.draw.rgba8(10, 8, 20, 250),
-      borderLight: nova64.draw.rgba8(100, 80, 50, 255),
-      borderDark: nova64.draw.rgba8(30, 25, 15, 255),
+    drawPanel(180, 120, 280, 140, {
+      bgColor: rgba8(10, 8, 20, 250),
+      borderLight: rgba8(100, 80, 50, 255),
+      borderDark: rgba8(30, 25, 15, 255),
     });
-    nova64.draw.printCentered('Select target:', 320, 128, nova64.draw.rgba8(200, 180, 120, 255));
+    printCentered('Select target:', 320, 128, rgba8(200, 180, 120, 255));
     for (let i = 0; i < party.length; i++) {
       const m = party[i];
       const y = 148 + i * 24;
@@ -3417,26 +3234,24 @@ function drawShopUI() {
       const cr = (c >> 16) & 0xff,
         cg = (c >> 8) & 0xff,
         cb = c & 0xff;
-      const nameColor = sel
-        ? nova64.draw.rgba8(255, 255, 200, 255)
-        : nova64.draw.rgba8(cr, cg, cb, 200);
-      nova64.draw.print(`${sel ? '►' : ' '} ${m.name}`, 200, y, nameColor);
-      nova64.draw.print(
+      const nameColor = sel ? rgba8(255, 255, 200, 255) : rgba8(cr, cg, cb, 200);
+      print(`${sel ? '►' : ' '} ${m.name}`, 200, y, nameColor);
+      print(
         m.alive ? `HP:${m.hp}/${m.maxHp}` : '☠ FALLEN',
         340,
         y,
-        m.alive ? nova64.draw.rgba8(150, 180, 150, 200) : nova64.draw.rgba8(180, 50, 50, 200)
+        m.alive ? rgba8(150, 180, 150, 200) : rgba8(180, 50, 50, 200)
       );
     }
-    nova64.draw.print('Z/Space=Confirm  Esc=Back', 200, 248, nova64.draw.rgba8(100, 100, 120, 150));
+    print('Z/Space=Confirm  Esc=Back', 200, 248, rgba8(100, 100, 120, 150));
   }
 
   // Controls
-  nova64.draw.printCentered(
+  printCentered(
     'W/S=Browse  Z/Space=Buy  ESC=Continue to next floor',
     320,
     H - 55,
-    nova64.draw.rgba8(120, 120, 150, 200)
+    rgba8(120, 120, 150, 200)
   );
 }
 
@@ -3446,9 +3261,9 @@ function drawShopUI() {
 
 export function draw() {
   // Apply 2D camera shake offset (setCamera API) for full-screen shake
-  const [shakeOX, shakeOY] = nova64.util.getShakeOffset(shake);
+  const [shakeOX, shakeOY] = getShakeOffset(shake);
   if (shakeOX !== 0 || shakeOY !== 0) {
-    nova64.draw.setCamera(Math.floor(shakeOX * 2), Math.floor(shakeOY * 2));
+    setCamera(Math.floor(shakeOX * 2), Math.floor(shakeOY * 2));
   }
 
   if (gameState === 'title') {
@@ -3481,7 +3296,7 @@ export function draw() {
     const cellW = W / cols,
       cellH = H / rows;
     // Regenerate flow field with time for flowing animation
-    bossFlowField = nova64.util.flowField(cols, rows, 0.08, animTimer * 0.5);
+    bossFlowField = flowField(cols, rows, 0.08, animTimer * 0.5);
     for (let i = 0; i < cols * rows; i++) {
       const col = i % cols,
         row = Math.floor(i / cols);
@@ -3492,12 +3307,12 @@ export function draw() {
       const ex = cx + Math.cos(angle) * len;
       const ey = cy + Math.sin(angle) * len;
       const alpha = Math.floor(20 + Math.sin(animTimer * 3 + i * 0.3) * 10);
-      nova64.draw.line(
+      line(
         Math.floor(cx),
         Math.floor(cy),
         Math.floor(ex),
         Math.floor(ey),
-        nova64.draw.rgba8(200, 50, 80, alpha)
+        rgba8(200, 50, 80, alpha)
       );
     }
   }
@@ -3508,15 +3323,15 @@ export function draw() {
     if (spellVFX.type === 'star') {
       const r = 30 + (1 - alpha) * 40;
       // HSB hue-cycling glow ring using colorMode + color API
-      nova64.util.colorMode('hsb', 360, 100, 100);
+      colorMode('hsb', 360, 100, 100);
       const ringHue = (animTimer * 200 + spellVFX.timer * 400) % 360;
-      const ringColor = nova64.util.color(ringHue, 80, 60, Math.floor(alpha * 100));
-      nova64.util.colorMode('rgb', 255); // restore RGB mode
-      nova64.draw.circle(spellVFX.x, spellVFX.y, Math.floor(r + 8), ringColor);
-      nova64.draw.drawStarburst(spellVFX.x, spellVFX.y, r, r * 0.4, 8, spellVFX.color);
+      const ringColor = color(ringHue, 80, 60, Math.floor(alpha * 100));
+      colorMode('rgb', 255); // restore RGB mode
+      circle(spellVFX.x, spellVFX.y, Math.floor(r + 8), ringColor);
+      drawStarburst(spellVFX.x, spellVFX.y, r, r * 0.4, 8, spellVFX.color);
       // Bezier arc spell trail — curved energy arc from caster to impact
       const arcProgress = 1 - alpha;
-      nova64.util.bezier(
+      bezier(
         50,
         H - 120,
         120,
@@ -3530,23 +3345,17 @@ export function draw() {
       );
     } else if (spellVFX.type === 'radial') {
       const r = 40 + (1 - alpha) * 60;
-      nova64.draw.drawRadialGradient(
-        spellVFX.x,
-        spellVFX.y,
-        r,
-        spellVFX.color,
-        nova64.draw.rgba8(0, 0, 0, 0)
-      );
+      drawRadialGradient(spellVFX.x, spellVFX.y, r, spellVFX.color, rgba8(0, 0, 0, 0));
       // Quadratic bezier energy arc for buff/heal spells (quadCurve)
       const arcAlpha = Math.floor(alpha * 180);
-      nova64.util.quadCurve(
+      quadCurve(
         100,
         H - 100,
         spellVFX.x,
         spellVFX.y - 60 * alpha,
         spellVFX.x,
         spellVFX.y,
-        nova64.util.lerpColor(spellVFX.color, nova64.util.hsb(120, 0.6, 1, arcAlpha), 0.4),
+        lerpColor(spellVFX.color, hsb(120, 0.6, 1, arcAlpha), 0.4),
         20
       );
     }
@@ -3554,28 +3363,20 @@ export function draw() {
 
   // Screen flash overlay using drawFlash API (damage, magic, discoveries)
   if (screenFlash && screenFlash.alpha > 0) {
-    nova64.draw.drawFlash(
-      nova64.draw.rgba8(screenFlash.r, screenFlash.g, screenFlash.b, Math.floor(screenFlash.alpha))
-    );
+    drawFlash(rgba8(screenFlash.r, screenFlash.g, screenFlash.b, Math.floor(screenFlash.alpha)));
   }
 
   // Floating texts (2D screen-space + 3D world-space via drawFloatingTexts3D)
-  nova64.draw.drawFloatingTexts(floatingTexts);
+  drawFloatingTexts(floatingTexts);
   if (floatingTexts3D && (gameState === 'combat' || gameState === 'explore')) {
-    nova64.draw.drawFloatingTexts3D(floatingTexts3D, worldToScreen);
+    drawFloatingTexts3D(floatingTexts3D, worldToScreen);
   }
 
   // Combat hit sparks (createPool)
   if (sparkPool && sparkPool.count > 0) {
     sparkPool.forEach(s => {
       const a = Math.floor((s.life / 0.5) * 255);
-      nova64.draw.rectfill(
-        Math.floor(s.x),
-        Math.floor(s.y),
-        2,
-        2,
-        nova64.draw.colorMix(s.color, s.life * 2)
-      );
+      rectfill(Math.floor(s.x), Math.floor(s.y), 2, 2, colorMix(s.color, s.life * 2));
     });
   }
 
@@ -3583,30 +3384,23 @@ export function draw() {
   // Only apply full-screen noise on states with 2D backgrounds;
   // in explore/combat the 3D scene must show through the overlay.
   if (gameState !== 'explore' && gameState !== 'combat') {
-    nova64.draw.drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
-    nova64.draw.drawScanlines(25, 3);
+    drawNoise(0, 0, W, H, 12, Math.floor(animTimer * 10));
+    drawScanlines(25, 3);
   }
 
   // Perlin noise atmospheric fog wisps in explore/combat (subtle 2D overlay)
   if (gameState === 'explore' || gameState === 'combat') {
     for (let i = 0; i < 4; i++) {
-      const nx = nova64.util.noise(animTimer * 0.3 + i * 3.7, i * 2.1) * W;
-      const ny = H - 70 + nova64.util.noise(i * 5.3, animTimer * 0.2) * 40;
-      const alpha = Math.floor(nova64.util.noise(animTimer * 0.5 + i, 0) * 25);
+      const nx = noise(animTimer * 0.3 + i * 3.7, i * 2.1) * W;
+      const ny = H - 70 + noise(i * 5.3, animTimer * 0.2) * 40;
+      const alpha = Math.floor(noise(animTimer * 0.5 + i, 0) * 25);
       if (alpha > 5) {
-        nova64.util.ellipse(
-          Math.floor(nx),
-          Math.floor(ny),
-          40 + i * 10,
-          8,
-          nova64.draw.rgba8(80, 70, 60, alpha),
-          true
-        );
+        ellipse(Math.floor(nx), Math.floor(ny), 40 + i * 10, 8, rgba8(80, 70, 60, alpha), true);
       }
     }
     // Procedural noiseMap fog overlay on deeper floors (floor 3+)
     if (floor >= 3) {
-      if (!floorNoiseMap) floorNoiseMap = nova64.util.noiseMap(32, 18, 0.12, floor * 10, 0);
+      if (!floorNoiseMap) floorNoiseMap = noiseMap(32, 18, 0.12, floor * 10, 0);
       const nCols = 32,
         nRows = 18;
       const cw = W / nCols,
@@ -3616,12 +3410,12 @@ export function draw() {
           const v = floorNoiseMap[r * nCols + c];
           const a = Math.floor(Math.max(0, v) * 18 * (floor - 2));
           if (a > 2)
-            nova64.draw.rectfill(
+            rectfill(
               Math.floor(c * cw),
               Math.floor(r * ch),
               Math.ceil(cw),
               Math.ceil(ch),
-              nova64.draw.rgba8(30, 20, 40, a)
+              rgba8(30, 20, 40, a)
             );
         }
       }
@@ -3629,108 +3423,75 @@ export function draw() {
   }
 
   // Reset 2D camera offset after ALL drawing (must be last)
-  nova64.draw.setCamera(0, 0);
+  setCamera(0, 0);
 }
 
 function drawTitle() {
   const t = stateElapsed();
-  const fadeIn = nova64.util.smoothstep(0, 2.0, t);
+  const fadeIn = smoothstep(0, 2.0, t);
   const fade = Math.floor(fadeIn * 255);
 
   // Semi-transparent overlays for text readability (3D scene shows through)
-  nova64.draw.drawGradient(
-    0,
-    0,
-    W,
-    160,
-    nova64.draw.rgba8(0, 0, 10, Math.floor(fade * 0.7)),
-    nova64.draw.rgba8(0, 0, 5, 0),
-    'v'
-  );
-  nova64.draw.drawGradient(
-    0,
-    240,
-    W,
-    120,
-    nova64.draw.rgba8(0, 0, 5, 0),
-    nova64.draw.rgba8(0, 0, 10, Math.floor(fade * 0.55)),
-    'v'
-  );
+  drawGradient(0, 0, W, 160, rgba8(0, 0, 10, Math.floor(fade * 0.7)), rgba8(0, 0, 5, 0), 'v');
+  drawGradient(0, 240, W, 120, rgba8(0, 0, 5, 0), rgba8(0, 0, 10, Math.floor(fade * 0.55)), 'v');
 
   // Animated starburst glow behind title text
-  const burstAlpha = Math.floor(nova64.util.pulse(t, 0.8) * 40 + 20);
-  nova64.draw.drawStarburst(320, 65, 120, 40, 12, nova64.draw.rgba8(255, 180, 50, burstAlpha));
-  nova64.draw.drawRadialGradient(
-    320,
-    65,
-    100,
-    nova64.draw.rgba8(180, 120, 40, Math.floor(fade * 0.2)),
-    nova64.draw.rgba8(0, 0, 0, 0)
-  );
+  const burstAlpha = Math.floor(pulse(t, 0.8) * 40 + 20);
+  drawStarburst(320, 65, 120, 40, 12, rgba8(255, 180, 50, burstAlpha));
+  drawRadialGradient(320, 65, 100, rgba8(180, 120, 40, Math.floor(fade * 0.2)), rgba8(0, 0, 0, 0));
 
   // Main title with large glow radius
-  nova64.draw.drawGlowText(
+  drawGlowText(
     'WIZARDRY',
     320,
     50,
-    nova64.draw.rgba8(255, 210, 60, fade),
-    nova64.draw.rgba8(200, 120, 0, Math.floor(fade * 0.6)),
+    rgba8(255, 210, 60, fade),
+    rgba8(200, 120, 0, Math.floor(fade * 0.6)),
     6
   );
 
   // Subtitle
-  const subAlpha = Math.floor(nova64.util.smoothstep(0.5, 1.5, t) * 255);
-  nova64.draw.printCentered(
-    'N O V A  6 4',
-    320,
-    100,
-    nova64.draw.rgba8(220, 180, 100, subAlpha),
-    2
-  );
+  const subAlpha = Math.floor(smoothstep(0.5, 1.5, t) * 255);
+  printCentered('N O V A  6 4', 320, 100, rgba8(220, 180, 100, subAlpha), 2);
 
   // Tagline
-  const tagAlpha = Math.floor(nova64.util.smoothstep(1.0, 2.0, t) * 200);
-  nova64.draw.printCentered(
-    'Proving Grounds of the Dark Tower',
-    320,
-    130,
-    nova64.draw.rgba8(170, 150, 130, tagAlpha)
-  );
+  const tagAlpha = Math.floor(smoothstep(1.0, 2.0, t) * 200);
+  printCentered('Proving Grounds of the Dark Tower', 320, 130, rgba8(170, 150, 130, tagAlpha));
 
   // Wave separator
   if (t > 1.0) {
-    nova64.draw.drawWave(
+    drawWave(
       100,
       147,
       440,
       4,
       0.04,
       animTimer * 2.5,
-      nova64.draw.rgba8(200, 140, 50, Math.floor(tagAlpha * 0.3)),
+      rgba8(200, 140, 50, Math.floor(tagAlpha * 0.3)),
       2
     );
   }
 
   // Action prompt (staggered)
   if (t > 1.5) {
-    const promptFade = nova64.util.smoothstep(1.5, 2.5, t);
+    const promptFade = smoothstep(1.5, 2.5, t);
     if (hasSave()) {
-      nova64.draw.drawPulsingText(
+      drawPulsingText(
         'Press C to Continue',
         320,
         255,
-        nova64.draw.rgba8(100, 200, 255, Math.floor(promptFade * 255)),
+        rgba8(100, 200, 255, Math.floor(promptFade * 255)),
         animTimer,
         {
           frequency: 2,
           minAlpha: 160,
         }
       );
-      nova64.draw.drawPulsingText(
+      drawPulsingText(
         'Press A / Tap to Start',
         320,
         275,
-        nova64.draw.rgba8(200, 200, 200, Math.floor(promptFade * 220)),
+        rgba8(200, 200, 200, Math.floor(promptFade * 220)),
         animTimer,
         {
           frequency: 3,
@@ -3738,11 +3499,11 @@ function drawTitle() {
         }
       );
     } else {
-      nova64.draw.drawPulsingText(
+      drawPulsingText(
         'Press A / Tap to begin your quest',
         320,
         260,
-        nova64.draw.rgba8(255, 255, 255, Math.floor(promptFade * 255)),
+        rgba8(255, 255, 255, Math.floor(promptFade * 255)),
         animTimer,
         {
           frequency: 2.5,
@@ -3754,8 +3515,8 @@ function drawTitle() {
 
   // Party preview (bottom, appears last)
   if (t > 2.0) {
-    const partyFade = Math.floor(nova64.util.smoothstep(2.0, 3.0, t) * 255);
-    nova64.draw.printCentered('Your Party:', 320, 298, nova64.draw.rgba8(180, 180, 200, partyFade));
+    const partyFade = Math.floor(smoothstep(2.0, 3.0, t) * 255);
+    printCentered('Your Party:', 320, 298, rgba8(180, 180, 200, partyFade));
     for (let i = 0; i < 4; i++) {
       const m = party[i];
       const x = 130 + i * 130;
@@ -3763,26 +3524,15 @@ function drawTitle() {
       const r = (c >> 16) & 0xff,
         g = (c >> 8) & 0xff,
         b = c & 0xff;
-      nova64.util.pushMatrix();
-      nova64.util.translate(x, 320);
-      nova64.util.rotate(QUARTER_PI + Math.sin(animTimer * 1.5 + i) * 0.2);
-      nova64.util.scale2d(1.3);
-      nova64.draw.rectfill(-6, -6, 12, 12, nova64.draw.rgba8(r, g, b, Math.floor(partyFade * 0.2)));
-      nova64.draw.rect(-6, -6, 12, 12, nova64.draw.rgba8(r, g, b, Math.floor(partyFade * 0.4)));
-      nova64.util.popMatrix();
-      nova64.draw.printCentered(
-        CLASS_ICONS[m.class],
-        x,
-        316,
-        nova64.draw.rgba8(r, g, b, partyFade),
-        2
-      );
-      nova64.draw.printCentered(
-        m.name,
-        x,
-        336,
-        nova64.draw.rgba8(r, g, b, Math.floor(partyFade * 0.8))
-      );
+      pushMatrix();
+      translate(x, 320);
+      rotate(QUARTER_PI + Math.sin(animTimer * 1.5 + i) * 0.2);
+      scale2d(1.3);
+      rectfill(-6, -6, 12, 12, rgba8(r, g, b, Math.floor(partyFade * 0.2)));
+      rect(-6, -6, 12, 12, rgba8(r, g, b, Math.floor(partyFade * 0.4)));
+      popMatrix();
+      printCentered(CLASS_ICONS[m.class], x, 316, rgba8(r, g, b, partyFade), 2);
+      printCentered(m.name, x, 336, rgba8(r, g, b, Math.floor(partyFade * 0.8)));
     }
   }
 }
@@ -3791,116 +3541,88 @@ function drawExploreHUD() {
   // Compass panel
   // Floor-themed compass border using hslColor (hue shifts per floor)
   const floorHue = floor > 0 ? (floor - 1) * 60 : 30; // warm → cool per floor
-  nova64.draw.drawPanel(270, 2, 100, 38, {
-    bgColor: nova64.draw.rgba8(0, 0, 0, 160),
-    borderLight: nova64.draw.hslColor(floorHue, 0.3, 0.25, 180),
-    borderDark: nova64.draw.hslColor(floorHue, 0.3, 0.1, 180),
+  drawPanel(270, 2, 100, 38, {
+    bgColor: rgba8(0, 0, 0, 160),
+    borderLight: hslColor(floorHue, 0.3, 0.25, 180),
+    borderDark: hslColor(floorHue, 0.3, 0.1, 180),
   });
-  nova64.draw.printCentered(
-    `Facing ${DIR_NAMES[facing]}`,
-    320,
-    8,
-    nova64.draw.rgba8(200, 200, 220, 255)
-  );
-  nova64.draw.printCentered(
-    `Floor ${floor} (${nova64.util.rad2deg(currentYaw).toFixed(0)}°)`,
+  printCentered(`Facing ${DIR_NAMES[facing]}`, 320, 8, rgba8(200, 200, 220, 255));
+  printCentered(
+    `Floor ${floor} (${rad2deg(currentYaw).toFixed(0)}°)`,
     320,
     24,
-    nova64.draw.hslColor(floorHue, 0.4, 0.5, 200)
+    hslColor(floorHue, 0.4, 0.5, 200)
   );
 
   // Directional arrow indicator using drawTriangle
-  const arrowColor = nova64.draw.hslColor(floorHue, 0.5, 0.6, 200);
+  const arrowColor = hslColor(floorHue, 0.5, 0.6, 200);
   const ax = 362,
     ay = 20; // right side of compass panel
   if (facing === 0)
-    nova64.draw.drawTriangle(ax, ay - 5, ax - 4, ay + 3, ax + 4, ay + 3, arrowColor, true); // N ▲
+    drawTriangle(ax, ay - 5, ax - 4, ay + 3, ax + 4, ay + 3, arrowColor, true); // N ▲
   else if (facing === 1)
-    nova64.draw.drawTriangle(ax + 5, ay, ax - 3, ay - 4, ax - 3, ay + 4, arrowColor, true); // E ►
+    drawTriangle(ax + 5, ay, ax - 3, ay - 4, ax - 3, ay + 4, arrowColor, true); // E ►
   else if (facing === 2)
-    nova64.draw.drawTriangle(ax, ay + 5, ax - 4, ay - 3, ax + 4, ay - 3, arrowColor, true); // S ▼
-  else nova64.draw.drawTriangle(ax - 5, ay, ax + 3, ay - 4, ax + 3, ay + 4, arrowColor, true); // W ◄
+    drawTriangle(ax, ay + 5, ax - 4, ay - 3, ax + 4, ay - 3, arrowColor, true); // S ▼
+  else drawTriangle(ax - 5, ay, ax + 3, ay - 4, ax + 3, ay + 4, arrowColor, true); // W ◄
 
   // Compass arc — sweeping arc around facing direction using deg2rad
-  const arcAngle = nova64.util.deg2rad(facing * 90);
-  nova64.util.arc(
-    320,
-    18,
-    28,
-    14,
-    arcAngle - 0.4,
-    arcAngle + 0.4,
-    nova64.draw.hslColor(floorHue, 0.6, 0.5, 100),
-    false
-  );
+  const arcAngle = deg2rad(facing * 90);
+  arc(320, 18, 28, 14, arcAngle - 0.4, arcAngle + 0.4, hslColor(floorHue, 0.6, 0.5, 100), false);
 
   // Mini party status (bottom)
   drawPartyBar();
 
   // Gamepad connected indicator on explore HUD
-  if (nova64.input.gamepadConnected()) {
-    nova64.draw.print('🎮', W - 108, 8, nova64.draw.rgba8(100, 200, 100, 180));
+  if (gamepadConnected()) {
+    print('🎮', W - 108, 8, rgba8(100, 200, 100, 180));
   }
 
   // Minimap (top-right) using createMinimap API
-  if (minimap) nova64.draw.drawMinimap(minimap, animTimer);
+  if (minimap) drawMinimap(minimap, animTimer);
 
   // Floor message
   if (floorMessageTimer > 0) {
     const alpha = Math.min(255, Math.floor(floorMessageTimer * 200));
-    nova64.draw.drawPanel(120, 158, 400, 28, {
-      bgColor: nova64.draw.rgba8(0, 0, 0, Math.floor(alpha * 0.7)),
-      borderLight: nova64.draw.rgba8(100, 80, 40, Math.floor(alpha * 0.4)),
-      borderDark: nova64.draw.rgba8(30, 20, 10, Math.floor(alpha * 0.4)),
+    drawPanel(120, 158, 400, 28, {
+      bgColor: rgba8(0, 0, 0, Math.floor(alpha * 0.7)),
+      borderLight: rgba8(100, 80, 40, Math.floor(alpha * 0.4)),
+      borderDark: rgba8(30, 20, 10, Math.floor(alpha * 0.4)),
     });
-    nova64.ui.drawTextShadow(
+    drawTextShadow(
       floorMessage,
       320,
       166,
-      nova64.draw.rgba8(255, 220, 100, alpha),
-      nova64.draw.rgba8(0, 0, 0, Math.floor(alpha * 0.5)),
+      rgba8(255, 220, 100, alpha),
+      rgba8(0, 0, 0, Math.floor(alpha * 0.5)),
       1
     );
   }
 
   // Magic energy wave divider above party bar — color shifts per floor
   const waveHue = floor > 0 ? (floor - 1) * 60 : 30;
-  nova64.draw.drawWave(
-    0,
-    H - 56,
-    W,
-    4,
-    0.04,
-    animTimer * 3,
-    nova64.draw.hslColor(waveHue, 0.5, 0.4, 80),
-    2
-  );
+  drawWave(0, H - 56, W, 4, 0.04, animTimer * 3, hslColor(waveHue, 0.5, 0.4, 80), 2);
 
   // Move cooldown indicator (shows when movement is on cooldown)
-  const moveProg = nova64.util.cooldownProgress(cooldowns.move);
+  const moveProg = cooldownProgress(cooldowns.move);
   if (moveProg < 1) {
     const barW = 40;
     const bx = 310,
       by = H - 58;
-    nova64.draw.drawRoundedRect(bx - 1, by - 1, barW + 2, 6, 2, nova64.draw.rgba8(20, 20, 30, 180));
-    nova64.draw.rectfill(
+    drawRoundedRect(bx - 1, by - 1, barW + 2, 6, 2, rgba8(20, 20, 30, 180));
+    rectfill(
       bx,
       by,
       Math.floor(barW * moveProg),
       4,
-      nova64.draw.rgba8(100, 180, 255, Math.floor(200 * (1 - moveProg)))
+      rgba8(100, 180, 255, Math.floor(200 * (1 - moveProg)))
     );
   }
 
   // Controls hint
-  nova64.draw.print(
-    'WASD/Arrows=Move  Q/E=Turn  I=Inventory',
-    10,
-    348,
-    nova64.draw.rgba8(80, 80, 100, 150)
-  );
+  print('WASD/Arrows=Move  Q/E=Turn  I=Inventory', 10, 348, rgba8(80, 80, 100, 150));
 
-  // Thief trap proximity warning using nova64.physics.aabb() collision check
+  // Thief trap proximity warning using aabb() collision check
   const thief = party.find(m => m.alive && m.class === 'Thief');
   if (thief) {
     let trapNear = false;
@@ -3909,40 +3631,39 @@ function drawExploreHUD() {
         const tx = px + dx,
           ty = py + dy;
         if (tx >= 0 && tx < dungeonW && ty >= 0 && ty < dungeonH && dungeon[ty][tx] === T.TRAP) {
-          if (nova64.physics.aabb(px - 1.5, py - 1.5, 3, 3, tx - 0.5, ty - 0.5, 1, 1))
-            trapNear = true;
+          if (aabb(px - 1.5, py - 1.5, 3, 3, tx - 0.5, ty - 0.5, 1, 1)) trapNear = true;
         }
       }
     }
     if (trapNear) {
-      const warnAlpha = Math.floor(nova64.util.pulse(animTimer, 3) * 100 + 155);
-      nova64.ui.drawTextShadow(
+      const warnAlpha = Math.floor(pulse(animTimer, 3) * 100 + 155);
+      drawTextShadow(
         '⚠ Trap nearby!',
         270,
         44,
-        nova64.draw.rgba8(255, 80, 60, warnAlpha),
-        nova64.draw.rgba8(0, 0, 0, 180),
+        rgba8(255, 80, 60, warnAlpha),
+        rgba8(0, 0, 0, 180),
         1
       );
     }
   }
 
   // Gold with diamond icon
-  nova64.draw.drawDiamond(534, 352, 4, 5, nova64.draw.rgba8(220, 180, 50, 200));
-  nova64.draw.print(`${totalGold}g`, 542, 348, nova64.draw.rgba8(220, 180, 50, 200));
+  drawDiamond(534, 352, 4, 5, rgba8(220, 180, 50, 200));
+  print(`${totalGold}g`, 542, 348, rgba8(220, 180, 50, 200));
 
-  // Floor transition checkerboard wipe — use nova64.util.ease() for smooth in/out
+  // Floor transition checkerboard wipe — use ease() for smooth in/out
   if (floorTransition > 0) {
-    const rawT = nova64.util.clamp(floorTransition / 0.6, 0, 1);
-    const easedT = nova64.util.ease(rawT, 'easeInOutQuad');
+    const rawT = clamp(floorTransition / 0.6, 0, 1);
+    const easedT = ease(rawT, 'easeInOutQuad');
     const alpha = Math.floor(easedT * 200);
-    nova64.draw.drawCheckerboard(
+    drawCheckerboard(
       0,
       0,
       W,
       H,
-      nova64.draw.rgba8(0, 0, 0, alpha),
-      nova64.draw.rgba8(10, 5, 20, Math.floor(alpha * 0.5)),
+      rgba8(0, 0, 0, alpha),
+      rgba8(10, 5, 20, Math.floor(alpha * 0.5)),
       24
     );
   }
@@ -3950,10 +3671,10 @@ function drawExploreHUD() {
 
 function drawPartyBar() {
   const barY = H - 52;
-  nova64.draw.drawPanel(0, barY, W, 52, {
-    bgColor: nova64.draw.rgba8(10, 8, 15, 220),
-    borderLight: nova64.draw.rgba8(60, 50, 40, 200),
-    borderDark: nova64.draw.rgba8(20, 15, 10, 200),
+  drawPanel(0, barY, W, 52, {
+    bgColor: rgba8(10, 8, 15, 220),
+    borderLight: rgba8(60, 50, 40, 200),
+    borderDark: rgba8(20, 15, 10, 200),
   });
 
   for (let i = 0; i < party.length; i++) {
@@ -3965,81 +3686,67 @@ function drawPartyBar() {
       b = c & 0xff;
 
     // Name + class icon
-    nova64.draw.print(
+    print(
       `${CLASS_ICONS[m.class]} ${m.name}`,
       bx,
       barY + 4,
-      m.alive ? nova64.draw.rgba8(r, g, b, 255) : nova64.draw.rgba8(80, 80, 80, 255)
+      m.alive ? rgba8(r, g, b, 255) : rgba8(80, 80, 80, 255)
     );
 
     // HP bar
     if (m.alive) {
       const hpRatio = m.hp / m.maxHp;
-      const hpColor = nova64.draw.colorLerp(
-        nova64.draw.rgba8(200, 40, 40, 255),
-        nova64.draw.rgba8(50, 180, 50, 255),
-        hpRatio
-      );
-      nova64.draw.drawHealthBar(bx, barY + 16, 100, 6, m.hp, m.maxHp, {
+      const hpColor = colorLerp(rgba8(200, 40, 40, 255), rgba8(50, 180, 50, 255), hpRatio);
+      drawHealthBar(bx, barY + 16, 100, 6, m.hp, m.maxHp, {
         barColor: hpColor,
-        backgroundColor: nova64.draw.rgba8(30, 20, 20, 255),
+        backgroundColor: rgba8(30, 20, 20, 255),
       });
-      nova64.draw.print(
-        `${m.hp}/${m.maxHp}`,
-        bx + 104,
-        barY + 14,
-        nova64.draw.rgba8(180, 180, 180, 200)
-      );
+      print(`${m.hp}/${m.maxHp}`, bx + 104, barY + 14, rgba8(180, 180, 180, 200));
     } else {
-      nova64.draw.print('DEAD', bx, barY + 16, nova64.draw.rgba8(150, 40, 40, 200));
+      print('DEAD', bx, barY + 16, rgba8(150, 40, 40, 200));
     }
 
     // MP bar (if applicable)
     if (m.maxMp > 0 && m.alive) {
-      nova64.draw.drawProgressBar(
+      drawProgressBar(
         bx,
         barY + 26,
         100,
         4,
         m.mp / m.maxMp,
-        nova64.draw.rgba8(50, 80, 200, 255),
-        nova64.draw.rgba8(20, 20, 30, 255)
+        rgba8(50, 80, 200, 255),
+        rgba8(20, 20, 30, 255)
       );
-      nova64.draw.print(
-        `${m.mp}/${m.maxMp}`,
-        bx + 104,
-        barY + 24,
-        nova64.draw.rgba8(120, 140, 220, 180)
-      );
+      print(`${m.mp}/${m.maxMp}`, bx + 104, barY + 24, rgba8(120, 140, 220, 180));
     }
 
     // Level
-    nova64.draw.print(`Lv${m.level}`, bx, barY + 36, nova64.draw.rgba8(120, 120, 140, 180));
+    print(`Lv${m.level}`, bx, barY + 36, rgba8(120, 120, 140, 180));
   }
 }
 
 function drawCombatUI() {
   // Dark overlay panels
-  nova64.draw.drawPanel(0, 0, W, 40, {
-    bgColor: nova64.draw.rgba8(10, 5, 15, 200),
-    borderLight: nova64.draw.rgba8(50, 30, 50, 150),
-    borderDark: nova64.draw.rgba8(10, 5, 15, 150),
+  drawPanel(0, 0, W, 40, {
+    bgColor: rgba8(10, 5, 15, 200),
+    borderLight: rgba8(50, 30, 50, 150),
+    borderDark: rgba8(10, 5, 15, 150),
   });
-  nova64.draw.drawPanel(0, H - 160, W, 160, {
-    bgColor: nova64.draw.rgba8(10, 5, 15, 220),
-    borderLight: nova64.draw.rgba8(50, 30, 50, 150),
-    borderDark: nova64.draw.rgba8(10, 5, 15, 150),
+  drawPanel(0, H - 160, W, 160, {
+    bgColor: rgba8(10, 5, 15, 220),
+    borderLight: rgba8(50, 30, 50, 150),
+    borderDark: rgba8(10, 5, 15, 150),
   });
 
   // Boss indicator with scrolling title
   if (enemies.length > 0 && enemies[0].isBoss) {
     const pulse = Math.floor(Math.sin(animTimer * 4) * 40 + 215);
-    nova64.draw.scrollingText(
+    scrollingText(
       `☠ BOSS BATTLE — ${enemies[0].name} ☠    `,
       42,
       80,
       animTimer,
-      nova64.draw.rgba8(pulse, 40, 60, 255),
+      rgba8(pulse, 40, 60, 255),
       2,
       W
     );
@@ -4050,34 +3757,27 @@ function drawCombatUI() {
     const e = enemies[i];
     const x = 20 + i * 200;
     const alive = e.hp > 0;
-    const nameColor = alive
-      ? nova64.draw.rgba8(220, 180, 180, 255)
-      : nova64.draw.rgba8(80, 80, 80, 150);
+    const nameColor = alive ? rgba8(220, 180, 180, 255) : rgba8(80, 80, 80, 150);
     const sel = combatAction === 'target' && i === selectedTarget;
 
-    nova64.draw.print(`${sel ? '► ' : '  '}${e.name}`, x, 6, nameColor);
+    print(`${sel ? '► ' : '  '}${e.name}`, x, 6, nameColor);
     if (alive) {
-      nova64.draw.drawHealthBar(x, 20, 120, 6, e.hp, e.maxHp, {
-        barColor: nova64.draw.rgba8(200, 40, 40, 255),
-        dangerColor: nova64.draw.rgba8(255, 100, 60, 255),
-        backgroundColor: nova64.draw.rgba8(40, 20, 20, 255),
+      drawHealthBar(x, 20, 120, 6, e.hp, e.maxHp, {
+        barColor: rgba8(200, 40, 40, 255),
+        dangerColor: rgba8(255, 100, 60, 255),
+        backgroundColor: rgba8(40, 20, 20, 255),
       });
-      nova64.draw.print(`${e.hp}/${e.maxHp}`, x + 124, 18, nova64.draw.rgba8(180, 140, 140, 200));
+      print(`${e.hp}/${e.maxHp}`, x + 124, 18, rgba8(180, 140, 140, 200));
       // Pulsing crosshair on selected target
       if (sel) {
         const pulse = Math.sin(animTimer * 6) * 0.3 + 0.7;
-        const crossColor = nova64.draw.rgba8(255, 60, 60, Math.floor(200 * pulse));
-        nova64.draw.drawCrosshair(x + 60, 14, 10, crossColor, 'cross');
+        const crossColor = rgba8(255, 60, 60, Math.floor(200 * pulse));
+        drawCrosshair(x + 60, 14, 10, crossColor, 'cross');
         // Magic targeting circle around crosshair
-        nova64.draw.circle(
-          x + 60,
-          14,
-          14,
-          nova64.draw.rgba8(255, 100, 80, Math.floor(120 * pulse))
-        );
+        circle(x + 60, 14, 14, rgba8(255, 100, 80, Math.floor(120 * pulse)));
       }
     } else {
-      nova64.draw.print('DEAD', x + 10, 20, nova64.draw.rgba8(100, 40, 40, 150));
+      print('DEAD', x + 10, 20, rgba8(100, 40, 40, 150));
     }
   }
 
@@ -4086,18 +3786,18 @@ function drawCombatUI() {
   const logLines = combatLog.slice(-5);
   for (let i = 0; i < logLines.length; i++) {
     const alpha = Math.floor(255 - (5 - i - 1) * 30);
-    nova64.ui.drawTextShadow(
+    drawTextShadow(
       logLines[i],
       20,
       logY + i * 12,
-      nova64.draw.rgba8(200, 200, 210, Math.max(80, alpha)),
-      nova64.draw.rgba8(0, 0, 0, Math.max(60, alpha)),
+      rgba8(200, 200, 210, Math.max(80, alpha)),
+      rgba8(0, 0, 0, Math.max(60, alpha)),
       1
     );
   }
 
   // Separator
-  nova64.draw.line(10, H - 90, W - 10, H - 90, nova64.draw.rgba8(60, 50, 70, 200));
+  line(10, H - 90, W - 10, H - 90, rgba8(60, 50, 70, 200));
 
   // Current party member + actions
   if (combatTurn < party.length) {
@@ -4107,83 +3807,56 @@ function drawCombatUI() {
       cg = (c >> 8) & 0xff,
       cb = c & 0xff;
 
-    nova64.draw.print(
-      `${CLASS_ICONS[member.class]} ${member.name}'s turn`,
-      20,
-      H - 82,
-      nova64.draw.rgba8(cr, cg, cb, 255)
-    );
+    print(`${CLASS_ICONS[member.class]} ${member.name}'s turn`, 20, H - 82, rgba8(cr, cg, cb, 255));
 
     if (combatAction === 'choose') {
       // Action menu with rounded highlight
       const menuItems = ['[1/Z] Attack', '[2/X] Magic', '[3/C] Defend'];
-      nova64.draw.drawRoundedRect(14, H - 68, 200, 54, 4, nova64.draw.rgba8(20, 15, 30, 120));
-      nova64.draw.print(menuItems[0], 20, H - 62, nova64.draw.rgba8(220, 200, 180, 255));
+      drawRoundedRect(14, H - 68, 200, 54, 4, rgba8(20, 15, 30, 120));
+      print(menuItems[0], 20, H - 62, rgba8(220, 200, 180, 255));
       if (member.maxMp > 0) {
-        nova64.draw.print(
-          `${menuItems[1]} (${member.mp} MP)`,
-          20,
-          H - 48,
-          nova64.draw.rgba8(120, 140, 255, 255)
-        );
+        print(`${menuItems[1]} (${member.mp} MP)`, 20, H - 48, rgba8(120, 140, 255, 255));
       }
-      nova64.draw.print(menuItems[2], 20, H - 34, nova64.draw.rgba8(180, 180, 140, 255));
-      const autoAlpha = Math.floor(nova64.util.pulse(animTimer, 1.5) * 75 + 180);
-      nova64.draw.print(
+      print(menuItems[2], 20, H - 34, rgba8(180, 180, 140, 255));
+      const autoAlpha = Math.floor(pulse(animTimer, 1.5) * 75 + 180);
+      print(
         `[A] Auto ${autoPlay ? 'ON' : 'OFF'}`,
         20,
         H - 20,
-        autoPlay
-          ? nova64.draw.rgba8(100, 255, 100, autoAlpha)
-          : nova64.draw.rgba8(120, 120, 140, 180)
+        autoPlay ? rgba8(100, 255, 100, autoAlpha) : rgba8(120, 120, 140, 180)
       );
       // Show equipped weapon
       if (member.weapon) {
-        nova64.draw.print(
-          `Weapon: ${member.weapon.name}`,
-          250,
-          H - 62,
-          nova64.draw.rgba8(200, 180, 140, 150)
-        );
+        print(`Weapon: ${member.weapon.name}`, 250, H - 62, rgba8(200, 180, 140, 150));
       }
     } else if (combatAction === 'target') {
-      nova64.draw.print(
+      print(
         'Select target: W/S = cycle, Z/Space = confirm, Esc = back',
         20,
         H - 62,
-        nova64.draw.rgba8(200, 180, 150, 200)
+        rgba8(200, 180, 150, 200)
       );
     } else if (combatAction === 'spell') {
       const available = Object.values(SPELLS).filter(
         s => s.class === member.class && member.mp >= s.cost
       );
       // Use grid layout helper for spell list positioning
-      const spellCells = nova64.ui.grid(1, Math.max(available.length, 1), 360, 14, 0, 0);
+      const spellCells = grid(1, Math.max(available.length, 1), 360, 14, 0, 0);
       for (let i = 0; i < available.length; i++) {
         const sp = available[i];
         const cell = spellCells[i];
-        nova64.draw.print(
+        print(
           `[${i + 1}] ${sp.name} (${sp.cost} MP) — ${sp.desc}`,
           20 + cell.x,
           H - 62 + cell.y,
-          nova64.draw.rgba8(140, 160, 255, 255)
+          rgba8(140, 160, 255, 255)
         );
       }
       if (available.length === 0)
-        nova64.draw.print(
-          'No spells available!',
-          20,
-          H - 62,
-          nova64.draw.rgba8(150, 100, 100, 200)
-        );
-      nova64.draw.print('Esc = back', 20, H - 20, nova64.draw.rgba8(120, 120, 140, 180));
+        print('No spells available!', 20, H - 62, rgba8(150, 100, 100, 200));
+      print('Esc = back', 20, H - 20, rgba8(120, 120, 140, 180));
     } else if (combatAction === 'enemyTurn') {
-      nova64.draw.printCentered(
-        'Enemies attacking...',
-        320,
-        H - 62,
-        nova64.draw.rgba8(200, 100, 100, 255)
-      );
+      printCentered('Enemies attacking...', 320, H - 62, rgba8(200, 100, 100, 255));
     }
   }
 
@@ -4191,31 +3864,15 @@ function drawCombatUI() {
     const won = enemies.every(e => e.hp <= 0);
     if (won) {
       // Eased slide-in for victory text
-      const t = nova64.util.ease(Math.min(1, stateElapsed() / 0.5), 'easeOutBack');
+      const t = ease(Math.min(1, stateElapsed() / 0.5), 'easeOutBack');
       const yOff = Math.floor((1 - t) * -30);
-      nova64.draw.printCentered(
-        'VICTORY!',
-        320,
-        H - 70 + yOff,
-        nova64.draw.rgba8(255, 220, 50, 255),
-        2
-      );
+      printCentered('VICTORY!', 320, H - 70 + yOff, rgba8(255, 220, 50, 255), 2);
       // Victory circle burst decoration
-      nova64.draw.circle(
-        320,
-        H - 60 + yOff,
-        Math.floor(t * 40),
-        nova64.draw.rgba8(255, 200, 50, Math.floor(t * 60))
-      );
+      circle(320, H - 60 + yOff, Math.floor(t * 40), rgba8(255, 200, 50, Math.floor(t * 60)));
     } else {
-      nova64.draw.printCentered('DEFEAT', 320, H - 70, nova64.draw.rgba8(200, 40, 40, 255), 2);
+      printCentered('DEFEAT', 320, H - 70, rgba8(200, 40, 40, 255), 2);
     }
-    nova64.draw.printCentered(
-      'Press A / Tap to continue',
-      320,
-      H - 40,
-      nova64.draw.rgba8(180, 180, 200, 200)
-    );
+    printCentered('Press A / Tap to continue', 320, H - 40, rgba8(180, 180, 200, 200));
   }
 
   // Party HP along right side
@@ -4230,39 +3887,35 @@ function drawCombatUI() {
 
     // Flash when recently hit (invulnerability frames)
     const hitVisible = !hitStates || !hitStates[i] || isVisible(hitStates[i], animTimer);
-    const hitFlash = hitStates && hitStates[i] && nova64.util.isFlashing(hitStates[i]);
+    const hitFlash = hitStates && hitStates[i] && isFlashing(hitStates[i]);
     const labelAlpha = hitVisible ? 255 : 80;
 
     const labelColor = m.alive
       ? hitFlash
-        ? nova64.draw.rgba8(255, 255, 255, 255)
+        ? rgba8(255, 255, 255, 255)
         : isCurrent
-          ? nova64.draw.rgba8(255, 255, 200, labelAlpha)
-          : nova64.draw.rgba8(cr, cg, cb, Math.min(200, labelAlpha))
-      : nova64.draw.rgba8(80, 80, 80, 150);
+          ? rgba8(255, 255, 200, labelAlpha)
+          : rgba8(cr, cg, cb, Math.min(200, labelAlpha))
+      : rgba8(80, 80, 80, 150);
     // Show invulnerability shield indicator (isInvulnerable API)
-    if (hitStates && hitStates[i] && nova64.util.isInvulnerable(hitStates[i])) {
-      nova64.draw.print('🛡', W - 214, y, nova64.draw.rgba8(100, 200, 255, 200));
+    if (hitStates && hitStates[i] && isInvulnerable(hitStates[i])) {
+      print('🛡', W - 214, y, rgba8(100, 200, 255, 200));
     }
-    nova64.draw.print(`${isCurrent ? '►' : ' '} ${m.name}`, W - 200, y, labelColor);
+    print(`${isCurrent ? '►' : ' '} ${m.name}`, W - 200, y, labelColor);
     if (m.alive) {
       // Buff indicator: brighten HP text when buffed using colorMix
       const buffed = (m.buffAtk > 0 || m.buffDef > 0) && m.buffTimer > 0;
       const hpTextColor = buffed
-        ? nova64.draw.colorMix(nova64.draw.rgba8(220, 220, 100, 255), 1.5)
-        : nova64.draw.rgba8(180, 180, 180, 200);
+        ? colorMix(rgba8(220, 220, 100, 255), 1.5)
+        : rgba8(180, 180, 180, 200);
       // Use colorLerp for smooth HP bar color: green → yellow → red
       const hpRatio = m.hp / m.maxHp;
-      const hpColor = nova64.draw.colorLerp(
-        nova64.draw.rgba8(200, 40, 40, 255),
-        nova64.draw.rgba8(50, 180, 50, 255),
-        hpRatio
-      );
-      nova64.draw.drawHealthBar(W - 95, y + 2, 60, 5, m.hp, m.maxHp, {
-        barColor: buffed ? nova64.draw.colorMix(hpColor, 1.3) : hpColor,
-        backgroundColor: nova64.draw.rgba8(30, 20, 20, 255),
+      const hpColor = colorLerp(rgba8(200, 40, 40, 255), rgba8(50, 180, 50, 255), hpRatio);
+      drawHealthBar(W - 95, y + 2, 60, 5, m.hp, m.maxHp, {
+        barColor: buffed ? colorMix(hpColor, 1.3) : hpColor,
+        backgroundColor: rgba8(30, 20, 20, 255),
       });
-      nova64.draw.print(`${m.hp}`, W - 30, y, hpTextColor);
+      print(`${m.hp}`, W - 30, y, hpTextColor);
     }
   }
 }
@@ -4270,20 +3923,14 @@ function drawCombatUI() {
 function drawInventoryUI() {
   const panelW = W - 80,
     panelH = H - 60;
-  nova64.draw.drawPanel(nova64.ui.centerX(panelW), nova64.ui.centerY(panelH), panelW, panelH, {
-    bgColor: nova64.draw.rgba8(10, 8, 20, 240),
-    borderLight: nova64.draw.rgba8(80, 70, 50, 255),
-    borderDark: nova64.draw.rgba8(30, 25, 20, 255),
+  drawPanel(centerX(panelW), centerY(panelH), panelW, panelH, {
+    bgColor: rgba8(10, 8, 20, 240),
+    borderLight: rgba8(80, 70, 50, 255),
+    borderDark: rgba8(30, 25, 20, 255),
   });
   // Save current font, use default for inventory title
-  const prevFont = nova64.ui.getFont();
-  nova64.draw.printCentered(
-    '═══ PARTY STATUS ═══',
-    320,
-    40,
-    nova64.draw.rgba8(200, 180, 120, 255),
-    2
-  );
+  const prevFont = getFont();
+  printCentered('═══ PARTY STATUS ═══', 320, 40, rgba8(200, 180, 120, 255), 2);
 
   for (let i = 0; i < party.length; i++) {
     const m = party[i];
@@ -4294,171 +3941,121 @@ function drawInventoryUI() {
       cb = c & 0xff;
 
     // Name + Class
-    nova64.draw.print(
+    print(
       `${CLASS_ICONS[m.class]} ${m.name}  [${m.class}]  Lv ${m.level}`,
       60,
       y,
-      nova64.draw.rgba8(cr, cg, cb, 255)
+      rgba8(cr, cg, cb, 255)
     );
 
     // Stats
-    const statColor = nova64.draw.rgba8(180, 180, 200, 220);
-    nova64.draw.print(`HP: ${m.hp}/${m.maxHp}`, 80, y + 14, statColor);
-    nova64.draw.drawProgressBar(
+    const statColor = rgba8(180, 180, 200, 220);
+    print(`HP: ${m.hp}/${m.maxHp}`, 80, y + 14, statColor);
+    drawProgressBar(
       160,
       y + 16,
       80,
       5,
       m.hp / m.maxHp,
-      nova64.draw.rgba8(50, 180, 50, 255),
-      nova64.draw.rgba8(30, 20, 20, 255)
+      rgba8(50, 180, 50, 255),
+      rgba8(30, 20, 20, 255)
     );
 
     if (m.maxMp > 0) {
-      nova64.draw.print(
-        `MP: ${m.mp}/${m.maxMp}`,
-        260,
-        y + 14,
-        nova64.draw.rgba8(120, 140, 220, 200)
-      );
-      nova64.draw.drawProgressBar(
+      print(`MP: ${m.mp}/${m.maxMp}`, 260, y + 14, rgba8(120, 140, 220, 200));
+      drawProgressBar(
         340,
         y + 16,
         60,
         5,
         m.mp / m.maxMp,
-        nova64.draw.rgba8(50, 80, 200, 255),
-        nova64.draw.rgba8(20, 20, 30, 255)
+        rgba8(50, 80, 200, 255),
+        rgba8(20, 20, 30, 255)
       );
     }
 
     const totalAtk = getEffectiveAtk(m);
     const totalDef = getEffectiveDef(m);
-    nova64.draw.print(
-      `ATK:${totalAtk}  DEF:${totalDef}  SPD:${m.spd}`,
-      80,
-      y + 28,
-      nova64.draw.rgba8(150, 150, 170, 180)
-    );
-    nova64.draw.printRight(
-      `XP: ${m.xp}/${m.xpNext}`,
-      560,
-      y + 28,
-      nova64.draw.rgba8(150, 150, 170, 180)
-    );
+    print(`ATK:${totalAtk}  DEF:${totalDef}  SPD:${m.spd}`, 80, y + 28, rgba8(150, 150, 170, 180));
+    printRight(`XP: ${m.xp}/${m.xpNext}`, 560, y + 28, rgba8(150, 150, 170, 180));
     // XP progress bar using uiProgressBar (UI widget variant)
-    nova64.ui.uiProgressBar(430, y + 30, 80, 4, m.xp, m.xpNext, {
-      fillColor: nova64.draw.rgba8(180, 150, 50, 200),
-      bgColor: nova64.draw.rgba8(30, 25, 15, 180),
+    uiProgressBar(430, y + 30, 80, 4, m.xp, m.xpNext, {
+      fillColor: rgba8(180, 150, 50, 200),
+      bgColor: rgba8(30, 25, 15, 180),
       showText: false,
     });
 
     // Equipment
     if (m.weapon) {
-      nova64.draw.print(`Wpn: ${m.weapon.name}`, 80, y + 40, nova64.draw.rgba8(200, 160, 80, 180));
+      print(`Wpn: ${m.weapon.name}`, 80, y + 40, rgba8(200, 160, 80, 180));
     }
     if (m.armor) {
-      nova64.draw.print(`Arm: ${m.armor.name}`, 260, y + 40, nova64.draw.rgba8(120, 160, 200, 180));
+      print(`Arm: ${m.armor.name}`, 260, y + 40, rgba8(120, 160, 200, 180));
     }
 
     if (!m.alive) {
-      nova64.draw.print('☠ FALLEN', 480, y, nova64.draw.rgba8(200, 40, 40, 255));
+      print('☠ FALLEN', 480, y, rgba8(200, 40, 40, 255));
     }
   }
 
   // Gold + Floor info
-  nova64.draw.drawDiamond(72, H - 86, 4, 5, nova64.draw.rgba8(220, 180, 50, 230));
+  drawDiamond(72, H - 86, 4, 5, rgba8(220, 180, 50, 230));
   const goldStr = `${totalGold}g`;
-  const goldMetrics = nova64.draw.measureText(goldStr, 1);
-  nova64.draw.print(goldStr, 80, H - 90, nova64.draw.rgba8(220, 180, 50, 230));
-  nova64.draw.print(
-    `Floor: ${floor}`,
-    80 + goldMetrics.width + 12,
-    H - 90,
-    nova64.draw.rgba8(150, 150, 170, 200)
-  );
+  const goldMetrics = measureText(goldStr, 1);
+  print(goldStr, 80, H - 90, rgba8(220, 180, 50, 230));
+  print(`Floor: ${floor}`, 80 + goldMetrics.width + 12, H - 90, rgba8(150, 150, 170, 200));
   if (bossDefeated.size > 0) {
-    nova64.draw.printRight(`Bosses slain: ${bossDefeated.size}`, 560, H - 90, n64Palette.red);
+    printRight(`Bosses slain: ${bossDefeated.size}`, 560, H - 90, n64Palette.red);
   }
 
   // Render stats debug info using get3DStats + getParticleStats + getRenderer
-  const stats = nova64.scene.get3DStats();
+  const stats = get3DStats();
   if (stats) {
     let debugStr = `Tris:${stats.triangles || 0}  Draws:${stats.drawCalls || 0}  Meshes:${stats.meshes || 0}`;
     // Append particle stats if any systems are active
     if (particleSystems.length > 0) {
-      const pStats = nova64.fx.getParticleStats(particleSystems[0]);
+      const pStats = getParticleStats(particleSystems[0]);
       if (pStats) debugStr += `  Particles:${pStats.active}/${pStats.max}`;
     }
     debugStr += `  Frame:${frameCount}`;
-    // Show renderer type from nova64.scene.getRenderer()
-    const renderer = nova64.scene.getRenderer();
+    // Show renderer type from getRenderer()
+    const renderer = getRenderer();
     if (renderer && renderer.info)
       debugStr += `  GL:${renderer.info.programs ? renderer.info.programs.length : '?'}prg`;
-    // Show scene object count from nova64.scene.getScene()
-    const scene = nova64.scene.getScene();
+    // Show scene object count from getScene()
+    const scene = getScene();
     if (scene && scene.children) debugStr += `  Obj:${scene.children.length}`;
-    nova64.draw.print(debugStr, 60, H - 55, nova64.draw.rgba8(80, 80, 100, 120));
+    print(debugStr, 60, H - 55, rgba8(80, 80, 100, 120));
   }
   // Game stats from createGameStore
   if (gameStats) {
     const gs = gameStats.getState();
-    nova64.draw.print(
-      `Steps:${gs.steps}  Kills:${gs.kills}`,
-      60,
-      H - 42,
-      nova64.draw.rgba8(70, 70, 90, 100)
-    );
+    print(`Steps:${gs.steps}  Kills:${gs.kills}`, 60, H - 42, rgba8(70, 70, 90, 100));
   }
   // Restore font after inventory rendering
-  if (prevFont) nova64.ui.setFont(prevFont.name || 'default');
+  if (prevFont) setFont(prevFont.name || 'default');
 
-  nova64.draw.print('[S] Save Game', 60, H - 72, nova64.draw.rgba8(100, 200, 100, 200));
+  print('[S] Save Game', 60, H - 72, rgba8(100, 200, 100, 200));
   // Visual preset toggle hint
   const presetLabel = visualPreset ? `[V] Mode: ${visualPreset.toUpperCase()}` : '[V] Visual Mode';
-  nova64.draw.print(presetLabel, 250, H - 72, n64Palette.cyan);
-  nova64.draw.printCentered(
-    'Press I / TAB / ESC to close',
-    320,
-    H - 55,
-    nova64.draw.rgba8(120, 120, 150, 180)
-  );
+  print(presetLabel, 250, H - 72, n64Palette.cyan);
+  printCentered('Press I / TAB / ESC to close', 320, H - 55, rgba8(120, 120, 150, 180));
 }
 
 function drawGameOver() {
-  // Smooth fade-in using nova64.util.ease() for polished game over transition
+  // Smooth fade-in using ease() for polished game over transition
   const fadeRaw = Math.min(1, stateElapsed() / 1.0);
-  const fadeIn = nova64.util.ease(fadeRaw, 'easeOutCubic');
+  const fadeIn = ease(fadeRaw, 'easeOutCubic');
   const fade = Math.floor(fadeIn * 220);
-  nova64.draw.drawSkyGradient(nova64.draw.rgba8(15, 0, 0, fade), nova64.draw.rgba8(0, 0, 0, fade));
+  drawSkyGradient(rgba8(15, 0, 0, fade), rgba8(0, 0, 0, fade));
   // Pulsing red radial glow behind text
-  nova64.draw.drawRadialGradient(
-    320,
-    140,
-    120,
-    nova64.draw.hslColor(0, 0.8, 0.2, 60),
-    nova64.draw.rgba8(0, 0, 0, 0)
-  );
+  drawRadialGradient(320, 140, 120, hslColor(0, 0.8, 0.2, 60), rgba8(0, 0, 0, 0));
   // Decorative ellipse frame behind title
-  nova64.util.ellipse(
-    320,
-    130,
-    160,
-    50,
-    nova64.draw.rgba8(120, 20, 20, Math.floor(fade * 0.3)),
-    false
-  );
-  nova64.ui.drawTextOutline(
-    'GAME OVER',
-    320,
-    120,
-    nova64.draw.hexColor(0xcc2828, 255),
-    nova64.draw.rgba8(80, 0, 0, 200),
-    3
-  );
+  ellipse(320, 130, 160, 50, rgba8(120, 20, 20, Math.floor(fade * 0.3)), false);
+  drawTextOutline('GAME OVER', 320, 120, hexColor(0xcc2828, 255), rgba8(80, 0, 0, 200), 3);
   // Skull polygon icon above text
-  const skullAlpha = Math.floor(nova64.util.pulse(animTimer, 2) * 100 + 155);
-  nova64.draw.poly(
+  const skullAlpha = Math.floor(pulse(animTimer, 2) * 100 + 155);
+  poly(
     [
       [310, 85],
       [320, 75],
@@ -4466,56 +4063,34 @@ function drawGameOver() {
       [325, 95],
       [315, 95],
     ],
-    nova64.draw.rgba8(200, 50, 50, skullAlpha),
+    rgba8(200, 50, 50, skullAlpha),
     true
   );
-  nova64.draw.printCentered(
-    `Your party fell on Floor ${floor}`,
-    320,
-    180,
-    nova64.draw.rgba8(180, 150, 130, 200)
-  );
-  nova64.draw.drawDiamond(270, 204, 4, 5, nova64.draw.hexColor(0xc8b432, 200));
-  nova64.draw.printCentered(
-    `${totalGold} Gold collected`,
-    320,
-    200,
-    nova64.draw.hexColor(0xc8b432, 200)
-  );
+  printCentered(`Your party fell on Floor ${floor}`, 320, 180, rgba8(180, 150, 130, 200));
+  drawDiamond(270, 204, 4, 5, hexColor(0xc8b432, 200));
+  printCentered(`${totalGold} Gold collected`, 320, 200, hexColor(0xc8b432, 200));
 
-  // Pulsing restart prompt using nova64.util.pulse() for smooth oscillation
-  const restartAlpha = Math.floor(nova64.util.pulse(animTimer, 1.5) * 120 + 135);
-  nova64.draw.printCentered(
-    'Press A / Tap to try again',
-    320,
-    280,
-    nova64.draw.rgba8(255, 255, 255, restartAlpha)
-  );
+  // Pulsing restart prompt using pulse() for smooth oscillation
+  const restartAlpha = Math.floor(pulse(animTimer, 1.5) * 120 + 135);
+  printCentered('Press A / Tap to try again', 320, 280, rgba8(255, 255, 255, restartAlpha));
   // Interactive restart button (createButton/updateButton/drawButton)
   if (restartButton) {
-    nova64.ui.updateButton(restartButton);
-    nova64.ui.drawButton(restartButton);
+    updateButton(restartButton);
+    drawButton(restartButton);
   }
 }
 
 function drawVictory() {
-  nova64.draw.drawGradient(
-    0,
-    0,
-    W,
-    H,
-    nova64.draw.rgba8(10, 8, 2, 200),
-    nova64.draw.rgba8(2, 2, 10, 200)
-  );
+  drawGradient(0, 0, W, H, rgba8(10, 8, 2, 200), rgba8(2, 2, 10, 200));
 
   // Victory crown polygon
-  const crownColor = nova64.draw.rgba8(
+  const crownColor = rgba8(
     255,
     220,
     50,
-    Math.floor(nova64.util.ease(Math.min(1, stateElapsed() / 1.5), 'easeOutBack') * 255)
+    Math.floor(ease(Math.min(1, stateElapsed() / 1.5), 'easeOutBack') * 255)
   );
-  nova64.draw.poly(
+  poly(
     [
       [280, 55],
       [290, 35],
@@ -4528,7 +4103,7 @@ function drawVictory() {
     crownColor,
     true
   );
-  nova64.draw.poly(
+  poly(
     [
       [280, 55],
       [290, 35],
@@ -4538,7 +4113,7 @@ function drawVictory() {
       [350, 35],
       [360, 55],
     ],
-    nova64.draw.rgba8(180, 120, 0, 200),
+    rgba8(180, 120, 0, 200),
     false
   );
 
@@ -4546,38 +4121,26 @@ function drawVictory() {
   for (let i = 0; i < 5; i++) {
     const sx = 80 + i * 130;
     const sy = 50 + Math.sin(animTimer * 2 + i) * 15;
-    const starColor = nova64.draw.hslColor(animTimer * 60 + i * 72, 0.7, 0.5, 120);
-    nova64.draw.drawStarburst(sx, sy, 20, 8, 6, starColor);
+    const starColor = hslColor(animTimer * 60 + i * 72, 0.7, 0.5, 120);
+    drawStarburst(sx, sy, 20, 8, 6, starColor);
   }
 
-  nova64.draw.drawGlowTextCentered(
-    'VICTORY!',
-    320,
-    80,
-    nova64.draw.rgba8(255, 220, 50, 255),
-    nova64.draw.rgba8(180, 120, 0, 150),
-    3
-  );
-  nova64.draw.printCentered(
-    'You conquered the Dark Tower!',
-    320,
-    140,
-    nova64.draw.rgba8(200, 200, 220, 255)
-  );
+  drawGlowTextCentered('VICTORY!', 320, 80, rgba8(255, 220, 50, 255), rgba8(180, 120, 0, 150), 3);
+  printCentered('You conquered the Dark Tower!', 320, 140, rgba8(200, 200, 220, 255));
 
   // Gold with diamond — use n64Palette for classic gold tone
-  nova64.draw.drawDiamond(290, 174, 4, 5, n64Palette.yellow);
-  nova64.draw.printCentered(`${totalGold} Gold`, 320, 170, n64Palette.yellow);
+  drawDiamond(290, 174, 4, 5, n64Palette.yellow);
+  printCentered(`${totalGold} Gold`, 320, 170, n64Palette.yellow);
 
   for (let i = 0; i < party.length; i++) {
     const m = party[i];
     const y = 200 + i * 16;
     // Use hexColor to convert CLASS_COLORS directly to rgba8
-    nova64.draw.printCentered(
+    printCentered(
       `${m.name} — Lv${m.level} ${m.class} ${m.alive ? '✓' : '☠'}`,
       320,
       y,
-      nova64.draw.hexColor(CLASS_COLORS[m.class], 220)
+      hexColor(CLASS_COLORS[m.class], 220)
     );
   }
 
@@ -4585,19 +4148,10 @@ function drawVictory() {
   for (let i = 0; i < 30; i++) {
     const sx = (Math.sin(animTimer * 2 + i * 1.7) * 0.5 + 0.5) * W;
     const sy = (animTimer * 40 + i * 37) % H;
-    nova64.draw.pset(
-      Math.floor(sx),
-      Math.floor(sy),
-      nova64.draw.hslColor(i * 36 + animTimer * 60, 0.7, 0.6, 200)
-    );
+    pset(Math.floor(sx), Math.floor(sy), hslColor(i * 36 + animTimer * 60, 0.7, 0.6, 200));
   }
 
-  // Pulsing restart prompt using nova64.util.pulse() for smooth oscillation
-  const replayAlpha = Math.floor(nova64.util.pulse(animTimer, 1.5) * 120 + 135);
-  nova64.draw.printCentered(
-    'Press A / Tap to play again',
-    320,
-    300,
-    nova64.draw.rgba8(255, 255, 255, replayAlpha)
-  );
+  // Pulsing restart prompt using pulse() for smooth oscillation
+  const replayAlpha = Math.floor(pulse(animTimer, 1.5) * 120 + 135);
+  printCentered('Press A / Tap to play again', 320, 300, rgba8(255, 255, 255, replayAlpha));
 }

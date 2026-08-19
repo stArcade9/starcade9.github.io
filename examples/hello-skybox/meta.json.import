@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://b2uis0nubxd5b"
+path="res://.godot/imported/meta.json-56ceb35db55ea29711479685f1672a8e.res"
+
+[deps]
+
+source_file="res://carts/hello-skybox/meta.json"
+dest_files=["res://.godot/imported/meta.json-56ceb35db55ea29711479685f1672a8e.res"]
+
+[params]
+

@@ -1,0 +1,7 @@
+{
+  "name": "Story → Video Demo",
+  "description": "A short auto-advancing slide story that ends with a fullscreen video cutscene. Web uses MP4; Godot and RetroArch use bundled frame playback.",
+  "author": "Nova64",
+  "version": "1.0.0",
+  "category": "demo"
+}

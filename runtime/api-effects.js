@@ -7,6 +7,12 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+// OutputPass handles the renderer's configured tone mapping + sRGB output
+// encoding. Required since THREE r152 — without it, post-processed colors
+// don't reach the canvas the way carts expect. Notably: it also keeps the
+// renderer's clear color path intact when bloom is enabled or removed, so
+// nova64.scene.setClearColor(...) reaches the screen even with bloom on.
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 // Chromatic Aberration shader
 const ChromaticAberrationShader = {
@@ -210,9 +216,23 @@ export function effectsApi(gpu) {
   let chromaticAberrationPass = null;
   let vignettePass = null;
   let glitchPass = null;
+  // OutputPass always lives at the END of the composer's pass list. This
+  // keeps the EffectComposer's terminal pass renderToScreen=true at all
+  // times — so addPass(bloom)/removePass(bloom) etc. never strip the
+  // chain's screen output and `nova64.scene.setClearColor(...)` always
+  // reaches the canvas. See addEffectPass() below for the helper that
+  // inserts new effect passes BEFORE outputPass to preserve this.
+  let outputPass = null;
 
   // Effect states
   let effectsEnabled = false;
+  // effectsBypassed is shared on globalThis so HMR-reloaded api-effects
+  // modules don't lose track of the bypass state between instances. The
+  // closure-scoped pattern broke for indie-odyssey combat because the
+  // setEffectsBypass call landed on a different module instance than the
+  // one renderEffects was checking — the user's combat stayed dark.
+  const BYPASS_KEY = '__nova64_fx_effects_bypassed__';
+  if (typeof globalThis[BYPASS_KEY] !== 'boolean') globalThis[BYPASS_KEY] = false;
   let glitchTime = 0;
 
   // Custom shader materials
@@ -228,11 +248,43 @@ export function effectsApi(gpu) {
     renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
 
+    // Terminal output pass — handles tone mapping + sRGB output and keeps
+    // the composer's screen-write path intact regardless of which effect
+    // passes are added/removed between RenderPass and this one.
+    outputPass = new OutputPass();
+    composer.addPass(outputPass);
+
     effectsEnabled = true;
   }
 
+  // Insert a new effect pass just BEFORE the terminal OutputPass so the
+  // OutputPass always remains last (and renderToScreen=true on it stays
+  // intact). Use this in place of composer.addPass() for any effect that
+  // should contribute to the chain.
+  function addEffectPass(pass) {
+    if (!composer || !pass) return;
+    if (outputPass && composer.passes.includes(outputPass)) {
+      const idx = composer.passes.indexOf(outputPass);
+      composer.insertPass(pass, idx);
+    } else {
+      composer.addPass(pass);
+    }
+  }
+
   // === BLOOM EFFECTS ===
-  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6) {
+  // Accepts EITHER positional args `enableBloom(strength, radius, threshold)`
+  // OR an options object `enableBloom({ strength, radius, threshold })` —
+  // existing carts (indie-odyssey, wizardry-3d, …) use the object form.
+  function enableBloom(strengthOrOptions = 1.0, radius = 0.5, threshold = 0.6) {
+    let strength = strengthOrOptions;
+    if (strengthOrOptions && typeof strengthOrOptions === 'object') {
+      strength = strengthOrOptions.strength ?? 1.0;
+      radius = strengthOrOptions.radius ?? radius;
+      threshold = strengthOrOptions.threshold ?? threshold;
+    } else if (typeof strengthOrOptions !== 'number') {
+      strength = 1.0;
+    }
+
     initPostProcessing();
 
     // Return early if post-processing not supported (e.g., Babylon.js backend)
@@ -252,7 +304,8 @@ export function effectsApi(gpu) {
       threshold
     );
 
-    composer.addPass(bloomPass);
+    // Insert before OutputPass so output stays terminal.
+    addEffectPass(bloomPass);
 
     return true;
   }
@@ -299,7 +352,7 @@ export function effectsApi(gpu) {
     fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
     fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
 
-    composer.addPass(fxaaPass);
+    addEffectPass(fxaaPass);
     return true;
   }
 
@@ -326,7 +379,7 @@ export function effectsApi(gpu) {
     }
     chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
     chromaticAberrationPass.uniforms['amount'].value = amount;
-    composer.addPass(chromaticAberrationPass);
+    addEffectPass(chromaticAberrationPass);
     return true;
   }
 
@@ -355,7 +408,7 @@ export function effectsApi(gpu) {
     vignettePass = new ShaderPass(VignetteShader);
     vignettePass.uniforms['darkness'].value = darkness;
     vignettePass.uniforms['offset'].value = offset;
-    composer.addPass(vignettePass);
+    addEffectPass(vignettePass);
     return true;
   }
 
@@ -382,7 +435,7 @@ export function effectsApi(gpu) {
     }
     glitchPass = new ShaderPass(GlitchShader);
     glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
-    composer.addPass(glitchPass);
+    addEffectPass(glitchPass);
     return true;
   }
 
@@ -397,6 +450,38 @@ export function effectsApi(gpu) {
     if (glitchPass) {
       glitchPass.uniforms['intensity'].value = Math.max(0, Math.min(1, intensity));
     }
+  }
+
+  // Convenience: fire a one-shot glitch BURST that starts at `intensity` and
+  // decays to zero over `duration` seconds, then removes the pass. Self-driven
+  // via rAF so carts get juicy damage/signal glitches in a single call:
+  // `nova64.fx.glitchBurst(0.7, 0.3)`. Great for hits, scene stings, interference.
+  let glitchBurstRAF = null;
+  function glitchBurst(intensity = 0.6, duration = 0.3) {
+    const peak = Math.max(0, Math.min(1, intensity));
+    if (!enableGlitch(peak)) return false;
+    const nowFn = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const raf = cb =>
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame(cb)
+        : setTimeout(() => cb(nowFn()), 16);
+    const ms = Math.max(1, duration * 1000);
+    const start = nowFn();
+    if (glitchBurstRAF != null && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(glitchBurstRAF);
+    }
+    const tick = () => {
+      const t = (nowFn() - start) / ms;
+      if (t >= 1) {
+        disableGlitch();
+        glitchBurstRAF = null;
+        return;
+      }
+      setGlitchIntensity(peak * (1 - t));
+      glitchBurstRAF = raf(tick);
+    };
+    glitchBurstRAF = raf(tick);
+    return true;
   }
 
   // === CUSTOM SHADERS ===
@@ -815,12 +900,64 @@ export function effectsApi(gpu) {
   }
 
   // === RENDERING ===
+  let _renderEffectsLogCount = 0;
   function renderEffects() {
-    if (effectsEnabled && composer) {
+    // First-frame diagnostic so we can see which path the user's browser
+    // actually takes. Logs once per ~120 frames (2s @ 60fps) until cleared.
+    if (_renderEffectsLogCount++ % 120 === 0) {
+      console.log(
+        '[api-fx] renderEffects: effectsEnabled=' +
+          effectsEnabled +
+          ' composer=' +
+          !!composer +
+          ' bypassed=' +
+          !!globalThis[BYPASS_KEY] +
+          ' → using ' +
+          (effectsEnabled && composer && !globalThis[BYPASS_KEY] ? 'COMPOSER' : 'DIRECT')
+      );
+    }
+    if (effectsEnabled && composer && !globalThis[BYPASS_KEY]) {
       composer.render();
     } else {
+      // Composer leaves the renderer pointing at an internal RenderTarget
+      // after running, so a direct renderer.render() would draw INTO that
+      // target instead of the screen — that's why bypass mode looked
+      // black/transparent for indie-odyssey combat. Reset to null (screen)
+      // and force-clear with the renderer's clear color (composer's last
+      // pass may have left clearColor/clearAlpha overridden internally)
+      // before drawing the scene.
+      const wasAutoClear = renderer.autoClear;
+      renderer.setRenderTarget(null);
+      renderer.autoClear = true;
+      // Explicit clear to repaint the canvas with the renderer's clear
+      // colour — guards against the composer leaving its internal
+      // clearColor/clearAlpha values latched.
+      renderer.clear(true, true, true);
       renderer.render(scene, camera);
+      renderer.autoClear = wasAutoClear;
     }
+  }
+
+  // === EFFECTS BYPASS ===
+  // Some cart phases (e.g. an Indie-Odyssey-style combat scene with a flat
+  // procedural sky) need the renderer's clear color to reach the canvas
+  // pixel-perfect, without any composer pass touching the alpha or color.
+  // Bypass mode routes endFrame through renderer.render(scene, camera)
+  // directly, skipping the EffectComposer. Toggle off when leaving the
+  // bypassed phase to resume normal post-processing.
+  function setEffectsBypass(bypass) {
+    globalThis[BYPASS_KEY] = !!bypass;
+    console.log(
+      '[api-fx] setEffectsBypass(' +
+        !!bypass +
+        ') — globalThis[' +
+        BYPASS_KEY +
+        '] = ' +
+        globalThis[BYPASS_KEY]
+    );
+  }
+  function isEffectsBypassed() {
+    return !!globalThis[BYPASS_KEY];
   }
 
   // Update effects (called every frame)
@@ -852,12 +989,21 @@ export function effectsApi(gpu) {
         enableGlitch: enableGlitch,
         disableGlitch: disableGlitch,
         setGlitchIntensity: setGlitchIntensity,
+        glitchBurst: glitchBurst,
 
         // Glow layer — Babylon-specific. On Three.js, UnrealBloom already
         // handles emissive glow well, so this is a graceful no-op that returns
         // false so carts can branch on the result if they care.
         enableGlow: () => false,
         disableGlow: () => {},
+
+        // Effects bypass — temporarily skip the EffectComposer to get a
+        // guaranteed-correct render through renderer.render(). Use this for
+        // combat scenes / cutscenes where the canvas must show the renderer's
+        // exact clear color and a composer pass would otherwise output
+        // alpha=0 (UnrealBloomPass × OutputPass interaction).
+        setEffectsBypass,
+        isEffectsBypassed,
 
         // Convenience
         enableRetroEffects: enableRetroEffects,

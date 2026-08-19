@@ -81,24 +81,24 @@ let wave = 3;
 let bossActive = false;
 
 export function init() {
-  ui = nova64.ui.parseCanvasUI(HUD_XML);
+  ui = parseCanvasUI(HUD_XML);
 
   // 3D scene: a few spinning cubes at different positions
   for (let i = 0; i < 6; i++) {
     const angle = (i / 6) * Math.PI * 2;
     const dist = 6;
-    const id = nova64.scene.createCube(
-      1.2,
-      [0x3399ff, 0xff6644, 0x44ff88, 0xff33cc, 0xffcc00, 0x00ddff][i],
-      [Math.cos(angle) * dist, 0, Math.sin(angle) * dist - 8]
-    );
+    const id = createCube(1.2, [0x3399ff, 0xff6644, 0x44ff88, 0xff33cc, 0xffcc00, 0x00ddff][i], [
+      Math.cos(angle) * dist,
+      0,
+      Math.sin(angle) * dist - 8,
+    ]);
     scene3D.push({ id, angle });
   }
 
-  nova64.camera.setCameraPosition(0, 8, 4);
-  nova64.camera.setCameraTarget(0, 0, -6);
-  nova64.light.setAmbientLight(0x223344, 0.8);
-  nova64.light.setFog(0x0a0a1a, 12, 40);
+  setCameraPosition(0, 8, 4);
+  setCameraTarget(0, 0, -6);
+  setAmbientLight(0x223344, 0.8);
+  setFog(0x0a0a1a, 12, 40);
 }
 
 export function update(dt) {
@@ -106,7 +106,7 @@ export function update(dt) {
 
   // Spin cubes
   for (const obj of scene3D) {
-    const mesh = nova64.scene.getMesh(obj.id);
+    const mesh = getMesh(obj.id);
     if (mesh) {
       mesh.rotation.x += dt * 0.7;
       mesh.rotation.y += dt * 1.1;
@@ -121,7 +121,7 @@ export function update(dt) {
   ammo = Math.max(0, 24 - (Math.floor(t * 0.8) % 25));
   bossActive = Math.sin(t * 0.15) > 0.7;
 
-  nova64.ui.updateCanvasUI(ui, dt);
+  updateCanvasUI(ui, dt);
 }
 
 export function draw() {
@@ -134,7 +134,7 @@ export function draw() {
   const sweepAngle = t * 1.4;
   const sweepDist = 40;
 
-  nova64.ui.renderCanvasUI(ui, {
+  renderCanvasUI(ui, {
     health: health.toFixed(0),
     mana: mana.toFixed(0),
     xp: xp.toFixed(0),

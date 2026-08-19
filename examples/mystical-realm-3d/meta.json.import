@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c71w0w33hluaj"
+path="res://.godot/imported/meta.json-6dca77a526a7f9eacee0f66b36e80afe.res"
+
+[deps]
+
+source_file="res://carts/mystical-realm-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-6dca77a526a7f9eacee0f66b36e80afe.res"]
+
+[params]
+

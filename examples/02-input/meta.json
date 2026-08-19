@@ -1,0 +1,7 @@
+{
+  "name": "Input",
+  "description": "G2 — keyboard/gamepad-driven cube on a ground plane with jump physics.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "demo"
+}

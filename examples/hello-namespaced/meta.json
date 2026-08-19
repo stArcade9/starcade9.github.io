@@ -1,0 +1,8 @@
+{
+  "name": "Hello Namespaced",
+  "description": "G5 first port — Nova64 nova64.* namespace API ported to the Godot host via the nova64-compat shim.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "port",
+  "source": "examples/hello-namespaced"
+}

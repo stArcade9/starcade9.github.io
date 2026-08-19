@@ -1,13 +1,1 @@
-{
-  "title": "Babylon.js Demo",
-  "description": "Babylon.js backend demo for Nova64 Phase 2 - showcasing GpuBabylon runtime with 3D primitives, lighting, and camera controls",
-  "author": "Nova64 Contributors",
-  "category": "3d",
-  "tags": ["babylon", "3d", "demo", "experimental"],
-  "version": "0.1.0",
-  "backend": "babylon",
-  "controls": {
-    "camera": "Free-look with gentle bob animation",
-    "objects": "Rotating cube, orbiting sphere, static pillar"
-  }
-}
+{"name":"Babylon Demo","description":"G6 cart port — Babylon backend demo cart (cube + sphere + cylinder + cone + ground plane + dynamic point light). Validates the shim's cylinder/cone primitive fallbacks and get3DStats stub.","author":"Nova64","version":"0.1.0","category":"port","source":"examples/babylon-demo"}

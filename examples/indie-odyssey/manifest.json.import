@@ -1,0 +1,13 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://rq886w0am7gb"
+valid=false
+
+[deps]
+
+source_file="res://carts/indie-odyssey/manifest.json"
+
+[params]
+

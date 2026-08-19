@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cbxs8wv2e1pt8"
+path="res://.godot/imported/meta.json-75d244a66dd8383fde2b3f4ca1c434cf.res"
+
+[deps]
+
+source_file="res://carts/strider-demo-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-75d244a66dd8383fde2b3f4ca1c434cf.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://dgflc5jg6cp5v"
+path="res://.godot/imported/meta.json-0477ec7eca77cacd8448463efcde68e5.res"
+
+[deps]
+
+source_file="res://carts/dungeon-crawler-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-0477ec7eca77cacd8448463efcde68e5.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cu3k7fx0cro0b"
+path="res://.godot/imported/meta.json-42acab0b89b4f9fbfd218e07c4c954a0.res"
+
+[deps]
+
+source_file="res://carts/babylon-demo/meta.json"
+dest_files=["res://.godot/imported/meta.json-42acab0b89b4f9fbfd218e07c4c954a0.res"]
+
+[params]
+

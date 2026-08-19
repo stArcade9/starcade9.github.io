@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://dhlmwt46ivc8o"
+path="res://.godot/imported/meta.json-8de7eef99910a80b4bb1491d381a4ec8.res"
+
+[deps]
+
+source_file="res://carts/stage-cards/meta.json"
+dest_files=["res://.godot/imported/meta.json-8de7eef99910a80b4bb1491d381a4ec8.res"]
+
+[params]
+

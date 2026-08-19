@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://xeomiyjee7e5"
+path="res://.godot/imported/meta.json-e2f46fc40f33d03a6e7c3f91b009c900.res"
+
+[deps]
+
+source_file="res://carts/pbr-showcase/meta.json"
+dest_files=["res://.godot/imported/meta.json-e2f46fc40f33d03a6e7c3f91b009c900.res"]
+
+[params]
+

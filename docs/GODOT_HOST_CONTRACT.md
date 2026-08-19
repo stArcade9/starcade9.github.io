@@ -213,9 +213,15 @@ day/night cycles. It is separate from individually tracked light handles.
   "down": false,
   "action": false,
   "buttons": [false, false, ...],    // 14-element gamepad button array
-  "axis": { "lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0, "lt": 0.0, "rt": 0.0 }
+  "axis": { "lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0, "lt": 0.0, "rt": 0.0 },
+  "touches": [{ "id": 0, "x": 100, "y": 280 }]  // active touches, 640x360 logical
 }
 ```
+
+**Touches** echo whatever the GDScript host last pushed via `set_touches`
+(`Nova64Host` can't enumerate active touches from the `Input` singleton, so the
+host captures `InputEventScreenTouch`/`Drag` and pushes the live set each frame).
+They surface to carts as `nova64.input.touches()` / `touchCount()`.
 
 **Key codes** use web `KeyboardEvent.code` names (`"KeyW"`, `"ArrowLeft"`,
 `"Space"`, `"Enter"`, `"ShiftLeft"`, etc.). The full mapped set is defined
@@ -275,6 +281,37 @@ Axes apply a shaped deadzone (0.18) and power curve (exponent 1.35).
 
 ---
 
+### Video (proposed — not yet implemented in the host)
+
+This section defines the host-side commands `nova64.video` will use on
+Godot once the Godot adapter ships. The JS API is already stable in
+`runtime/api-video.js`; it currently falls through to a stub on Godot
+hosts. When the bridge below is in place, `videoApi(gpu)`'s backend
+detector will recognise Godot and route real calls through.
+
+| Method | Key payload fields | Returns |
+|--------|--------------------|---------|
+| `video.load` | `path` (Godot resource path, must resolve to a `VideoStream`-compatible file, typically `.ogv` or `.webm`), `loop` (bool), `autoplay` (bool), `muted` (bool) | `{ handle, ready }` |
+| `video.applyToMesh` | `videoHandle`, `meshHandle`, `slot` (`'albedo'` (default) / `'emission'`) | `{ ok }` — host binds a `VideoStreamPlayback`'s texture as the mesh material's `albedo_texture` / `emission_texture` |
+| `video.play` | `handle` | `{ ok }` |
+| `video.pause` | `handle` | `{ ok }` |
+| `video.seek` | `handle`, `time` (seconds) | `{ ok }` |
+| `video.setVolume` | `handle`, `volume` (0–1) | `{ ok }` |
+| `video.playFullscreen` | `path`, `loop` (bool), `muted` (bool), `skipKey` (string, default `'ui_cancel'`) | `{ handle }` — host spawns a fullscreen `VideoStreamPlayer` on the viewport; emits `video.finished` event when playback ends or skip-key is pressed |
+| `video.destroy` | `handle` | `{ ok }` |
+
+**Asset format**: Godot's `VideoStream` core supports `.ogv` (Theora) out
+of the box and `.webm` (VP8/9) via the `webm` plugin. `.mp4` (H.264) is
+not natively supported in Godot 4 and would require a third-party
+plugin or transcoding to one of the above. The browser path uses `.mp4`
+freely, so carts that want cross-host compatibility should ship both an
+`.mp4` and a transcoded `.ogv` / `.webm` and let the engine pick by
+backend.
+
+**Events**: the host MUST emit `video.finished` with payload
+`{ handle, skipped: bool }` when a fullscreen video ends or is skipped,
+so the `playFullscreen` promise resolves.
+
 ### Voxel
 
 | Method | Key payload fields | Returns |
@@ -315,10 +352,12 @@ Coordinates are in the cart's 640×360 virtual canvas space.
 | `overlay.line` | `x1`, `y1`, `x2`, `y2`, `color`, `width` | `{ ok }` |
 | `overlay.circle` | `x`, `y`, `r`, `color`, `fill` | `{ ok }` |
 | `overlay.text` | `x`, `y`, `text`, `color`, `size` (font size px) | `{ ok }` |
+| `overlay.image` | `texture`/`handle` (texture handle), `x`, `y`, `w`, `h`, `color` ({r,g,b,a}, optional modulate) | `{ ok }` |
 | `overlay.batch` | `ops: Array` of individual overlay command objects (each has `type` + fields above) | `{ ok }` |
 
 `overlay.batch` is the preferred path for HUD-heavy carts; it amortises
-the JS→C++ call overhead to a single round-trip per frame.
+the JS→C++ call overhead to a single round-trip per frame. Image ops use
+the compact array form `['image', textureHandle, x, y, w, h, color]`.
 
 ---
 
@@ -356,11 +395,13 @@ the Three.js browser backend.
 | VOX model loading | ✅ | ✅ | ✅ |
 | WAD loading | ✅ | ✅ | ✅ |
 | Voxel chunk meshing | ✅ | ✅ | ✅ (native C++ greedy mesher) |
-| 2D overlay (HUD) | ✅ | ✅ | ✅ |
+| 2D overlay (HUD + image blits) | ✅ | ✅ | ✅ |
 | Gamepad input | ✅ | ✅ | ✅ |
 | Mouse look / pointer lock | ✅ | ✅ | ⚠️ partial (no browser pointer-lock API) |
 | Audio | ✅ | ✅ | ✅ |
 | Post-processing (bloom, SSAO) | ✅ | ✅ | ✅ (via `env.set`) |
+| Video texture on mesh (`nova64.video`) | ✅ | ✅ | 🟡 contract defined, host impl pending |
+| Full-screen video playback | ✅ | ✅ | 🟡 contract defined, host impl pending |
 | TSL / custom shaders | ✅ Three-only | ❌ | ❌ |
 | WebXR / VR / AR | ✅ | ✅ | ❌ (Godot XR is separate and not yet bridged) |
 | canvas2D textures (HTMLCanvas) | ✅ | ✅ | ❌ (no DOM; use `texture.createFromImage` instead) |

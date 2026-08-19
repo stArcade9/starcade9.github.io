@@ -1,0 +1,7 @@
+{
+  "name": "Texture",
+  "description": "G2 — procedural 64x64 checkerboard texture.createFromImage upload.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "demo"
+}

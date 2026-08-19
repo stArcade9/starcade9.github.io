@@ -76,6 +76,17 @@ export function createBabylonLightsApi(self) {
       return true;
     },
 
+    setLightVisible(lightId, visible = true) {
+      const light = self._cartLights.get(lightId);
+      if (!light) return false;
+      if (typeof light.setEnabled === 'function') {
+        light.setEnabled(!!visible);
+      } else {
+        light.isEnabled = !!visible;
+      }
+      return true;
+    },
+
     removeLight(lightId) {
       const light = self._cartLights.get(lightId);
       if (!light) return false;

@@ -188,6 +188,9 @@ export function primitivesModule({
         if (prop === '__meshId') {
           return id;
         }
+        if (prop === '__threeObject') {
+          return target;
+        }
         // Forward all other property access to the actual Three.js mesh
         const value = target[prop];
         if (typeof value === 'function') {
@@ -213,12 +216,18 @@ export function primitivesModule({
     }
     const mesh = meshes.get(id);
     if (mesh) {
-      // The mesh is a Proxy that forwards to the actual Three.js mesh
-      // scene.remove, dispose etc. all work through the Proxy's forwarding
-      scene.remove(mesh);
-      mesh.geometry?.dispose?.();
-      if (mesh.material?.map) mesh.material.map.dispose?.();
-      mesh.material?.dispose?.();
+      const object = mesh.__threeObject ?? mesh;
+      scene.remove(object);
+      object.geometry?.dispose?.();
+      if (Array.isArray(object.material)) {
+        object.material.forEach(material => {
+          material?.map?.dispose?.();
+          material?.dispose?.();
+        });
+      } else {
+        object.material?.map?.dispose?.();
+        object.material?.dispose?.();
+      }
       meshes.delete(id);
       mixers.delete(id);
       modelAnimations.delete(id);

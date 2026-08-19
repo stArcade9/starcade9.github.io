@@ -7,13 +7,10 @@ import { i18nApi } from './i18n.js';
 import { dataApi } from './data.js';
 import { assetLoaderApi } from './asset-loader.js';
 
-const _hasImportMetaGlob = typeof import.meta.glob === 'function';
-const _exampleMetaModules = _hasImportMetaGlob
-  ? import.meta.glob('../examples/**/meta.json', {
-      eager: true,
-      import: 'default',
-    })
-  : {};
+const _exampleMetaModules = import.meta.glob('../examples/**/meta.json', {
+  eager: true,
+  import: 'default',
+});
 
 // ── Subsystem instances ──────────────────────────────────────
 let _envInst = null;
@@ -139,9 +136,7 @@ export function manifestApi() {
       }
 
       // For non-bundled carts, still try the conventional sidecar meta.json.
-      // Static hosts do not provide Vite's import.meta.glob, so example carts
-      // need the same fetch fallback there.
-      if (basePath && (!basePath.startsWith('/examples/') || !_hasImportMetaGlob)) {
+      if (basePath && !basePath.startsWith('/examples/')) {
         try {
           const metaUrl = basePath + '/meta.json?t=' + Date.now();
           const res = await fetch(metaUrl);

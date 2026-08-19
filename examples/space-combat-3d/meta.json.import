@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cf48k755c7mmj"
+path="res://.godot/imported/meta.json-1b405afadaa5af163ed05cbdbf1a503b.res"
+
+[deps]
+
+source_file="res://carts/space-combat-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-1b405afadaa5af163ed05cbdbf1a503b.res"]
+
+[params]
+

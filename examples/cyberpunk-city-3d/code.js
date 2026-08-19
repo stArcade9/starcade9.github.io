@@ -101,11 +101,11 @@ function spawnPackets() {
     const x = (Math.random() - 0.5) * CITY_SIZE * 1.5;
     const y = 3 + Math.random() * 20;
     const z = (Math.random() - 0.5) * CITY_SIZE * 1.5;
-    const mesh = nova64.scene.createAdvancedCube(
-      2,
-      { material: 'emissive', emissive: 0x00ff00, intensity: 3 },
-      [x, y, z]
-    );
+    const mesh = createAdvancedCube(2, { material: 'emissive', emissive: 0x00ff00, intensity: 3 }, [
+      x,
+      y,
+      z,
+    ]);
     dataPackets.push({ mesh, x, y, z, active: true, offset: Math.random() * 10 });
   }
 }
@@ -115,8 +115,8 @@ function spawnDrones() {
     const x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
     const y = 8 + Math.random() * 15;
     const z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
-    const body = nova64.scene.createCube(1.5, 0.6, 1.5, 0xff2222, [x, y, z]);
-    const glow = nova64.scene.createCube(1.8, 0.3, 1.8, 0xff0000, [x, y - 0.4, z]);
+    const body = createCube(1.5, 0.6, 1.5, 0xff2222, [x, y, z]);
+    const glow = createCube(1.8, 0.3, 1.8, 0xff0000, [x, y - 0.4, z]);
     drones.push({
       body,
       glow,
@@ -145,8 +145,8 @@ function updateDrones(dt) {
         d.x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
         d.y = 8 + Math.random() * 15;
         d.z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
-        d.body = nova64.scene.createCube(1.5, 0.6, 1.5, 0xff2222, [d.x, d.y, d.z]);
-        d.glow = nova64.scene.createCube(1.8, 0.3, 1.8, 0xff0000, [d.x, d.y - 0.4, d.z]);
+        d.body = createCube(1.5, 0.6, 1.5, 0xff2222, [d.x, d.y, d.z]);
+        d.glow = createCube(1.8, 0.3, 1.8, 0xff0000, [d.x, d.y - 0.4, d.z]);
         d.hp = 60;
         d.alive = true;
         d.shootCD = 2 + Math.random() * 2;
@@ -169,7 +169,7 @@ function updateDrones(dt) {
         d.shootCD = 1.5 + Math.random();
         const pspd = 30;
         droneProjectiles.push({
-          mesh: nova64.scene.createSphere(0.3, 0xff4444, [d.x, d.y, d.z]),
+          mesh: createSphere(0.3, 0xff4444, [d.x, d.y, d.z]),
           x: d.x,
           y: d.y,
           z: d.z,
@@ -178,7 +178,7 @@ function updateDrones(dt) {
           vz: (dz / dist) * pspd,
           life: 3,
         });
-        nova64.audio.sfx('laser');
+        sfx('laser');
       }
     } else {
       d.waypointTimer -= dt;
@@ -203,25 +203,25 @@ function updateDrones(dt) {
     d.x += d.vx * dt;
     d.y += d.vy * dt;
     d.z += d.vz * dt;
-    nova64.scene.setPosition(d.body, d.x, d.y, d.z);
-    nova64.scene.setPosition(d.glow, d.x, d.y - 0.4, d.z);
-    nova64.scene.setRotation(d.body, 0, gameTime * 3, 0);
+    setPosition(d.body, d.x, d.y, d.z);
+    setPosition(d.glow, d.x, d.y - 0.4, d.z);
+    setRotation(d.body, 0, gameTime * 3, 0);
 
     // Player ram damage when boosting
     if (dist < 3 && player.boost > 1.5) {
       d.hp -= 40;
-      nova64.audio.sfx('hit');
-      nova64.util.triggerShake(shake, 0.5);
+      sfx('hit');
+      triggerShake(shake, 0.5);
       if (d.hp <= 0) {
         d.alive = false;
         d.respawnTimer = 8;
-        nova64.scene.destroyMesh(d.body);
-        nova64.scene.destroyMesh(d.glow);
+        destroyMesh(d.body);
+        destroyMesh(d.glow);
         dronesDestroyed++;
         playerScore += 200;
-        nova64.audio.sfx('explosion');
+        sfx('explosion');
         for (let j = 0; j < 10; j++) {
-          const p = nova64.scene.createSphere(0.2, 0xff4400, [d.x, d.y, d.z]);
+          const p = createSphere(0.2, 0xff4400, [d.x, d.y, d.z]);
           particles.push({
             mesh: p,
             x: d.x,
@@ -251,7 +251,7 @@ function updateProjectiles(dt) {
     p.y += p.vy * dt;
     p.z += p.vz * dt;
     p.life -= dt;
-    nova64.scene.setPosition(p.mesh, p.x, p.y, p.z);
+    setPosition(p.mesh, p.x, p.y, p.z);
 
     const dx = p.x - player.x;
     const dy = p.y - player.y;
@@ -259,22 +259,22 @@ function updateProjectiles(dt) {
     if (Math.sqrt(dx * dx + dy * dy + dz * dz) < 3 && playerDmgCD <= 0) {
       playerHealth = Math.max(0, playerHealth - 10);
       playerDmgCD = 0.8;
-      nova64.util.triggerShake(shake, 0.4);
-      nova64.audio.sfx('hit');
-      nova64.scene.destroyMesh(p.mesh);
+      triggerShake(shake, 0.4);
+      sfx('hit');
+      destroyMesh(p.mesh);
       droneProjectiles.splice(i, 1);
       if (playerHealth <= 0) {
         playerHealth = playerMaxHealth;
         playerScore = Math.max(0, playerScore - 500);
         missionMsg = 'SYSTEM CRASH - REBOOTING...';
         missionMsgTimer = 3;
-        nova64.audio.sfx('death');
+        sfx('death');
       }
       continue;
     }
 
     if (p.life <= 0) {
-      nova64.scene.destroyMesh(p.mesh);
+      destroyMesh(p.mesh);
       droneProjectiles.splice(i, 1);
     }
   }
@@ -328,7 +328,7 @@ function startNextMission() {
   missionTimer = currentMission.timeLimit;
   missionMsg = `NEW: ${currentMission.name}`;
   missionMsgTimer = 3;
-  nova64.audio.sfx('powerup');
+  sfx('powerup');
 }
 
 function respawnPackets(count) {
@@ -338,27 +338,27 @@ function respawnPackets(count) {
     const x = (Math.random() - 0.5) * CITY_SIZE * 1.2;
     const y = 3 + Math.random() * 20;
     const z = (Math.random() - 0.5) * CITY_SIZE * 1.2;
-    const mesh = nova64.scene.createAdvancedCube(
-      2,
-      { material: 'emissive', emissive: 0x00ff00, intensity: 3 },
-      [x, y, z]
-    );
+    const mesh = createAdvancedCube(2, { material: 'emissive', emissive: 0x00ff00, intensity: 3 }, [
+      x,
+      y,
+      z,
+    ]);
     dataPackets.push({ mesh, x, y, z, active: true, offset: Math.random() * 10 });
   }
 }
 
 function createCheckpointMarker(x, y, z) {
-  checkpointMesh = nova64.scene.createCylinder(1, 30, 0x00ffff, [x, y, z], { segments: 6 });
-  checkpointGlow = nova64.scene.createCylinder(2, 32, 0x004488, [x, y - 1, z], { segments: 6 });
+  checkpointMesh = createCylinder(1, 30, 0x00ffff, [x, y, z], { segments: 6 });
+  checkpointGlow = createCylinder(2, 32, 0x004488, [x, y - 1, z], { segments: 6 });
 }
 
 function removeCheckpoint() {
   if (checkpointMesh) {
-    nova64.scene.destroyMesh(checkpointMesh);
+    destroyMesh(checkpointMesh);
     checkpointMesh = null;
   }
   if (checkpointGlow) {
-    nova64.scene.destroyMesh(checkpointGlow);
+    destroyMesh(checkpointGlow);
     checkpointGlow = null;
   }
 }
@@ -372,8 +372,8 @@ function updateMission(dt) {
     playerScore += currentMission.reward;
     missionMsg = `COMPLETE! +${currentMission.reward} CREDITS`;
     missionMsgTimer = 3;
-    nova64.audio.sfx('coin');
-    nova64.util.triggerShake(shake, 0.3);
+    sfx('coin');
+    triggerShake(shake, 0.3);
     playerHealth = Math.min(playerMaxHealth, playerHealth + 20);
     const m = currentMission;
     currentMission = null;
@@ -387,13 +387,13 @@ function updateMission(dt) {
     if (Math.sqrt(dx * dx + dz * dz) < 8) {
       currentMission.progress = 1;
     }
-    if (checkpointMesh) nova64.scene.setRotation(checkpointMesh, 0, gameTime * 2, 0);
+    if (checkpointMesh) setRotation(checkpointMesh, 0, gameTime * 2, 0);
   }
 
   if (missionTimer <= 0) {
     missionMsg = 'MISSION FAILED - RETRYING';
     missionMsgTimer = 2;
-    nova64.audio.sfx('error');
+    sfx('error');
     currentMission.progress = 0;
     missionTimer = currentMission.timeLimit;
     if (currentMission.type === 'SPEED_RUN') {
@@ -424,28 +424,28 @@ const COLORS = {
 };
 
 export async function init() {
-  nova64.draw.cls();
+  cls();
 
   // Setup dramatic 3D scene
-  nova64.camera.setCameraPosition(0, 20, 30);
-  nova64.camera.setCameraTarget(0, 10, 0);
-  nova64.camera.setCameraFOV(75);
+  setCameraPosition(0, 20, 30);
+  setCameraTarget(0, 10, 0);
+  setCameraFOV(75);
 
   // 🌈 BRIGHT NEON LIGHTING - Make it pop!
-  nova64.light.setLightDirection(-0.3, -0.7, -0.4);
-  nova64.light.setLightColor(0xffaaff); // Bright magenta/pink key light
-  nova64.light.setAmbientLight(0x664488); // Much brighter purple ambient
+  setLightDirection(-0.3, -0.7, -0.4);
+  setLightColor(0xffaaff); // Bright magenta/pink key light
+  setAmbientLight(0x664488); // Much brighter purple ambient
 
   // 🌫️ Atmospheric fog with neon tint
-  nova64.light.setFog(0x441166, 30, 180); // Purple/magenta fog
+  setFog(0x441166, 30, 180); // Purple/magenta fog
 
   // 🎨 Enable ALL visual effects for maximum impact
-  nova64.fx.enablePixelation(1);
-  nova64.fx.enableDithering(true);
-  nova64.fx.enableBloom(1.5, 0.3, 0.25); // Strong neon glow
-  nova64.fx.enableFXAA(); // Anti-aliasing
-  nova64.fx.enableChromaticAberration(0.003); // Cyberpunk lens distortion
-  nova64.fx.enableVignette(1.6, 0.85); // Dark vignette for immersion
+  enablePixelation(1);
+  enableDithering(true);
+  enableBloom(1.5, 0.3, 0.25); // Strong neon glow
+  enableFXAA(); // Anti-aliasing
+  enableChromaticAberration(0.003); // Cyberpunk lens distortion
+  enableVignette(1.6, 0.85); // Dark vignette for immersion
 
   await buildCyberpunkCity();
   createPlayer();
@@ -453,7 +453,7 @@ export async function init() {
   initParticleSystem();
   spawnPackets();
   spawnDrones();
-  shake = nova64.util.createShake(0.3);
+  shake = createShake(0.3);
 
   // Initialize start screen
   initStartScreen();
@@ -466,8 +466,8 @@ function initStartScreen() {
   uiButtons = [];
 
   uiButtons.push(
-    nova64.ui.createButton(
-      nova64.ui.centerX(240),
+    createButton(
+      centerX(240),
       150,
       240,
       60,
@@ -477,16 +477,16 @@ function initStartScreen() {
         startNextMission();
       },
       {
-        normalColor: nova64.draw.rgba8(255, 0, 100, 255),
-        hoverColor: nova64.draw.rgba8(255, 60, 150, 255),
-        pressedColor: nova64.draw.rgba8(200, 0, 80, 255),
+        normalColor: rgba8(255, 0, 100, 255),
+        hoverColor: rgba8(255, 60, 150, 255),
+        pressedColor: rgba8(200, 0, 80, 255),
       }
     )
   );
 
   uiButtons.push(
-    nova64.ui.createButton(
-      nova64.ui.centerX(200),
+    createButton(
+      centerX(200),
       355,
       200,
       45,
@@ -495,9 +495,9 @@ function initStartScreen() {
         console.log('Cyberpunk City - WASD: Move, SHIFT: Fly, SPACE: Boost');
       },
       {
-        normalColor: nova64.draw.rgba8(0, 255, 255, 255),
-        hoverColor: nova64.draw.rgba8(60, 255, 255, 255),
-        pressedColor: nova64.draw.rgba8(0, 200, 200, 255),
+        normalColor: rgba8(0, 255, 255, 255),
+        hoverColor: rgba8(60, 255, 255, 255),
+        pressedColor: rgba8(0, 200, 200, 255),
       }
     )
   );
@@ -508,11 +508,11 @@ export function update(dt) {
 
   if (gameState === 'start') {
     startScreenTime += dt;
-    nova64.ui.updateAllButtons();
+    updateAllButtons();
 
     // Animate scene in background
     updateVehicles(dt);
-    _local_updateParticles(dt);
+    updateParticles(dt);
     updatePackets(dt);
     updateCityLights(dt);
     updateNeonSigns(dt);
@@ -521,15 +521,15 @@ export function update(dt) {
     camera.x = Math.cos(gameTime * 0.2) * 40;
     camera.z = Math.sin(gameTime * 0.2) * 40;
     camera.y = 25;
-    nova64.camera.setCameraPosition(camera.x, camera.y, camera.z);
-    nova64.camera.setCameraTarget(0, 10, 0);
+    setCameraPosition(camera.x, camera.y, camera.z);
+    setCameraTarget(0, 10, 0);
     return;
   }
 
   handleInput(dt);
   updatePlayer(dt);
   updateVehicles(dt);
-  _local_updateParticles(dt);
+  updateParticles(dt);
   updatePackets(dt);
   updateCityLights(dt);
   updateCamera(dt);
@@ -537,7 +537,7 @@ export function update(dt) {
   updateDrones(dt);
   updateProjectiles(dt);
   updateMission(dt);
-  if (shake) nova64.util.updateShake(shake, dt);
+  if (shake) updateShake(shake, dt);
   if (playerDmgCD > 0) playerDmgCD -= dt;
 }
 
@@ -553,184 +553,95 @@ export function draw() {
 
 function drawStartScreen() {
   // Neon gradient background — dual-band
-  nova64.draw.drawGradient(
-    0,
-    0,
-    640,
-    200,
-    nova64.draw.rgba8(50, 10, 50, 235),
-    nova64.draw.rgba8(10, 5, 20, 245),
-    'v'
-  );
-  nova64.draw.drawGradient(
-    0,
-    200,
-    640,
-    160,
-    nova64.draw.rgba8(10, 5, 20, 245),
-    nova64.draw.rgba8(20, 5, 40, 240),
-    'v'
-  );
+  drawGradient(0, 0, 640, 200, rgba8(50, 10, 50, 235), rgba8(10, 5, 20, 245), 'v');
+  drawGradient(0, 200, 640, 160, rgba8(10, 5, 20, 245), rgba8(20, 5, 40, 240), 'v');
 
   // Animated noise "digital rain" static
-  nova64.draw.drawNoise(0, 0, 640, 360, 22, Math.floor(startScreenTime * 30));
+  drawNoise(0, 0, 640, 360, 22, Math.floor(startScreenTime * 30));
 
   // Radial spotlight behind title
-  nova64.draw.drawRadialGradient(
-    320,
-    88,
-    200,
-    nova64.draw.rgba8(180, 0, 120, 35),
-    nova64.draw.rgba8(0, 0, 0, 0)
-  );
+  drawRadialGradient(320, 88, 200, rgba8(180, 0, 120, 35), rgba8(0, 0, 0, 0));
 
   // Neon title with glow effect
   const neonPulse = Math.sin(startScreenTime * 4) * 0.3 + 0.7;
-  const pinkNeon = nova64.draw.rgba8(
-    255,
-    Math.floor(neonPulse * 100),
-    Math.floor(neonPulse * 200),
-    255
-  );
-  const cyanNeon = nova64.draw.rgba8(0, Math.floor(neonPulse * 255), 255, 255);
+  const pinkNeon = rgba8(255, Math.floor(neonPulse * 100), Math.floor(neonPulse * 200), 255);
+  const cyanNeon = rgba8(0, Math.floor(neonPulse * 255), 255, 255);
 
   const flicker = Math.random() > 0.95 ? -2 : 0;
-  nova64.draw.drawGlowTextCentered(
-    'CYBERPUNK',
-    320,
-    50 + flicker,
-    pinkNeon,
-    nova64.draw.rgba8(150, 0, 100, 150),
-    2
-  );
-  nova64.draw.drawGlowTextCentered(
-    'CITY 3D',
-    320,
-    105 + flicker,
-    cyanNeon,
-    nova64.draw.rgba8(0, 80, 140, 150),
-    2
-  );
+  drawGlowTextCentered('CYBERPUNK', 320, 50 + flicker, pinkNeon, rgba8(150, 0, 100, 150), 2);
+  drawGlowTextCentered('CITY 3D', 320, 105 + flicker, cyanNeon, rgba8(0, 80, 140, 150), 2);
 
   // Glitch subtitle
   const glitch = Math.random() > 0.97 ? Math.floor(Math.random() * 4) - 2 : 0;
-  nova64.ui.setFont('large');
-  nova64.ui.setTextAlign('center');
-  nova64.ui.drawText(
-    '▶ Nintendo 64 / PlayStation Style ◀',
-    320 + glitch,
-    162,
-    nova64.draw.rgba8(255, 255, 0, 255),
-    1
-  );
+  setFont('large');
+  setTextAlign('center');
+  drawText('▶ Nintendo 64 / PlayStation Style ◀', 320 + glitch, 162, rgba8(255, 255, 0, 255), 1);
 
   // Info panel
-  const panel = nova64.ui.createPanel(nova64.ui.centerX(480), 208, 480, 118, {
-    bgColor: nova64.draw.rgba8(30, 10, 30, 210),
-    borderColor: nova64.draw.rgba8(255, 0, 100, 255),
+  const panel = createPanel(centerX(480), 208, 480, 118, {
+    bgColor: rgba8(30, 10, 30, 210),
+    borderColor: rgba8(255, 0, 100, 255),
     borderWidth: 3,
     shadow: true,
     gradient: true,
-    gradientColor: nova64.draw.rgba8(50, 20, 50, 210),
+    gradientColor: rgba8(50, 20, 50, 210),
   });
-  nova64.draw.drawPanel(panel);
+  drawPanel(panel);
 
-  nova64.ui.setFont('normal');
-  nova64.ui.setTextAlign('center');
-  nova64.ui.drawText(
-    'EXPLORE THE NEON METROPOLIS',
-    320,
-    225,
-    nova64.draw.rgba8(255, 0, 255, 255),
-    1
-  );
+  setFont('normal');
+  setTextAlign('center');
+  drawText('EXPLORE THE NEON METROPOLIS', 320, 225, rgba8(255, 0, 255, 255), 1);
 
-  nova64.ui.setFont('small');
-  nova64.ui.drawText('▶ 50+ Procedural Buildings with Neon Lights', 320, 247, uiColors.light, 1);
-  nova64.ui.drawText('▶ Flying Vehicles & Dynamic Particle System', 320, 262, uiColors.light, 1);
-  nova64.ui.drawText('▶ Full Player Control + Flying Mode', 320, 277, uiColors.light, 1);
-  nova64.ui.drawText(
-    '▶ Retro N64 Effects: Pixelation, Dithering, Bloom',
-    320,
-    292,
-    uiColors.light,
-    1
-  );
+  setFont('small');
+  drawText('▶ 50+ Procedural Buildings with Neon Lights', 320, 247, uiColors.light, 1);
+  drawText('▶ Flying Vehicles & Dynamic Particle System', 320, 262, uiColors.light, 1);
+  drawText('▶ Full Player Control + Flying Mode', 320, 277, uiColors.light, 1);
+  drawText('▶ Retro N64 Effects: Pixelation, Dithering, Bloom', 320, 292, uiColors.light, 1);
 
-  nova64.ui.setFont('tiny');
-  nova64.ui.drawText('WASD: Move | SHIFT: Fly | SPACE: Boost', 320, 310, uiColors.secondary, 1);
+  setFont('tiny');
+  drawText('WASD: Move | SHIFT: Fly | SPACE: Boost', 320, 310, uiColors.secondary, 1);
 
   // Draw buttons
-  nova64.ui.drawAllButtons();
+  drawAllButtons();
 
   // Animated neon wave at horizon
-  nova64.draw.drawWave(
-    0,
-    348,
-    640,
-    7,
-    0.032,
-    startScreenTime * 2.5,
-    nova64.draw.rgba8(255, 0, 255, 110),
-    2
-  );
-  nova64.draw.drawWave(
-    0,
-    353,
-    640,
-    5,
-    0.045,
-    startScreenTime * 2.5 + 1.2,
-    nova64.draw.rgba8(0, 255, 255, 85),
-    2
-  );
+  drawWave(0, 348, 640, 7, 0.032, startScreenTime * 2.5, rgba8(255, 0, 255, 110), 2);
+  drawWave(0, 353, 640, 5, 0.045, startScreenTime * 2.5 + 1.2, rgba8(0, 255, 255, 85), 2);
 
   // Pulsing neon prompt
   const alpha = Math.floor((Math.sin(startScreenTime * 6) * 0.5 + 0.5) * 255);
-  nova64.ui.setFont('normal');
-  nova64.ui.drawText(
-    '▶ WELCOME TO THE FUTURE ◀',
-    320,
-    430,
-    nova64.draw.rgba8(255, 0, 255, alpha),
-    1
-  );
+  setFont('normal');
+  drawText('▶ WELCOME TO THE FUTURE ◀', 320, 430, rgba8(255, 0, 255, alpha), 1);
 
   // Build info
-  nova64.ui.setFont('tiny');
-  nova64.ui.drawText(
-    'GPU-Accelerated 3D City Simulation',
-    320,
-    338,
-    nova64.draw.rgba8(150, 100, 200, 150),
-    1
-  );
+  setFont('tiny');
+  drawText('GPU-Accelerated 3D City Simulation', 320, 338, rgba8(150, 100, 200, 150), 1);
 
   // CRT scanlines
-  nova64.draw.drawScanlines(52, 2);
+  drawScanlines(52, 2);
 }
 
 async function buildCyberpunkCity() {
   // 🌃 Create ground with brighter base
-  const ground = nova64.scene.createPlane(CITY_SIZE * 2, CITY_SIZE * 2, 0x2a2a55, [0, 0, 0]);
-  nova64.scene.setRotation(ground, -Math.PI / 2, 0, 0);
+  const ground = createPlane(CITY_SIZE * 2, CITY_SIZE * 2, 0x2a2a55, [0, 0, 0]);
+  setRotation(ground, -Math.PI / 2, 0, 0);
 
   // ⚡ Add BRIGHT NEON grid lines for cyberpunk aesthetic
   for (let i = -CITY_SIZE; i <= CITY_SIZE; i += 10) {
     // Horizontal lines - CYAN neon
-    nova64.scene.createCube(CITY_SIZE * 2, 0.15, 0.3, 0x00ffff, [0, 0.15, i]);
+    createCube(CITY_SIZE * 2, 0.15, 0.3, 0x00ffff, [0, 0.15, i]);
     // Vertical lines - MAGENTA neon
-    nova64.scene.createCube(0.3, 0.15, CITY_SIZE * 2, 0xff00ff, [i, 0.15, 0]);
+    createCube(0.3, 0.15, CITY_SIZE * 2, 0xff00ff, [i, 0.15, 0]);
 
     // Add glow effect underneath
-    nova64.scene.createCube(CITY_SIZE * 2, 0.05, 0.5, 0x0088aa, [0, 0.05, i]);
-    nova64.scene.createCube(0.5, 0.05, CITY_SIZE * 2, 0xaa0088, [i, 0.05, 0]);
+    createCube(CITY_SIZE * 2, 0.05, 0.5, 0x0088aa, [0, 0.05, i]);
+    createCube(0.5, 0.05, CITY_SIZE * 2, 0xaa0088, [i, 0.05, 0]);
   }
 
   // ✨ Intersection glow points — GPU instanced (121 spheres → 1 draw call)
   const gridCount = Math.ceil((CITY_SIZE * 2) / 20 + 1);
   const totalGlows = gridCount * gridCount;
-  glowSphereInstanceId = nova64.scene.createInstancedMesh('sphere', totalGlows, 0x00ffff, {
+  glowSphereInstanceId = createInstancedMesh('sphere', totalGlows, 0x00ffff, {
     size: 0.5,
     segments: 6,
     emissive: 0x008888,
@@ -740,12 +651,12 @@ async function buildCyberpunkCity() {
   for (let i = -CITY_SIZE; i <= CITY_SIZE; i += 20) {
     for (let j = -CITY_SIZE; j <= CITY_SIZE; j += 20) {
       const neonIdx = Math.floor(Math.random() * COLORS.neon.length);
-      nova64.scene.setInstanceTransform(glowSphereInstanceId, glowIdx, i, 0.5, j);
-      nova64.scene.setInstanceColor(glowSphereInstanceId, glowIdx, COLORS.neon[neonIdx]);
+      setInstanceTransform(glowSphereInstanceId, glowIdx, i, 0.5, j);
+      setInstanceColor(glowSphereInstanceId, glowIdx, COLORS.neon[neonIdx]);
       glowIdx++;
     }
   }
-  nova64.scene.finalizeInstances(glowSphereInstanceId);
+  finalizeInstances(glowSphereInstanceId);
 
   // Generate procedural buildings
   for (let i = 0; i < BUILDING_COUNT; i++) {
@@ -759,14 +670,14 @@ async function buildCyberpunkCity() {
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2;
     const radius = 40;
-    const platform = nova64.scene.createCube(8, 1, 8, 0x666699, [
+    const platform = createCube(8, 1, 8, 0x666699, [
       Math.cos(angle) * radius,
       15 + Math.sin(gameTime + i) * 3,
       Math.sin(angle) * radius,
     ]);
 
     // Add neon underglow
-    const glow = nova64.scene.createCube(8.5, 0.2, 8.5, COLORS.neon[i % COLORS.neon.length], [
+    const glow = createCube(8.5, 0.2, 8.5, COLORS.neon[i % COLORS.neon.length], [
       Math.cos(angle) * radius,
       14.5 + Math.sin(gameTime + i) * 3,
       Math.sin(angle) * radius,
@@ -788,7 +699,7 @@ async function createBuilding(index) {
   const height = 8 + Math.random() * 25;
 
   // Main building
-  const building = nova64.scene.createCube(
+  const building = createCube(
     width,
     height,
     depth,
@@ -799,12 +710,12 @@ async function createBuilding(index) {
   // 🎨 Add COLORFUL detail layers (no more black blocks!)
   const detailColor1 = COLORS.neon[index % COLORS.neon.length];
   const detailColor2 = COLORS.neonGlow[(index + 2) % COLORS.neonGlow.length];
-  const detail1 = nova64.scene.createCube(width * 0.9, height * 0.3, depth * 0.9, detailColor1, [
+  const detail1 = createCube(width * 0.9, height * 0.3, depth * 0.9, detailColor1, [
     x,
     height * 0.15,
     z,
   ]);
-  const detail2 = nova64.scene.createCube(width * 0.8, height * 0.2, depth * 0.8, detailColor2, [
+  const detail2 = createCube(width * 0.8, height * 0.2, depth * 0.8, detailColor2, [
     x,
     height * 0.9,
     z,
@@ -822,14 +733,10 @@ async function createBuilding(index) {
 
       // Use BRIGHT neon glow colors for windows
       const windowColor = COLORS.neonGlow[(row * 3 + col) % COLORS.neonGlow.length];
-      const window = nova64.scene.createCube(0.8, 0.8, 0.1, windowColor, [
-        windowX,
-        windowY,
-        windowZ,
-      ]);
+      const window = createCube(0.8, 0.8, 0.1, windowColor, [windowX, windowY, windowZ]);
 
       // Add window glow halo (brighter larger cube behind)
-      nova64.scene.createCube(1.2, 1.2, 0.05, windowColor, [windowX, windowY, windowZ - 0.1]);
+      createCube(1.2, 1.2, 0.05, windowColor, [windowX, windowY, windowZ - 0.1]);
 
       windows.push({
         mesh: window,
@@ -846,14 +753,10 @@ async function createBuilding(index) {
     const glowColor = COLORS.neonGlow[Math.floor(Math.random() * COLORS.neonGlow.length)];
 
     // Main sign
-    const sign = nova64.scene.createCube(width * 1.2, 1, 0.2, signColor, [x, height + 1, z]);
+    const sign = createCube(width * 1.2, 1, 0.2, signColor, [x, height + 1, z]);
 
     // Glow halo around sign (larger, behind)
-    const signGlow = nova64.scene.createCube(width * 1.4, 1.5, 0.1, glowColor, [
-      x,
-      height + 1,
-      z - 0.2,
-    ]);
+    const signGlow = createCube(width * 1.4, 1.5, 0.1, glowColor, [x, height + 1, z - 0.2]);
 
     neonSigns.push({
       mesh: sign,
@@ -876,12 +779,12 @@ async function createBuilding(index) {
 
 async function createMegaStructure() {
   // 🏙️ Central tower (BRIGHT PURPLE with neon accents)
-  nova64.scene.createCube(12, 60, 12, 0x8855cc, [0, 30, 0]);
+  createCube(12, 60, 12, 0x8855cc, [0, 30, 0]);
 
   // Add colorful stripes to tower
   for (let i = 0; i < 10; i++) {
     const stripeColor = COLORS.neon[i % COLORS.neon.length];
-    nova64.scene.createCube(12.5, 2, 12.5, stripeColor, [0, 6 + i * 6, 0]);
+    createCube(12.5, 2, 12.5, stripeColor, [0, 6 + i * 6, 0]);
   }
 
   // 🌉 Connecting bridges (BRIGHT CYAN)
@@ -891,34 +794,28 @@ async function createMegaStructure() {
     const bridgeZ = Math.sin(angle) * 20;
 
     const bridgeColor = COLORS.neonGlow[i % COLORS.neonGlow.length];
-    const bridge = nova64.scene.createCube(16, 2, 4, bridgeColor, [bridgeX / 2, 25, bridgeZ / 2]);
-    nova64.scene.setRotation(bridge, 0, angle, 0);
+    const bridge = createCube(16, 2, 4, bridgeColor, [bridgeX / 2, 25, bridgeZ / 2]);
+    setRotation(bridge, 0, angle, 0);
 
     // Add underglow to bridges
-    const bridgeGlow = nova64.scene.createCube(
-      17,
-      0.5,
-      4.5,
-      COLORS.underglow[i % COLORS.underglow.length],
-      [bridgeX / 2, 24, bridgeZ / 2]
-    );
-    nova64.scene.setRotation(bridgeGlow, 0, angle, 0);
+    const bridgeGlow = createCube(17, 0.5, 4.5, COLORS.underglow[i % COLORS.underglow.length], [
+      bridgeX / 2,
+      24,
+      bridgeZ / 2,
+    ]);
+    setRotation(bridgeGlow, 0, angle, 0);
   }
 
   // Antenna array on top
   for (let i = 0; i < 6; i++) {
-    const antenna = nova64.scene.createCube(0.3, 8, 0.3, 0xffffff, [
+    const antenna = createCube(0.3, 8, 0.3, 0xffffff, [
       Math.random() * 8 - 4,
       64,
       Math.random() * 8 - 4,
     ]);
 
     // Blinking light on antenna
-    const light = nova64.scene.createSphere(0.5, 0xff0000, [
-      Math.random() * 8 - 4,
-      68,
-      Math.random() * 8 - 4,
-    ]);
+    const light = createSphere(0.5, 0xff0000, [Math.random() * 8 - 4, 68, Math.random() * 8 - 4]);
 
     cityLights.push({
       mesh: light,
@@ -930,15 +827,15 @@ async function createMegaStructure() {
 
 function createPlayer() {
   // Sleek hovercar
-  const body = nova64.scene.createCube(3, 0.8, 1.5, 0x4444ff, [0, 2, 0]);
-  const cockpit = nova64.scene.createSphere(1, 0x2222aa, [0, 2.8, 0.2]);
+  const body = createCube(3, 0.8, 1.5, 0x4444ff, [0, 2, 0]);
+  const cockpit = createSphere(1, 0x2222aa, [0, 2.8, 0.2]);
 
   // Thrusters
-  const thruster1 = nova64.scene.createCube(0.4, 0.4, 0.8, 0xff4400, [-1.2, 1.8, -0.8]);
-  const thruster2 = nova64.scene.createCube(0.4, 0.4, 0.8, 0xff4400, [1.2, 1.8, -0.8]);
+  const thruster1 = createCube(0.4, 0.4, 0.8, 0xff4400, [-1.2, 1.8, -0.8]);
+  const thruster2 = createCube(0.4, 0.4, 0.8, 0xff4400, [1.2, 1.8, -0.8]);
 
   // Underglow
-  const glow = nova64.scene.createCube(3.5, 0.2, 2, 0x00ffff, [0, 1.2, 0]);
+  const glow = createCube(3.5, 0.2, 2, 0x00ffff, [0, 1.2, 0]);
 
   player = {
     body: body,
@@ -972,14 +869,14 @@ function createTrafficVehicle(index) {
   const color = COLORS.vehicle[index % COLORS.vehicle.length];
 
   // 🚗 Main vehicle body
-  const body = nova64.scene.createCube(2.5, 0.6, 1.2, color, [x, y, z]);
+  const body = createCube(2.5, 0.6, 1.2, color, [x, y, z]);
 
   // ⚡ BRIGHT NEON UNDERGLOW (use underglow colors)
   const underglowColor = COLORS.underglow[index % COLORS.underglow.length];
-  const glow = nova64.scene.createCube(3.2, 0.3, 1.8, underglowColor, [x, y - 0.5, z]);
+  const glow = createCube(3.2, 0.3, 1.8, underglowColor, [x, y - 0.5, z]);
 
   // ✨ Add second glow layer for extra brightness
-  const glow2 = nova64.scene.createCube(3.5, 0.15, 2.0, underglowColor, [x, y - 0.6, z]);
+  const glow2 = createCube(3.5, 0.15, 2.0, underglowColor, [x, y - 0.6, z]);
 
   return {
     body: body,
@@ -1011,7 +908,7 @@ function createAmbientParticle() {
   const y = Math.random() * 40;
   const z = (Math.random() - 0.5) * CITY_SIZE * 2;
 
-  const particle = nova64.scene.createSphere(
+  const particle = createSphere(
     0.1,
     COLORS.particle[Math.floor(Math.random() * COLORS.particle.length)],
     [x, y, z]
@@ -1041,23 +938,23 @@ function handleInput(dt) {
   let inputZ = 0;
 
   // ⬅️➡️ Horizontal movement with smooth acceleration
-  if (nova64.input.btn(0)) {
+  if (btn(0)) {
     // Left
     inputX = -1;
     player.tilt = Math.max(player.tilt - dt * 3, -0.4);
   }
-  if (nova64.input.btn(1)) {
+  if (btn(1)) {
     // Right
     inputX = 1;
     player.tilt = Math.min(player.tilt + dt * 3, 0.4);
   }
 
   // ⬆️⬇️ Forward/backward movement
-  if (nova64.input.btn(2)) {
+  if (btn(2)) {
     // Up
     inputZ = -1;
   }
-  if (nova64.input.btn(3)) {
+  if (btn(3)) {
     // Down
     inputZ = 1;
   }
@@ -1073,17 +970,17 @@ function handleInput(dt) {
   }
 
   // 🎮 Vertical movement (much more responsive)
-  if (nova64.input.btn(4)) {
+  if (btn(4)) {
     // Z - Down
     player.vy -= moveSpeed * dt * 0.8; // Faster vertical
   }
-  if (nova64.input.btn(5)) {
+  if (btn(5)) {
     // X - Up
     player.vy += moveSpeed * dt * 0.8; // Faster vertical
   }
 
   // 💨 BOOST - More powerful!
-  if (nova64.input.btnp(6)) {
+  if (btnp(6)) {
     // Space
     player.boost = 4; // Stronger boost
     const boostDir = { x: player.vx, z: player.vz };
@@ -1096,7 +993,7 @@ function handleInput(dt) {
   }
 
   // ✈️ Flight mode toggle
-  if (nova64.input.btnp(7)) {
+  if (btnp(7)) {
     // Shift
     flying = !flying;
   }
@@ -1153,16 +1050,16 @@ function updatePlayer(dt) {
   }
 
   // Update mesh positions
-  nova64.scene.setPosition(player.body, player.x, player.y, player.z);
-  nova64.scene.setPosition(player.cockpit, player.x, player.y + 0.8, player.z + 0.2);
-  nova64.scene.setPosition(player.glow, player.x, player.y - 0.8, player.z);
+  setPosition(player.body, player.x, player.y, player.z);
+  setPosition(player.cockpit, player.x, player.y + 0.8, player.z + 0.2);
+  setPosition(player.glow, player.x, player.y - 0.8, player.z);
 
-  nova64.scene.setPosition(player.thrusters[0], player.x - 1.2, player.y - 0.2, player.z - 0.8);
-  nova64.scene.setPosition(player.thrusters[1], player.x + 1.2, player.y - 0.2, player.z - 0.8);
+  setPosition(player.thrusters[0], player.x - 1.2, player.y - 0.2, player.z - 0.8);
+  setPosition(player.thrusters[1], player.x + 1.2, player.y - 0.2, player.z - 0.8);
 
   // Apply rotations
-  nova64.scene.setRotation(player.body, player.tilt * 0.3, player.rotation, player.tilt);
-  nova64.scene.setRotation(player.cockpit, 0, player.rotation, 0);
+  setRotation(player.body, player.tilt * 0.3, player.rotation, player.tilt);
+  setRotation(player.cockpit, 0, player.rotation, 0);
 
   // Create thruster particles
   if (Math.abs(player.vx) > 5 || Math.abs(player.vz) > 5) {
@@ -1211,9 +1108,9 @@ function updateVehicles(dt) {
     vehicle.vz *= 0.95;
 
     // Update mesh positions (body + both glow layers)
-    nova64.scene.setPosition(vehicle.body, vehicle.x, vehicle.y, vehicle.z);
-    nova64.scene.setPosition(vehicle.glow, vehicle.x, vehicle.y - 0.5, vehicle.z);
-    nova64.scene.setPosition(vehicle.glow2, vehicle.x, vehicle.y - 0.6, vehicle.z);
+    setPosition(vehicle.body, vehicle.x, vehicle.y, vehicle.z);
+    setPosition(vehicle.glow, vehicle.x, vehicle.y - 0.5, vehicle.z);
+    setPosition(vehicle.glow2, vehicle.x, vehicle.y - 0.6, vehicle.z);
 
     // Occasional thruster particles
     if (Math.random() < 0.1) {
@@ -1229,8 +1126,8 @@ function updatePackets(dt) {
 
     // Rotate and hover
     p.offset += dt * 3;
-    nova64.scene.setRotation(p.mesh, p.offset, p.offset * 0.5, p.offset * 0.2);
-    nova64.scene.setPosition(p.mesh, p.x, p.y + Math.sin(p.offset) * 0.5, p.z);
+    setRotation(p.mesh, p.offset, p.offset * 0.5, p.offset * 0.2);
+    setPosition(p.mesh, p.x, p.y + Math.sin(p.offset) * 0.5, p.z);
 
     // Collision with player
     const dx = player.x - p.x;
@@ -1241,8 +1138,8 @@ function updatePackets(dt) {
     if (dist < 4.0) {
       p.active = false;
       playerScore += 100;
-      nova64.scene.setScale(p.mesh, 0, 0, 0);
-      nova64.audio.sfx('coin');
+      setScale(p.mesh, 0, 0, 0);
+      sfx('coin');
       if (currentMission && currentMission.type === 'DATA_HEIST') {
         currentMission.progress++;
       }
@@ -1250,7 +1147,7 @@ function updatePackets(dt) {
   }
 }
 
-function _local_updateParticles(dt) {
+function updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const particle = particles[i];
 
@@ -1262,15 +1159,15 @@ function _local_updateParticles(dt) {
     particle.life -= dt;
 
     // Update position
-    nova64.scene.setPosition(particle.mesh, particle.x, particle.y, particle.z);
+    setPosition(particle.mesh, particle.x, particle.y, particle.z);
 
     // Fade out
     const alpha = particle.life / particle.maxLife;
-    nova64.scene.setScale(particle.mesh, alpha);
+    setScale(particle.mesh, alpha);
 
     // Remove dead particles
     if (particle.life <= 0) {
-      nova64.scene.destroyMesh(particle.mesh);
+      destroyMesh(particle.mesh);
       particles.splice(i, 1);
 
       // Respawn ambient particles
@@ -1291,9 +1188,9 @@ function updateCityLights(dt) {
 
       // Change light color/visibility
       if (light.isOn) {
-        nova64.scene.setScale(light.mesh, 1);
+        setScale(light.mesh, 1);
       } else {
-        nova64.scene.setScale(light.mesh, 0.3);
+        setScale(light.mesh, 0.3);
       }
     }
   });
@@ -1325,8 +1222,8 @@ function updateCamera(dt) {
   camera.y += (camera.targetY - camera.y) * 3 * dt;
   camera.z += (camera.targetZ - camera.z) * 3 * dt;
 
-  nova64.camera.setCameraPosition(camera.x, camera.y, camera.z);
-  nova64.camera.setCameraTarget(player.x, player.y + 2, player.z);
+  setCameraPosition(camera.x, camera.y, camera.z);
+  setCameraTarget(player.x, player.y + 2, player.z);
 }
 
 function updateNeonSigns(dt) {
@@ -1339,13 +1236,8 @@ function updateNeonSigns(dt) {
   cityObjects.forEach(obj => {
     if (obj.type === 'platform') {
       const newY = 15 + Math.sin(gameTime * 0.5 + obj.index) * 3;
-      nova64.scene.setPosition(obj.mesh, Math.cos(obj.angle) * 40, newY, Math.sin(obj.angle) * 40);
-      nova64.scene.setPosition(
-        obj.glow,
-        Math.cos(obj.angle) * 40,
-        newY - 0.5,
-        Math.sin(obj.angle) * 40
-      );
+      setPosition(obj.mesh, Math.cos(obj.angle) * 40, newY, Math.sin(obj.angle) * 40);
+      setPosition(obj.glow, Math.cos(obj.angle) * 40, newY - 0.5, Math.sin(obj.angle) * 40);
     }
   });
 }
@@ -1354,7 +1246,7 @@ function createBoostParticles() {
   // 💨 BRIGHTER BOOST PARTICLES - More visual impact!
   for (let i = 0; i < 30; i++) {
     const boostColors = [0x00ffff, 0xff00ff, 0xffff00, 0x00ff00];
-    const particle = nova64.scene.createSphere(0.25, boostColors[i % boostColors.length], [
+    const particle = createSphere(0.25, boostColors[i % boostColors.length], [
       player.x + (Math.random() - 0.5) * 5,
       player.y + (Math.random() - 0.5) * 2.5,
       player.z + (Math.random() - 0.5) * 5,
@@ -1380,7 +1272,7 @@ function createThrusterParticles() {
   const thrusterColors = [0xff6600, 0xffaa00, 0xff00ff, 0x00ffff];
   for (let i = 0; i < 3; i++) {
     const thrusterX = player.x + (i === 0 ? -1.2 : 1.2);
-    const particle = nova64.scene.createSphere(
+    const particle = createSphere(
       0.2,
       thrusterColors[Math.floor(Math.random() * thrusterColors.length)],
       [thrusterX, player.y - 0.5, player.z - 1]
@@ -1402,7 +1294,7 @@ function createThrusterParticles() {
 }
 
 function createVehicleThrusterParticles(x, y, z) {
-  const particle = nova64.scene.createSphere(0.1, 0x4488ff, [x, y - 0.3, z - 0.8]);
+  const particle = createSphere(0.1, 0x4488ff, [x, y - 0.3, z - 0.8]);
 
   particles.push({
     mesh: particle,
@@ -1424,38 +1316,25 @@ function drawHUD() {
     hby = 16,
     hbw = 150,
     hbh = 12;
-  nova64.draw.rect(hbx, hby, hbw, hbh, nova64.draw.rgba8(40, 0, 0, 200), true);
+  rect(hbx, hby, hbw, hbh, rgba8(40, 0, 0, 200), true);
   const hFrac = playerHealth / playerMaxHealth;
-  if (hFrac > 0)
-    nova64.draw.rect(
-      hbx,
-      hby,
-      Math.floor(hbw * hFrac),
-      hbh,
-      nova64.draw.rgba8(255, 50, 50, 255),
-      true
-    );
-  nova64.draw.rect(hbx, hby, hbw, hbh, nova64.draw.rgba8(255, 100, 100, 150), false);
-  nova64.draw.print(
-    `HP ${playerHealth}/${playerMaxHealth}`,
-    hbx + 4,
-    hby + 2,
-    nova64.draw.rgba8(255, 255, 255, 255)
-  );
+  if (hFrac > 0) rect(hbx, hby, Math.floor(hbw * hFrac), hbh, rgba8(255, 50, 50, 255), true);
+  rect(hbx, hby, hbw, hbh, rgba8(255, 100, 100, 150), false);
+  print(`HP ${playerHealth}/${playerMaxHealth}`, hbx + 4, hby + 2, rgba8(255, 255, 255, 255));
 
   // Score and stats
-  nova64.draw.print(`CREDITS: ${playerScore}`, 480, 18, nova64.draw.rgba8(255, 255, 100, 255));
-  nova64.draw.print(`DRONES: ${dronesDestroyed}`, 480, 34, nova64.draw.rgba8(255, 150, 150, 255));
+  print(`CREDITS: ${playerScore}`, 480, 18, rgba8(255, 255, 100, 255));
+  print(`DRONES: ${dronesDestroyed}`, 480, 34, rgba8(255, 150, 150, 255));
 
   // Mode & speed
   const speedMag = Math.sqrt(player.vx * player.vx + player.vz * player.vz);
-  nova64.draw.print(
+  print(
     `${flying ? 'FLIGHT' : 'HOVER'} ${speedMag.toFixed(0)}m/s`,
     16,
     34,
-    nova64.draw.rgba8(0, 255, 255, 255)
+    rgba8(0, 255, 255, 255)
   );
-  nova64.draw.print(`ALT: ${player.y.toFixed(0)}m`, 16, 50, nova64.draw.rgba8(100, 255, 100, 255));
+  print(`ALT: ${player.y.toFixed(0)}m`, 16, 50, rgba8(100, 255, 100, 255));
 
   // Mission panel
   if (currentMission) {
@@ -1463,20 +1342,12 @@ function drawHUD() {
       mpy = 16,
       mpw = 240,
       mph = 50;
-    nova64.draw.rect(mpx, mpy, mpw, mph, nova64.draw.rgba8(0, 0, 30, 200), true);
-    nova64.draw.rect(mpx, mpy, mpw, mph, nova64.draw.rgba8(0, 200, 255, 150), false);
-    nova64.draw.print(currentMission.name, mpx + 6, mpy + 4, nova64.draw.rgba8(0, 255, 255, 255));
-    nova64.draw.print(
-      currentMission.desc,
-      mpx + 6,
-      mpy + 18,
-      nova64.draw.rgba8(200, 200, 255, 255)
-    );
-    const tColor =
-      missionTimer < 10
-        ? nova64.draw.rgba8(255, 80, 80, 255)
-        : nova64.draw.rgba8(255, 255, 200, 255);
-    nova64.draw.print(
+    rect(mpx, mpy, mpw, mph, rgba8(0, 0, 30, 200), true);
+    rect(mpx, mpy, mpw, mph, rgba8(0, 200, 255, 150), false);
+    print(currentMission.name, mpx + 6, mpy + 4, rgba8(0, 255, 255, 255));
+    print(currentMission.desc, mpx + 6, mpy + 18, rgba8(200, 200, 255, 255));
+    const tColor = missionTimer < 10 ? rgba8(255, 80, 80, 255) : rgba8(255, 255, 200, 255);
+    print(
       `${currentMission.progress}/${currentMission.target}  TIME: ${Math.ceil(missionTimer)}s`,
       mpx + 6,
       mpy + 34,
@@ -1487,58 +1358,46 @@ function drawHUD() {
   // Mission message (center, fading)
   if (missionMsgTimer > 0) {
     const alpha = Math.min(1, missionMsgTimer) * 255;
-    nova64.draw.rect(160, 160, 320, 24, nova64.draw.rgba8(0, 0, 0, Math.floor(alpha * 0.6)), true);
-    nova64.draw.print(missionMsg, 180, 166, nova64.draw.rgba8(255, 255, 0, Math.floor(alpha)));
+    rect(160, 160, 320, 24, rgba8(0, 0, 0, Math.floor(alpha * 0.6)), true);
+    print(missionMsg, 180, 166, rgba8(255, 255, 0, Math.floor(alpha)));
   }
 
   // Damage flash
   if (playerDmgCD > 0.4) {
-    nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(255, 0, 0, 60), true);
+    rect(0, 0, 640, 360, rgba8(255, 0, 0, 60), true);
   }
 
   // Controls
-  nova64.draw.print(
-    'WASD:Move SHIFT:Fly SPACE:Boost(ram drones!)',
-    16,
-    344,
-    nova64.draw.rgba8(200, 200, 255, 180)
-  );
+  print('WASD:Move SHIFT:Fly SPACE:Boost(ram drones!)', 16, 344, rgba8(200, 200, 255, 180));
 
   // Mini-map (radar)
   const radarSize = 80;
   const radarX = 560;
   const radarY = 260;
-  nova64.draw.rect(
+  rect(
     radarX - radarSize / 2,
     radarY - radarSize / 2,
     radarSize,
     radarSize,
-    nova64.draw.rgba8(0, 50, 0, 150),
+    rgba8(0, 50, 0, 150),
     true
   );
-  nova64.draw.rect(
+  rect(
     radarX - radarSize / 2,
     radarY - radarSize / 2,
     radarSize,
     radarSize,
-    nova64.draw.rgba8(0, 255, 0, 100),
+    rgba8(0, 255, 0, 100),
     false
   );
-  nova64.draw.rect(radarX - 1, radarY - 1, 2, 2, nova64.draw.rgba8(255, 255, 255, 255), true);
+  rect(radarX - 1, radarY - 1, 2, 2, rgba8(255, 255, 255, 255), true);
 
   // Vehicle dots (magenta)
   vehicles.forEach(v => {
     const rx = ((v.x - player.x) / CITY_SIZE) * radarSize * 0.4;
     const rz = ((v.z - player.z) / CITY_SIZE) * radarSize * 0.4;
     if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
-      nova64.draw.rect(
-        radarX + rx - 1,
-        radarY + rz - 1,
-        2,
-        2,
-        nova64.draw.rgba8(255, 0, 255, 200),
-        true
-      );
+      rect(radarX + rx - 1, radarY + rz - 1, 2, 2, rgba8(255, 0, 255, 200), true);
     }
   });
 
@@ -1548,14 +1407,7 @@ function drawHUD() {
     const rx = ((d.x - player.x) / CITY_SIZE) * radarSize * 0.4;
     const rz = ((d.z - player.z) / CITY_SIZE) * radarSize * 0.4;
     if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
-      nova64.draw.rect(
-        radarX + rx - 1,
-        radarY + rz - 1,
-        3,
-        3,
-        nova64.draw.rgba8(255, 50, 50, 255),
-        true
-      );
+      rect(radarX + rx - 1, radarY + rz - 1, 3, 3, rgba8(255, 50, 50, 255), true);
     }
   });
 
@@ -1568,14 +1420,7 @@ function drawHUD() {
       Math.abs(rz) < radarSize / 2 &&
       Math.sin(gameTime * 8) > 0
     ) {
-      nova64.draw.rect(
-        radarX + rx - 2,
-        radarY + rz - 2,
-        4,
-        4,
-        nova64.draw.rgba8(0, 255, 255, 255),
-        true
-      );
+      rect(radarX + rx - 2, radarY + rz - 2, 4, 4, rgba8(0, 255, 255, 255), true);
     }
   }
 
@@ -1585,14 +1430,9 @@ function drawHUD() {
     const rx = ((p.x - player.x) / CITY_SIZE) * radarSize * 0.4;
     const rz = ((p.z - player.z) / CITY_SIZE) * radarSize * 0.4;
     if (Math.abs(rx) < radarSize / 2 && Math.abs(rz) < radarSize / 2) {
-      nova64.draw.rect(radarX + rx, radarY + rz, 2, 2, nova64.draw.rgba8(0, 255, 0, 200), true);
+      rect(radarX + rx, radarY + rz, 2, 2, rgba8(0, 255, 0, 200), true);
     }
   });
 
-  nova64.draw.print(
-    'RADAR',
-    radarX - 15,
-    radarY + radarSize / 2 + 4,
-    nova64.draw.rgba8(0, 255, 0, 255)
-  );
+  print('RADAR', radarX - 15, radarY + radarSize / 2 + 4, rgba8(0, 255, 0, 255));
 }

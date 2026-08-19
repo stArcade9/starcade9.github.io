@@ -454,8 +454,93 @@ export function api2d(gpu) {
     return { width: text.length * 6 * s, height: 7 * s };
   }
 
-  /** printCentered(text, cx, y, color, scale=1) — centre on x */
+  function layoutTextBox(text, maxWidth, maxHeight, opts = {}) {
+    const words = String(text ?? '')
+      .split(/\s+/)
+      .filter(Boolean);
+    const overflow = opts.overflow ?? (opts.ellipsis === false ? 'wrap' : 'ellipsis');
+    const fit = opts.fit === true || overflow === 'fit';
+    const startScale = Math.max(1, Math.round(opts.scale ?? 1));
+    const minScale = Math.max(1, Math.min(startScale, Math.round(opts.minScale ?? startScale)));
+
+    function layout(scale) {
+      const metrics = measureText('M', scale);
+      const charWidth = Math.max(1, metrics.width);
+      const lineHeight = Math.max(1, Math.round(opts.lineHeight ?? metrics.height + 4));
+      const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+      const maxChars = Math.max(1, Math.floor(maxWidth / charWidth));
+      const lines = [];
+      let line = '';
+      let truncated = false;
+
+      for (const word of words) {
+        const next = line ? `${line} ${word}` : word;
+        if (next.length > maxChars && line) {
+          lines.push(line);
+          line = word;
+          if (lines.length >= maxLines) {
+            truncated = true;
+            break;
+          }
+        } else {
+          line = next;
+        }
+      }
+      if (line && lines.length < maxLines) lines.push(line);
+      return { lines, lineHeight, maxChars, truncated, scale };
+    }
+
+    let result = layout(startScale);
+    while (fit && result.truncated && result.scale > minScale) {
+      result = layout(result.scale - 1);
+    }
+
+    if (result.truncated && overflow === 'ellipsis' && result.lines.length) {
+      const last = result.lines[result.lines.length - 1].replace(/\s+$/, '');
+      result.lines[result.lines.length - 1] =
+        last.length > 3 ? `${last.slice(0, Math.max(0, result.maxChars - 3))}...` : last;
+    }
+
+    return result;
+  }
+
+  function drawTextBox(text, x, y, w, h, opts = {}) {
+    const result = layoutTextBox(text, w, h, opts);
+    const color = opts.color ?? rgba8(255, 255, 255, 255);
+    const align = opts.align ?? 'left';
+    const valign = opts.valign ?? 'top';
+    const totalHeight = result.lines.length * result.lineHeight;
+    let yy = y;
+    if (valign === 'middle' || valign === 'center') yy += Math.max(0, (h - totalHeight) / 2);
+    else if (valign === 'bottom') yy += Math.max(0, h - totalHeight);
+
+    for (const line of result.lines) {
+      let xx = x;
+      if (align === 'center') xx += (w - measureText(line, result.scale).width) / 2;
+      else if (align === 'right') xx += w - measureText(line, result.scale).width;
+      _print(line, xx | 0, yy | 0, color, result.scale);
+      yy += result.lineHeight;
+    }
+
+    return {
+      lines: result.lines.slice(),
+      truncated: result.truncated,
+      scale: result.scale,
+      lineHeight: result.lineHeight,
+    };
+  }
+
+  /**
+   * printCentered(text, y, color, scale=1)           — centre on screen width
+   * printCentered(text, cx, y, color, scale=1)        — centre on explicit cx
+   */
   function printCentered(text, cx, y, color, scale = 1) {
+    if (color === undefined) {
+      // 3-arg form: printCentered(text, y, color)
+      color = y;
+      y = cx;
+      cx = (globalThis.nova64?.draw?.screenWidth?.() ?? 640) / 2;
+    }
     const w = measureText(text, scale).width;
     _print(text, (cx - w / 2) | 0, y, color, scale);
   }
@@ -1135,6 +1220,8 @@ export function api2d(gpu) {
 
         // Text
         measureText,
+        drawTextBox,
+        textBox: drawTextBox,
         printCentered,
         printRight,
         drawGlowText,

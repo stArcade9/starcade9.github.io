@@ -190,6 +190,18 @@ export interface ProgressBarOptions {
   radius?: number;
 }
 
+export interface TextBoxOptions {
+  color?: Color;
+  scale?: number;
+  minScale?: number;
+  align?: 'left' | 'center' | 'right';
+  valign?: 'top' | 'middle' | 'center' | 'bottom';
+  overflow?: 'ellipsis' | 'fit' | 'wrap';
+  ellipsis?: boolean;
+  fit?: boolean;
+  lineHeight?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Stats
 // ---------------------------------------------------------------------------
@@ -399,6 +411,7 @@ export interface ThreeDApiInstance {
   ): LightId;
   setPointLightPosition(lightId: LightId, x: number, y: number, z: number): void;
   setPointLightColor(lightId: LightId, color: Color): void;
+  setLightVisible(lightId: LightId, visible: boolean): void;
   removeLight(lightId: LightId): void;
 
   // GPU instancing
@@ -1014,6 +1027,22 @@ export interface Nova64CartGlobals {
   cls(color?: Color): void;
   print(text: string, x: number, y: number, color?: Color, scale?: number): void;
   printCentered(text: string, y: number, color?: Color, scale?: number): void;
+  drawTextBox(
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    options?: TextBoxOptions
+  ): { lines: string[]; truncated: boolean; scale: number; lineHeight: number };
+  textBox(
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    options?: TextBoxOptions
+  ): { lines: string[]; truncated: boolean; scale: number; lineHeight: number };
   line(x1: number, y1: number, x2: number, y2: number, color?: Color): void;
   circle(x: number, y: number, r: number, color?: Color, filled?: boolean): void;
   drawRect(x: number, y: number, w: number, h: number, color?: Color): void;
@@ -1331,3 +1360,163 @@ export interface Tween {
   duration: number;
   _done: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// WAD runtime
+// ---------------------------------------------------------------------------
+
+export interface WADMapVertex {
+  x: number;
+  y: number;
+}
+
+export interface WADMapLineDef {
+  v1: number;
+  v2: number;
+  flags: number;
+  right: number;
+  left: number;
+}
+
+export interface WADMapSideDef {
+  xoff: number;
+  yoff: number;
+  upper: string;
+  lower: string;
+  middle: string;
+  sector: number;
+}
+
+export interface WADMapSector {
+  floorH: number;
+  ceilH: number;
+  floorFlat: string;
+  ceilFlat: string;
+  light: number;
+}
+
+export interface WADMapThing {
+  x: number;
+  y: number;
+  angle: number;
+  type: number;
+  flags?: number;
+}
+
+export interface WADMapData {
+  name?: string;
+  vertexes: WADMapVertex[];
+  linedefs: WADMapLineDef[];
+  sidedefs: WADMapSideDef[];
+  sectors: WADMapSector[];
+  things: WADMapThing[];
+}
+
+export interface WADWall {
+  x: number;
+  y: number;
+  z: number;
+  len: number;
+  h: number;
+  ang: number;
+  light: number;
+  texName: string | null;
+  xoff: number;
+  yoff: number;
+  step?: boolean;
+  upper?: boolean;
+}
+
+export interface WADCollisionSegment {
+  x: number;
+  z: number;
+  r: number;
+}
+
+export interface WADSpawn {
+  x: number;
+  z: number;
+  floorH: number;
+  type: string;
+  doomType: number;
+}
+
+export interface WADPlayerStart {
+  x: number;
+  z: number;
+  angle: number;
+  floorH: number;
+}
+
+export interface WADSectorBounds {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+
+export interface WADConvertedSector {
+  floorH: number;
+  ceilH: number;
+  floorFlat: string;
+  ceilFlat: string;
+  light: number;
+  bounds: WADSectorBounds | null;
+}
+
+export interface WADConvertedMap {
+  walls: WADWall[];
+  colSegs: WADCollisionSegment[];
+  enemies: WADSpawn[];
+  items: WADSpawn[];
+  playerStart: WADPlayerStart;
+  sectors: WADConvertedSector[];
+  getFloorHeight(x: number, z: number, fallback?: number): number;
+}
+
+export interface WADLump {
+  data: Uint8Array;
+  size: number;
+}
+
+export declare class WADLoader {
+  directory: Array<{ name: string; filepos: number; size: number }>;
+  buffer: ArrayBuffer | null;
+  load(arrayBuffer: ArrayBuffer): this;
+  getMapNames(): string[];
+  getMapTitles(): Record<string, string>;
+  getMap(name: string): WADMapData | null;
+  getPalette(): Uint8Array | null;
+  getLump(name: string): WADLump | null;
+  getFlatLumps(): Record<string, Uint8Array>;
+  getPNames(): string[];
+  getTextureDefs(lumpName: string): Record<string, object>;
+  getSpriteLumps(): Record<string, Uint8Array>;
+}
+
+export declare class WADTextureManager {
+  constructor(wadLoader: WADLoader);
+  init(): void;
+  getWallTexture(name: string): EngineTexture | null;
+  getTextureDef(name: string): object | null;
+  getFlatTexture(name: string): EngineTexture | null;
+  getSpriteTexture(doomType: number): { texture: EngineTexture; width: number; height: number } | null;
+  dispose(): void;
+}
+
+export declare function convertWADMap(map: WADMapData, scale?: number): WADConvertedMap;
+export declare function setWallUVs(
+  meshId: MeshId,
+  wallDoomLen: number,
+  wallDoomH: number,
+  texWidth: number,
+  texHeight: number,
+  xoff?: number,
+  yoff?: number
+): void;
+
+export interface WADApiInstance {
+  exposeTo(target: object): void;
+}
+
+export declare function wadApi(): WADApiInstance;

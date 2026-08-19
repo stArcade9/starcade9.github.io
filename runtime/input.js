@@ -43,6 +43,11 @@ class Input {
     this.mouse = { x: 0, y: 0, down: false, prevDown: false, pressed: false };
     this.uiCallbacks = { setMousePosition: null, setMouseButton: null };
 
+    // Multi-touch points in 640x360 design space, keyed by touch identifier.
+    // Additive to the single-touch→mouse mapping (which stays for back-compat);
+    // carts that need dual-stick mobile read input.touches(). { id, x, y }.
+    this.touchPoints = new Map();
+
     // Gamepad state
     this.gamepadButtons = new Map();
     this.gamepadPrev = new Map();
@@ -134,6 +139,12 @@ class Input {
         this.setMouseDown(true);
         this._touchActive = true;
 
+        // Track every changed touch for multi-touch carts (dual-stick mobile).
+        for (const t of e.changedTouches) {
+          const p = this.clientToDesign(t.clientX, t.clientY);
+          this.touchPoints.set(t.identifier, { id: t.identifier, x: p.x, y: p.y });
+        }
+
         // Tap on canvas also triggers Space key so "press space to start" works on mobile
         this.setKeyState('Space', true);
       };
@@ -146,16 +157,29 @@ class Input {
 
         const touch = e.changedTouches[0];
         this.updateMousePosition(touch.clientX, touch.clientY);
+
+        for (const t of e.changedTouches) {
+          const p = this.clientToDesign(t.clientX, t.clientY);
+          const tp = this.touchPoints.get(t.identifier);
+          if (tp) {
+            tp.x = p.x;
+            tp.y = p.y;
+          } else {
+            this.touchPoints.set(t.identifier, { id: t.identifier, x: p.x, y: p.y });
+          }
+        }
       };
 
       const handleTouchEnd = e => {
+        for (const t of e.changedTouches) this.touchPoints.delete(t.identifier);
         if (!this._touchActive) return;
         e.preventDefault();
-        this.setMouseDown(false);
-        this._touchActive = false;
-
-        // Release the synthetic Space key
-        this.setKeyState('Space', false);
+        // Only release the synthetic pointer/Space once no touches remain.
+        if (this.touchPoints.size === 0) {
+          this.setMouseDown(false);
+          this._touchActive = false;
+          this.setKeyState('Space', false);
+        }
       };
 
       window.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -180,6 +204,17 @@ class Input {
       this.justPressedKeys.add(code);
     }
     this.keys.set(code, down);
+  }
+
+  // Convert client (CSS px) coords to the 640x360 design space carts draw in.
+  clientToDesign(clientX, clientY) {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor(((clientX - rect.left) / rect.width) * 640),
+      y: Math.floor(((clientY - rect.top) / rect.height) * 360),
+    };
   }
 
   updateMousePosition(clientX, clientY) {
@@ -241,6 +276,7 @@ class Input {
     this.keys.clear();
     this.prev.clear();
     this.justPressedKeys.clear();
+    this.touchPoints.clear();
     this.mouse.x = 0;
     this.mouse.y = 0;
     this.mouse.down = false;
@@ -338,6 +374,11 @@ export function inputApi() {
         mouseY: () => input.mouse.y,
         mouseDown: () => input.mouse.down,
         mousePressed: () => input.mouse.pressed || (input.mouse.down && !input.mouse.prevDown),
+        // Multi-touch (mobile): array of active { id, x, y } in 640x360 space.
+        // Empty on desktop / no touch. Lets carts build dual-stick controls.
+        touches: () =>
+          Array.from(input.touchPoints.values()).map(t => ({ id: t.id, x: t.x, y: t.y })),
+        touchCount: () => input.touchPoints.size,
         // Gamepad functions
         gamepadAxis: axisName => input.getGamepadAxis(axisName),
         gamepadConnected: () => input.isGamepadConnected(),

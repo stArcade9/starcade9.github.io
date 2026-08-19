@@ -11,8 +11,8 @@ const COLORS = [0xff4466, 0x44aaff, 0xffcc00, 0x44ff88, 0xff8844, 0xaa44ff];
 const BALL_COUNT = 6;
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
   for (let i = 0; i < BALL_COUNT; i++) {
     const x = 30 + (i / (BALL_COUNT - 1)) * (W - 60);
     const radius = 12 + Math.random() * 8;
@@ -21,7 +21,7 @@ export function init() {
     const color = COLORS[i % COLORS.length];
 
     // Hype-style scalar tween — produces a y-value we drive manually
-    const tw = nova64.tween.createTween({
+    const tw = createTween({
       from: -radius,
       to: H - radius * 2 - 10,
       duration: dur,
@@ -41,10 +41,10 @@ export function update(dt) {
 }
 
 export function draw() {
-  nova64.draw.cls(0x0a0a1a);
+  cls(0x0a0a1a);
 
   // Ground
-  nova64.draw.rectfill(0, H - 10, W, 10, 0x223344);
+  rectfill(0, H - 10, W, 10, 0x223344);
 
   // Balls
   for (const b of BALLS) {
@@ -53,13 +53,13 @@ export function draw() {
     // Shadow — scale with height
     const shadowScale = 0.3 + 0.7 * (y / (H - b.radius * 2 - 10));
     const sw = b.radius * 2 * shadowScale;
-    nova64.util.ellipsefill(b.x, H - 8, sw, 6, 0x00000088);
+    ellipsefill(b.x, H - 8, sw, 6, 0x00000088);
 
     // Ball body
-    nova64.util.ellipsefill(b.x, y + b.radius, b.radius * 2, b.radius * 2, b.color);
+    ellipsefill(b.x, y + b.radius, b.radius * 2, b.radius * 2, b.color);
 
     // Specular highlight
-    nova64.util.ellipsefill(
+    ellipsefill(
       b.x - b.radius * 0.3,
       y + b.radius * 0.4,
       b.radius * 0.55,
@@ -68,6 +68,6 @@ export function draw() {
     );
   }
 
-  nova64.draw.print('TWEEN BOUNCE', 4, 4, 0xffffff);
-  nova64.draw.print('6 balls • easeOutBounce • pingpong', 4, 12, 0x778899);
+  print('TWEEN BOUNCE', 4, 4, 0xffffff);
+  print('6 balls • easeOutBounce • pingpong', 4, 12, 0x778899);
 }

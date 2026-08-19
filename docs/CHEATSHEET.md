@@ -171,6 +171,23 @@ setVolume(0..1)      // master volume
 
 ---
 
+## Video
+
+```js
+// Fullscreen video on web / Godot / RetroArch from one call. Drive the ticks!
+nova64.video.playFullscreen('/assets/clip.mp4', {
+  nativeUrl: 'assets/video/clip.ogv', // Godot (Theora)
+  mpgUrl:    'assets/video/clip.mpg', // RetroArch (MPEG1, decoded in-core)
+  muted: false, onFinish: () => setScreen('next'),
+});
+// update(dt): nova64.video._tick(dt)   draw(): nova64.video._draw()
+```
+
+Transcode assets: `python3 scripts/transcode-video.py in.mp4 out/ --mp4`.
+Full guide → [VIDEO_GUIDE.md](VIDEO_GUIDE.md) · demo → `examples/story-video-demo`.
+
+---
+
 ## Physics
 
 ```js

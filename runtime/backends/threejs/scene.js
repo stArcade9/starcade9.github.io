@@ -29,6 +29,9 @@ export function sceneModule(ctx) {
     const disposeMaterial = getDisposeMaterial();
     const removeLight = getRemoveLight();
 
+    // Reset post-processing so the previous cart's bloom/FXAA/vignette don't leak.
+    globalThis.nova64?.fx?.disableRetroEffects?.();
+
     logger.info(
       '🧹 Clearing 3D scene... meshes:',
       meshes.size,
@@ -40,11 +43,12 @@ export function sceneModule(ctx) {
 
     // Dispose all cart meshes
     for (const [, mesh] of meshes) {
-      scene.remove(mesh);
-      if (mesh.geometry) mesh.geometry.dispose();
-      if (mesh.material) {
-        if (Array.isArray(mesh.material)) mesh.material.forEach(disposeMaterial);
-        else disposeMaterial(mesh.material);
+      const object = mesh.__threeObject ?? mesh;
+      scene.remove(object);
+      if (object.geometry) object.geometry.dispose();
+      if (object.material) {
+        if (Array.isArray(object.material)) object.material.forEach(disposeMaterial);
+        else disposeMaterial(object.material);
       }
     }
     meshes.clear();
@@ -57,9 +61,12 @@ export function sceneModule(ctx) {
     materialCache.forEach(disposeMaterial);
     materialCache.clear();
 
-    // Remove any remaining scene children (e.g. from loadModel / direct additions)
-    while (scene.children.length > 0) {
-      const child = scene.children[0];
+    // Remove any remaining scene children (e.g. from loadModel / direct additions).
+    // Lights are intentionally skipped — the backend's default lights (gpu.lights.*)
+    // stay in the scene so setAmbientLight / setLightDirection keep working after clear.
+    for (let i = scene.children.length - 1; i >= 0; i--) {
+      const child = scene.children[i];
+      if (child.isLight) continue;
       scene.remove(child);
       if (child.geometry) child.geometry.dispose();
       if (child.material) {
@@ -68,11 +75,8 @@ export function sceneModule(ctx) {
       }
     }
 
-    // Re-add minimal default lighting so scenes aren't black
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(5, 10, 7.5);
-    scene.add(dir);
+    // Clear fog so the previous scene's fog doesn't bleed into the next one.
+    scene.fog = null;
 
     // Reset animated mesh registry in GPU backend
     if (gpu.clearAnimatedMeshes) gpu.clearAnimatedMeshes();

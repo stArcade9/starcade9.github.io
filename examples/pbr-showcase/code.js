@@ -51,7 +51,7 @@ const SCENE_NAMES = ['Material Grid', 'Metals', 'Gems & Glass', 'Mixed', 'Emissi
 
 async function applyShowcaseSkybox() {
   try {
-    await nova64.light.createImageSkybox([
+    await createImageSkybox([
       '/assets/sky/studio/px.png',
       '/assets/sky/studio/nx.png',
       '/assets/sky/studio/py.png',
@@ -60,22 +60,22 @@ async function applyShowcaseSkybox() {
       '/assets/sky/studio/nz.png',
     ]);
   } catch (e) {
-    nova64.light.createGradientSkybox(0x0c1828, 0x040810);
+    createGradientSkybox(0x0c1828, 0x040810);
   }
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
 export async function init() {
-  nova64.camera.setCameraFOV(58);
+  setCameraFOV(58);
   await applyShowcaseSkybox();
 
-  nova64.light.setFog(0x060e1a, 22, 60);
-  nova64.light.setAmbientLight(0x2a3a55, 1.6);
-  nova64.light.setLightDirection(-0.6, -1.0, -0.5);
-  nova64.light.setLightColor(0xffffff);
-  nova64.fx.enableBloom(0.5, 0.35, 0.35);
-  nova64.fx.enableVignette(1.0, 0.75);
-  nova64.fx.enableFXAA();
+  setFog(0x060e1a, 22, 60);
+  setAmbientLight(0x2a3a55, 1.6);
+  setLightDirection(-0.6, -1.0, -0.5);
+  setLightColor(0xffffff);
+  enableBloom(0.5, 0.35, 0.35);
+  enableVignette(1.0, 0.75);
+  enableFXAA();
 
   await buildScene(0);
 }
@@ -86,26 +86,22 @@ function clearMeshes() {
 }
 
 function buildFloor() {
-  floorId = nova64.scene.createPlane(50, 50, 0x080c14, [0, -3.3, 0]);
-  nova64.scene.setRotation(floorId, -Math.PI / 2, 0, 0);
-  nova64.scene.setPBRProperties(floorId, {
-    metalness: 0.85,
-    roughness: 0.08,
-    envMapIntensity: 1.5,
-  });
+  floorId = createPlane(50, 50, 0x080c14, [0, -3.3, 0]);
+  setRotation(floorId, -Math.PI / 2, 0, 0);
+  setPBRProperties(floorId, { metalness: 0.85, roughness: 0.08, envMapIntensity: 1.5 });
 }
 
 async function buildScene(idx) {
   clearMeshes();
-  nova64.scene.clearScene();
+  clearScene();
   // Re-apply lighting after clearScene
-  nova64.light.setAmbientLight(0x2a3a55, 1.6);
-  nova64.light.setLightDirection(-0.6, -1.0, -0.5);
-  nova64.light.setLightColor(0xffffff);
-  nova64.fx.enableBloom(0.5, 0.35, 0.35);
-  nova64.fx.enableVignette(1.0, 0.75);
-  nova64.fx.enableFXAA();
-  nova64.light.setFog(0x060e1a, 22, 60);
+  setAmbientLight(0x2a3a55, 1.6);
+  setLightDirection(-0.6, -1.0, -0.5);
+  setLightColor(0xffffff);
+  enableBloom(0.5, 0.35, 0.35);
+  enableVignette(1.0, 0.75);
+  enableFXAA();
+  setFog(0x060e1a, 22, 60);
 
   await applyShowcaseSkybox();
 
@@ -132,8 +128,8 @@ function buildMaterialGrid() {
       const x = (col - 2) * SPACING;
       const y = (2 - row) * SPACING;
       const color = lerpHex(0xd4c0a8, 0xc8d4e0, metalness);
-      const id = nova64.scene.createSphere(0.95, color, [x, y, 0], 32, {});
-      nova64.scene.setPBRProperties(id, { metalness, roughness });
+      const id = createSphere(0.95, color, [x, y, 0], 32, {});
+      setPBRProperties(id, { metalness, roughness });
       meshIds.push(id);
     }
   }
@@ -163,8 +159,8 @@ function buildMetals() {
     const row = Math.floor(i / cols);
     const x = (col - (cols - 1) / 2) * 3.0;
     const y = (1 - row) * 3.0;
-    const id = nova64.scene.createSphere(1.1, m.color, [x, y, 0], 32, {});
-    nova64.scene.setPBRProperties(id, {
+    const id = createSphere(1.1, m.color, [x, y, 0], 32, {});
+    setPBRProperties(id, {
       metalness: m.metalness,
       roughness: m.roughness,
       envMapIntensity: m.envMap,
@@ -194,12 +190,12 @@ function buildGems() {
     const x = Math.sin(angle) * r;
     const z = Math.cos(angle) * r - r;
     const y = 0;
-    const id = nova64.scene.createSphere(0.9, g.color, [x, y, z], 32, {
+    const id = createSphere(0.9, g.color, [x, y, z], 32, {
       material: 'standard',
       emissive: g.emissive,
       emissiveIntensity: 1.5,
     });
-    nova64.scene.setPBRProperties(id, {
+    setPBRProperties(id, {
       metalness: 0.1,
       roughness: g.roughness,
       envMapIntensity: 3.0,
@@ -213,12 +209,12 @@ function buildGems() {
     const angle = ((i - 2) / 5) * Math.PI * 0.5;
     const x = Math.sin(angle) * 4;
     const z = Math.cos(angle) * 4 - 4;
-    const id = nova64.scene.createSphere(0.6, glassColors[i], [x, 3, z], 32, {
+    const id = createSphere(0.6, glassColors[i], [x, 3, z], 32, {
       material: 'standard',
       emissive: glassColors[i],
       emissiveIntensity: 0.3,
     });
-    nova64.scene.setPBRProperties(id, {
+    setPBRProperties(id, {
       metalness: 0.0,
       roughness: 0.0,
       envMapIntensity: 4.0,
@@ -255,13 +251,13 @@ function buildMixed() {
     // Use cubes for some variety
     let id;
     if (i % 3 === 1) {
-      id = nova64.scene.createCube(1.6, m.color, [x, y, 0], { material: 'standard' });
+      id = createCube(1.6, m.color, [x, y, 0], { material: 'standard' });
     } else if (i % 3 === 2) {
-      id = nova64.scene.createCylinder(0.8, 1.8, m.color, [x, y, 0], { material: 'standard' });
+      id = createCylinder(0.8, 1.8, m.color, [x, y, 0], { material: 'standard' });
     } else {
-      id = nova64.scene.createSphere(0.95, m.color, [x, y, 0], 32, {});
+      id = createSphere(0.95, m.color, [x, y, 0], 32, {});
     }
-    nova64.scene.setPBRProperties(id, {
+    setPBRProperties(id, {
       metalness: m.metalness,
       roughness: m.roughness,
       envMapIntensity: m.envMap,
@@ -296,25 +292,25 @@ function buildEmissive() {
     const y = (1 - row) * 3.0;
     let id;
     if (i % 3 === 0) {
-      id = nova64.scene.createSphere(0.95, e.color, [x, y, 0], 32, {
+      id = createSphere(0.95, e.color, [x, y, 0], 32, {
         material: 'standard',
         emissive: e.emissive,
         emissiveIntensity: e.intensity,
       });
     } else if (i % 3 === 1) {
-      id = nova64.scene.createCube(1.5, e.color, [x, y, 0], {
+      id = createCube(1.5, e.color, [x, y, 0], {
         material: 'standard',
         emissive: e.emissive,
         emissiveIntensity: e.intensity,
       });
     } else {
-      id = nova64.scene.createTorus(0.7, 0.25, e.color, [x, y, 0], {
+      id = createTorus(0.7, 0.25, e.color, [x, y, 0], {
         material: 'standard',
         emissive: e.emissive,
         emissiveIntensity: e.intensity,
       });
     }
-    nova64.scene.setPBRProperties(id, { metalness: 0.3, roughness: 0.2, envMapIntensity: 1.0 });
+    setPBRProperties(id, { metalness: 0.3, roughness: 0.2, envMapIntensity: 1.0 });
     meshIds.push(id);
   }
 }
@@ -390,19 +386,16 @@ function buildShapes() {
 
   for (const s of shapes) {
     let id;
-    if (s.type === 'sphere')
-      id = nova64.scene.createSphere(1.0, s.color, s.pos, 32, { material: 'standard' });
-    else if (s.type === 'cube')
-      id = nova64.scene.createCube(1.6, s.color, s.pos, { material: 'standard' });
+    if (s.type === 'sphere') id = createSphere(1.0, s.color, s.pos, 32, { material: 'standard' });
+    else if (s.type === 'cube') id = createCube(1.6, s.color, s.pos, { material: 'standard' });
     else if (s.type === 'cylinder')
-      id = nova64.scene.createCylinder(0.7, 2.0, s.color, s.pos, { material: 'standard' });
+      id = createCylinder(0.7, 2.0, s.color, s.pos, { material: 'standard' });
     else if (s.type === 'torus')
-      id = nova64.scene.createTorus(0.8, 0.3, s.color, s.pos, { material: 'standard' });
-    else if (s.type === 'cone')
-      id = nova64.scene.createCone(0.9, 2.0, s.color, s.pos, { material: 'standard' });
+      id = createTorus(0.8, 0.3, s.color, s.pos, { material: 'standard' });
+    else if (s.type === 'cone') id = createCone(0.9, 2.0, s.color, s.pos, { material: 'standard' });
     else if (s.type === 'capsule')
-      id = nova64.scene.createCapsule(0.5, 1.2, s.color, s.pos, { material: 'standard' });
-    nova64.scene.setPBRProperties(id, {
+      id = createCapsule(0.5, 1.2, s.color, s.pos, { material: 'standard' });
+    setPBRProperties(id, {
       metalness: s.metalness,
       roughness: s.roughness,
       envMapIntensity: s.envMap,
@@ -416,22 +409,15 @@ export function update(dt) {
   time += dt;
 
   // Keyboard orbit controls
-  if (nova64.input.key('KeyA') || nova64.input.key('ArrowLeft')) orbitAngle -= dt * 1.0;
-  if (nova64.input.key('KeyD') || nova64.input.key('ArrowRight')) orbitAngle += dt * 1.0;
-  if (nova64.input.key('KeyW') || nova64.input.key('ArrowUp'))
-    orbitY = Math.min(12, orbitY + dt * 4);
-  if (nova64.input.key('KeyS') || nova64.input.key('ArrowDown'))
-    orbitY = Math.max(-4, orbitY - dt * 4);
-  if (nova64.input.key('KeyQ')) orbitDist = Math.min(30, orbitDist + dt * 6);
-  if (nova64.input.key('KeyE')) orbitDist = Math.max(8, orbitDist - dt * 6);
+  if (key('KeyA') || key('ArrowLeft')) orbitAngle -= dt * 1.0;
+  if (key('KeyD') || key('ArrowRight')) orbitAngle += dt * 1.0;
+  if (key('KeyW') || key('ArrowUp')) orbitY = Math.min(12, orbitY + dt * 4);
+  if (key('KeyS') || key('ArrowDown')) orbitY = Math.max(-4, orbitY - dt * 4);
+  if (key('KeyQ')) orbitDist = Math.min(30, orbitDist + dt * 6);
+  if (key('KeyE')) orbitDist = Math.max(8, orbitDist - dt * 6);
 
   // Slow auto-orbit when no input
-  if (
-    !nova64.input.key('KeyA') &&
-    !nova64.input.key('KeyD') &&
-    !nova64.input.key('ArrowLeft') &&
-    !nova64.input.key('ArrowRight')
-  ) {
+  if (!key('KeyA') && !key('KeyD') && !key('ArrowLeft') && !key('ArrowRight')) {
     orbitAngle += dt * 0.16;
   }
 
@@ -439,16 +425,12 @@ export function update(dt) {
   const camZ = Math.cos(orbitAngle) * orbitDist;
   const camY = orbitY + Math.sin(time * 0.22) * 0.8;
 
-  nova64.camera.setCameraPosition(camX, camY, camZ);
-  nova64.camera.setCameraTarget(0, 0, 0);
+  setCameraPosition(camX, camY, camZ);
+  setCameraTarget(0, 0, 0);
 
   // Scene switch
   for (let i = 0; i < 6; i++) {
-    if (
-      nova64.input.keyp('Digit' + (i + 1)) ||
-      nova64.input.keyp('Numpad' + (i + 1)) ||
-      nova64.input.btnp(13 + i)
-    ) {
+    if (keyp('Digit' + (i + 1)) || keyp('Numpad' + (i + 1)) || btnp(13 + i)) {
       if (scene !== i) {
         scene = i;
         void buildScene(i);
@@ -459,30 +441,30 @@ export function update(dt) {
 
 // ── Draw (2D HUD) ─────────────────────────────────────────────────────────────
 export function draw() {
-  nova64.draw.drawRoundedRect(0, 0, 320, 14, 0, nova64.draw.rgba8(0, 0, 0, 150));
-  nova64.draw.printCentered(
+  drawRoundedRect(0, 0, 320, 14, 0, rgba8(0, 0, 0, 150));
+  printCentered(
     '[1]Grid [2]Metal [3]Gem [4]Mix [5]Glow [6]Shape',
     160,
     2,
-    nova64.draw.rgba8(220, 200, 150, 255)
+    rgba8(220, 200, 150, 255)
   );
 
   // Scene-specific info
   if (scene === 0) {
-    nova64.draw.print('METALNESS  0 ──────── 1', 50, 218, 0x6aadcc, 1);
-    nova64.draw.print('R', 2, 80, 0xcc8844, 1);
-    nova64.draw.print('O', 2, 88, 0xcc8844, 1);
-    nova64.draw.print('U', 2, 96, 0xcc8844, 1);
-    nova64.draw.print('G', 2, 104, 0xcc8844, 1);
-    nova64.draw.print('H', 2, 112, 0xcc8844, 1);
+    print('METALNESS  0 ──────── 1', 50, 218, 0x6aadcc, 1);
+    print('R', 2, 80, 0xcc8844, 1);
+    print('O', 2, 88, 0xcc8844, 1);
+    print('U', 2, 96, 0xcc8844, 1);
+    print('G', 2, 104, 0xcc8844, 1);
+    print('H', 2, 112, 0xcc8844, 1);
   }
 
-  nova64.draw.drawRoundedRect(0, 224, 320, 16, 0, nova64.draw.rgba8(0, 0, 0, 130));
-  nova64.draw.print(
+  drawRoundedRect(0, 224, 320, 16, 0, rgba8(0, 0, 0, 130));
+  print(
     'Scene: ' + SCENE_NAMES[scene] + '   [WASD] Orbit  [QE] Zoom',
     6,
     226,
-    nova64.draw.rgba8(110, 110, 110, 220)
+    rgba8(110, 110, 110, 220)
   );
 }
 

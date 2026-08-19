@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://diq8amhlyyxcg"
+path="res://.godot/imported/meta.json-037fbd11e0c4360f14d030a28302655d.res"
+
+[deps]
+
+source_file="res://carts/star-fox-nova-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-037fbd11e0c4360f14d030a28302655d.res"]
+
+[params]
+

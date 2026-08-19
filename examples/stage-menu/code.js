@@ -22,7 +22,7 @@ let bgRoot;
 let navCooldown = 0;
 
 function _makeBgStripe(x, y, w, h, color) {
-  return nova64.ui.createGraphicsNode((ctx, n) => {
+  return createGraphicsNode((ctx, n) => {
     ctx.save();
     ctx.globalAlpha = n.alpha;
     ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
@@ -32,11 +32,11 @@ function _makeBgStripe(x, y, w, h, color) {
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
-  root = nova64.ui.createContainer();
-  bgRoot = nova64.ui.createContainer();
-  nova64.ui.addChild(root, bgRoot);
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  root = createContainer();
+  bgRoot = createContainer();
+  addChild(root, bgRoot);
 
   // Decorative background stripes
   const stripeColors = [0x1a2a4a, 0x16223c, 0x1e2f52, 0x131d34];
@@ -44,11 +44,11 @@ export function init() {
     const s = _makeBgStripe(0, i, W, 20, stripeColors[i % 4]);
     s.x = 0;
     s.y = i;
-    nova64.ui.addChild(bgRoot, s);
+    addChild(bgRoot, s);
   }
 
   // Title node — slide in from top
-  titleNode = nova64.ui.createTextNode('NOVA 64', {
+  titleNode = createTextNode('NOVA 64', {
     font: 'bold 48px monospace',
     fill: '#ffcc44',
     align: 'center',
@@ -57,7 +57,7 @@ export function init() {
   });
   titleNode.x = W / 2;
   titleNode.y = -60; // start above screen
-  nova64.ui.addChild(root, titleNode);
+  addChild(root, titleNode);
 
   // Animate title in
   titleNode.tweenTo({ y: 60 }, 0.7, { ease: 'easeOutBack' }).play();
@@ -65,7 +65,7 @@ export function init() {
   // Menu items — stagger slide-in from left
   menuItems = [];
   for (let i = 0; i < ITEMS.length; i++) {
-    const node = nova64.ui.createTextNode(ITEMS[i], {
+    const node = createTextNode(ITEMS[i], {
       font: 'bold 24px monospace',
       fill: `#${COLORS_DEF[i].toString(16).padStart(6, '0')}`,
       align: 'left',
@@ -73,7 +73,7 @@ export function init() {
     node.x = -W; // start off-left
     node.y = 140 + i * 50;
     node._idx = i;
-    nova64.ui.addChild(root, node);
+    addChild(root, node);
 
     setTimeout(
       () => {
@@ -86,7 +86,7 @@ export function init() {
   }
 
   // Cursor node (animated bar)
-  const cursor = nova64.ui.createGraphicsNode((ctx, n) => {
+  const cursor = createGraphicsNode((ctx, n) => {
     ctx.save();
     ctx.globalAlpha = n.alpha * 0.35;
     ctx.fillStyle = '#ffcc44';
@@ -96,7 +96,7 @@ export function init() {
   cursor.x = 90;
   cursor.y = 140 + selected * 50 - 8;
   cursor._isCursor = true;
-  nova64.ui.addChild(root, cursor);
+  addChild(root, cursor);
 
   root._cursor = cursor;
 }
@@ -104,11 +104,11 @@ export function init() {
 export function update(dt) {
   time += dt;
   navCooldown -= dt;
-  nova64.tween.updateTweens(dt);
+  updateTweens(dt);
 
   // Navigate
-  const up = nova64.input.keyp('ArrowUp') || nova64.input.keyp('KeyW');
-  const down = nova64.input.keyp('ArrowDown') || nova64.input.keyp('KeyS');
+  const up = keyp('ArrowUp') || keyp('KeyW');
+  const down = keyp('ArrowDown') || keyp('KeyS');
 
   if ((up || down) && navCooldown <= 0) {
     navCooldown = 0.15;
@@ -129,28 +129,23 @@ export function update(dt) {
 }
 
 export function draw() {
-  nova64.draw.cls(0x0d1a2e);
+  cls(0x0d1a2e);
 
   // Scrolling background gradient dots
   for (let i = 0; i < 20; i++) {
     const dx = ((i * 127 + time * 18) % W) | 0;
     const dy = ((i * 83 + time * 9) % H) | 0;
-    nova64.draw.pset(dx, dy, 0x334455);
+    pset(dx, dy, 0x334455);
   }
 
-  nova64.ui.drawStage(root);
+  drawStage(root);
 
   // Subtitle tagline
   const alpha = 0.5 + 0.5 * Math.sin(time * 2.4);
   const bright = Math.floor(alpha * 120 + 60);
-  nova64.draw.print(
-    'ULTIMATE 3D FANTASY CONSOLE',
-    W / 2 - 82,
-    95,
-    (bright << 16) | (bright << 8) | 0xff
-  );
+  print('ULTIMATE 3D FANTASY CONSOLE', W / 2 - 82, 95, (bright << 16) | (bright << 8) | 0xff);
 
   // Bottom bar
-  nova64.draw.rectfill(0, H - 16, W, 16, 0x000000cc);
-  nova64.draw.print('[↑↓] Navigate   [Enter] Select', 4, H - 11, 0x556677);
+  rectfill(0, H - 16, W, 16, 0x000000cc);
+  print('[↑↓] Navigate   [Enter] Select', 4, H - 11, 0x556677);
 }

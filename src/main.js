@@ -1,5 +1,6 @@
 import { Nova64, NOVA64_VERSION } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
+import { GpuBabylon } from '../runtime/gpu-babylon.js';
 import { logger } from '../runtime/logger.js';
 globalThis.novaLogger = logger;
 import { createLogger } from '../runtime/debug-logger.js';
@@ -35,6 +36,13 @@ import { xrModule } from '../runtime/xr.js';
 import { mediapipeModule } from '../runtime/mediapipe.js';
 import { blendApi } from '../runtime/api-blend.js';
 import { stageApi } from '../runtime/stage.js';
+import { loaderApi } from '../runtime/api-loader.js';
+import { storyApi } from '../runtime/api-story.js';
+import { levelApi } from '../runtime/api-level.js';
+import { videoApi } from '../runtime/api-video.js';
+import { netApi } from '../runtime/api-net.js';
+import { authApi } from '../runtime/api-auth.js';
+import { configureSupabaseAuth } from '../runtime/supabase-auth.js';
 import { movieClipApi } from '../runtime/movie-clip.js';
 import { filtersApi } from '../runtime/api-filters.js';
 import { camera2DApi } from '../runtime/camera-2d.js';
@@ -71,7 +79,6 @@ let gpu;
 let backendLabel = 'Three.js';
 try {
   if (_useBabylon) {
-    const { GpuBabylon } = await import('../runtime/gpu-babylon.js');
     gpu = new GpuBabylon(canvas, _paramW, _paramH);
     backendLabel = 'Babylon.js';
     console.log(`✅ Using Babylon.js renderer (${_paramW}x${_paramH}) - experimental backend`);
@@ -154,6 +161,12 @@ const particles2DInst = particles2DApi(gpu);
 const tweenInst = tweenApi();
 const xrInst = xrModule(gpu);
 const mpInst = mediapipeModule(gpu);
+const loaderInst = loaderApi();
+const storyInst = storyApi();
+const levelInst = levelApi(gpu);
+const videoInst = videoApi(gpu);
+const netInst = netApi();
+const authInst = authApi();
 
 // Create UI API - needs to be created after api is fully initialized
 let uiApiInstance;
@@ -175,6 +188,12 @@ stApi.exposeTo(nova64api);
 scrApi.exposeTo(nova64api);
 skyApi.exposeTo(nova64api);
 fxApi.exposeTo(nova64api);
+loaderInst.exposeTo(nova64api);
+storyInst.exposeTo(nova64api);
+levelInst.exposeTo(nova64api);
+videoInst.exposeTo(nova64api);
+netInst.exposeTo(nova64api);
+authInst.exposeTo(nova64api);
 vxApi.exposeTo(nova64api);
 storeApiInst.exposeTo(nova64api);
 api2dInst.exposeTo(nova64api);
@@ -211,6 +230,34 @@ iApi.connectUI(uiApiInstance.setMousePosition, uiApiInstance.setMouseButton);
 // Expose grouped-only namespace. Carts use nova64.draw.cls(), nova64.scene.createCube(), etc.
 globalThis.nova64 = buildNamespace(nova64api, NAMESPACE_MAP);
 
+// Sub-namespace APIs that ship as cohesive objects rather than flat methods
+// (loader, story, level, video). exposeTo wrote `nova64api.loader = {...}`
+// which buildNamespace would otherwise stash in `_unmapped`. Lift them
+// onto the final `nova64` so carts can call `nova64.loader.show(...)` etc.
+for (const subns of ['loader', 'story', 'level', 'video', 'net', 'auth']) {
+  if (nova64api[subns]) globalThis.nova64[subns] = nova64api[subns];
+}
+
+// nova64.post — ergonomic post-processing sugar namespace that delegates to nova64.fx.
+// Carts that write `nova64.post.setBloom(2.2)` will work; the canonical API is nova64.fx.*.
+globalThis.nova64.post = {
+  setBloom: (strength, radius, threshold) =>
+    globalThis.nova64.fx.enableBloom(strength, radius, threshold),
+  setChromatic: amount => globalThis.nova64.fx.enableChromaticAberration(amount),
+  setVignette: (darkness, offset) => globalThis.nova64.fx.enableVignette(darkness, offset),
+  setFXAA: () => globalThis.nova64.fx.enableFXAA(),
+  setGlitch: intensity => globalThis.nova64.fx.enableGlitch(intensity),
+  disable: () => {
+    globalThis.nova64.fx.disableBloom?.();
+    globalThis.nova64.fx.disableChromaticAberration?.();
+    globalThis.nova64.fx.disableVignette?.();
+    globalThis.nova64.fx.disableGlitch?.();
+  },
+};
+
+const supabaseClient = configureSupabaseAuth(globalThis.nova64.auth, import.meta.env);
+if (supabaseClient) globalThis.nova64.auth.supabase = supabaseClient;
+
 // inject camera ref into sprite system
 if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
 
@@ -227,6 +274,14 @@ globalThis.__nova64CartLoadState = {
 
 registerCartResetHook('input', () => {
   iApi.reset?.();
+});
+
+registerCartResetHook('loader-story-video', () => {
+  // Clean up any overlay state that belonged to the previous cart so the
+  // new one boots into a known-empty visual state.
+  loaderInst.hide?.();
+  storyInst.stop?.();
+  videoInst._disposeAll?.();
 });
 
 registerCartResetHook('ui', () => {
@@ -321,6 +376,13 @@ nova.onCartDidLoad = path => {
 
 let paused = false;
 let stepOnce = false;
+
+// External pause control — lets an embedder (e.g. demo-embed.html pausing the
+// cart while the phone is held in portrait) freeze the loop. Toggles the same
+// flag the in-console Pause button uses.
+globalThis.__nova64SetPaused = v => {
+  paused = !!v;
+};
 let statsEl = document.getElementById('stats');
 let _currentCartPath = '';
 
@@ -428,6 +490,8 @@ function loop() {
     storeApiInst.tick(dt);
     // Auto-animate skybox if enabled
     skyApi._tick(dt);
+    // Story slideshow tick (no-op when nothing is playing)
+    storyInst._tick(dt);
     // Advance generative art frame counter
     genArtInst._advanceFrame();
     // Update post-processing shader uniforms (time, etc.)
@@ -576,6 +640,11 @@ const gameMap = {
 // Map demo names (from ?demo= URL param) to paths
 const demoMap = {
   'hello-world': '/examples/hello-world/code.js',
+  'hello-helpers': '/examples/hello-helpers/code.js',
+  'multiplayer-lobby': '/examples/multiplayer-lobby/code.js',
+  metaverse: '/examples/metaverse/code.js',
+  'story-video-demo': '/examples/story-video-demo/code.js',
+  'tv-demo': '/examples/tv-demo/code.js',
   'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
   'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
   'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
@@ -612,6 +681,7 @@ const demoMap = {
   'game-of-life-3d': '/examples/game-of-life-3d/code.js',
   'nature-explorer-3d': '/examples/nature-explorer-3d/code.js',
   'dungeon-crawler-3d': '/examples/dungeon-crawler-3d/code.js',
+  'indie-odyssey': '/examples/indie-odyssey/code.js',
   'wizardry-3d': '/examples/wizardry-3d/code.js',
   'voxel-terrain': '/examples/voxel-terrain/code.js',
   'voxel-creative': '/examples/voxel-creative/code.js',

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c2ck2d2sttyyr"
+path="res://.godot/imported/meta.json-ba93ec416808cab790138065db93a0fc.res"
+
+[deps]
+
+source_file="res://carts/tween-logo/meta.json"
+dest_files=["res://.godot/imported/meta.json-ba93ec416808cab790138065db93a0fc.res"]
+
+[params]
+

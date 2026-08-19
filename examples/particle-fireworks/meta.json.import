@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://b58bvbpc7t1s1"
+path="res://.godot/imported/meta.json-d74db9ffc9c8f8700d8c04624deb3cb8.res"
+
+[deps]
+
+source_file="res://carts/particle-fireworks/meta.json"
+dest_files=["res://.godot/imported/meta.json-d74db9ffc9c8f8700d8c04624deb3cb8.res"]
+
+[params]
+

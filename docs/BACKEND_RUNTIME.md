@@ -147,6 +147,8 @@ It currently provides parity shims for:
 - scene graph object checks: `isObject3D`, `isMesh`, `isLight`, `type`
 - Babylon mesh visibility bridging: `mesh.visible`
 - material aliases: `material.color`, `material.map`, `material.transparent`, `material.opacity`
+- Babylon material render shims: `needAlphaBlendingForMesh`, `needAlphaTesting`, `needAlphaTestingForMesh`, `isReady`, `isReadyForSubMesh`
+- imported material light budget normalization: GLB/PBR materials opt into at least eight simultaneous lights so shader compilation stays stable in carts with combat or prop point lights
 - color helpers: `color.set(...)`, `color.setHex(...)`, `color.getHex()`, `color.getHexString()`
 - texture helpers: `texture.repeat`, `texture.offset`, `texture.wrapS`, `texture.wrapT`, `texture.needsUpdate`
 - dirty/version tracking used by parity tests and cart utilities
@@ -197,6 +199,10 @@ Recent parity work focused on the places where carts were still clearly broken u
 - Godot shim's `WADTextureManager._uploadDataTexture` now delegates to `engine.createDataTexture` internally, removing duplicated bridge-transport code.
 - Godot shim now exposes `getCamera()` in `nova64.camera` returning `{ position: { x, y, z } }`, so billboard sprite code like `const cam = getCamera(); Math.atan2(cam.position.x - e.x, ...)` works without throwing on the Godot host.
 - Godot `createPlane` already creates double-sided planes by default (matches the Babylon plane double-sided fix), so WAD floor/ceiling and sprite billboards render correctly from all viewing angles.
+- Point lights now include a shared `setLightVisible(id, visible)` backend API, allowing carts to temporarily hide scene-local lights during alternate scene states such as Indie Odyssey combat without destroying and recreating them.
+- Babylon imported GLB materials now receive the compat-layer render-method shims and a minimum simultaneous-light budget, preventing PBR shader compile failures when carts mix default lights with several controlled point lights.
+- Babylon bloom now accepts the same object-form options as the Three.js effects API and pairs low-strength bloom with a restrained `GlowLayer`, so emissive cart geometry such as Indie Odyssey's neon grid reads as glow instead of flat colour.
+- Babylon material creation now honors `emissiveIntensity` for PBR and Standard materials; carts can tune backend parity without replacing materials or branching into raw Babylon APIs.
 
 Current visual status:
 
@@ -229,14 +235,11 @@ Use the WAD-specific visual and regression slices first when touching Babylon WA
 Use the XR/AR slice first when touching `runtime/xr.js`, `runtime/mediapipe.js`, or demos that call WebXR/MediaPipe APIs.
 Use the TSL Galaxy slice first when touching Babylon post-processing, procedural shader materials, particle glow, or the `tsl-showcase` cart.
 
-## Remaining Babylon Backlog
+## Remaining Babylon Work
 
-- fuller particle-system parity
-- broader model-loading parity beyond VOX coverage
-- voxel visual parity against Three.js beyond “boots and runs”
-- voxel support for more advanced custom/entity mesh cases if carts move beyond simple box entities
-- post-processing parity beyond safe capability-gated warnings
-- continued removal of façade-only glue as shared contracts mature
+Remaining Babylon parity work is tracked in [`../BACKLOG.md`](../BACKLOG.md).
+Keep this document focused on backend architecture, runtime contracts, and
+validation guidance rather than a second backlog.
 
 ## Extending The Runtime
 

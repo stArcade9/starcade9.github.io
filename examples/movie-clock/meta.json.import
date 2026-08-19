@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://vpdnbvxvlhhp"
+path="res://.godot/imported/meta.json-fe199d06f53a46af2bb2d112ccd06767.res"
+
+[deps]
+
+source_file="res://carts/movie-clock/meta.json"
+dest_files=["res://.godot/imported/meta.json-fe199d06f53a46af2bb2d112ccd06767.res"]
+
+[params]
+

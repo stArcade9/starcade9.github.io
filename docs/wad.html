@@ -122,7 +122,16 @@ wad.<span class="function-name">load</span>(buffer);
   });
 }
 
-<span class="comment">// Set player start position</span>
+<span class="comment">// Set player start position and sample floor height while moving</span>
+player.x = level.playerStart.x;
+player.z = level.playerStart.z;
+player.y = level.playerStart.floorH + <span class="number">1</span>;
+player.floor = level.<span class="function-name">getFloorHeight</span>(player.x, player.z, player.floor);
+
+<span class="comment">// Spawn enemies/items on their containing sector floor</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> enemy <span class="keyword">of</span> level.enemies) {
+  <span class="function-name">spawnEnemy</span>(enemy.x, enemy.floorH + <span class="number">2</span>, enemy.z, enemy.type);
+}
 <span class="function-name">setCameraPosition</span>(level.playerStart.x, <span class="number">1.5</span>, level.playerStart.z);
 </code></pre>
             </div>
@@ -305,10 +314,11 @@ texMgr.<span class="function-name">init</span>();
                 <tr><th>Property</th><th>Type</th><th>Description</th></tr>
                 <tr><td><code>walls</code></td><td>array</td><td>Wall segments: <code>{ x, y, z, len, h, ang, light, texName, xoff, yoff, step?, upper? }</code></td></tr>
                 <tr><td><code>colSegs</code></td><td>array</td><td>Collision points: <code>{ x, z, r }</code></td></tr>
-                <tr><td><code>enemies</code></td><td>array</td><td>Enemy spawns: <code>{ x, z, type, doomType }</code></td></tr>
-                <tr><td><code>items</code></td><td>array</td><td>Item pickups: <code>{ x, z, type, doomType }</code></td></tr>
+                <tr><td><code>enemies</code></td><td>array</td><td>Enemy spawns: <code>{ x, z, floorH, type, doomType }</code></td></tr>
+                <tr><td><code>items</code></td><td>array</td><td>Item pickups: <code>{ x, z, floorH, type, doomType }</code></td></tr>
                 <tr><td><code>playerStart</code></td><td>object</td><td><code>{ x, z, angle, floorH }</code></td></tr>
-                <tr><td><code>sectors</code></td><td>array</td><td>Sector data: <code>{ floorH, ceilH, floorFlat, ceilFlat, light }</code></td></tr>
+                <tr><td><code>sectors</code></td><td>array</td><td>Sector data: <code>{ floorH, ceilH, floorFlat, ceilFlat, light, bounds }</code>. Bounds are coarse sector extents for fallback floor-plane rendering.</td></tr>
+                <tr><td><code>getFloorHeight</code></td><td>function</td><td><code>(x, z, fallback?) =&gt; number</code>. Samples the floor height at a world-space point using the converted sector outlines.</td></tr>
             </table>
 
             <h3>Enemy Types</h3>

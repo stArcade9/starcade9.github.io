@@ -1,0 +1,7 @@
+{
+  "name": "Errors",
+  "description": "G3 conformance — bad-input error contract and engine.flush behavior.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "test"
+}

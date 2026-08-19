@@ -58,8 +58,8 @@ function _drawRays(ctx, band, t, alpha) {
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
 }
 
 export function update(dt) {
@@ -68,13 +68,13 @@ export function update(dt) {
 
 export function draw() {
   // Dark sky gradient
-  nova64.draw.cls(0x020710);
+  cls(0x020710);
   for (let y = 0; y < H * 0.6; y++) {
     const t = y / (H * 0.6);
     const r = Math.floor(t * 5 + 2);
     const g = Math.floor(t * 10 + 5);
     const b = Math.floor(t * 35 + 14);
-    nova64.draw.rectfill(0, y, W, 1, (r << 16) | (g << 8) | b);
+    rectfill(0, y, W, 1, (r << 16) | (g << 8) | b);
   }
 
   // Stars
@@ -83,11 +83,11 @@ export function draw() {
     const sy = (i * 97 + 7) % Math.floor(H * 0.65);
     const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(time * (0.8 + i * 0.03) + i));
     const c = Math.floor(twinkle * 220);
-    nova64.draw.pset(sx, sy, (c << 16) | (c << 8) | c);
+    pset(sx, sy, (c << 16) | (c << 8) | c);
   }
 
   // Aurora bands — draw on stage canvas with BM.SCREEN
-  nova64.draw.withBlend('screen', ctx => {
+  withBlend('screen', ctx => {
     for (const band of BANDS) {
       const alpha = 0.55 + 0.35 * Math.sin(time * 0.22 + band.phase);
       _drawBand(ctx, band, time, alpha);
@@ -95,7 +95,7 @@ export function draw() {
   });
 
   // Ray shafts — BM.ADD for the bright needle effect
-  nova64.draw.withBlend('add', ctx => {
+  withBlend('add', ctx => {
     for (const band of BANDS) {
       const alpha = 0.4 + 0.3 * Math.sin(time * 0.18 + band.phase * 1.3);
       _drawRays(ctx, band, time, alpha);
@@ -103,7 +103,7 @@ export function draw() {
   });
 
   // Horizon glow — BM.SCREEN
-  nova64.draw.withBlend('screen', ctx => {
+  withBlend('screen', ctx => {
     const horizY = H * 0.62;
     const hg = ctx.createLinearGradient(0, horizY - 20, 0, horizY + 30);
     const hue = ((time * 20) % 360) | 0;
@@ -117,15 +117,15 @@ export function draw() {
   const terrainY = Math.floor(H * 0.62);
   for (let x = 0; x < W; x++) {
     const h = 12 + 8 * Math.sin(x * 0.07) + 5 * Math.sin(x * 0.19 + 2.1);
-    nova64.draw.rectfill(x, terrainY + Math.floor(h), 1, H - terrainY, 0x09090f);
+    rectfill(x, terrainY + Math.floor(h), 1, H - terrainY, 0x09090f);
   }
 
   // Reflections on still water
   for (let rx = 0; rx < W; rx += 2) {
     const ry = terrainY + 12 + Math.floor(Math.sin(rx * 0.07) * 3);
-    nova64.draw.pset(rx, ry, 0x334455);
+    pset(rx, ry, 0x334455);
   }
 
-  nova64.draw.print('BLEND AURORA', 4, 4, 0xffffff);
-  nova64.draw.print('BM.SCREEN • BM.ADD • withBlend • layered gradients', 4, H - 12, 0x334455);
+  print('BLEND AURORA', 4, 4, 0xffffff);
+  print('BM.SCREEN • BM.ADD • withBlend • layered gradients', 4, H - 12, 0x334455);
 }

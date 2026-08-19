@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://fvcgg3uafufl"
+path="res://.godot/imported/meta.json-5ce081b0236caa3e6c8150daec0191cc.res"
+
+[deps]
+
+source_file="res://carts/voxel-creative/meta.json"
+dest_files=["res://.godot/imported/meta.json-5ce081b0236caa3e6c8150daec0191cc.res"]
+
+[params]
+

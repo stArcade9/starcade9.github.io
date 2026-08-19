@@ -583,16 +583,24 @@ function updateInput(dt) {
   const y = input.mouseY();
 
   if (scene === 'boot') {
-    const noTap = pointerTap && inRect(x, y, 378, 270, 116, 34);
-    const yesTap = pointerTap && sceneTime > 4.2 && !noTap;
-    if (keyboardTap || yesTap) {
+    // YES/NO are POSITIONAL so they're tappable on mobile (a canvas touch sets
+    // mousePressed). Crucially, a canvas touch ALSO synthesises Space (see
+    // runtime/input.js) — so we must NOT let that auto-confirm YES when the user
+    // tapped NO. Only a real keyboard/gamepad press (no pointer) auto-confirms.
+    if (pointerTap && sceneTime > 4.2) {
+      if (inRect(x, y, 378, 270, 116, 34)) {
+        deniedNo = true;
+        playSound('error');
+        return;
+      }
       playSound('confirm');
       startNovaLoader();
       return;
     }
-    if (noTap) {
-      deniedNo = true;
-      playSound('error');
+    if (keyboardTap && !pointerTap) {
+      playSound('confirm');
+      startNovaLoader();
+      return;
     }
   }
 

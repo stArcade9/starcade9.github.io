@@ -2,6 +2,7 @@
 // Mesh position, rotation, scale, visibility, and shadow controls
 
 import { logger } from '../../logger.js';
+import { normalizeColorToHex } from './materials.js';
 
 export function transformsModule({ getMesh }) {
   function normalizeVectorArgs(x, y, z) {
@@ -130,6 +131,33 @@ export function transformsModule({ getMesh }) {
     return true;
   }
 
+  function setMeshEmissive(meshId, color, intensity = 1) {
+    const mesh = getMesh(meshId);
+    if (!mesh) return false;
+    const hex = normalizeColorToHex(color);
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const m of mats) {
+      if (!m) continue;
+      if (m.emissive) m.emissive.setHex(hex);
+      m.emissiveIntensity = typeof intensity === 'number' ? intensity : 1;
+      m.needsUpdate = true;
+    }
+    return true;
+  }
+
+  function setMeshColor(meshId, color) {
+    const mesh = getMesh(meshId);
+    if (!mesh) return false;
+    const hex = normalizeColorToHex(color);
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const m of mats) {
+      if (!m) continue;
+      if (m.color) m.color.setHex(hex);
+      m.needsUpdate = true;
+    }
+    return true;
+  }
+
   function setMeshVisible(meshId, visible) {
     const mesh = getMesh(meshId);
     if (!mesh) return false;
@@ -171,6 +199,8 @@ export function transformsModule({ getMesh }) {
     rotateMesh,
     moveMesh,
     setFlatShading,
+    setMeshEmissive,
+    setMeshColor,
     setMeshVisible,
     setMeshOpacity,
     setCastShadow,

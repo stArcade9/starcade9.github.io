@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://d4co63vqevete"
+path="res://.godot/imported/meta.json-a894b2d60a0bd6801019d03b4d2169ce.res"
+
+[deps]
+
+source_file="res://carts/shooter-demo-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-a894b2d60a0bd6801019d03b4d2169ce.res"]
+
+[params]
+

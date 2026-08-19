@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://5qb60onj0eng"
+path="res://.godot/imported/meta.json-ddd253138592931d010782bcf2046521.res"
+
+[deps]
+
+source_file="res://carts/startscreen-demo/meta.json"
+dest_files=["res://.godot/imported/meta.json-ddd253138592931d010782bcf2046521.res"]
+
+[params]
+

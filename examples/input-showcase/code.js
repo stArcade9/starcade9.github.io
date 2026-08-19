@@ -34,19 +34,19 @@ let cubeColor = 0x0088ff;
 let mouseTrail = [];
 
 export function init() {
-  nova64.camera.setCameraPosition(0, 0, 8);
-  nova64.camera.setCameraTarget(0, 0, 0);
-  nova64.light.setAmbientLight(0xffffff, 1.0);
-  nova64.light.setFog(0x0a0a1a, 20, 50);
+  setCameraPosition(0, 0, 8);
+  setCameraTarget(0, 0, 0);
+  setAmbientLight(0xffffff, 1.0);
+  setFog(0x0a0a1a, 20, 50);
 
-  cube = nova64.scene.createCube(2, cubeColor, [0, 0, 0], { material: 'holographic' });
+  cube = createCube(2, cubeColor, [0, 0, 0], { material: 'holographic' });
 }
 
 export function update(dt) {
   // Drive cube rotation with WASD
-  const rx = (nova64.input.key('KeyS') ? 1 : 0) - (nova64.input.key('KeyW') ? 1 : 0);
-  const ry = (nova64.input.key('KeyD') ? 1 : 0) - (nova64.input.key('KeyA') ? 1 : 0);
-  nova64.scene.rotateMesh(cube, rx * dt * 2, ry * dt * 2, 0);
+  const rx = (key('KeyS') ? 1 : 0) - (key('KeyW') ? 1 : 0);
+  const ry = (key('KeyD') ? 1 : 0) - (key('KeyA') ? 1 : 0);
+  rotateMesh(cube, rx * dt * 2, ry * dt * 2, 0);
 
   // Record mouse trail (last 20 positions)
   const mx = getMouseX ? getMouseX() : 0;
@@ -57,74 +57,60 @@ export function update(dt) {
 
 export function draw() {
   // ── Background gradient header ───────────────────────────────────────────
-  nova64.draw.rect(0, 0, 320, 20, nova64.draw.rgba8(20, 20, 50, 255), true);
-  nova64.draw.printCentered('INPUT SHOWCASE', 4, 0xffffff);
+  rect(0, 0, 320, 20, rgba8(20, 20, 50, 255), true);
+  printCentered('INPUT SHOWCASE', 4, 0xffffff);
 
   // ── Keyboard section ─────────────────────────────────────────────────────
-  nova64.draw.print('KEYBOARD', 8, 26, 0xaaaaff);
+  print('KEYBOARD', 8, 26, 0xaaaaff);
   const kbCols = 7;
   KEY_MAP.forEach(([code, label], i) => {
     const col = i % kbCols;
     const row = Math.floor(i / kbCols);
     const x = 8 + col * 44;
     const y = 36 + row * 14;
-    const pressed = nova64.input.key(code);
-    nova64.draw.rect(
-      x,
-      y,
-      40,
-      12,
-      pressed ? nova64.draw.rgba8(0, 200, 80, 255) : nova64.draw.rgba8(40, 40, 80, 200),
-      true
-    );
-    nova64.draw.rect(x, y, 40, 12, nova64.draw.rgba8(100, 100, 180, 180), false);
-    nova64.draw.print(label, x + 2, y + 2, pressed ? 0x000000 : 0xdddddd);
+    const pressed = key(code);
+    rect(x, y, 40, 12, pressed ? rgba8(0, 200, 80, 255) : rgba8(40, 40, 80, 200), true);
+    rect(x, y, 40, 12, rgba8(100, 100, 180, 180), false);
+    print(label, x + 2, y + 2, pressed ? 0x000000 : 0xdddddd);
   });
 
   // ── Gamepad section ───────────────────────────────────────────────────────
-  nova64.draw.print('GAMEPAD', 8, 74, 0xaaaaff);
+  print('GAMEPAD', 8, 74, 0xaaaaff);
   BTN_LABELS.forEach((label, i) => {
     const x = 8 + i * 30;
-    const pressed = nova64.input.btn(i);
-    nova64.draw.rect(
-      x,
-      84,
-      26,
-      12,
-      pressed ? nova64.draw.rgba8(255, 160, 0, 255) : nova64.draw.rgba8(40, 40, 80, 200),
-      true
-    );
-    nova64.draw.rect(x, 84, 26, 12, nova64.draw.rgba8(100, 100, 180, 180), false);
-    nova64.draw.print(label, x + 2, 86, pressed ? 0x000000 : 0xdddddd);
+    const pressed = btn(i);
+    rect(x, 84, 26, 12, pressed ? rgba8(255, 160, 0, 255) : rgba8(40, 40, 80, 200), true);
+    rect(x, 84, 26, 12, rgba8(100, 100, 180, 180), false);
+    print(label, x + 2, 86, pressed ? 0x000000 : 0xdddddd);
   });
 
   // ── Analog sticks ─────────────────────────────────────────────────────────
-  nova64.draw.print('STICKS', 8, 102, 0xaaaaff);
+  print('STICKS', 8, 102, 0xaaaaff);
   // Left stick area
-  nova64.draw.rect(8, 112, 40, 22, nova64.draw.rgba8(30, 30, 60, 200), true);
-  nova64.draw.rect(8, 112, 40, 22, nova64.draw.rgba8(80, 80, 150, 180), false);
-  nova64.draw.print('L-STICK', 10, 114, 0x888888);
+  rect(8, 112, 40, 22, rgba8(30, 30, 60, 200), true);
+  rect(8, 112, 40, 22, rgba8(80, 80, 150, 180), false);
+  print('L-STICK', 10, 114, 0x888888);
   // Right stick area
-  nova64.draw.rect(54, 112, 40, 22, nova64.draw.rgba8(30, 30, 60, 200), true);
-  nova64.draw.rect(54, 112, 40, 22, nova64.draw.rgba8(80, 80, 150, 180), false);
-  nova64.draw.print('R-STICK', 56, 114, 0x888888);
-  nova64.draw.print('(connect gamepad)', 100, 118, 0x555577);
+  rect(54, 112, 40, 22, rgba8(30, 30, 60, 200), true);
+  rect(54, 112, 40, 22, rgba8(80, 80, 150, 180), false);
+  print('R-STICK', 56, 114, 0x888888);
+  print('(connect gamepad)', 100, 118, 0x555577);
 
   // ── Mouse section ─────────────────────────────────────────────────────────
-  nova64.draw.print('MOUSE', 8, 140, 0xaaaaff);
+  print('MOUSE', 8, 140, 0xaaaaff);
   const mx = mouseTrail.length ? mouseTrail[mouseTrail.length - 1].x : 0;
   const my = mouseTrail.length ? mouseTrail[mouseTrail.length - 1].y : 0;
-  nova64.draw.print(`X: ${Math.round(mx)}  Y: ${Math.round(my)}`, 8, 150, 0xdddddd);
+  print(`X: ${Math.round(mx)}  Y: ${Math.round(my)}`, 8, 150, 0xdddddd);
 
   // Draw mouse trail
   if (mouseTrail.length > 1) {
     for (let i = 1; i < mouseTrail.length; i++) {
       const alpha = Math.floor((i / mouseTrail.length) * 200);
-      nova64.draw.pset(mouseTrail[i].x, mouseTrail[i].y, nova64.draw.rgba8(80, 200, 255, alpha));
+      pset(mouseTrail[i].x, mouseTrail[i].y, rgba8(80, 200, 255, alpha));
     }
   }
 
   // ── Active key hint ───────────────────────────────────────────────────────
-  nova64.draw.rect(0, 170, 320, 10, nova64.draw.rgba8(15, 15, 40, 255), true);
-  nova64.draw.print('WASD rotates cube  |  All inputs highlighted in real time', 4, 172, 0x555577);
+  rect(0, 170, 320, 10, rgba8(15, 15, 40, 255), true);
+  print('WASD rotates cube  |  All inputs highlighted in real time', 4, 172, 0x555577);
 }

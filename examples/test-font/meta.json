@@ -1,18 +1,1 @@
-{
-  "name": "Test Font",
-  "description": "Font Test - Complete Character Set Demo",
-  "author": "Nova64 Team",
-  "version": "1.0.0",
-  "category": "test",
-
-  "text": {
-    "defaultLocale": "en",
-    "strings": {
-      "game.title": "NOVA64 FONT TEST"
-    }
-  },
-
-  "defaults": {
-    "cheats": { "enabled": false, "items": {} }
-  }
-}
+{"name":"test-font","description":"G6 cart port from examples/test-font","author":"Nova64","version":"0.1.0","category":"port","source":"examples/test-font"}

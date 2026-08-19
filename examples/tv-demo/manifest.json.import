@@ -1,0 +1,13 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cx1rvtloasskr"
+valid=false
+
+[deps]
+
+source_file="res://carts/tv-demo/manifest.json"
+
+[params]
+
