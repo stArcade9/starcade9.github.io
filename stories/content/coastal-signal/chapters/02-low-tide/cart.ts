@@ -7,7 +7,6 @@ import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 
 declare const nova64: any;
-export const env = {}; // skip the sidecar meta.json fetch — see runtime/manifest.js
 
 type Beat = 'settle' | 'comb' | 'rest' | 'closing';
 

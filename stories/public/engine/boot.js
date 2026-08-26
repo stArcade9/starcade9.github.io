@@ -43,7 +43,14 @@ import { generativeApi } from '../nova64/api-generative.js';
 import { gameUtilsApi } from '../nova64/api-gameutils.js';
 import { nftSeedApi } from '../nova64/nft-seed.js';
 import { wadApi } from '../nova64/wad.js';
-import { manifestApi } from '../nova64/manifest.js';
+// Deliberately not importing manifest.js: it uses import.meta.glob(...), a
+// Vite-only build-time feature that throws when this file is loaded as a
+// plain static ES module (our case — no Vite bundling here; the main site's
+// build handles it fine because it goes through real Vite). Our carts don't
+// use meta.json-driven config anyway (tokenSeed/chapterSeed/complete come
+// through the __chapterContext bridge instead), and `_manifest` is optional
+// on Nova64 — omitting it entirely avoids the crash rather than working
+// around it.
 import { canvasUIApi } from '../nova64/canvas-ui.js';
 import { hypeApi } from '../nova64/hype.js';
 import { xrModule } from '../nova64/xr.js';
@@ -136,7 +143,6 @@ export async function bootNova64({ canvas, cartUrl, onCartLoaded, onCartError })
   const gameUtilsInst = gameUtilsApi();
   const nftSeedInst = nftSeedApi();
   const wadInst = wadApi();
-  const manifestInst = manifestApi();
   const hypeInst = hypeApi();
   const blendInst = blendApi(gpu);
   const stageInst = stageApi(gpu);
@@ -170,7 +176,6 @@ export async function bootNova64({ canvas, cartUrl, onCartLoaded, onCartError })
   gameUtilsInst.exposeTo(nova64api);
   nftSeedInst.exposeTo(nova64api);
   wadInst.exposeTo(nova64api);
-  manifestInst.exposeTo(nova64api);
   hypeInst.exposeTo(nova64api);
   blendInst.exposeTo(nova64api);
   stageInst.exposeTo(nova64api);
@@ -191,7 +196,10 @@ export async function bootNova64({ canvas, cartUrl, onCartLoaded, onCartError })
   globalThis.nova64 = buildNamespace(nova64api, NAMESPACE_MAP);
   if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
 
-  const nova = new Nova64(gpu, manifestInst);
+  // No manifest instance (see the manifest.js import comment above) — Nova64
+  // treats it as fully optional and simply skips meta.json/env-based
+  // cart config, which our carts don't rely on.
+  const nova = new Nova64(gpu);
   globalThis.NOVA64_VERSION = NOVA64_VERSION;
   globalThis.__nova64Runtime = nova;
 
@@ -214,7 +222,6 @@ export async function bootNova64({ canvas, cartUrl, onCartLoaded, onCartError })
     nova64api.setCameraTarget?.(0, 0, 0);
   });
   registerCartResetHook('fog', () => nova64api.setFog?.(0x87ceeb, 50, 200));
-  registerCartResetHook('manifest', () => manifestInst._reset?.());
 
   nova.onCartDidLoad = (path) => onCartLoaded?.(path);
 

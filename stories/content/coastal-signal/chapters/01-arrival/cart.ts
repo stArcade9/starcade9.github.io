@@ -11,7 +11,6 @@ import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
 
 declare const nova64: any;
-export const env = {}; // skip the sidecar meta.json fetch — see runtime/manifest.js
 
 // nova64.input.mouseX()/mouseY() report in a fixed virtual 640x360 space regardless
 // of real canvas resolution (see runtime/input.js updateMousePosition) — every
