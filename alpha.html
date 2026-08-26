@@ -167,7 +167,7 @@
           </div>
           <div style="display:flex; flex-direction:column; justify-content:center; padding:12px 16px; gap:3px;">
             <span style="font-size:13px; color:#ece7db;">{{ priceNote }}</span>
-            <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; color:rgba(236,231,219,0.5);">SECURE CHECKOUT · LEMON SQUEEZY</span>
+            <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; color:rgba(236,231,219,0.5);">SECURE CHECKOUT · PATREON</span>
           </div>
         </div>
 
@@ -519,14 +519,14 @@
 
           <button onClick="{{ buy }}" style="width:100%; padding:18px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 →</button>
           <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; font-family:'Space Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:rgba(236,231,219,0.5);">
-            <span style="width:6px; height:6px; background:#46f0a0; border-radius:50%;"></span>SECURE CHECKOUT BY LEMON SQUEEZY · CARDS · PAYPAL
+            <span style="width:6px; height:6px; background:#46f0a0; border-radius:50%;"></span>SECURE CHECKOUT BY PATREON
           </div>
         </div>
         <!-- corner marks -->
         <div style="position:absolute; top:-1px; right:-1px; width:16px; height:16px; border-top:2px solid #46f0a0; border-right:2px solid #46f0a0;"></div>
         <div style="position:absolute; bottom:-1px; left:-1px; width:16px; height:16px; border-bottom:2px solid #46f0a0; border-left:2px solid #46f0a0;"></div>
       </div>
-      <p style="text-align:center; font-family:'Space Mono',monospace; font-size:11px; color:rgba(236,231,219,0.4); margin-top:18px;">License delivery + download handled automatically after checkout · secured by Lemon Squeezy</p>
+      <p style="text-align:center; font-family:'Space Mono',monospace; font-size:11px; color:rgba(236,231,219,0.4); margin-top:18px;">License delivery + download handled automatically after checkout · secured by Patreon</p>
     </div>
   </section>
 
@@ -588,7 +588,7 @@
             </div>
           </sc-for>
         </div>
-        <p style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.04em; color:rgba(236,231,219,0.42); margin:20px 0 0; line-height:1.6;">Secure checkout by <span style="color:#46f0a0;">Lemon Squeezy</span> — cards &amp; PayPal, trusted merchant of record. Your license and download arrive automatically the moment payment clears.</p>
+        <p style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.04em; color:rgba(236,231,219,0.42); margin:20px 0 0; line-height:1.6;">Secure checkout by <span style="color:#46f0a0;">Patreon</span>. Your license and download arrive automatically the moment payment clears.</p>
       </div>
 
       <!-- socials / patreon -->
@@ -639,21 +639,14 @@
 //  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
 //  change every "Buy" button on the page.
 // ============================================================================
-const CHECKOUT_URL = 'https://nova64.lemonsqueezy.com/checkout/buy/cc794be3-4e71-4cad-bed9-0248233631b4';
+const CHECKOUT_URL = 'https://www.patreon.com/login?ru=https%3A%2F%2Fwww.patreon.com%2Fcheckout%2Fstarcade9%3Fpvid%3D5157631';
 
 class Component extends DCLogic {
   // ============================================================================
-  //  LEMON SQUEEZY CONFIG  —  fill these in before launch
+  //  PATREON CHECKOUT CONFIG  —  fill these in before launch
   //  In a Next.js / React app, read these from process.env.* at build/runtime.
-  //  Public values may live on the client. NEVER ship the API key or webhook
-  //  secret to the browser — those stay server-side (API routes / webhooks).
   //
-  //    NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL   -> checkoutUrl (public)
-  //    NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID       -> storeId     (public)
-  //    NEXT_PUBLIC_LEMON_SQUEEZY_PRODUCT_ID     -> productId   (public)
-  //    NEXT_PUBLIC_LEMON_SQUEEZY_VARIANT_ID     -> variantId   (public)
-  //    LEMON_SQUEEZY_API_KEY                     -> server only
-  //    LEMON_SQUEEZY_WEBHOOK_SECRET              -> server only
+  //    NEXT_PUBLIC_PATREON_CHECKOUT_URL   -> checkoutUrl (public)
   // ============================================================================
   cfg = {
     price: 14.99,          // launch-sale price
@@ -663,9 +656,6 @@ class Component extends DCLogic {
     // Update CHECKOUT_URL (top of this script) to change every Buy button.
     checkoutUrl: CHECKOUT_URL,
     demoUrl: 'https://nova64.io/demo',
-    storeId: 'YOUR_STORE_ID',
-    productId: 'YOUR_PRODUCT_ID',
-    variantId: 'YOUR_VARIANT_ID',
   };
 
   // heroPlaying / demoPlaying stay false until the visitor clicks — nothing
@@ -723,11 +713,9 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { if (this._off) this._off(); }
 
-  // Route the buyer to Lemon Squeezy checkout.
-  // Swap window.open for the Lemon.js overlay if you load lemon.js:
-  //   window.LemonSqueezy.Url.Open(url)
+  // Route the buyer to Patreon login/checkout.
   buy = () => {
-    const url = this.cfg.checkoutUrl; // process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL
+    const url = this.cfg.checkoutUrl; // process.env.NEXT_PUBLIC_PATREON_CHECKOUT_URL
     window.open(url, '_blank', 'noopener');
   };
   play = () => { window.open(this.cfg.demoUrl, '_blank', 'noopener'); };
@@ -779,7 +767,7 @@ class Component extends DCLogic {
       { code: 'Q3', q: 'Does it work on mobile?', a: 'Yes. Mobile is a first-class citizen. You can build and play on a phone or tablet, with touch controls and a mobile-friendly editor included.' },
       { code: 'Q4', q: 'Is this like PICO-8 or TIC-80?', a: 'Same spirit — a self-contained fantasy console with real constraints — but Nova64 is built for stylish low-poly 3D and JavaScript, not 2D sprites. Think PS1/N64 energy in the browser.' },
       { code: 'Q5', q: 'What do I get when I buy?', a: 'The full console: editor, runtime, renderer, mobile support, publishing, and free updates through the launch era. Delivery and download are handled automatically after checkout.' },
-      { code: 'Q6', q: 'How does checkout work?', a: 'Payment is handled by Lemon Squeezy — a trusted merchant of record supporting cards and PayPal. You are routed to a secure checkout, and your license is delivered right after purchase.' },
+      { code: 'Q6', q: 'How does checkout work?', a: 'Checkout is handled through Patreon. You are routed to log in (or sign up) and complete membership checkout, and your license is delivered right after purchase.' },
       { code: 'Q7', q: 'Can I make commercial games?', a: 'Yes. Build prototypes, jam entries, or full mini-games and ship them however you like. The games you make are yours.' },
       { code: 'Q8', q: 'Is Starcade9 included?', a: 'Nova64 is the product you buy here — the creation engine. Starcade9 is the surrounding arcade universe your games connect into; explore it any time at starcade9.io.' },
     ];

@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+.env
+.env.local
+public/nova64
+public/carts
+provisioning-output
+*.tsbuildinfo
+next-env.d.ts
+.vercel

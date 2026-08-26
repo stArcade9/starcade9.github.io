@@ -1,0 +1,47 @@
+{
+  "name": "coastal-signal",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "predev": "node scripts/sync-nova64.mjs && tsx scripts/build-carts.ts",
+    "dev": "next dev",
+    "prebuild": "node scripts/sync-nova64.mjs && tsx scripts/build-carts.ts --minify",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx db/migrate.ts",
+    "db:seed": "tsx db/seed-dev.ts",
+    "experience:create": "tsx scripts/provision.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
+    "next": "^16.3.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "@types/ws": "^8.5.13",
+    "drizzle-kit": "^0.31.10",
+    "dotenv": "^16.4.7",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
