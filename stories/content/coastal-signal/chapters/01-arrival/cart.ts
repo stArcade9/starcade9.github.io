@@ -1,11 +1,14 @@
 // Coastal Signal — Chapter 01: Arrival
 // A Space Harrier–style forward rail ride on a hovering board: the world
-// scrolls toward a fixed rider through a cool blue dusk, past reflective
-// multicolor asteroid-chunks and randomised drifting clouds, with a rare
-// shooting star and a hidden signal fragment tucked into the ride. Drag
-// left/right to steer and bank, tap the corner icon to swap first-/
-// third-person, and a warm glowing signal grows on the horizon as you close
-// in on it — catching it is the chapter's climax.
+// scrolls toward a fixed rider through a cool blue dusk, over a low-poly
+// reflective endless ocean, past reflective multicolor asteroid-chunks and
+// randomised drifting clouds, with a rare shooting star and a hidden signal
+// fragment tucked into the ride. Drag left/right to steer and bank, tap the
+// corner icon to swap first-/third-person, and a warm glowing signal grows
+// on the horizon as you close in on it — catching it is the chapter's
+// climax. Every moving element streams toward the rider (Z increases from
+// far negative toward the camera, recycling once it's passed) — never away
+// from them.
 import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
@@ -37,14 +40,19 @@ const PROJECTILE_SPEED = 34;
 // Waves repeat throughout the ride until WAVE_STOP_BUFFER units before the
 // signal appears, and are only cleared once well past the camera
 // (WAVE_CLEAR_Z), so they visibly fly through and by rather than halting.
+// Each block tracks its own spawnDist rather than sharing one for the whole
+// wave, which is what lets a new wave start (WAVE_INTERVAL) before the
+// previous one has fully cleared (the clear travel distance, WAVE_CLEAR_Z -
+// BLOCK_WALL_Z = 56, is longer than the interval) — multiple waves are
+// airborne at once instead of strictly one-at-a-time.
 const INVADER_COUNT = 3;
 const INVADER_COLS = 6;
 const INVADER_ROWS = 4;
 const INVADER_CELL = 0.34;
 const INVADER_BG_Z_OFFSET = 0.22;
 const INVADER_SPACING = 2.6;
-const FIRST_WAVE_DIST = 34;
-const WAVE_INTERVAL = 38;
+const FIRST_WAVE_DIST = 26;
+const WAVE_INTERVAL = 24;
 const WAVE_STOP_BUFFER = 20;
 const WAVE_CLEAR_Z = 14;
 
@@ -80,6 +88,7 @@ let muzzleEmitter: any;
 
 interface Cloud {
   mesh: any;
+  type: 'puff' | 'stretched';
   baseX: number;
   baseY: number;
   speedMult: number;
@@ -90,6 +99,22 @@ interface Cloud {
 }
 let clouds: Cloud[] = [];
 
+// A handful of small, dim stars drifting across the sky, each on its own
+// independent cross-then-pause cycle (wall-clock, same as the shooting-star
+// comet below) — ambient background life, not an easter egg, so no caption
+// and much subtler than the comet.
+interface Star {
+  mesh: any;
+  y: number;
+  z: number;
+  crossDuration: number;
+  pauseDuration: number;
+  timer: number;
+  startX: number;
+  endX: number;
+}
+let stars: Star[] = [];
+
 interface Ridge {
   mesh: any;
   baseX: number;
@@ -99,6 +124,25 @@ interface Ridge {
   foundSpecial: boolean;
 }
 let ridges: Ridge[] = [];
+
+interface Peak {
+  mesh: any;
+  baseX: number;
+  baseY: number;
+  offset: number;
+  speedMult: number;
+}
+let peaks: Peak[] = [];
+
+interface WaterTile {
+  mesh: any;
+  baseX: number;
+  baseZ: number;
+  baseY: number;
+  bobPhase: number;
+  bobAmount: number;
+}
+let waterTiles: WaterTile[] = [];
 
 let crest: any = null;
 let ring: any = null;
@@ -117,10 +161,10 @@ interface Block {
   color: number;
   alive: boolean;
   currentZ: number;
+  spawnDist: number;
 }
 let blocks: Block[] = [];
 let nextWaveDist = FIRST_WAVE_DIST;
-let waveSpawnDist = 0;
 
 interface Projectile {
   mesh: any;
@@ -176,26 +220,36 @@ export function init() {
   const ctx = getChapterContext();
   chapterCtx = ctx;
   rand = mulberry32(ctx.chapterSeed);
-  // A cool blue dusk, not a warm sunrise — the signal itself keeps a warm
-  // glow so it reads as the one thing in the scene that doesn't belong.
-  hue = 0.55 + rand() * 0.14;
+  // A bright, cheerful daytime sky-blue — Mario-World-bright, not moody dusk
+  // — with the warm amber signal still the one thing that doesn't belong.
+  hue = 0.55 + rand() * 0.08;
 
-  const skyTop = hsvToHex((hue + 0.05) % 1, 0.55, 0.14);
-  const skyHorizon = hsvToHex(hue, 0.65, 0.55);
-  crestColor = hsvToHex(0.08 + rand() * 0.04, 0.7, 1); // warm amber — the one accent
-  ringColor = hsvToHex((hue + 0.5) % 1, 0.15, 0.95);
-  boardColor = hsvToHex((hue - 0.1 + 1) % 1, 0.4, 0.85);
+  // More saturated, less pure-white than the first pass — "bright" should
+  // read as vivid colour, not a washed-out white glare.
+  const skyTop = hsvToHex((hue - 0.03 + 1) % 1, 0.62, 0.72);
+  const skyHorizon = hsvToHex(hue, 0.45, 0.8);
+  crestColor = hsvToHex(0.1 + rand() * 0.03, 0.75, 1); // warm sunny amber — the one accent
+  ringColor = hsvToHex((hue + 0.5) % 1, 0.12, 0.95);
+  boardColor = hsvToHex((hue - 0.1 + 1) % 1, 0.45, 0.9);
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
-  nova64.light.setAmbientLight(0xffffff, 0.9);
-  nova64.light.setFog(skyHorizon, 22, 62);
-  nova64.light.createPointLight(skyHorizon, 2, 40, 0, 3, -20);
+  nova64.light.setAmbientLight(0xffffff, 0.85);
+  // A soft haze near the horizon — pushes the far edge of the ocean grid
+  // into an atmospheric blend instead of a visible seam, and reads as
+  // "sunny sea air" rather than gloom.
+  nova64.light.setFog(skyHorizon, 20, 66);
+  nova64.light.createPointLight(skyHorizon, 1.6, 40, 0, 3, -20);
 
   nova64.fx.enablePSXMode();
-  // Lower bloom threshold + higher strength than the PSX preset default —
-  // bright edges (the crest, asteroid highlights) bleed generously into the
-  // frame instead of staying contained, closer to an Unreal-style bloom.
-  nova64.fx.enableBloom(1.7, 0.55, 0.18);
+  // enableBloom's real signature is (strength, radius, THRESHOLD) — this was
+  // previously called as if threshold were the middle argument, passing 0.18
+  // as the threshold. That's a very low bar (bloom fires on almost any lit
+  // pixel), which is exactly what was blowing the whole bright sky/water out
+  // to solid white instead of just letting the crest/invaders/engine glow
+  // bleed. A high threshold keeps bloom selective to genuinely emissive
+  // things; strength/radius stay a bit above the PSX default for some bleed
+  // on those highlights.
+  nova64.fx.enableBloom(1.1, 0.4, 0.82);
   nova64.fx.enableVignette(0.6, 0.88);
   nova64.fx.enableChromaticAberration(0.0012);
 
@@ -252,28 +306,87 @@ export function init() {
   });
   shipParts.push({ mesh: engineR, ox: -0.13, oy: -0.02, oz: 0.92, extraRotX: 0, extraRotZ: 0 });
 
-  // Clouds: every parameter independently randomised (size, squash, speed,
-  // opacity, bob phase) so no two drift the same way — never a visible loop.
+  // Clouds: two distinct silhouettes, not one shape at random sizes — low
+  // puffy cumulus and higher, wider, wispier cirrus streaks — plus every
+  // other parameter (size, squash, speed, opacity, bob phase) independently
+  // randomised so no two of the same type drift alike either.
   clouds = [];
   for (let i = 0; i < CLOUD_COUNT; i++) {
-    const size = 1.0 + rand() * 2.3;
+    const cloudType: Cloud['type'] = rand() < 0.55 ? 'puff' : 'stretched';
+    const size = cloudType === 'puff' ? 1.0 + rand() * 2.3 : 1.5 + rand() * 2.6;
     const tint = hsvToHex((hue + (rand() - 0.5) * 0.1 + 1) % 1, 0.15 + rand() * 0.15, 0.9 + rand() * 0.1);
     const mesh = nova64.scene.createSphere(size, tint, [0, 0, 0], 5, {
       flatShading: true,
       roughness: 0.9,
       transparent: true,
-      opacity: 0.5 + rand() * 0.35,
+      opacity: cloudType === 'puff' ? 0.5 + rand() * 0.35 : 0.3 + rand() * 0.22,
     });
-    nova64.scene.setScale(mesh, 1.2 + rand() * 0.9, 0.3 + rand() * 0.35, 0.8 + rand() * 0.6);
+    if (cloudType === 'puff') {
+      nova64.scene.setScale(mesh, 1.2 + rand() * 0.9, 0.3 + rand() * 0.35, 0.8 + rand() * 0.6);
+    } else {
+      // Cirrus streak: much wider and flatter, longer along the flight axis
+      // too — reads as a thin high-altitude wisp rather than a puffy blob.
+      nova64.scene.setScale(mesh, 2.8 + rand() * 2.4, 0.12 + rand() * 0.1, 1.6 + rand() * 1.3);
+    }
     clouds.push({
       mesh,
+      type: cloudType,
       baseX: (rand() - 0.5) * 30,
-      baseY: 3 + rand() * 5.5,
+      baseY: cloudType === 'puff' ? 3 + rand() * 4 : 6.5 + rand() * 3.5,
       speedMult: 0.45 + rand() * 0.75,
       offset: rand() * 90,
       bobPhase: rand() * Math.PI * 2,
       bobSpeed: 0.15 + rand() * 0.3,
-      bobAmount: 0.2 + rand() * 0.4,
+      bobAmount: cloudType === 'puff' ? 0.2 + rand() * 0.4 : 0.08 + rand() * 0.15,
+    });
+  }
+
+  // A handful of small, dim stars that drift across the sky on their own
+  // slow cross-then-pause cycles — ambient background life, deliberately
+  // subtler and more numerous than the one-time shooting-star easter egg
+  // below (which still gets its own fanfare/caption; these don't).
+  const STAR_COUNT = 4;
+  stars = [];
+  for (let i = 0; i < STAR_COUNT; i++) {
+    const mesh = nova64.scene.createSphere(0.07 + rand() * 0.05, 0xf4f7ff, [0, 0, 0], 4, {
+      emissive: 0xf4f7ff,
+      emissiveIntensity: 0.9 + rand() * 0.5,
+    });
+    stars.push({
+      mesh,
+      y: 10 + rand() * 6,
+      z: -35 - rand() * 25,
+      crossDuration: 16 + rand() * 10,
+      pauseDuration: 6 + rand() * 14,
+      timer: rand() * 20,
+      startX: -24 - rand() * 6,
+      endX: 24 + rand() * 6,
+    });
+  }
+
+  // Distant terrain: a mix of low-poly rocky hills (flat-shaded, matte) and
+  // reflective pyramids (low-segment cones, metallic, catching the bright
+  // sky) breaking up the empty background — a denser, larger, closer range
+  // than the first pass, which was too small and too far out to read as a
+  // real landscape rather than background clutter.
+  const PEAK_COUNT = 12;
+  peaks = [];
+  for (let i = 0; i < PEAK_COUNT; i++) {
+    const isPyramid = rand() < 0.45;
+    const height = 6 + rand() * 12;
+    const radius = height * (0.45 + rand() * 0.25);
+    const color = isPyramid
+      ? hsvToHex((hue + 0.5 + (rand() - 0.5) * 0.08 + 1) % 1, 0.15, 0.88)
+      : hsvToHex((hue - 0.18 + (rand() - 0.5) * 0.06 + 1) % 1, 0.32 + rand() * 0.15, 0.3 + rand() * 0.15);
+    const mesh = nova64.scene.createCone(radius, height, color, [0, 0, 0], isPyramid
+      ? { metallic: true, roughness: 0.12, flatShading: true, segments: 4 }
+      : { flatShading: true, roughness: 0.95, segments: 6 });
+    peaks.push({
+      mesh,
+      baseX: (rand() < 0.5 ? -1 : 1) * (14 + rand() * 20),
+      baseY: -0.6 + height / 2,
+      offset: rand() * 140,
+      speedMult: 0.3 + rand() * 0.2,
     });
   }
 
@@ -308,6 +421,49 @@ export function init() {
       special,
       foundSpecial: false,
     });
+  }
+
+  // Low-poly reflective ocean: since the board never actually translates in
+  // world Z (the classic Space-Harrier illusion — the rider stays fixed near
+  // Z=0 and the world scrolls toward them instead), a single static grid of
+  // tiles that's larger than the fog-out distance reads as endless with no
+  // recycling logic needed at all, unlike the clouds/ridges/waves above.
+  // Kept close under the board (not far below it) so it reads as a surfboard
+  // skimming the water, not a distant sea floor — vivid tropical tint, and a
+  // travelling swell (driven by dist + each tile's Z, in update()) on top of
+  // each tile's own bob so the whole surface visibly rolls, not just jitters.
+  const WATER_ROWS = 8;
+  const WATER_COLS = 8;
+  const WATER_Y = -0.55;
+  waterTiles = [];
+  for (let row = 0; row < WATER_ROWS; row++) {
+    for (let col = 0; col < WATER_COLS; col++) {
+      const baseZ = -60 + (row / (WATER_ROWS - 1)) * 72;
+      const baseX = -42 + (col / (WATER_COLS - 1)) * 84;
+      const baseY = WATER_Y + (rand() - 0.5) * 0.2;
+      // Darker and more saturated than the first pass — against a brighter
+      // sky, a pale tint just merged into the background instead of reading
+      // as distinct water.
+      const tint = hsvToHex((hue + 0.03 + (rand() - 0.5) * 0.04 + 1) % 1, 0.75 + rand() * 0.15, 0.55 + rand() * 0.15);
+      const mesh = nova64.scene.createPlane(13, 12, tint, [baseX, baseY, baseZ], {
+        metallic: true,
+        roughness: 0.1 + rand() * 0.08,
+        transparent: true,
+        opacity: 0.95,
+      });
+      // Plane geometry defaults to facing +Z; tip it flat (-90° on X) to lie
+      // like a water surface, with a slight random tilt per tile for the
+      // faceted low-poly look instead of one perfectly flat sheet.
+      nova64.scene.setRotation(mesh, -Math.PI / 2 + (rand() - 0.5) * 0.08, 0, (rand() - 0.5) * 0.08);
+      waterTiles.push({
+        mesh,
+        baseX,
+        baseZ,
+        baseY,
+        bobPhase: rand() * Math.PI * 2,
+        bobAmount: 0.14 + rand() * 0.16,
+      });
+    }
   }
 
   // A shooting star crosses the sky exactly once per ride, at a
@@ -490,11 +646,19 @@ export function update(dt: number) {
   const boardY = 0.9 + Math.sin(dist * 0.35) * 0.12 + Math.abs(steerX) * 0.05;
   const bank = -steerX * 0.6;
 
-  // Every ship part moves rigidly together — same board position, same
-  // shared bank roll plus its own fixed local offset (wing sweep, nose
-  // pitch) — and is hidden as a group in first-person view.
+  // Every ship part moves rigidly together as one body. Each part's local
+  // offset (wing sweep, nose position) must also orbit around the fuselage's
+  // centre as the ship rolls — setting a part's own rotation to the shared
+  // bank while leaving its (ox, oy) position offset unrotated made the wings
+  // twist in place around their own centre instead of banking together with
+  // the fuselage, which read as unnatural during steering. Rotating the
+  // offset itself by the bank angle first fixes that.
+  const bankCos = Math.cos(bank);
+  const bankSin = Math.sin(bank);
   for (const part of shipParts) {
-    nova64.scene.setPosition(part.mesh, boardX + part.ox, boardY + part.oy, part.oz);
+    const rotOx = part.ox * bankCos - part.oy * bankSin;
+    const rotOy = part.ox * bankSin + part.oy * bankCos;
+    nova64.scene.setPosition(part.mesh, boardX + rotOx, boardY + rotOy, part.oz);
     nova64.scene.setRotation(part.mesh, part.extraRotX, 0, bank + part.extraRotZ);
     nova64.scene.setMeshVisible?.(part.mesh, cameraMode === 'third');
   }
@@ -507,15 +671,43 @@ export function update(dt: number) {
 
   // Clouds and asteroid-chunks stream toward the camera on an endless loop,
   // each with its own independent bob — the constant sense of motion the
-  // whole scene is built around.
+  // whole scene is built around. Z must increase from far-negative toward
+  // the camera as dist grows (then wrap back once past it) so every item
+  // reads as approaching, never receding — the previous formula here
+  // subtracted the cycling term, which made objects drift away and then
+  // teleport back instead of closing in.
   for (const c of clouds) {
-    const z = 40 - (((dist * c.speedMult + c.offset) % 90) - 0);
+    const cyclePos = (dist * c.speedMult + c.offset) % 90;
+    const z = -85 + cyclePos;
     const bob = Math.sin(dist * c.bobSpeed + c.bobPhase) * c.bobAmount;
-    nova64.scene.setPosition(c.mesh, c.baseX, c.baseY + bob, z - 40);
+    nova64.scene.setPosition(c.mesh, c.baseX, c.baseY + bob, z);
+  }
+  // Ambient stars: each on its own cross-then-pause cycle (wall-clock, not
+  // dist-driven, matching the comet below) — visible only while actually
+  // crossing, so the loop reset happens off-frame instead of a visible pop.
+  for (const s of stars) {
+    s.timer += dt;
+    const cycle = s.crossDuration + s.pauseDuration;
+    const phase = s.timer % cycle;
+    if (phase < s.crossDuration) {
+      const f = phase / s.crossDuration;
+      const x = s.startX + (s.endX - s.startX) * f;
+      nova64.scene.setPosition(s.mesh, x, s.y, s.z);
+      nova64.scene.setMeshVisible?.(s.mesh, true);
+    } else {
+      nova64.scene.setMeshVisible?.(s.mesh, false);
+    }
+  }
+  // Slow, wide-cycle parallax so the hills/pyramids read as a distant range
+  // rather than close, fast-passing detail.
+  for (const p of peaks) {
+    const cyclePos = (dist * p.speedMult + p.offset) % 140;
+    const z = -130 + cyclePos;
+    nova64.scene.setPosition(p.mesh, p.baseX, p.baseY, z);
   }
   for (const r of ridges) {
-    const z = 30 - (((dist * 1.4 + r.offset) % 50) - 0);
-    const worldZ = z - 34;
+    const cyclePos = (dist * 1.4 + r.offset) % 50;
+    const worldZ = -46 + cyclePos;
     nova64.scene.setPosition(r.mesh, r.baseX, -0.4, worldZ);
     nova64.scene.rotateMesh(r.mesh, dt * r.spin[0], dt * r.spin[1], dt * r.spin[2]);
 
@@ -529,6 +721,17 @@ export function update(dt: number) {
       nova64.fx.updateEmitter2D(burstEmitter, 1 / 30);
       burstEmitter.rate = 0;
     }
+  }
+
+  // The ocean grid never needs to recycle (it's already larger than the
+  // fog-out distance — see init()) — a travelling swell (phase offset by
+  // each tile's own Z, so it rolls across the grid as dist advances) plus a
+  // smaller independent per-tile bob makes the whole surface read as
+  // visibly rolling water, not a flat static floor or per-tile jitter.
+  for (const t of waterTiles) {
+    const swell = Math.sin(dist * 0.3 + t.baseZ * 0.12) * 0.3;
+    const bob = Math.sin(dist * 0.7 + t.bobPhase) * t.bobAmount;
+    nova64.scene.setPosition(t.mesh, t.baseX, t.baseY + swell + bob, t.baseZ);
   }
 
   // Shooting star: spawns once at its seeded distance, streaks across the
@@ -561,19 +764,17 @@ export function update(dt: number) {
   cometTrailEmitter.rate = comet ? cometTrailEmitter.rate : 0;
   nova64.fx.updateEmitter2D(cometTrailEmitter, dt);
 
-  // Voxel-invader waves: a fresh squadron spawns every WAVE_INTERVAL once the
-  // previous one has fully passed, each with its own random symmetric
-  // pattern. They fly all the way through and past the ship (cleared well
-  // behind the camera, not right in front of it — stopping them near the
-  // screen made them look like they'd frozen instead of flown past) and stop
-  // spawning as the ride nears the signal so the climax has a clear stage.
-  if (
-    beat === 'ride' &&
-    blocks.length === 0 &&
-    dist >= nextWaveDist &&
-    dist < SIGNAL_SPAWN_DIST - WAVE_STOP_BUFFER
-  ) {
-    waveSpawnDist = dist;
+  // Voxel-invader waves: a fresh squadron spawns every WAVE_INTERVAL — no
+  // longer gated on the previous wave having fully cleared, so with an
+  // interval shorter than a wave's full clear travel, two or three waves are
+  // airborne at once instead of strictly one-at-a-time. Each with its own
+  // random symmetric pattern. They fly all the way through and past the ship
+  // (cleared well behind the camera, not right in front of it — stopping
+  // them near the screen made them look like they'd frozen instead of flown
+  // past) and stop spawning as the ride nears the signal so the climax has a
+  // clear stage.
+  if (beat === 'ride' && dist >= nextWaveDist && dist < SIGNAL_SPAWN_DIST - WAVE_STOP_BUFFER) {
+    const waveSpawnDist = dist;
     nextWaveDist = dist + WAVE_INTERVAL;
     // A small squadron of symmetric voxel-invader sprites, not a plain grid —
     // each cell is a front voxel plus a slightly-recessed background voxel
@@ -599,33 +800,49 @@ export function update(dt: number) {
             [gridX, gridY, BLOCK_WALL_Z + INVADER_BG_Z_OFFSET],
             { emissive: bgColor, emissiveIntensity: 0.4, transparent: true, opacity: 0.7 },
           );
-          blocks.push({ mesh, bgMesh, gridX, gridY, color: invaderColor, alive: true, currentZ: BLOCK_WALL_Z });
+          blocks.push({
+            mesh,
+            bgMesh,
+            gridX,
+            gridY,
+            color: invaderColor,
+            alive: true,
+            currentZ: BLOCK_WALL_Z,
+            spawnDist: waveSpawnDist,
+          });
         }
       }
     }
     chapterCtx?.setCaption('Invaders ahead — fire!');
   }
-  if (blocks.length > 0) {
-    const waveZ = BLOCK_WALL_Z + (dist - waveSpawnDist);
-    let anyAlive = false;
-    for (const b of blocks) {
-      if (!b.alive) continue;
-      anyAlive = true;
-      b.currentZ = waveZ;
-      nova64.scene.setPosition(b.mesh, b.gridX, b.gridY, waveZ);
-      nova64.scene.setPosition(b.bgMesh, b.gridX, b.gridY, waveZ + INVADER_BG_Z_OFFSET);
+  // Each block moves from its own spawnDist, independent of every other
+  // block — this is what lets multiple waves coexist without one wave's
+  // position math clobbering another's. Shot blocks (alive: false, meshes
+  // already destroyed by the hit-test below) and blocks that have travelled
+  // past WAVE_CLEAR_Z are spliced out here, same pattern as projectiles.
+  const hadBlocks = blocks.length > 0;
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i];
+    if (!b) continue;
+    if (!b.alive) {
+      blocks.splice(i, 1);
+      continue;
     }
-    if (!anyAlive || waveZ > WAVE_CLEAR_Z) {
-      for (const b of blocks) {
-        if (b.alive) {
-          nova64.scene.destroyMesh(b.mesh);
-          nova64.scene.destroyMesh(b.bgMesh);
-        }
-      }
-      blocks = [];
-      if (beat === 'ride') chapterCtx?.setCaption(null);
+    const z = BLOCK_WALL_Z + (dist - b.spawnDist);
+    b.currentZ = z;
+    nova64.scene.setPosition(b.mesh, b.gridX, b.gridY, z);
+    nova64.scene.setPosition(b.bgMesh, b.gridX, b.gridY, z + INVADER_BG_Z_OFFSET);
+    if (z > WAVE_CLEAR_Z) {
+      nova64.scene.destroyMesh(b.mesh);
+      nova64.scene.destroyMesh(b.bgMesh);
+      blocks.splice(i, 1);
     }
   }
+  // Only clear the caption on the frame the last block of a (possibly
+  // overlapping) run of waves actually disappears — not every frame the
+  // array happens to be empty, which would also wipe the ride-hint caption
+  // before the first wave ever spawns.
+  if (hadBlocks && blocks.length === 0 && beat === 'ride') chapterCtx?.setCaption(null);
 
   // Fire: continuous while held — Space bar, mouse held down and dragging,
   // or a touch held on the canvas — not just a single tap/press. Held-state
