@@ -77,3 +77,38 @@ Generates `count` new experiences (cryptographically random tokens, deterministi
 3. Run `pnpm experience:create --story <new-story-id> --count <n>` to provision and print/export its QR batch.
 
 Every story lives side by side under `content/`, and the database's `experiences.story_id` column keeps their progress data fully separate — this is the same mechanism for every future drop, not a one-off.
+
+## Chapter design notes
+
+**This is an interactive story/journey, not a scored game.** Any interaction
+mechanic in a chapter (steering, firing, searching, tapping) exists to make a
+narrative moment feel *felt* rather than just read — not to add scoring,
+competition, or difficulty for their own sake. Chapter One is a deliberate,
+explicitly-requested exception in *texture*: it plays as Space-Harrier-style
+arcade action (voxel invaders, projectiles, waves) because that was asked for
+specifically as this story's opening register — but it still exists in
+service of the ride's emotional arc (closing in on the signal), not a score.
+
+Two constraints worth knowing before writing a new chapter's interaction:
+
+- **No touch/mouse-release event reaches carts.** `nova64.input` exposes
+  press-edge (`mousePressed`), held-state (`mouseDown`), and position
+  (`mouseX`/`mouseY`) — nothing fires on release. A "drag around, then let go
+  over the target" mechanic isn't buildable as written; touch interactions
+  need to work as a *sequence of discrete probes* (each press is a complete
+  attempt at its current position), not a drag-then-commit gesture. Chapter
+  Two's beachcombing search is built around this: every touch is a real probe
+  scored by proximity to a hidden target, not a preview.
+- **Every interaction should produce a visible response — including misses.**
+  Chapter Two's first pass had a search where a miss did nothing at all,
+  which reads as "broken" or "unclear," not "not found yet." The fix wasn't
+  better instructions alone — it was making every touch produce *some*
+  immediate feedback (a proximity-scaled ripple on a miss, a full
+  celebration burst on a hit), so the player never wonders whether their
+  input registered.
+
+Chapter Two also has no `nova64.scene` world-to-screen projection utility
+available, so its search "zones" are authored directly in fixed 640×360
+screen space (independent of the stones' 3D positions) rather than derived
+from a live projection — which is also why its camera holds still during the
+search beat instead of swaying like it does the rest of the chapter.

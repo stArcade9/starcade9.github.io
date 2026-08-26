@@ -134,6 +134,13 @@ interface Peak {
 }
 let peaks: Peak[] = [];
 
+interface Planet {
+  mesh: any;
+  ring: any;
+  spin: number;
+}
+let planets: Planet[] = [];
+
 interface WaterTile {
   mesh: any;
   baseX: number;
@@ -224,21 +231,28 @@ export function init() {
   // — with the warm amber signal still the one thing that doesn't belong.
   hue = 0.55 + rand() * 0.08;
 
-  // More saturated, less pure-white than the first pass — "bright" should
-  // read as vivid colour, not a washed-out white glare.
-  const skyTop = hsvToHex((hue - 0.03 + 1) % 1, 0.62, 0.72);
-  const skyHorizon = hsvToHex(hue, 0.45, 0.8);
-  crestColor = hsvToHex(0.1 + rand() * 0.03, 0.75, 1); // warm sunny amber — the one accent
-  ringColor = hsvToHex((hue + 0.5) % 1, 0.12, 0.95);
-  boardColor = hsvToHex((hue - 0.1 + 1) % 1, 0.45, 0.9);
+  // The previous pass fixed a real bloom bug (see enableBloom below) that
+  // was blowing the scene to white, but I also pulled base brightness down
+  // at the same time to be safe — with the bloom threshold now correctly
+  // high, that extra caution wasn't needed. Pushed vividness and value back
+  // up for a genuinely bright, saturated, engaging sky rather than a
+  // drab/muted one.
+  const skyTop = hsvToHex((hue - 0.03 + 1) % 1, 0.68, 0.9);
+  const skyHorizon = hsvToHex(hue, 0.5, 0.98);
+  crestColor = hsvToHex(0.1 + rand() * 0.03, 0.78, 1); // warm sunny amber — the one accent
+  ringColor = hsvToHex((hue + 0.5) % 1, 0.12, 0.98);
+  boardColor = hsvToHex((hue - 0.1 + 1) % 1, 0.5, 0.92);
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
-  nova64.light.setAmbientLight(0xffffff, 0.85);
+  nova64.light.setAmbientLight(0xffffff, 1.15);
   // A soft haze near the horizon — pushes the far edge of the ocean grid
   // into an atmospheric blend instead of a visible seam, and reads as
-  // "sunny sea air" rather than gloom.
-  nova64.light.setFog(skyHorizon, 20, 66);
-  nova64.light.createPointLight(skyHorizon, 1.6, 40, 0, 3, -20);
+  // "sunny sea air" rather than gloom. Pushed out from 66 to 92 so the new
+  // ringed planets (out past 55-73 units) read clearly instead of fogging
+  // into invisibility — THREE.Fog is plain camera-distance fog, so anything
+  // beyond "far" is fully fog-coloured regardless of how high up it sits.
+  nova64.light.setFog(skyHorizon, 20, 92);
+  nova64.light.createPointLight(skyHorizon, 2.2, 40, 0, 3, -20);
 
   nova64.fx.enablePSXMode();
   // enableBloom's real signature is (strength, radius, THRESHOLD) — this was
@@ -364,23 +378,43 @@ export function init() {
     });
   }
 
-  // Distant terrain: a mix of low-poly rocky hills (flat-shaded, matte) and
-  // reflective pyramids (low-segment cones, metallic, catching the bright
-  // sky) breaking up the empty background — a denser, larger, closer range
-  // than the first pass, which was too small and too far out to read as a
-  // real landscape rather than background clutter.
+  // Distant terrain: three distinct silhouettes, not two — low-poly rocky
+  // hills (flat-shaded, matte), reflective metallic pyramids, and tall thin
+  // faceted crystal spires (translucent, glowing, a fantastical colour
+  // family unrelated to the sky's blue bias) — breaking up the background
+  // with real variety instead of two similar cone shapes repeated.
   const PEAK_COUNT = 12;
   peaks = [];
   for (let i = 0; i < PEAK_COUNT; i++) {
-    const isPyramid = rand() < 0.45;
-    const height = 6 + rand() * 12;
-    const radius = height * (0.45 + rand() * 0.25);
-    const color = isPyramid
-      ? hsvToHex((hue + 0.5 + (rand() - 0.5) * 0.08 + 1) % 1, 0.15, 0.88)
-      : hsvToHex((hue - 0.18 + (rand() - 0.5) * 0.06 + 1) % 1, 0.32 + rand() * 0.15, 0.3 + rand() * 0.15);
-    const mesh = nova64.scene.createCone(radius, height, color, [0, 0, 0], isPyramid
-      ? { metallic: true, roughness: 0.12, flatShading: true, segments: 4 }
-      : { flatShading: true, roughness: 0.95, segments: 6 });
+    const typeRoll = rand();
+    const peakType: 'hill' | 'pyramid' | 'crystal' = typeRoll < 0.4 ? 'hill' : typeRoll < 0.72 ? 'pyramid' : 'crystal';
+    const height = peakType === 'crystal' ? 9 + rand() * 11 : 6 + rand() * 12;
+    const radius = peakType === 'crystal' ? height * (0.16 + rand() * 0.09) : height * (0.45 + rand() * 0.25);
+    const color =
+      peakType === 'pyramid'
+        ? hsvToHex((hue + 0.5 + (rand() - 0.5) * 0.08 + 1) % 1, 0.15, 0.88)
+        : peakType === 'crystal'
+          ? hsvToHex((hue + 0.38 + rand() * 0.22 + 1) % 1, 0.55 + rand() * 0.25, 0.78 + rand() * 0.18)
+          : hsvToHex((hue - 0.18 + (rand() - 0.5) * 0.06 + 1) % 1, 0.32 + rand() * 0.15, 0.3 + rand() * 0.15);
+    const mesh = nova64.scene.createCone(
+      radius,
+      height,
+      color,
+      [0, 0, 0],
+      peakType === 'pyramid'
+        ? { metallic: true, roughness: 0.12, flatShading: true, segments: 4 }
+        : peakType === 'crystal'
+          ? {
+              flatShading: true,
+              roughness: 0.15,
+              segments: 5,
+              transparent: true,
+              opacity: 0.72,
+              emissive: color,
+              emissiveIntensity: 0.7,
+            }
+          : { flatShading: true, roughness: 0.95, segments: 6 },
+    );
     peaks.push({
       mesh,
       baseX: (rand() < 0.5 ? -1 : 1) * (14 + rand() * 20),
@@ -388,6 +422,36 @@ export function init() {
       offset: rand() * 140,
       speedMult: 0.3 + rand() * 0.2,
     });
+  }
+
+  // Large ringed planets far in the sky — mostly static (vast, distant
+  // things should read as still against the nearer scenery's fast motion,
+  // not zoom past like foreground obstacles), with only a slow independent
+  // ring spin for life. A fantastical flourish in the empty sky rather than
+  // flat blue nothing.
+  const PLANET_COUNT = 1 + (rand() < 0.5 ? 1 : 0);
+  planets = [];
+  for (let i = 0; i < PLANET_COUNT; i++) {
+    const size = 4.5 + rand() * 3;
+    const planetColor = hsvToHex((hue + 0.3 + rand() * 0.3 + 1) % 1, 0.5 + rand() * 0.25, 0.7 + rand() * 0.2);
+    const planetRingColor = hsvToHex((hue + 0.55 + rand() * 0.2 + 1) % 1, 0.35 + rand() * 0.2, 0.92);
+    const px = (i === 0 ? -1 : 1) * (18 + rand() * 14);
+    const py = 20 + rand() * 10;
+    const pz = -55 - rand() * 18;
+    const mesh = nova64.scene.createSphere(size, planetColor, [px, py, pz], 6, {
+      flatShading: true,
+      roughness: 0.6,
+      emissive: planetColor,
+      emissiveIntensity: 0.25,
+    });
+    const ring = nova64.scene.createTorus(size * 1.7, size * 0.16, planetRingColor, [px, py, pz], {
+      metallic: true,
+      roughness: 0.25,
+      transparent: true,
+      opacity: 0.85,
+    });
+    nova64.scene.setRotation(ring, 1.3 + rand() * 0.25, 0, 0.35 + rand() * 0.3);
+    planets.push({ mesh, ring, spin: 0.05 + rand() * 0.08 });
   }
 
   // Asteroid-chunks: reflective (metallic), multicolor (independent hue per
@@ -704,6 +768,11 @@ export function update(dt: number) {
     const cyclePos = (dist * p.speedMult + p.offset) % 140;
     const z = -130 + cyclePos;
     nova64.scene.setPosition(p.mesh, p.baseX, p.baseY, z);
+  }
+  // Planets stay fixed in place (vast/distant things shouldn't zoom past
+  // like foreground scenery) — only the ring itself slowly turns.
+  for (const p of planets) {
+    nova64.scene.rotateMesh(p.ring, 0, dt * p.spin, 0);
   }
   for (const r of ridges) {
     const cyclePos = (dist * 1.4 + r.offset) % 50;
