@@ -16,6 +16,7 @@
 import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
+import { OceanSurface } from '../../../ocean/ocean-surface';
 
 declare const nova64: any;
 
@@ -89,15 +90,7 @@ let pointLightId: number | null = null;
 let waveTimer = WAVE_INTERVAL_SECONDS * 0.5;
 let waveFlashTimer = 0;
 
-interface WaterTile {
-  mesh: any;
-  baseX: number;
-  baseZ: number;
-  baseY: number;
-  bobPhase: number;
-  bobAmount: number;
-}
-let waterTiles: WaterTile[] = [];
+let ocean: OceanSurface | null = null;
 
 function hsvToHex(h: number, s: number, v: number): number {
   const i = Math.floor(h * 6);
@@ -198,39 +191,25 @@ export function init() {
     planetRing = ring;
   }
 
-  // A low-poly tide ring around the stone cluster — reflective, gently
-  // rolling (see the swell+bob in update()), so the shore itself is always
-  // visibly alive rather than a flat static backdrop the stones sit on.
-  waterTiles = [];
-  const WATER_ROWS = 6;
-  const WATER_COLS = 6;
-  const WATER_Y = -0.32;
-  for (let row = 0; row < WATER_ROWS; row++) {
-    for (let col = 0; col < WATER_COLS; col++) {
-      const baseZ = -14 + (row / (WATER_ROWS - 1)) * 20;
-      const baseX = -14 + (col / (WATER_COLS - 1)) * 28;
-      // Leave a clear dry patch under the stone cluster itself (radius ~5) —
-      // the tide surrounds the stones, it doesn't submerge them.
-      if (Math.hypot(baseX, baseZ) < 5.5) continue;
-      const baseY = WATER_Y + (rand() - 0.5) * 0.15;
-      const tint = hsvToHex((baseHue + (rand() - 0.5) * 0.05 + 1) % 1, 0.55 + rand() * 0.15, 0.75 + rand() * 0.15);
-      const mesh = nova64.scene.createPlane(6, 5.5, tint, [baseX, baseY, baseZ], {
-        metallic: true,
-        roughness: 0.12 + rand() * 0.08,
-        transparent: true,
-        opacity: 0.9,
-      });
-      nova64.scene.setRotation(mesh, -Math.PI / 2 + (rand() - 0.5) * 0.06, 0, (rand() - 0.5) * 0.06);
-      waterTiles.push({
-        mesh,
-        baseX,
-        baseZ,
-        baseY,
-        bobPhase: rand() * Math.PI * 2,
-        bobAmount: 0.06 + rand() * 0.08,
-      });
-    }
-  }
+  // A tide ring around the stone cluster — leaves a dry patch under the
+  // stones themselves (the tide surrounds them, it doesn't submerge them).
+  // See content/ocean/ for the shared wave-field math driving both this and
+  // Chapter One's ocean.
+  ocean = new OceanSurface({
+    rows: 9,
+    cols: 9,
+    width: 28,
+    depth: 20,
+    originY: -0.32,
+    waveHeight: 0.25,
+    centerHoleRadius: 5.5,
+    // Vivid, unambiguous blue rather than a muted tint — combined with the
+    // low roughness in ocean-surface.ts, this reads as shiny water instead
+    // of a dull dark panel.
+    colorDeep: hsvToHex((baseHue + 1) % 1, 0.8, 0.75),
+    colorShallow: hsvToHex((baseHue + 0.05 + 1) % 1, 0.7, 0.97),
+    rand,
+  });
 
   // Stones: reflective, translucent, each an independently-random hue in the
   // teal/blue family — not one flat colour repeated four times. One stone,
@@ -457,14 +436,12 @@ export function update(dt: number) {
   nova64.fx.updateEmitter2D(sparkleEmitter, dt);
   nova64.fx.updateEmitter2D(dustEmitter, dt);
 
-  // Tide ring: a travelling swell (phased by each tile's own position) plus
-  // a smaller per-tile bob, exactly like Chapter One's ocean — the shore is
-  // always visibly rolling, never a static backdrop.
-  for (const t of waterTiles) {
-    const swell = Math.sin(time * 0.5 + (t.baseX + t.baseZ) * 0.15) * 0.12;
-    const bob = Math.sin(time * 0.9 + t.bobPhase) * t.bobAmount;
-    nova64.scene.setPosition(t.mesh, t.baseX, t.baseY + swell + bob, t.baseZ);
-  }
+  // Tide ring: height and tilt driven by the shared wave-field math
+  // (content/ocean/wave-field.ts), same as Chapter One's ocean. Passes dt,
+  // not the chapter's own `time` — OceanSurface tracks its own wave clock
+  // (see ocean-surface.ts) so both chapters' oceans move at the same
+  // real-world pace regardless of what each chapter's own time means.
+  ocean?.update(dt);
 
   if (planetRing) nova64.scene.rotateMesh(planetRing, 0, dt * 0.06, 0);
 

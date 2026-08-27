@@ -12,6 +12,7 @@
 import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
+import { OceanSurface } from '../../../ocean/ocean-surface';
 
 declare const nova64: any;
 
@@ -21,8 +22,8 @@ declare const nova64: any;
 const INPUT_W = 640;
 const INPUT_H = 360;
 
-const FORWARD_SPEED = 7; // world units/sec
-const THROTTLE_MULT = 1.8;
+const FORWARD_SPEED = 11; // world units/sec — faster overall pace
+const THROTTLE_MULT = 2;
 const FIRE_COOLDOWN = 0.14; // seconds between shots while firing is held
 const LATERAL_RANGE = 3.4;
 const CLOUD_COUNT = 8;
@@ -32,7 +33,7 @@ const SIGNAL_SPAWN_Z = -55;
 const CAM_ICON_ZONE = { x0: 552, y0: 10, x1: 630, y1: 54 }; // input-space hit box
 
 const BLOCK_WALL_Z = -42;
-const PROJECTILE_SPEED = 34;
+const PROJECTILE_SPEED = 55; // faster bullets read as snappier and clear the screen sooner
 
 // Voxel invader squadron — bilaterally-symmetric pixel-art aliens (classic
 // Space Invaders sprite technique: randomise one half of each row, mirror it
@@ -141,19 +142,27 @@ interface Planet {
 }
 let planets: Planet[] = [];
 
-interface WaterTile {
-  mesh: any;
-  baseX: number;
-  baseZ: number;
-  baseY: number;
-  bobPhase: number;
-  bobAmount: number;
-}
-let waterTiles: WaterTile[] = [];
+let ocean: OceanSurface | null = null;
 
 let crest: any = null;
 let ring: any = null;
 let crestSpawnDist = 0;
+
+// Large glowing rings along the flight path, threaded by steering into
+// them — a Sonic/WipEout-style rail-shooter flourish, pure delight rather
+// than a scored challenge (missing one has no penalty, just no burst).
+interface FlyRing {
+  mesh: any;
+  baseX: number;
+  baseY: number;
+  offset: number;
+  holeRadius: number;
+  passed: boolean;
+  spinSpeed: number;
+}
+let flyRings: FlyRing[] = [];
+const RING_CYCLE = 110;
+const RING_FAR_Z = -100;
 
 let comet: { mesh: any; t: number; duration: number; startX: number; endX: number; y: number; z: number } | null =
   null;
@@ -172,6 +181,26 @@ interface Block {
 }
 let blocks: Block[] = [];
 let nextWaveDist = FIRST_WAVE_DIST;
+
+interface Explosion {
+  mesh: any;
+  t: number;
+  duration: number;
+}
+let explosions: Explosion[] = [];
+
+interface Debris {
+  mesh: any;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  t: number;
+  duration: number;
+}
+let debris: Debris[] = [];
 
 interface Projectile {
   mesh: any;
@@ -454,6 +483,37 @@ export function init() {
     planets.push({ mesh, ring, spin: 0.05 + rand() * 0.08 });
   }
 
+  // Large glowing rings spaced along the flight path — a Sonic/WipEout-style
+  // rail-shooter flourish, threaded by steering into them. Torus geometry's
+  // default orientation already faces along Z (the flight axis), so no
+  // extra rotation is needed for the hole to face the oncoming player.
+  const RING_COUNT = 6;
+  flyRings = [];
+  for (let i = 0; i < RING_COUNT; i++) {
+    const holeRadius = 2.2 + rand() * 0.8;
+    const tube = 0.16 + rand() * 0.08;
+    const ringGlowColor = hsvToHex(rand(), 0.55, 1);
+    const mesh = nova64.scene.createTorus(holeRadius, tube, ringGlowColor, [0, 0, 0], {
+      metallic: true,
+      roughness: 0.2,
+      emissive: ringGlowColor,
+      emissiveIntensity: 1.4,
+      transparent: true,
+      opacity: 0.88,
+    });
+    flyRings.push({
+      mesh,
+      baseX: (rand() - 0.5) * LATERAL_RANGE * 1.5,
+      baseY: 0.85 + (rand() - 0.5) * 0.4,
+      // Spread evenly across the cycle (plus jitter) rather than fully
+      // random, so rings don't randomly cluster or leave long empty gaps.
+      offset: (i / RING_COUNT) * RING_CYCLE + rand() * 8,
+      holeRadius,
+      passed: false,
+      spinSpeed: 0.3 + rand() * 0.4,
+    });
+  }
+
   // Asteroid-chunks: reflective (metallic), multicolor (independent hue per
   // chunk, not tied to the scene's blue bias), translucent, mixed shapes.
   // One, chosen at random per token, is the hidden signal fragment.
@@ -487,48 +547,28 @@ export function init() {
     });
   }
 
-  // Low-poly reflective ocean: since the board never actually translates in
-  // world Z (the classic Space-Harrier illusion — the rider stays fixed near
-  // Z=0 and the world scrolls toward them instead), a single static grid of
-  // tiles that's larger than the fog-out distance reads as endless with no
-  // recycling logic needed at all, unlike the clouds/ridges/waves above.
-  // Kept close under the board (not far below it) so it reads as a surfboard
-  // skimming the water, not a distant sea floor — vivid tropical tint, and a
-  // travelling swell (driven by dist + each tile's Z, in update()) on top of
-  // each tile's own bob so the whole surface visibly rolls, not just jitters.
-  const WATER_ROWS = 8;
-  const WATER_COLS = 8;
-  const WATER_Y = -0.55;
-  waterTiles = [];
-  for (let row = 0; row < WATER_ROWS; row++) {
-    for (let col = 0; col < WATER_COLS; col++) {
-      const baseZ = -60 + (row / (WATER_ROWS - 1)) * 72;
-      const baseX = -42 + (col / (WATER_COLS - 1)) * 84;
-      const baseY = WATER_Y + (rand() - 0.5) * 0.2;
-      // Darker and more saturated than the first pass — against a brighter
-      // sky, a pale tint just merged into the background instead of reading
-      // as distinct water.
-      const tint = hsvToHex((hue + 0.03 + (rand() - 0.5) * 0.04 + 1) % 1, 0.75 + rand() * 0.15, 0.55 + rand() * 0.15);
-      const mesh = nova64.scene.createPlane(13, 12, tint, [baseX, baseY, baseZ], {
-        metallic: true,
-        roughness: 0.1 + rand() * 0.08,
-        transparent: true,
-        opacity: 0.95,
-      });
-      // Plane geometry defaults to facing +Z; tip it flat (-90° on X) to lie
-      // like a water surface, with a slight random tilt per tile for the
-      // faceted low-poly look instead of one perfectly flat sheet.
-      nova64.scene.setRotation(mesh, -Math.PI / 2 + (rand() - 0.5) * 0.08, 0, (rand() - 0.5) * 0.08);
-      waterTiles.push({
-        mesh,
-        baseX,
-        baseZ,
-        baseY,
-        bobPhase: rand() * Math.PI * 2,
-        bobAmount: 0.14 + rand() * 0.16,
-      });
-    }
-  }
+  // Ocean: since the board never actually translates in world Z (the
+  // classic Space-Harrier illusion — the rider stays fixed near Z=0 and the
+  // world scrolls toward them instead), a single static grid that's larger
+  // than the fog-out distance reads as endless with no recycling logic
+  // needed, unlike the clouds/ridges/waves above. Kept close under the
+  // board (not far below it) so it reads as a surfboard skimming the
+  // water, not a distant sea floor. See content/ocean/ for the shared
+  // wave-field math driving both this and Chapter Two's water.
+  ocean = new OceanSurface({
+    rows: 12,
+    cols: 12,
+    width: 84,
+    depth: 72,
+    originY: -0.55,
+    waveHeight: 0.6,
+    // Vivid, unambiguous blue rather than a muted/dark tint — combined with
+    // the low roughness in ocean-surface.ts, this is what actually reads as
+    // "shiny blue water" instead of a dark, hard-to-see panel.
+    colorDeep: hsvToHex((hue + 0.03 + 1) % 1, 0.85, 0.72),
+    colorShallow: hsvToHex((hue + 0.05 + 1) % 1, 0.75, 0.96),
+    rand,
+  });
 
   // A shooting star crosses the sky exactly once per ride, at a
   // seeded-random moment — a small easter egg, not a random per-frame roll.
@@ -774,6 +814,30 @@ export function update(dt: number) {
   for (const p of planets) {
     nova64.scene.rotateMesh(p.ring, 0, dt * p.spin, 0);
   }
+
+  // Large fly-through rings: same approach-toward-camera conveyor as the
+  // rest of the ride, plus an idle spin, plus a proximity check right as
+  // each one crosses near the board's Z to see if the player threaded it.
+  // Missing one has no penalty — it's a delight, not a scored gate.
+  for (const r of flyRings) {
+    const cyclePos = (dist * 1 + r.offset) % RING_CYCLE;
+    const z = RING_FAR_Z + cyclePos;
+    nova64.scene.setPosition(r.mesh, r.baseX, r.baseY, z);
+    nova64.scene.rotateMesh(r.mesh, 0, 0, dt * r.spinSpeed);
+    if (z < RING_FAR_Z + 4) r.passed = false;
+    if (!r.passed && z > -1.5 && z < 1.5) {
+      const throughDist = Math.hypot(boardX - r.baseX, boardY - r.baseY);
+      if (throughDist < r.holeRadius * 0.75) {
+        r.passed = true;
+        const rw = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+        const rh = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+        burstEmitter.x = rw / 2;
+        burstEmitter.y = rh * 0.45;
+        nova64.fx.updateEmitter2D(burstEmitter, 1 / 30);
+        burstEmitter.rate = 0;
+      }
+    }
+  }
   for (const r of ridges) {
     const cyclePos = (dist * 1.4 + r.offset) % 50;
     const worldZ = -46 + cyclePos;
@@ -793,15 +857,10 @@ export function update(dt: number) {
   }
 
   // The ocean grid never needs to recycle (it's already larger than the
-  // fog-out distance — see init()) — a travelling swell (phase offset by
-  // each tile's own Z, so it rolls across the grid as dist advances) plus a
-  // smaller independent per-tile bob makes the whole surface read as
-  // visibly rolling water, not a flat static floor or per-tile jitter.
-  for (const t of waterTiles) {
-    const swell = Math.sin(dist * 0.3 + t.baseZ * 0.12) * 0.3;
-    const bob = Math.sin(dist * 0.7 + t.bobPhase) * t.bobAmount;
-    nova64.scene.setPosition(t.mesh, t.baseX, t.baseY + swell + bob, t.baseZ);
-  }
+  // fog-out distance — see init()); each tile's height and tilt come from
+  // the shared wave-field math (content/ocean/wave-field.ts). Passes dt, not
+  // dist — OceanSurface tracks its own wave clock (see ocean-surface.ts).
+  ocean?.update(dt);
 
   // Shooting star: spawns once at its seeded distance, streaks across the
   // sky over ~1.4s, then is gone for good this ride.
@@ -962,12 +1021,81 @@ export function update(dt: number) {
           (typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360) * 0.5;
         nova64.fx.updateEmitter2D(burstEmitter, 1 / 40);
         burstEmitter.rate = 0;
+
+        // A real explosion at the exact 3D hit point (not just a generic
+        // screen-centred particle flash) — a quick expanding, fading flash
+        // plus a handful of flying debris fragments tinted the block's own
+        // colour, instead of the block just silently vanishing.
+        const boom = nova64.scene.createSphere(0.12, b.color, [b.gridX, b.gridY, b.currentZ], 5, {
+          emissive: b.color,
+          emissiveIntensity: 2.4,
+          transparent: true,
+          opacity: 0.95,
+        });
+        explosions.push({ mesh: boom, t: 0, duration: 0.3 });
+        for (let k = 0; k < 5; k++) {
+          const chunk = nova64.scene.createCube(INVADER_CELL * 0.35, b.color, [b.gridX, b.gridY, b.currentZ], {
+            emissive: b.color,
+            emissiveIntensity: 1.3,
+            transparent: true,
+            opacity: 1,
+          });
+          debris.push({
+            mesh: chunk,
+            x: b.gridX,
+            y: b.gridY,
+            z: b.currentZ,
+            vx: (rand() - 0.5) * 3.5,
+            vy: 1.5 + rand() * 2.5,
+            vz: (rand() - 0.5) * 2 + 1,
+            t: 0,
+            duration: 0.45 + rand() * 0.25,
+          });
+        }
         break;
       }
     }
-    if (hit || p.z < BLOCK_WALL_Z - 6) {
+    // Travel well past the invader wall and toward the fog-out distance
+    // before disappearing, so a miss reads as "flew off into the distance"
+    // rather than an abrupt nearby pop — the old despawn distance
+    // (BLOCK_WALL_Z - 6, only 6 units past the wall) vanished projectiles
+    // while they were still large/close in frame.
+    if (hit || p.z < -95) {
       nova64.scene.destroyMesh(p.mesh);
       projectiles.splice(i, 1);
+    }
+  }
+
+  for (let i = explosions.length - 1; i >= 0; i--) {
+    const e = explosions[i];
+    if (!e) continue;
+    e.t += dt;
+    const f = Math.min(1, e.t / e.duration);
+    const s = 0.4 + f * 2.2;
+    nova64.scene.setScale(e.mesh, s, s, s);
+    if (e.mesh.material) e.mesh.material.opacity = 0.95 * (1 - f);
+    if (f >= 1) {
+      nova64.scene.destroyMesh(e.mesh);
+      explosions.splice(i, 1);
+    }
+  }
+
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i];
+    if (!d) continue;
+    d.t += dt;
+    d.vy -= dt * 4.5; // gravity
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    d.z += d.vz * dt;
+    nova64.scene.setPosition(d.mesh, d.x, d.y, d.z);
+    const f = Math.min(1, d.t / d.duration);
+    if (d.mesh.material) d.mesh.material.opacity = 1 - f;
+    const s = 1 - f * 0.7;
+    nova64.scene.setScale(d.mesh, s, s, s);
+    if (f >= 1) {
+      nova64.scene.destroyMesh(d.mesh);
+      debris.splice(i, 1);
     }
   }
 
