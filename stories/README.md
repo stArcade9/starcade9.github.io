@@ -96,19 +96,45 @@ Two constraints worth knowing before writing a new chapter's interaction:
   (`mouseX`/`mouseY`) — nothing fires on release. A "drag around, then let go
   over the target" mechanic isn't buildable as written; touch interactions
   need to work as a *sequence of discrete probes* (each press is a complete
-  attempt at its current position), not a drag-then-commit gesture. Chapter
-  Two's beachcombing search is built around this: every touch is a real probe
-  scored by proximity to a hidden target, not a preview.
+  attempt at its current position), not a drag-then-commit gesture, unless
+  the mechanic is proximity-based instead (see Chapter Two below), which
+  sidesteps the constraint entirely.
 - **Every interaction should produce a visible response — including misses.**
-  Chapter Two's first pass had a search where a miss did nothing at all,
-  which reads as "broken" or "unclear," not "not found yet." The fix wasn't
-  better instructions alone — it was making every touch produce *some*
-  immediate feedback (a proximity-scaled ripple on a miss, a full
-  celebration burst on a hit), so the player never wonders whether their
-  input registered.
+  A search/collection mechanic that does nothing on a miss reads as "broken"
+  or "unclear," not "not found yet." Every input should produce *some*
+  immediate feedback, so the player never wonders whether it registered.
 
-Chapter Two also has no `nova64.scene` world-to-screen projection utility
-available, so its search "zones" are authored directly in fixed 640×360
-screen space (independent of the stones' 3D positions) rather than derived
-from a live projection — which is also why its camera holds still during the
-search beat instead of swaying like it does the rest of the chapter.
+Chapter Two is a continuous shoreline walk (same drag/arrow steering as
+Chapter One's rail-ride): embers of the signal are scattered along the
+route, and walking near one gathers it into a carried flame that grows with
+each pickup, climaxing in the flame flaring up to answer the signal back —
+mirroring Chapter One's falling light with a rising one. Collection is
+proximity-based (walk near an ember) rather than a tap-and-hit-test, which
+is also how it works around the no-release-event constraint above.
+
+### Prologue cinematics ("forgotten cartridge")
+
+Both chapters open on a short in-engine cold-open before the ride/walk
+begins, built entirely with existing `nova64` primitives — no separate
+overlay, video, or slide system, and no new engine API. The pattern (see
+`setWorldVisible`, the `prologue1`-`prologue4` beats, and the `targetAmbient`
+lerp at the top of each chapter's `update()`) is the same in both chapters:
+
+1. Ambient light starts near black; every emissive prop in the scene (ship
+   glows, embers, planets, fly-through rings, point lights, etc.) is hidden
+   via `setWorldVisible(false)` — dimming ambient alone isn't enough, since
+   emissive materials ignore ambient light and would otherwise stay visible
+   as a cluttered mess of glowing bits in the dark.
+2. A single small pulsing spark and a deliberately-composed close-up camera
+   shot (explicit `setCameraPosition`/`setCameraTarget` — never the engine's
+   unset default) carry four caption beats that build the throughline: this
+   cartridge is real lost hardware, lost near this coast, still faintly
+   transmitting; the chapter is either catching its spark (Ch1) or giving
+   something back to it (Ch2).
+3. On the final beat, ambient lerps from ~0 up to the chapter's real
+   ambient target, the spark is destroyed, `setWorldVisible(true)` reveals
+   the world, and the chapter's normal beat sequence begins.
+
+Extending this to a future chapter is mechanical: add the `prologueN` beats
+to that chapter's `Beat` type, port `setWorldVisible`/`targetAmbient`, and
+write new captions — the reveal choreography itself doesn't change.

@@ -57,14 +57,23 @@ const WAVE_INTERVAL = 24;
 const WAVE_STOP_BUFFER = 20;
 const WAVE_CLEAR_Z = 14;
 
-type Beat = 'intro' | 'ride' | 'rising' | 'ready' | 'climax';
+// prologue1-4 play once, before the ride itself begins — a short in-engine
+// "cartridge booting" cinematic (a dark scene with a single pulsing spark,
+// resolving up into the bright ride) establishing the "forgotten cartridge"
+// framing, built the same way every other beat in this file is: nova64's
+// own scene/light/caption APIs, no separate overlay or new routing.
+type Beat = 'prologue1' | 'prologue2' | 'prologue3' | 'prologue4' | 'intro' | 'ride' | 'rising' | 'ready' | 'climax';
 
-let beat: Beat = 'intro';
+let beat: Beat = 'prologue1';
 let beatTime = 0;
 let rideHintCleared = false;
 let completeSent = false;
 let chapterCtx: ReturnType<typeof getChapterContext> | null = null;
 let rand: () => number = Math.random;
+// The scene's real ambient intensity, captured so the prologue can start
+// the world dark and lerp up to this exact value rather than a guessed one.
+let targetAmbient = 1.15;
+let prologueSpark: any = null;
 
 let dist = 0;
 let steerX = 0;
@@ -134,6 +143,17 @@ interface Peak {
   speedMult: number;
 }
 let peaks: Peak[] = [];
+
+interface Flora {
+  capMesh: any;
+  stemMesh: any;
+  baseX: number;
+  baseY: number;
+  stemHeight: number;
+  capOffset: number;
+  offset: number;
+}
+let flora: Flora[] = [];
 
 interface Planet {
   mesh: any;
@@ -236,7 +256,15 @@ function hsvToHex(h: number, s: number, v: number): number {
 }
 
 const RIDE_HINT_SECONDS = 3.2;
+const PROLOGUE1_SECONDS = 2.6;
+const PROLOGUE2_SECONDS = 2.6;
+const PROLOGUE3_SECONDS = 2.6;
+const PROLOGUE4_SECONDS = 2.8; // also the ambient-light reveal — see update()
 const BEAT_CAPTIONS: Record<Beat, string | null> = {
+  prologue1: 'Every cartridge remembers something.',
+  prologue2: 'This one was lost before it finished loading.',
+  prologue3: 'Somewhere off this coast, it never powered down.',
+  prologue4: 'Tonight, it finally got a signal back.',
   intro: 'Something is reaching for you',
   // A brief one-time controls hint, then cleared once RIDE_HINT_SECONDS
   // passes (see update()) — after that, pure visuals, no HUD text.
@@ -250,6 +278,31 @@ function setBeat(next: Beat) {
   beat = next;
   beatTime = 0;
   chapterCtx?.setCaption(BEAT_CAPTIONS[next]);
+}
+
+// Hides/reveals every ride prop except the ocean (which already reads as
+// dark and unobtrusive at low ambient on its own — see ocean-surface.ts) —
+// used to clear the scene for the prologue. Without this, the prologue's
+// "dark void with one spark" was really the full, busy ride scene with
+// ambient turned down: every emissive object (ship engine glow, glowing
+// fly-through rings, planets, crystal peaks, the signal-fragment asteroid)
+// ignores ambient light entirely and stayed visible regardless, which is
+// what actually made the opening read as cluttered/odd rather than clean.
+function setWorldVisible(visible: boolean) {
+  for (const p of shipParts) nova64.scene.setMeshVisible?.(p.mesh, visible);
+  for (const c of clouds) nova64.scene.setMeshVisible?.(c.mesh, visible);
+  for (const p of peaks) nova64.scene.setMeshVisible?.(p.mesh, visible);
+  for (const p of planets) {
+    nova64.scene.setMeshVisible?.(p.mesh, visible);
+    nova64.scene.setMeshVisible?.(p.ring, visible);
+  }
+  for (const r of flyRings) nova64.scene.setMeshVisible?.(r.mesh, visible);
+  for (const f of flora) {
+    nova64.scene.setMeshVisible?.(f.capMesh, visible);
+    nova64.scene.setMeshVisible?.(f.stemMesh, visible);
+  }
+  for (const r of ridges) nova64.scene.setMeshVisible?.(r.mesh, visible);
+  for (const s of stars) nova64.scene.setMeshVisible?.(s.mesh, visible);
 }
 
 export function init() {
@@ -273,7 +326,13 @@ export function init() {
   boardColor = hsvToHex((hue - 0.1 + 1) % 1, 0.5, 0.92);
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
-  nova64.light.setAmbientLight(0xffffff, 1.15);
+  // The world is fully built bright from the start (unchanged below) — the
+  // prologue just starts ambient light very low and lerps it up to this
+  // target as the final prologue beat plays (see update()), so the ride
+  // visually "powers on" into view rather than needing a second, separate
+  // scene to be built and torn down for the cinematic.
+  targetAmbient = 1.15;
+  nova64.light.setAmbientLight(0xffffff, 0.05);
   // A soft haze near the horizon — pushes the far edge of the ocean grid
   // into an atmospheric blend instead of a visible seam, and reads as
   // "sunny sea air" rather than gloom. Pushed out from 66 to 92 so the new
@@ -462,6 +521,61 @@ export function init() {
       baseY: -1.6 + height / 2,
       offset: rand() * 140,
       speedMult: 0.3 + rand() * 0.2,
+    });
+  }
+
+  // A few small mushrooms and flowers dotted along the passing shoreline —
+  // original low-poly shapes/colours (a solid-colour dome cap on a stem, a
+  // simple bloom on a stem), evoking that same cheerful, whimsical garden
+  // feeling without copying any specific character design. Deliberately
+  // just a handful, not a garden.
+  const MUSHROOM_COUNT = 5;
+  const FLOWER_COUNT = 6;
+  flora = [];
+  for (let i = 0; i < MUSHROOM_COUNT; i++) {
+    const capColor = hsvToHex(rand(), 0.55 + rand() * 0.25, 0.85 + rand() * 0.15);
+    const stemHeight = 0.26 + rand() * 0.12;
+    const capRadius = 0.15 + rand() * 0.06;
+    const stemMesh = nova64.scene.createCylinder(0.045, 0.055, stemHeight, 0xf0e6d2, [0, 0, 0], {
+      flatShading: true,
+      roughness: 0.8,
+    });
+    const capMesh = nova64.scene.createSphere(capRadius, capColor, [0, 0, 0], 5, {
+      flatShading: true,
+      roughness: 0.5,
+    });
+    nova64.scene.setScale(capMesh, 1, 0.6, 1);
+    flora.push({
+      capMesh,
+      stemMesh,
+      baseX: (rand() - 0.5) * 26,
+      baseY: -0.2 + rand() * 1.1,
+      stemHeight,
+      capOffset: capRadius * 0.4,
+      offset: rand() * 90,
+    });
+  }
+  for (let i = 0; i < FLOWER_COUNT; i++) {
+    const bloomColor = hsvToHex(rand(), 0.6 + rand() * 0.3, 0.9 + rand() * 0.1);
+    const stemHeight = 0.3 + rand() * 0.16;
+    const bloomRadius = 0.08 + rand() * 0.04;
+    const stemMesh = nova64.scene.createCylinder(0.028, 0.028, stemHeight, 0x3a7d3a, [0, 0, 0], {
+      flatShading: true,
+      roughness: 0.7,
+    });
+    const capMesh = nova64.scene.createSphere(bloomRadius, bloomColor, [0, 0, 0], 5, {
+      flatShading: true,
+      emissive: bloomColor,
+      emissiveIntensity: 0.3,
+    });
+    flora.push({
+      capMesh,
+      stemMesh,
+      baseX: (rand() - 0.5) * 26,
+      baseY: -0.2 + rand() * 1.1,
+      stemHeight,
+      capOffset: bloomRadius * 0.5,
+      offset: rand() * 90,
     });
   }
 
@@ -706,7 +820,24 @@ export function init() {
     colors: [0xffffff, 0xbfe0ff],
   });
 
-  setBeat('intro');
+  // The one thing visible in the dark prologue — a small, gently pulsing
+  // point of light (the cartridge, still trying). Destroyed once the world
+  // finishes revealing itself (end of prologue4, see update()).
+  prologueSpark = nova64.scene.createSphere(0.14, crestColor, [0, 1.2, -4], 6, {
+    emissive: crestColor,
+    emissiveIntensity: 1.6,
+  });
+
+  // Every other ride prop hidden until the reveal (see setWorldVisible), and
+  // a deliberate, centred shot on the spark — the previous version never
+  // explicitly set a camera for the prologue at all, leaving it at
+  // whatever the engine's own unset default happened to be, which is very
+  // likely the real reason the opening looked wrong rather than composed.
+  setWorldVisible(false);
+  nova64.camera.setCameraPosition(0, 1.2, 1.5);
+  nova64.camera.setCameraTarget(0, 1.2, -4);
+
+  setBeat('prologue1');
 }
 
 function inZone(x: number, y: number, z: { x0: number; y0: number; x1: number; y1: number }): boolean {
@@ -740,6 +871,35 @@ function updateCamera(boardX: number, boardY: number) {
 
 export function update(dt: number) {
   beatTime += dt;
+
+  // The prologue plays before any ride logic — just a timer per stage, a
+  // gentle pulse on the one visible spark, and (on the final stage) the
+  // ambient-light reveal. Everything else in update() below is the ride
+  // itself and shouldn't run yet.
+  if (beat === 'prologue1' || beat === 'prologue2' || beat === 'prologue3' || beat === 'prologue4') {
+    if (prologueSpark) {
+      const pulse = 1 + Math.sin(beatTime * 3) * 0.25;
+      nova64.scene.setScale(prologueSpark, pulse, pulse, pulse);
+    }
+    if (beat === 'prologue1' && beatTime >= PROLOGUE1_SECONDS) setBeat('prologue2');
+    else if (beat === 'prologue2' && beatTime >= PROLOGUE2_SECONDS) setBeat('prologue3');
+    else if (beat === 'prologue3' && beatTime >= PROLOGUE3_SECONDS) setBeat('prologue4');
+    else if (beat === 'prologue4') {
+      // The world "powers on" — ambient light lerps from the dark prologue
+      // starting value up to its real target as this final stage plays.
+      const f = Math.min(1, beatTime / PROLOGUE4_SECONDS);
+      nova64.light.setAmbientLight(0xffffff, 0.05 + (targetAmbient - 0.05) * f);
+      if (f >= 1) {
+        if (prologueSpark) {
+          nova64.scene.destroyMesh(prologueSpark);
+          prologueSpark = null;
+        }
+        setWorldVisible(true);
+        setBeat('intro');
+      }
+    }
+    return;
+  }
 
   // Steering: mouse/touch drag OR arrow keys / A-D, recentres when neither
   // is active — classic rail-shooter feel, never "stuck" off to one side.
@@ -820,6 +980,16 @@ export function update(dt: number) {
     const cyclePos = (dist * p.speedMult + p.offset) % 140;
     const z = -130 + cyclePos;
     nova64.scene.setPosition(p.mesh, p.baseX, p.baseY, z);
+  }
+  // Mushrooms/flowers ride the same approach-toward-camera conveyor as the
+  // asteroid-chunks (a shorter, closer cycle than the distant peaks — these
+  // are meant to be noticed passing by, not background scenery).
+  for (const f of flora) {
+    const cyclePos = (dist * 1.1 + f.offset) % 90;
+    const z = -85 + cyclePos;
+    nova64.scene.setPosition(f.stemMesh, f.baseX, f.baseY + f.stemHeight / 2, z);
+    nova64.scene.setPosition(f.capMesh, f.baseX, f.baseY + f.stemHeight + f.capOffset, z);
+    nova64.scene.rotateMesh(f.capMesh, 0, dt * 0.3, 0);
   }
   // Planets stay fixed in place (vast/distant things shouldn't zoom past
   // like foreground scenery) — only the ring itself slowly turns.

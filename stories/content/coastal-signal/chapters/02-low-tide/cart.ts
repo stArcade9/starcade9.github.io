@@ -27,12 +27,19 @@ declare const nova64: any;
 // full note.
 const INPUT_W = 640;
 
-type Beat = 'settle' | 'walk' | 'flare' | 'closing';
+// prologue1-4 continue directly from Chapter One's own prologue/climax —
+// same in-engine technique (a dark scene, one held point of light, ambient
+// lerping up into the real scene), not a separate overlay or new routing.
+type Beat = 'prologue1' | 'prologue2' | 'prologue3' | 'prologue4' | 'settle' | 'walk' | 'flare' | 'closing';
 
 const SETTLE_SECONDS = 1.3;
 const FLARE_SECONDS = 1.9;
 const CLOSING_SECONDS = 1.2;
 const WAVE_INTERVAL_SECONDS = 5.5;
+const PROLOGUE1_SECONDS = 2.4;
+const PROLOGUE2_SECONDS = 2.4;
+const PROLOGUE3_SECONDS = 2.4;
+const PROLOGUE4_SECONDS = 2.6; // also the ambient-light reveal — see update()
 
 const WALK_SPEED = 2.4; // world units/sec — a walking pace, not a rail-ride pace
 const WALK_LATERAL_RANGE = 3.2;
@@ -42,7 +49,7 @@ const EMBER_COLLECT_RADIUS = 1.05;
 
 let time = 0;
 let beatTime = 0;
-let beat: Beat = 'settle';
+let beat: Beat = 'prologue1';
 let chapterCtx: ReturnType<typeof getChapterContext> | null = null;
 let completeSent = false;
 
@@ -59,6 +66,10 @@ let swayRadius = 5;
 let stoneGlowColor = 0x8fd8d0;
 let signalColor = 0xffcc66;
 let planetRing: any = null;
+let planetMesh: any = null;
+let sunMesh: any = null;
+let targetAmbient = 1.4;
+let prologueSpark: any = null;
 
 let walkDist = 0;
 // Eases toward the walker's lane position rather than snapping to it
@@ -144,8 +155,10 @@ export function init() {
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
   // Pushed brighter again — a cheerful, sunny "Mario World" feel, not just
-  // technically well-lit.
-  nova64.light.setAmbientLight(0xffffff, 1.4);
+  // technically well-lit. Scene starts dark for the prologue and lerps up
+  // to this target once the cold open finishes.
+  targetAmbient = 1.4;
+  nova64.light.setAmbientLight(0xffffff, 0.05);
   nova64.light.setFog(skyHorizon, 18, 55);
   nova64.camera.setCameraTarget(0, 0.3, -4);
   nova64.camera.setCameraPosition(0, 2.2, 5);
@@ -156,7 +169,7 @@ export function init() {
 
   // A soft low sun near the horizon — cheap, static, and does a lot of work
   // selling "golden hour" without any extra motion cost.
-  nova64.scene.createSphere(1.6, skyHorizon, [-6, 2.6, -18], 6, {
+  sunMesh = nova64.scene.createSphere(1.6, skyHorizon, [-6, 2.6, -18], 6, {
     emissive: skyHorizon,
     emissiveIntensity: 1.4,
   });
@@ -193,7 +206,7 @@ export function init() {
     const px = 9 + rand() * 6;
     const py = 9 + rand() * 4;
     const pz = -26 - rand() * 8;
-    const mesh = nova64.scene.createSphere(size, planetColor, [px, py, pz], 6, {
+    planetMesh = nova64.scene.createSphere(size, planetColor, [px, py, pz], 6, {
       flatShading: true,
       roughness: 0.6,
       emissive: planetColor,
@@ -412,13 +425,34 @@ export function init() {
     colors: [signalColor, 0xffffff],
   });
 
-  setBeat('settle');
+  // The one thing visible in the dark prologue — a small, gently pulsing
+  // point of light (the ember, still faintly warm), sitting right where the
+  // carried flame will first appear. Destroyed once the world finishes
+  // revealing itself (end of prologue4, see update()) — same technique as
+  // Chapter One's own cold open.
+  prologueSpark = nova64.scene.createSphere(0.12, signalColor, [0, 0.55, 0.4], 6, {
+    emissive: signalColor,
+    emissiveIntensity: 1.6,
+  });
+
+  // Every other glowing prop hidden until the reveal (see setWorldVisible),
+  // and a deliberate close-up shot on the spark rather than the wide walk
+  // camera the rest of the chapter uses.
+  setWorldVisible(false);
+  nova64.camera.setCameraPosition(0, 0.7, 1.6);
+  nova64.camera.setCameraTarget(0, 0.6, 0.4);
+
+  setBeat('prologue1');
 }
 
 function setBeat(next: Beat) {
   beat = next;
   beatTime = 0;
-  if (next === 'settle') chapterCtx?.setCaption('The tide has gone out, and left something of the signal behind');
+  if (next === 'prologue1') chapterCtx?.setCaption('You held it for only a second.');
+  else if (next === 'prologue2') chapterCtx?.setCaption('Long enough for the tide to notice.');
+  else if (next === 'prologue3') chapterCtx?.setCaption('It left pieces of itself behind.');
+  else if (next === 'prologue4') chapterCtx?.setCaption('The shore remembers, too.');
+  else if (next === 'settle') chapterCtx?.setCaption('The tide has gone out, and left something of the signal behind');
   else if (next === 'walk') chapterCtx?.setCaption('Steer along the shore — gather the light as you pass it');
   else if (next === 'flare') {
     chapterCtx?.setCaption('The light answers back');
@@ -447,9 +481,54 @@ function setBeat(next: Beat) {
   } else if (next === 'closing') chapterCtx?.setCaption('You watch it go');
 }
 
+// Hides/reveals the chapter's emissive props for the prologue — matte,
+// non-emissive things (cliffs, driftwood, shells, the tide) already read as
+// dark and unobtrusive under near-zero ambient light on their own, same as
+// Chapter One's ocean; only things that glow regardless of ambient
+// (sun, planet+ring, embers, the carried flame) and the point light itself
+// (which — unlike ambient — actively illuminates everything near the
+// stones) need to be explicitly hidden for the prologue's dark shot.
+function setWorldVisible(visible: boolean) {
+  nova64.scene.setMeshVisible?.(sunMesh, visible);
+  nova64.scene.setMeshVisible?.(planetMesh, visible);
+  nova64.scene.setMeshVisible?.(planetRing, visible);
+  for (const e of embers) nova64.scene.setMeshVisible?.(e.mesh, visible);
+  if (flameMesh) nova64.scene.setMeshVisible?.(flameMesh, visible);
+  if (pointLightId !== null) nova64.light.setLightVisible?.(pointLightId, visible);
+}
+
 export function update(dt: number) {
   time += dt;
   beatTime += dt;
+
+  // The prologue plays before any walk logic — just a timer per stage, a
+  // gentle pulse on the one visible spark, and (on the final stage) the
+  // ambient-light reveal. Everything else in update() below is the chapter
+  // itself and shouldn't run yet. Mirrors Chapter One's cold open exactly.
+  if (beat === 'prologue1' || beat === 'prologue2' || beat === 'prologue3' || beat === 'prologue4') {
+    if (prologueSpark) {
+      const pulse = 1 + Math.sin(beatTime * 3) * 0.25;
+      nova64.scene.setScale(prologueSpark, pulse, pulse, pulse);
+    }
+    if (beat === 'prologue1' && beatTime >= PROLOGUE1_SECONDS) setBeat('prologue2');
+    else if (beat === 'prologue2' && beatTime >= PROLOGUE2_SECONDS) setBeat('prologue3');
+    else if (beat === 'prologue3' && beatTime >= PROLOGUE3_SECONDS) setBeat('prologue4');
+    else if (beat === 'prologue4') {
+      // The world "powers on" — ambient light lerps from the dark prologue
+      // starting value up to its real target as this final stage plays.
+      const f = Math.min(1, beatTime / PROLOGUE4_SECONDS);
+      nova64.light.setAmbientLight(0xffffff, 0.05 + (targetAmbient - 0.05) * f);
+      if (f >= 1) {
+        if (prologueSpark) {
+          nova64.scene.destroyMesh(prologueSpark);
+          prologueSpark = null;
+        }
+        setWorldVisible(true);
+        setBeat('settle');
+      }
+    }
+    return;
+  }
 
   const w = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
   const h = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
