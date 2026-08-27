@@ -49,6 +49,10 @@ let completeSent = false;
 let foamEmitter: any;
 let sparkleEmitter: any;
 let dustEmitter: any;
+// A continuous light trail following the carried flame during the walk —
+// reinforces "you're carrying a light" the whole time, not just at the
+// discrete collection/climax moments.
+let trailEmitter: any;
 
 let swaySpeed = 0.05;
 let swayRadius = 5;
@@ -57,6 +61,10 @@ let signalColor = 0xffcc66;
 let planetRing: any = null;
 
 let walkDist = 0;
+// Eases toward the walker's lane position rather than snapping to it
+// exactly — a small trailing lag that gives the carried flame some
+// physical weight instead of moving as a rigidly-attached prop.
+let flameX = 0;
 let walkSteer = 0;
 let kindled = 0;
 let flameMesh: any = null;
@@ -135,7 +143,9 @@ export function init() {
   const skyHorizon = hsvToHex(0.09 + rand() * 0.03, 0.62, 0.96);
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
-  nova64.light.setAmbientLight(0xffffff, 1.2);
+  // Pushed brighter again — a cheerful, sunny "Mario World" feel, not just
+  // technically well-lit.
+  nova64.light.setAmbientLight(0xffffff, 1.4);
   nova64.light.setFog(skyHorizon, 18, 55);
   nova64.camera.setCameraTarget(0, 0.3, -4);
   nova64.camera.setCameraPosition(0, 2.2, 5);
@@ -283,7 +293,13 @@ export function init() {
   }
 
   nova64.fx.enableLowPolyMode();
-  nova64.fx.setBloomStrength(0.7);
+  // enableLowPolyMode's own bloom preset (strength 0.4, threshold 0.7) is
+  // quite conservative — fine for a plain scene, but it meant the embers
+  // and flame only ever glowed faintly during the walk, with the one-off
+  // strength bump at the climax the only real "glow" moment. A properly
+  // permissive threshold here means the light effects actually read as
+  // glowing throughout, not just at the very end.
+  nova64.fx.enableBloom(1.3, 0.45, 0.5);
 
   foamEmitter = nova64.fx.createEmitter2D({
     blendMode: 'add',
@@ -365,6 +381,25 @@ export function init() {
     endAlpha: 0,
     colors: [0xffffff, stoneGlowColor],
   });
+  trailEmitter = nova64.fx.createEmitter2D({
+    blendMode: 'add',
+    x: 0,
+    y: 0,
+    rate: 0,
+    maxParticles: 60,
+    life: 0.5,
+    lifeVariance: 0.15,
+    speed: 6,
+    speedVariance: 4,
+    angle: -Math.PI / 2,
+    angleVariance: 0.9,
+    gravity: -3,
+    startSize: 1.6,
+    endSize: 0,
+    startAlpha: 0.6,
+    endAlpha: 0,
+    colors: [signalColor, 0xffffff],
+  });
 
   setBeat('settle');
 }
@@ -381,7 +416,7 @@ function setBeat(next: Beat) {
     // combination that actually reads as "glowing like a star" rather than
     // a single opaque bright ball. Bloom boosted for this one moment, same
     // technique Chapter One's own climax uses.
-    nova64.fx.setBloomStrength(2.4);
+    nova64.fx.setBloomStrength(3.2);
     flare = {
       mesh: nova64.scene.createSphere(0.22, signalColor, [laneX, 0.6, 0.4], 6, {
         emissive: signalColor,
@@ -469,8 +504,19 @@ export function update(dt: number) {
     nova64.camera.setCameraPosition(laneX * 0.35, 2.1, 4.6);
     nova64.camera.setCameraTarget(laneX * 0.55, 0.5, -6);
 
+    // A small trailing lag rather than snapping straight to laneX — gives
+    // the carried flame some physical weight as you steer, instead of
+    // feeling rigidly bolted to the walker.
+    flameX += (laneX - flameX) * Math.min(1, dt * 5);
     const flameBob = Math.sin(time * 2) * 0.04;
-    nova64.scene.setPosition(flameMesh, laneX, 0.55 + flameBob, 0.4);
+    nova64.scene.setPosition(flameMesh, flameX, 0.55 + flameBob, 0.4);
+
+    // A continuous light trail while walking — the flame should feel alive
+    // the whole time, not just at the moment of each pickup.
+    trailEmitter.x = w / 2 + (laneX - flameX) * 40;
+    trailEmitter.y = h * 0.62;
+    trailEmitter.rate = 30;
+    nova64.fx.updateEmitter2D(trailEmitter, dt);
 
     for (const e of embers) {
       if (!e.active) continue;
@@ -556,6 +602,7 @@ export function draw() {
   // engine's fixed bitmap font.
   nova64.fx.drawEmitter2D(dustEmitter);
   nova64.fx.drawEmitter2D(foamEmitter);
+  nova64.fx.drawEmitter2D(trailEmitter);
   nova64.fx.drawEmitter2D(sparkleEmitter);
   nova64.fx.drawEmitter2D(flareEmitter);
 }
