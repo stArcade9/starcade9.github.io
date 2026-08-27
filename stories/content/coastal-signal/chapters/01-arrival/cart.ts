@@ -447,7 +447,15 @@ export function init() {
     peaks.push({
       mesh,
       baseX: (rand() < 0.5 ? -1 : 1) * (14 + rand() * 20),
-      baseY: -0.6 + height / 2,
+      // The ocean (waveHeight 0.6, origin -0.55) oscillates down to roughly
+      // -1.17 at its lowest — peaks sat with their base fixed at -0.6, well
+      // above that, so whenever a peak's X/Z happened to be over a wave
+      // trough the gap between its flat base and the dipped water surface
+      // was visible ("floating"). Anchoring the base well below the
+      // water's lowest possible point means peaks always read as rising up
+      // out of the water, never hovering above it, without needing to
+      // track the water's per-frame height at every peak's position.
+      baseY: -1.6 + height / 2,
       offset: rand() * 140,
       speedMult: 0.3 + rand() * 0.2,
     });
@@ -556,8 +564,8 @@ export function init() {
   // water, not a distant sea floor. See content/ocean/ for the shared
   // wave-field math driving both this and Chapter Two's water.
   ocean = new OceanSurface({
-    rows: 12,
-    cols: 12,
+    rows: 16,
+    cols: 16,
     width: 84,
     depth: 72,
     originY: -0.55,
@@ -565,8 +573,8 @@ export function init() {
     // Vivid, unambiguous blue rather than a muted/dark tint — combined with
     // the low roughness in ocean-surface.ts, this is what actually reads as
     // "shiny blue water" instead of a dark, hard-to-see panel.
-    colorDeep: hsvToHex((hue + 0.03 + 1) % 1, 0.85, 0.72),
-    colorShallow: hsvToHex((hue + 0.05 + 1) % 1, 0.75, 0.96),
+    colorDeep: hsvToHex((hue + 0.03 + 1) % 1, 0.78, 0.85),
+    colorShallow: hsvToHex((hue + 0.05 + 1) % 1, 0.65, 1),
     rand,
   });
 

@@ -1,39 +1,44 @@
 // Coastal Signal — Chapter 02: Low Tide
-// The exhale after Chapter One's rush: the tide has gone out over a bright,
-// golden-hour shore. This is a moment in an interactive story, not a scored
-// minigame — the search below exists to make "noticing something" a real,
-// felt action rather than a formality, not to turn the chapter into a
-// competitive hunt. Rather than a blind "tap anywhere N times" counter (the
-// old version — any tap, anywhere on screen, advanced to the next stone in
-// array order with no connection to where you actually tapped, which read
-// as arbitrary and thin), each touch is a genuine probe: nearby stones pulse
-// warmer the closer you are, and — important given the engine exposes no
-// touch-release event to carts, only press-edge/held-state/position — every
-// touch (hit or miss) gets an immediate, visible response (a warmth-scaled
-// ripple), so a tap never just silently does nothing. Calm doesn't mean
-// static or passive — the light, water, stones, gulls and tide are always
-// gently moving.
+// Rewritten concept, not just a re-tuned version of the last one: the old
+// beat was a static hunt for hidden stones scattered around one fixed spot
+// — however well it played, "stand still and search a small area" was
+// never going to feel like anything next to Chapter One's rail-ride, and
+// no amount of tuning the search mechanic itself was going to change that.
+// This chapter now has continuous motion instead: the tide has gone out
+// and left small embers of the same signal Chapter One caught scattered
+// along the shoreline. Steer along the beach (same continuous drag/arrow
+// steering as Chapter One) and walking near an ember gathers it into a
+// small flame that grows with every one collected; reaching the end of the
+// shoreline makes that flame flare up and answer the signal back —
+// mirroring Chapter One's falling light with a rising one. Collection is
+// proximity-based (walk near an ember), not a tap-and-hit-test — this also
+// sidesteps a real engine constraint the old version had to work around:
+// nova64 exposes no touch/mouse-release event to carts, only press-edge,
+// held-state, and position, so anything requiring "aim, then commit" is
+// awkward; "walk near it" needs none of that.
 import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
-import { packColor } from '../../../pack-color';
 import { OceanSurface } from '../../../ocean/ocean-surface';
 
 declare const nova64: any;
 
 // Same fixed virtual input space nova64.input.mouseX()/mouseY() report in
 // regardless of real canvas resolution — see Chapter One's cart.ts for the
-// full note; every reticle/zone calculation here is done in this space.
+// full note.
 const INPUT_W = 640;
-const INPUT_H = 360;
 
-type Beat = 'settle' | 'comb' | 'rest' | 'closing';
+type Beat = 'settle' | 'walk' | 'flare' | 'closing';
 
 const SETTLE_SECONDS = 1.3;
-const REST_HOLD_SECONDS = 1.2;
-const CLOSING_SECONDS = 1.3;
-const STONE_COUNT = 4;
+const FLARE_SECONDS = 1.9;
+const CLOSING_SECONDS = 1.2;
 const WAVE_INTERVAL_SECONDS = 5.5;
-const ZONE_RADIUS = 70;
+
+const WALK_SPEED = 2.4; // world units/sec — a walking pace, not a rail-ride pace
+const WALK_LATERAL_RANGE = 3.2;
+const EMBER_COUNT = 8;
+const WALK_DISTANCE = 52; // total shoreline distance for the walk beat
+const EMBER_COLLECT_RADIUS = 1.05;
 
 let time = 0;
 let beatTime = 0;
@@ -44,31 +49,32 @@ let completeSent = false;
 let foamEmitter: any;
 let sparkleEmitter: any;
 let dustEmitter: any;
-// Feedback for every probe/touch — including misses — scaled by how close
-// the nearest stone was; keeps a tap from ever silently doing nothing.
-let probeEmitter: any;
-let stones: {
-  mesh: any;
-  pos: [number, number, number];
-  size: number;
-  found: boolean;
-  special: boolean;
-  glowColor: number;
-  bobPhase: number;
-  // Where this stone's scanner hit-zone sits in the fixed input space — the
-  // actual target the reticle search is testing against.
-  zoneX: number;
-  zoneY: number;
-}[] = [];
-let foundCount = 0;
+
 let swaySpeed = 0.05;
 let swayRadius = 5;
-// The scanner reticle, in the fixed input space — starts centred rather
-// than snapping to (0,0) before the first touch/drag.
-let reticleX = INPUT_W / 2;
-let reticleY = INPUT_H / 2;
 let stoneGlowColor = 0x8fd8d0;
+let signalColor = 0xffcc66;
 let planetRing: any = null;
+
+let walkDist = 0;
+let walkSteer = 0;
+let kindled = 0;
+let flameMesh: any = null;
+
+interface Ember {
+  mesh: any;
+  laneX: number;
+  spawnDist: number;
+  active: boolean;
+  bobPhase: number;
+}
+let embers: Ember[] = [];
+
+let flare: { mesh: any; glowMesh: any; t: number; duration: number; startY: number; laneX: number } | null = null;
+// A dedicated, much bigger particle burst for the climax — the ember-
+// collection sparkle (sparkleEmitter) stays modest so this moment reads as
+// a clear step up from it, not the same effect reused.
+let flareEmitter: any;
 
 interface Gull {
   mesh: any;
@@ -120,36 +126,33 @@ export function init() {
   swaySpeed = 0.04 + rand() * 0.04;
   swayRadius = 4 + rand() * 2;
 
-  const baseHue = 0.5 + rand() * 0.12; // teal/blue family, for the stones and water
+  const baseHue = 0.5 + rand() * 0.12; // teal/blue family, for the water
   const foamColor = tealShift > 0.5 ? 0x8fd8d0 : 0x9fc8e0;
   stoneGlowColor = foamColor;
-  // Golden-hour low tide — bright pale sky overhead, warm low-sun horizon —
-  // not the near-black night sky this chapter had originally. Pushed
-  // brighter still than the last pass (matching the same correction made in
-  // Chapter One): the earlier brightness fix was made cautiously alongside
-  // an unrelated bloom-clamp fix, and ended up more muted/drab than needed.
+  signalColor = hsvToHex(0.1 + rand() * 0.04, 0.75, 1); // warm amber, same family as Chapter One's crest
+  // Golden-hour low tide — bright pale sky overhead, warm low-sun horizon.
   const skyTop = hsvToHex(baseHue, 0.42, 0.92);
   const skyHorizon = hsvToHex(0.09 + rand() * 0.03, 0.62, 0.96);
 
   nova64.light.createGradientSkybox(skyTop, skyHorizon);
   nova64.light.setAmbientLight(0xffffff, 1.2);
   nova64.light.setFog(skyHorizon, 18, 55);
-  nova64.camera.setCameraTarget(0, 0.3, 0);
-  nova64.camera.setCameraPosition(0, 2.4, 6);
-  // One warm accent light over the stone cluster, on top of the bright
-  // ambient above — briefly brightens in colour with the tide rhythm below.
+  nova64.camera.setCameraTarget(0, 0.3, -4);
+  nova64.camera.setCameraPosition(0, 2.2, 5);
+  // One warm accent light that travels with the walker, on top of the
+  // bright ambient above — briefly brightens in colour with the tide
+  // rhythm below.
   pointLightId = nova64.light.createPointLight(stoneGlowColor, 2.6, 16, 0, 1.8, 0);
 
-  // A soft low sun near the horizon, behind the stones — cheap, static, and
-  // does a lot of work selling "golden hour" without any extra motion cost.
+  // A soft low sun near the horizon — cheap, static, and does a lot of work
+  // selling "golden hour" without any extra motion cost.
   nova64.scene.createSphere(1.6, skyHorizon, [-6, 2.6, -18], 6, {
     emissive: skyHorizon,
     emissiveIntensity: 1.4,
   });
 
-  // A headland framing the cove — this chapter was just four stones and a
-  // water ring floating in an empty void; a static ring of rocky cliffs
-  // around the horizon gives the scene an actual place to be in.
+  // A headland framing the cove — static ring of rocky cliffs around the
+  // horizon so the shore has an actual place to be in, not an empty void.
   const CLIFF_COUNT = 9;
   for (let i = 0; i < CLIFF_COUNT; i++) {
     const cliffAngle = (i / CLIFF_COUNT) * Math.PI * 2 + rand() * 0.3;
@@ -191,92 +194,65 @@ export function init() {
     planetRing = ring;
   }
 
-  // A tide ring around the stone cluster — leaves a dry patch under the
-  // stones themselves (the tide surrounds them, it doesn't submerge them).
-  // See content/ocean/ for the shared wave-field math driving both this and
-  // Chapter One's ocean.
+  // The tide, running the length of the walk — same shared wave-field math
+  // as Chapter One's ocean (see content/ocean/), leaving a dry strip down
+  // the middle for the walker.
   ocean = new OceanSurface({
-    rows: 9,
-    cols: 9,
-    width: 28,
-    depth: 20,
+    rows: 13,
+    cols: 8,
+    width: 22,
+    depth: WALK_DISTANCE + 20,
+    originZ: -WALK_DISTANCE / 2,
     originY: -0.32,
     waveHeight: 0.25,
-    centerHoleRadius: 5.5,
-    // Vivid, unambiguous blue rather than a muted tint — combined with the
-    // low roughness in ocean-surface.ts, this reads as shiny water instead
-    // of a dull dark panel.
-    colorDeep: hsvToHex((baseHue + 1) % 1, 0.8, 0.75),
-    colorShallow: hsvToHex((baseHue + 0.05 + 1) % 1, 0.7, 0.97),
+    centerHoleRadius: 3.2,
+    colorDeep: hsvToHex((baseHue + 1) % 1, 0.75, 0.85),
+    colorShallow: hsvToHex((baseHue + 0.05 + 1) % 1, 0.62, 1),
     rand,
   });
 
-  // Stones: reflective, translucent, each an independently-random hue in the
-  // teal/blue family — not one flat colour repeated four times. One stone,
-  // chosen at random per token, is a hidden shimmering rarity.
-  stones = [];
-  const specialIndex = Math.floor(rand() * STONE_COUNT);
-  for (let i = 0; i < STONE_COUNT; i++) {
-    const special = i === specialIndex;
-    const angle = (i / STONE_COUNT) * Math.PI * 2 + rand() * 0.4;
-    const radius = 2.2 + rand() * 2;
-    const size = special ? 0.42 : 0.3 + rand() * 0.3;
-    const pos: [number, number, number] = [Math.cos(angle) * radius, size * 0.4, Math.sin(angle) * radius];
-    const color = special ? 0xd8b4ff : hsvToHex((baseHue + (rand() - 0.5) * 0.15 + 1) % 1, 0.3 + rand() * 0.2, 0.7);
-    // A soft ambient glow even before being found — unfound stones used to
-    // sit as flat, dark, easy-to-ignore rocks with nothing drawing the eye
-    // to them; a gentle emissive baseline (well below the bright "found"
-    // glow later) invites a closer look instead.
-    const mesh = nova64.scene.createSphere(size, color, pos, 6, {
-      metallic: true,
-      roughness: 0.3,
-      transparent: true,
-      opacity: special ? 0.85 : 0.65 + rand() * 0.2,
-      emissive: color,
-      emissiveIntensity: special ? 0.55 : 0.3,
+  // The walker's own small flame — grows in size and glow with every ember
+  // gathered. Always emissive (it's meant to be a light source, not a lit
+  // surface), so no PBR/shading subtlety to worry about here.
+  flameMesh = nova64.scene.createSphere(0.16, signalColor, [0, 0.55, 0.4], 6, {
+    emissive: signalColor,
+    emissiveIntensity: 1.4,
+    transparent: true,
+    opacity: 0.92,
+  });
+
+  // Embers scattered along the shoreline — spread out with a bit of jitter
+  // so the walk isn't a perfectly even metronome, alternating sides so it
+  // asks for some actual steering rather than sitting still and drifting
+  // through them.
+  embers = [];
+  for (let i = 0; i < EMBER_COUNT; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const laneX = side * (0.8 + rand() * (WALK_LATERAL_RANGE - 0.8));
+    const spawnDist = 8 + (i / EMBER_COUNT) * (WALK_DISTANCE - 12) + rand() * 3;
+    const emberColor = hsvToHex((0.1 + rand() * 0.06 + 1) % 1, 0.7 + rand() * 0.2, 1);
+    const mesh = nova64.scene.createSphere(0.13, emberColor, [laneX, 0.4, -spawnDist], 5, {
+      emissive: emberColor,
+      emissiveIntensity: 1.7,
     });
-    nova64.scene.setScale(mesh, 0.01, 0.01, 0.01);
-    // Spread each stone's scanner zone across distinct, well-separated
-    // regions of the screen — the actual thing the reticle search tests
-    // against, independent of the stone's 3D position (this scene has no
-    // world-to-screen projection utility available to keep a zone in exact
-    // sync with a moving stone/camera, so the zone is authored directly in
-    // screen space instead of derived from one).
-    const zoneX = 90 + (i / (STONE_COUNT - 1)) * 460 + (rand() - 0.5) * 30;
-    const zoneY = 150 + (rand() - 0.5) * 70;
-    stones.push({
-      mesh,
-      pos,
-      size,
-      found: false,
-      special,
-      glowColor: special ? 0xd8b4ff : stoneGlowColor,
-      bobPhase: rand() * Math.PI * 2,
-      zoneX,
-      zoneY,
-    });
+    embers.push({ mesh, laneX, spawnDist, active: true, bobPhase: rand() * Math.PI * 2 });
   }
 
   // Driftwood and shells scattered around the sand — non-interactive set
-  // dressing, but the difference between "four balls floating in a void"
-  // and an actual beach with things lying around on it.
-  const DRIFTWOOD_COUNT = 4;
+  // dressing, the difference between an empty beach and a real one.
+  const DRIFTWOOD_COUNT = 5;
   for (let i = 0; i < DRIFTWOOD_COUNT; i++) {
-    const woodAngle = rand() * Math.PI * 2;
-    const woodDist = 5 + rand() * 6;
-    const wx = Math.cos(woodAngle) * woodDist;
-    const wz = Math.sin(woodAngle) * woodDist;
+    const wx = (rand() - 0.5) * 12;
+    const wz = -rand() * WALK_DISTANCE;
     const woodColor = hsvToHex(0.08 + rand() * 0.03, 0.4 + rand() * 0.15, 0.22 + rand() * 0.12);
     const mesh = nova64.scene.createCube(1, woodColor, [wx, -0.08, wz], { flatShading: true, roughness: 0.9 });
     nova64.scene.setScale(mesh, 0.9 + rand() * 0.7, 0.12 + rand() * 0.05, 0.16 + rand() * 0.06);
     nova64.scene.setRotation(mesh, 0, rand() * Math.PI * 2, (rand() - 0.5) * 0.2);
   }
-  const SHELL_COUNT = 7;
+  const SHELL_COUNT = 10;
   for (let i = 0; i < SHELL_COUNT; i++) {
-    const shellAngle = rand() * Math.PI * 2;
-    const shellDist = 4 + rand() * 7;
-    const sx = Math.cos(shellAngle) * shellDist;
-    const sz = Math.sin(shellAngle) * shellDist;
+    const sx = (rand() - 0.5) * 12;
+    const sz = -rand() * WALK_DISTANCE;
     const shellColor = hsvToHex((baseHue + (rand() - 0.5) * 0.1 + 1) % 1, 0.15 + rand() * 0.15, 0.75 + rand() * 0.15);
     const mesh = nova64.scene.createCone(0.08 + rand() * 0.06, 0.05 + rand() * 0.04, shellColor, [sx, -0.1, sz], {
       flatShading: true,
@@ -307,8 +283,6 @@ export function init() {
   }
 
   nova64.fx.enableLowPolyMode();
-  // A touch more bloom bleed than the LowPolyMode default, kept gentle —
-  // this is the quiet chapter, not the spectacle.
   nova64.fx.setBloomStrength(0.7);
 
   foamEmitter = nova64.fx.createEmitter2D({
@@ -335,7 +309,7 @@ export function init() {
     x: 0,
     y: 0,
     rate: 0,
-    maxParticles: 40,
+    maxParticles: 60,
     life: 0.7,
     lifeVariance: 0.2,
     speed: 20,
@@ -347,7 +321,30 @@ export function init() {
     endSize: 0,
     startAlpha: 1,
     endAlpha: 0,
-    colors: [stoneGlowColor, 0xffffff],
+    colors: [signalColor, 0xffffff],
+  });
+  // The climax burst — bigger, longer-lived, and with a slight upward drift
+  // (negative gravity) matching a rising light, deliberately more
+  // spectacular than the per-ember sparkle above so this moment reads as a
+  // clear step up, not a repeat of the same effect.
+  flareEmitter = nova64.fx.createEmitter2D({
+    blendMode: 'add',
+    x: 0,
+    y: 0,
+    rate: 0,
+    maxParticles: 160,
+    life: 1.4,
+    lifeVariance: 0.5,
+    speed: 35,
+    speedVariance: 20,
+    angle: -Math.PI / 2,
+    angleVariance: Math.PI * 1.6,
+    gravity: -8,
+    startSize: 3.2,
+    endSize: 0,
+    startAlpha: 1,
+    endAlpha: 0,
+    colors: [signalColor, 0xffffff, 0xfff6d8],
   });
   dustEmitter = nova64.fx.createEmitter2D({
     blendMode: 'add',
@@ -368,63 +365,45 @@ export function init() {
     endAlpha: 0,
     colors: [0xffffff, stoneGlowColor],
   });
-  // A soft ripple at the exact touch point on every probe — deliberately
-  // neutral (not the golden "found" colour), so it reads as "your touch
-  // registered" rather than pre-empting the hit celebration. Rate/burst
-  // strength is scaled by proximity when it's fired (see update()).
-  probeEmitter = nova64.fx.createEmitter2D({
-    blendMode: 'add',
-    x: 0,
-    y: 0,
-    rate: 0,
-    maxParticles: 40,
-    life: 0.55,
-    lifeVariance: 0.15,
-    speed: 14,
-    speedVariance: 6,
-    angle: 0,
-    angleVariance: Math.PI * 2,
-    gravity: 0,
-    startSize: 2.2,
-    endSize: 0,
-    startAlpha: 0.7,
-    endAlpha: 0,
-    colors: [0xdfe8f0, 0x9fc8e0],
-  });
 
   setBeat('settle');
-}
-
-function combCaption(): string {
-  return `${foundCount}/${STONE_COUNT} found — touch the sand where it feels warm`;
 }
 
 function setBeat(next: Beat) {
   beat = next;
   beatTime = 0;
-  if (next === 'settle') chapterCtx?.setCaption('The tide has gone out, and something is caught in the wet sand');
-  // Plain, literal instruction first ("touch the sand"), then the feedback
-  // rule that makes the search legible ("warmer the closer") — every touch
-  // gets a visible response even on a miss, so this promise holds up.
-  else if (next === 'comb') chapterCtx?.setCaption('Touch the sand to search — it feels warmer the closer you are');
-  else if (next === 'rest') chapterCtx?.setCaption("You're in no hurry here. Touch when it feels right.");
-  else if (next === 'closing') chapterCtx?.setCaption('You stay a while longer');
+  if (next === 'settle') chapterCtx?.setCaption('The tide has gone out, and left something of the signal behind');
+  else if (next === 'walk') chapterCtx?.setCaption('Steer along the shore — gather the light as you pass it');
+  else if (next === 'flare') {
+    chapterCtx?.setCaption('The light answers back');
+    const laneX = walkSteer * WALK_LATERAL_RANGE;
+    // A bright core plus a larger, softer, translucent halo around it — the
+    // combination that actually reads as "glowing like a star" rather than
+    // a single opaque bright ball. Bloom boosted for this one moment, same
+    // technique Chapter One's own climax uses.
+    nova64.fx.setBloomStrength(2.4);
+    flare = {
+      mesh: nova64.scene.createSphere(0.22, signalColor, [laneX, 0.6, 0.4], 6, {
+        emissive: signalColor,
+        emissiveIntensity: 3.4,
+      }),
+      glowMesh: nova64.scene.createSphere(0.55, signalColor, [laneX, 0.6, 0.4], 6, {
+        emissive: signalColor,
+        emissiveIntensity: 1.8,
+        transparent: true,
+        opacity: 0.45,
+      }),
+      t: 0,
+      duration: FLARE_SECONDS,
+      startY: 0.6,
+      laneX,
+    };
+  } else if (next === 'closing') chapterCtx?.setCaption('You watch it go');
 }
 
 export function update(dt: number) {
   time += dt;
   beatTime += dt;
-
-  // A bit more amplitude/speed than before, plus a slow height bob — the
-  // old sway was so subtle it read as a static shot. Held still during the
-  // search itself (below) since the stones' scanner zones are authored in
-  // fixed screen space — a moving camera would drift the 3D stones out from
-  // under their own zones.
-  if (beat !== 'comb') {
-    const camAngle = Math.sin(time * swaySpeed) * 0.5;
-    const camHeight = 2.4 + Math.sin(time * swaySpeed * 0.6) * 0.25;
-    nova64.camera.setCameraPosition(Math.sin(camAngle) * swayRadius, camHeight, Math.cos(camAngle) * 6);
-  }
 
   const w = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
   const h = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
@@ -436,17 +415,9 @@ export function update(dt: number) {
   nova64.fx.updateEmitter2D(sparkleEmitter, dt);
   nova64.fx.updateEmitter2D(dustEmitter, dt);
 
-  // Tide ring: height and tilt driven by the shared wave-field math
-  // (content/ocean/wave-field.ts), same as Chapter One's ocean. Passes dt,
-  // not the chapter's own `time` — OceanSurface tracks its own wave clock
-  // (see ocean-surface.ts) so both chapters' oceans move at the same
-  // real-world pace regardless of what each chapter's own time means.
   ocean?.update(dt);
-
   if (planetRing) nova64.scene.rotateMesh(planetRing, 0, dt * 0.06, 0);
 
-  // Gulls: same cross-then-pause cycle as Chapter One's ambient stars, with
-  // a gentle glide bob — visible only while actually crossing.
   for (const g of gulls) {
     g.timer += dt;
     const cycle = g.crossDuration + g.pauseDuration;
@@ -462,10 +433,6 @@ export function update(dt: number) {
     }
   }
 
-  // A rhythmic wave washing in every WAVE_INTERVAL_SECONDS — a foam/sparkle
-  // burst plus a brief warm brightening of the accent light (colour only;
-  // the engine has no dynamic point-light intensity setter) — gives the
-  // whole chapter a living pulse instead of one flat unchanging tableau.
   waveTimer -= dt;
   if (waveTimer <= 0) {
     waveTimer = WAVE_INTERVAL_SECONDS;
@@ -479,102 +446,98 @@ export function update(dt: number) {
     if (waveFlashTimer <= 0 && pointLightId !== null) nova64.light.setPointLightColor(pointLightId, stoneGlowColor);
   }
 
-  // The reticle: wherever the player is dragging/touching, in the same
-  // fixed input space the zone coordinates are authored in. Held at the
-  // screen centre when not actively pointing at anything (before the first
-  // touch) rather than snapping to (0,0).
-  reticleX = nova64.input.mouseX?.() ?? reticleX;
-  reticleY = nova64.input.mouseY?.() ?? reticleY;
-
-  // Closest not-yet-found stone to the reticle, if within range — the
-  // actual hot/cold search target this frame.
-  let closest: (typeof stones)[number] | null = null;
-  let closestDist = Infinity;
-  if (beat === 'comb') {
-    for (const stone of stones) {
-      if (stone.found) continue;
-      const d = Math.hypot(reticleX - stone.zoneX, reticleY - stone.zoneY);
-      if (d < closestDist) {
-        closestDist = d;
-        closest = stone;
-      }
-    }
-  }
-
-  const introEase = nova64.util.ease(Math.min(1, time / SETTLE_SECONDS), 'easeOutCubic');
-  for (const stone of stones) {
-    if (!stone.found) {
-      // Proximity-driven pulse — closer to the reticle means faster and
-      // bigger, giving real-time "warmer/colder" feedback instead of the
-      // stones sitting inert until tapped.
-      const proximity = stone === closest ? Math.max(0, 1 - closestDist / (ZONE_RADIUS * 2.4)) : 0;
-      const pulse = 1 + Math.sin(time * (6 + proximity * 10)) * (0.03 + proximity * 0.14);
-      const s = introEase * pulse;
-      nova64.scene.setScale(stone.mesh, s, s, s);
-      // A small idle bob on unfound stones — enough to read as "alive," not
-      // enough to make them harder to tap.
-      const bob = Math.sin(time * 0.8 + stone.bobPhase) * 0.03;
-      nova64.scene.setPosition(stone.mesh, stone.pos[0], stone.pos[1] + bob, stone.pos[2]);
-    }
-    nova64.scene.rotateMesh(stone.mesh, 0, dt * 0.04, 0);
-  }
-
   if (beat === 'settle') {
-    if (beatTime >= SETTLE_SECONDS) setBeat('comb');
+    if (beatTime >= SETTLE_SECONDS) setBeat('walk');
     return;
   }
 
-  if (beat === 'comb') {
-    if (nova64.input.mousePressed?.()) {
-      const px = (reticleX / INPUT_W) * w;
-      const py = (reticleY / INPUT_H) * h;
-      if (closest && closestDist <= ZONE_RADIUS) {
-        const next = closest;
-        next.found = true;
-        foundCount++;
-        nova64.scene.destroyMesh(next.mesh);
-        next.mesh = nova64.scene.createSphere(next.size * 1.15, next.glowColor, next.pos, 6, {
-          emissive: next.glowColor,
-          emissiveIntensity: next.special ? 1.8 : 1.2,
-        });
+  if (beat === 'walk') {
+    // Same continuous drag/arrow steering as Chapter One, just at a walking
+    // pace — proven, reliable input handling, not a new mechanic to debug.
+    const dragging = nova64.input.mouseDown?.();
+    const keyLeft = nova64.input.key?.('ArrowLeft') || nova64.input.key?.('KeyA');
+    const keyRight = nova64.input.key?.('ArrowRight') || nova64.input.key?.('KeyD');
+    const keyboardSteer = keyRight && !keyLeft ? 1 : keyLeft && !keyRight ? -1 : 0;
+    const targetSteer = dragging
+      ? Math.max(-1, Math.min(1, (nova64.input.mouseX() / INPUT_W - 0.5) * 2.4))
+      : keyboardSteer;
+    walkSteer += (targetSteer - walkSteer) * Math.min(1, dt * 3);
+
+    walkDist += dt * WALK_SPEED;
+    const laneX = walkSteer * WALK_LATERAL_RANGE;
+
+    nova64.camera.setCameraPosition(laneX * 0.35, 2.1, 4.6);
+    nova64.camera.setCameraTarget(laneX * 0.55, 0.5, -6);
+
+    const flameBob = Math.sin(time * 2) * 0.04;
+    nova64.scene.setPosition(flameMesh, laneX, 0.55 + flameBob, 0.4);
+
+    for (const e of embers) {
+      if (!e.active) continue;
+      const z = walkDist - e.spawnDist;
+      const bob = Math.sin(time * 1.6 + e.bobPhase) * 0.06;
+      nova64.scene.setPosition(e.mesh, e.laneX, 0.4 + bob, z);
+      nova64.scene.rotateMesh(e.mesh, 0, dt * 0.8, 0);
+      if (z > -1.2 && z < 1.2 && Math.abs(laneX - e.laneX) < EMBER_COLLECT_RADIUS) {
+        e.active = false;
+        kindled++;
+        nova64.scene.destroyMesh(e.mesh);
+        const flameScale = 1 + kindled * 0.18;
+        nova64.scene.setScale(flameMesh, flameScale, flameScale, flameScale);
+        if (flameMesh.material) flameMesh.material.emissiveIntensity = 1.7 + kindled * 0.3;
+        // A bigger, brighter burst than before — more "arcade pickup," less
+        // a quiet acknowledgment.
         sparkleEmitter.x = w / 2;
         sparkleEmitter.y = h * 0.5;
-        sparkleEmitter.rate = next.special ? 500 : 300;
-        nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 30);
+        sparkleEmitter.rate = 420;
+        nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 22);
         sparkleEmitter.rate = 0;
-        // The hidden rarity gets its own moment before falling back to the
-        // running counter on the next tap.
-        chapterCtx?.setCaption(next.special ? '✦ This one feels different ✦' : combCaption());
-        if (foundCount >= STONE_COUNT) setBeat('rest');
-      } else {
-        // A miss still gets an immediate, visible response at the exact
-        // touch point, scaled by how close the nearest stone actually was —
-        // a tap never just silently does nothing, which is what made the
-        // search feel broken/unclear rather than merely "not there yet."
-        const nearProximity = closest ? Math.max(0, 1 - closestDist / (ZONE_RADIUS * 3)) : 0;
-        probeEmitter.x = px;
-        probeEmitter.y = py;
-        probeEmitter.rate = 60 + nearProximity * 200;
-        nova64.fx.updateEmitter2D(probeEmitter, 1 / 20);
-        probeEmitter.rate = 0;
+      } else if (z > 1.6) {
+        e.active = false;
+        nova64.scene.destroyMesh(e.mesh);
       }
     }
+
+    if (walkDist >= WALK_DISTANCE) setBeat('flare');
     return;
   }
 
-  if (beat === 'rest') {
-    if (beatTime >= REST_HOLD_SECONDS && nova64.input.mousePressed?.()) {
-      // A gentle acknowledgment before the actual completion call — the old
-      // version called complete() directly on tap with no feedback, so a
-      // second impatient tap (waiting on the network round trip) fired a
-      // second completion request the server correctly rejected as a
-      // conflict. Now the tap always gets an immediate visible response.
-      sparkleEmitter.x = w / 2;
-      sparkleEmitter.y = h * 0.55;
-      sparkleEmitter.rate = 220;
-      nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 25);
-      sparkleEmitter.rate = 0;
-      setBeat('closing');
+  if (beat === 'flare') {
+    if (flare) {
+      flare.t += dt;
+      const f = Math.min(1, flare.t / flare.duration);
+      const y = flare.startY + f * 9;
+      const z = 0.4 - f * 2;
+      nova64.scene.setPosition(flare.mesh, flare.laneX, y, z);
+      nova64.scene.setPosition(flare.glowMesh, flare.laneX, y, z);
+
+      // Core grows through the first half then holds bright until the very
+      // end, where both it and the halo fade together.
+      const growF = Math.min(1, f / 0.5);
+      const coreScale = 1 + Math.sin((growF * Math.PI) / 2) * 0.9;
+      nova64.scene.setScale(flare.mesh, coreScale, coreScale, coreScale);
+      if (flare.mesh.material) flare.mesh.material.opacity = f < 0.75 ? 1 : 1 - (f - 0.75) / 0.25;
+
+      // The halo keeps expanding and softening the whole time — this is
+      // what actually sells "glowing," not just a bright opaque ball.
+      const glowScale = 1 + f * 2 + Math.sin(time * 8) * 0.06;
+      nova64.scene.setScale(flare.glowMesh, glowScale, glowScale, glowScale);
+      if (flare.glowMesh.material) flare.glowMesh.material.opacity = 0.45 * (1 - f * 0.55);
+
+      const fw = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
+      const fh = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+      flareEmitter.x = fw / 2;
+      flareEmitter.y = fh * (0.5 - f * 0.15);
+      flareEmitter.rate = 90;
+      nova64.fx.updateEmitter2D(flareEmitter, dt);
+
+      if (f >= 1) {
+        nova64.scene.destroyMesh(flare.mesh);
+        nova64.scene.destroyMesh(flare.glowMesh);
+        flare = null;
+        flareEmitter.rate = 0;
+        setBeat('closing');
+      }
     }
     return;
   }
@@ -582,7 +545,7 @@ export function update(dt: number) {
   if (beat === 'closing') {
     if (beatTime >= CLOSING_SECONDS && !completeSent) {
       completeSent = true;
-      void chapterCtx?.complete({ discovered: ['coastal-signal:chapter-02:settled'] });
+      void chapterCtx?.complete({ discovered: ['coastal-signal:chapter-02:answered'] });
     }
   }
 }
@@ -594,24 +557,5 @@ export function draw() {
   nova64.fx.drawEmitter2D(dustEmitter);
   nova64.fx.drawEmitter2D(foamEmitter);
   nova64.fx.drawEmitter2D(sparkleEmitter);
-  nova64.fx.drawEmitter2D(probeEmitter);
-
-  // The scanner reticle — the one thing that makes the search legible as a
-  // search rather than blind tapping. Converted from the fixed 640x360
-  // input space to real screen pixels, same conversion Chapter One's camera
-  // icon uses.
-  if (beat === 'comb') {
-    const w = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-    const h = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
-    const rx = (reticleX / INPUT_W) * w;
-    const ry = (reticleY / INPUT_H) * h;
-    const r = 16 * Math.max(0.8, Math.min(2, w / 700));
-    // packColor's alpha is 0-255, not 0-1 — 204 ≈ 80% opacity.
-    const reticleColor = packColor(0xffffff, 204);
-    nova64.draw.circle(rx, ry, r, reticleColor, false);
-    nova64.draw.rectfill(rx - 1, ry - r * 1.6, 2, r * 0.8, reticleColor);
-    nova64.draw.rectfill(rx - 1, ry + r * 0.8, 2, r * 0.8, reticleColor);
-    nova64.draw.rectfill(rx - r * 1.6, ry - 1, r * 0.8, 2, reticleColor);
-    nova64.draw.rectfill(rx + r * 0.8, ry - 1, r * 0.8, 2, reticleColor);
-  }
+  nova64.fx.drawEmitter2D(flareEmitter);
 }

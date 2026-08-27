@@ -66,6 +66,17 @@ interface OceanTile {
   baseX: number;
   baseZ: number;
   baseY: number;
+  // Each tile's own small independent bob (own phase/speed/amplitude,
+  // unrelated to the shared wave-field) — the actual technique a well-known
+  // reference ocean implementation uses (per-vertex randomised angle/
+  // amplitude/speed on a flat-shaded, modestly-subdivided plane) rather
+  // than a smooth continuous shader surface. Applied on top of the shared
+  // wave height so neighbouring tiles don't move in perfect lockstep,
+  // which is what actually reads as glittering water instead of one
+  // uniform surface undulating as a block.
+  jitterPhase: number;
+  jitterSpeed: number;
+  jitterAmp: number;
 }
 
 function lerpChannel(a: number, b: number, t: number): number {
@@ -106,16 +117,16 @@ function createWaterTextureDataUrl(colorDeep: number, colorShallow: number, rand
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 2;
-  const streakCount = 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 3;
+  const streakCount = 10;
   for (let i = 0; i < streakCount; i++) {
     const baseY = ((i + 0.5) / streakCount) * size;
     const phase = rand() * Math.PI * 2;
-    ctx.globalAlpha = 0.25 + rand() * 0.35;
+    ctx.globalAlpha = 0.35 + rand() * 0.4;
     ctx.beginPath();
     for (let x = 0; x <= size; x += 8) {
-      const y = baseY + Math.sin(x * 0.08 + phase) * 7;
+      const y = baseY + Math.sin(x * 0.08 + phase) * 8;
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -123,8 +134,8 @@ function createWaterTextureDataUrl(colorDeep: number, colorShallow: number, rand
   }
 
   ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  const flecks = 40;
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  const flecks = 70;
   for (let i = 0; i < flecks; i++) {
     const x = rand() * size;
     const y = rand() * size;
@@ -213,14 +224,28 @@ export class OceanSurface {
         // fixed emissive floor (kept ≤0.5 so it does NOT tip into the
         // holographic branch) still guarantees the surface is never fully
         // black in deep shadow, without dominating the diffuse response.
+        // flatShading is what a faceted low-poly water surface actually
+        // relies on — every other low-poly object in this project already
+        // uses it (clouds, peaks, cliffs, shells); the ocean tiles never
+        // had it, which is a real part of why they read as flatter/duller
+        // than everything else instead of catching light per-facet.
         const mesh = nova64.scene.createPlane(tileW, tileD, colorShallow, [baseX, originY, baseZ], {
           emissive: colorDeep,
-          emissiveIntensity: 0.35,
+          emissiveIntensity: 0.44,
+          flatShading: true,
           transparent: opacity < 1,
           opacity,
         });
         nova64.scene.setRotation(mesh, -Math.PI / 2, 0, 0);
-        this.tiles.push({ mesh, baseX, baseZ, baseY: originY });
+        this.tiles.push({
+          mesh,
+          baseX,
+          baseZ,
+          baseY: originY,
+          jitterPhase: rand() * Math.PI * 2,
+          jitterSpeed: 1.4 + rand() * 1.8,
+          jitterAmp: 0.04 + rand() * 0.07,
+        });
       }
     }
 
@@ -243,7 +268,11 @@ export class OceanSurface {
     for (const t of this.tiles) {
       const h = oceanHeight(t.baseX, t.baseZ, time, this.waveHeight);
       const slope = oceanSlope(t.baseX, t.baseZ, time, this.waveHeight, this.slopeSampleEps);
-      nova64.scene.setPosition(t.mesh, t.baseX, t.baseY + h, t.baseZ);
+      // Each tile's own independent bob, layered on top of the shared wave
+      // shape — small enough not to break the overall swell, but enough
+      // that neighbouring tiles are never in perfect lockstep.
+      const jitter = Math.sin(time * t.jitterSpeed + t.jitterPhase) * t.jitterAmp;
+      nova64.scene.setPosition(t.mesh, t.baseX, t.baseY + h + jitter, t.baseZ);
       // Tilt the tile to roughly match the wave surface's local slope at
       // its centre — kept gentle (not a 1:1 match to the raw slope) so
       // tiles stay closer to coplanar with their neighbours instead of
