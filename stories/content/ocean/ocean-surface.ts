@@ -155,6 +155,14 @@ export class OceanSurface {
   private colorDeep: number;
   private colorShallow: number;
   private foamColor: number;
+  // A single large, flat, static plane well beyond the detailed tile grid —
+  // the grid only needs to cover where the camera actually looks closely;
+  // this backdrop means there's always water-coloured surface extending far
+  // past the grid's own edges instead of a visible boundary where the
+  // tiles just stop. Never animated (no wave motion, no jitter) since at
+  // that distance it reads the same either way and animating it would be
+  // wasted cost.
+  private horizonMesh: any = null;
   // Sampled well wider than the tile spacing, so slope reflects the
   // dominant long-wavelength swell rather than short-wavelength ripple —
   // keeps neighbouring tiles agreeing with each other on which way they're
@@ -248,6 +256,20 @@ export class OceanSurface {
         });
       }
     }
+
+    // Positioned safely below the lowest point any tile could dip to (wave
+    // + jitter combined) so it never pokes through the animated tiles near
+    // the camera — it's only ever visible past the detailed grid's edges.
+    const horizonSize = Math.max(width, depth) * 6;
+    const lowestTileDip = waveHeight * 1.1 + 0.12;
+    this.horizonMesh = nova64.scene.createPlane(
+      horizonSize,
+      horizonSize,
+      colorDeep,
+      [originX, originY - lowestTileDip, originZ],
+      { emissive: colorDeep, emissiveIntensity: 0.4, flatShading: true },
+    );
+    nova64.scene.setRotation(this.horizonMesh, -Math.PI / 2, 0, 0);
 
     const textureUrl = createWaterTextureDataUrl(colorDeep, colorShallow, rand);
     if (textureUrl) {

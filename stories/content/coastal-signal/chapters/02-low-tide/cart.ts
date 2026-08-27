@@ -171,7 +171,12 @@ export function init() {
     const cx = Math.cos(cliffAngle) * cliffDist;
     const cz = Math.sin(cliffAngle) * cliffDist - 8;
     const cliffColor = hsvToHex((baseHue - 0.2 + (rand() - 0.5) * 0.06 + 1) % 1, 0.25 + rand() * 0.12, 0.32 + rand() * 0.15);
-    const mesh = nova64.scene.createCone(height * (0.5 + rand() * 0.25), height, cliffColor, [cx, -0.6 + height / 2, cz], {
+    // Anchored well below the tide's lowest possible point (same fix as
+    // Chapter One's peaks) — a fixed base at -0.6 sat only just above the
+    // water's own oscillation range, and once per-tile jitter was added to
+    // the ocean, some cliffs' bases would dip visibly above the locally
+    // troughed water, reading as floating instead of rising out of it.
+    const mesh = nova64.scene.createCone(height * (0.5 + rand() * 0.25), height, cliffColor, [cx, -1.4 + height / 2, cz], {
       flatShading: true,
       roughness: 0.95,
       segments: 6,
@@ -296,10 +301,16 @@ export function init() {
   // enableLowPolyMode's own bloom preset (strength 0.4, threshold 0.7) is
   // quite conservative — fine for a plain scene, but it meant the embers
   // and flame only ever glowed faintly during the walk, with the one-off
-  // strength bump at the climax the only real "glow" moment. A properly
-  // permissive threshold here means the light effects actually read as
-  // glowing throughout, not just at the very end.
-  nova64.fx.enableBloom(1.3, 0.45, 0.5);
+  // strength bump at the climax the only real "glow" moment. The first fix
+  // for that (threshold 0.5) repeated a mistake already made and corrected
+  // in Chapter One: combined with how bright this chapter's ambient light
+  // and sky/water now are, a threshold that permissive caught nearly the
+  // whole frame, not just the intended light sources — bloom washing
+  // everything out is exactly what a too-low threshold does. Threshold
+  // back up near Chapter One's own corrected value, selective to genuinely
+  // emissive things (embers, flame, flare) rather than the general
+  // ambient-lit scene.
+  nova64.fx.enableBloom(1.2, 0.4, 0.8);
 
   foamEmitter = nova64.fx.createEmitter2D({
     blendMode: 'add',

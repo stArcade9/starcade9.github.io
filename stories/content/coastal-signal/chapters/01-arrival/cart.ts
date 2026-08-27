@@ -420,8 +420,12 @@ export function init() {
     const height = peakType === 'crystal' ? 9 + rand() * 11 : 6 + rand() * 12;
     const radius = peakType === 'crystal' ? height * (0.16 + rand() * 0.09) : height * (0.45 + rand() * 0.25);
     const color =
+      // A wide, fully-random hue (not a narrow band near one fixed offset)
+      // and real saturation — the old 0.15 saturation made every pyramid
+      // read as a similar pale, nearly colourless silver regardless of the
+      // random hue underneath it.
       peakType === 'pyramid'
-        ? hsvToHex((hue + 0.5 + (rand() - 0.5) * 0.08 + 1) % 1, 0.15, 0.88)
+        ? hsvToHex(rand(), 0.55 + rand() * 0.3, 0.8 + rand() * 0.15)
         : peakType === 'crystal'
           ? hsvToHex((hue + 0.38 + rand() * 0.22 + 1) % 1, 0.55 + rand() * 0.25, 0.78 + rand() * 0.18)
           : hsvToHex((hue - 0.18 + (rand() - 0.5) * 0.06 + 1) % 1, 0.32 + rand() * 0.15, 0.3 + rand() * 0.15);
