@@ -64,7 +64,17 @@ const WALK_SPEED = 2.4; // world units/sec — a walking pace, not a rail-ride p
 const WALK_LATERAL_RANGE = 3.2;
 const EMBER_COUNT = 8;
 const WALK_DISTANCE = 52; // total shoreline distance for the walk beat
-const EMBER_COLLECT_RADIUS = 1.05;
+// Embers are magnetic rather than merely collidable: get near one and it
+// pulls free of the sand and comes to you, then binds into the flame you're
+// carrying. The attract radius is deliberately well under the full lateral
+// span (2 * WALK_LATERAL_RANGE), so steering toward one still matters — this
+// makes the walk forgiving and tactile, not automatic.
+const EMBER_ATTRACT_RADIUS = 2.8;
+const EMBER_BIND_RADIUS = 0.4;
+// The bind itself: one swell, a colour shift from its own ember hue into the
+// flame's amber, and a fade — the moment the light stops being its own and
+// becomes part of yours.
+const EMBER_BIND_SECONDS = 0.7;
 
 let time = 0;
 let beatTime = 0;
@@ -99,12 +109,22 @@ let walkSteer = 0;
 let kindled = 0;
 let flameMesh: any = null;
 
+// waiting → sitting in the sand on its own lane; drawn → pulled loose and
+// travelling toward the carried flame; binding → merging into it (the pulse,
+// colour shift and fade). Live x/y/z are tracked per ember because once one
+// is drawn it no longer sits on its lane and can't be derived from walkDist.
+type EmberPhase = 'waiting' | 'drawn' | 'binding';
 interface Ember {
   mesh: any;
   laneX: number;
   spawnDist: number;
-  active: boolean;
+  phase: EmberPhase;
   bobPhase: number;
+  x: number;
+  y: number;
+  z: number;
+  bindT: number;
+  color: number;
 }
 let embers: Ember[] = [];
 
@@ -163,6 +183,18 @@ let waveTimer = WAVE_INTERVAL_SECONDS * 0.5;
 let waveFlashTimer = 0;
 
 let ocean: OceanSurface | null = null;
+
+// Straight per-channel blend between two packed 0xRRGGBB colours — used to
+// carry an ember's own hue over into the flame's amber as it binds.
+function mixColor(a: number, b: number, t: number): number {
+  const ar = (a >> 16) & 0xff;
+  const ag = (a >> 8) & 0xff;
+  const ab = a & 0xff;
+  const r = Math.round(ar + (((b >> 16) & 0xff) - ar) * t);
+  const g = Math.round(ag + (((b >> 8) & 0xff) - ag) * t);
+  const bl = Math.round(ab + ((b & 0xff) - ab) * t);
+  return (r << 16) | (g << 8) | bl;
+}
 
 function hsvToHex(h: number, s: number, v: number): number {
   const i = Math.floor(h * 6);
@@ -306,11 +338,30 @@ export function init() {
     const laneX = side * (0.8 + rand() * (WALK_LATERAL_RANGE - 0.8));
     const spawnDist = 8 + (i / EMBER_COUNT) * (WALK_DISTANCE - 12) + rand() * 3;
     const emberColor = hsvToHex((0.1 + rand() * 0.06 + 1) % 1, 0.7 + rand() * 0.2, 1);
-    const mesh = nova64.scene.createSphere(0.13, emberColor, [laneX, 0.4, -spawnDist], 5, {
-      emissive: emberColor,
-      emissiveIntensity: 1.7,
+    // Its own material (see own-material.ts): each ember animates its glow
+    // while being drawn in, then shifts colour and fades as it binds, and is
+    // destroyed afterwards — all three of which go wrong on a shared one.
+    const mesh = ownMaterial(
+      nova64.scene.createSphere(0.13, emberColor, [laneX, 0.4, -spawnDist], 5, {
+        emissive: emberColor,
+        emissiveIntensity: 1.7,
+        transparent: true,
+        opacity: 1,
+      }),
+      1.7
+    );
+    embers.push({
+      mesh,
+      laneX,
+      spawnDist,
+      phase: 'waiting',
+      bobPhase: rand() * Math.PI * 2,
+      x: laneX,
+      y: 0.4,
+      z: -spawnDist,
+      bindT: 0,
+      color: emberColor,
     });
-    embers.push({ mesh, laneX, spawnDist, active: true, bobPhase: rand() * Math.PI * 2 });
   }
 
   // Driftwood and shells scattered around the sand — non-interactive set
@@ -852,30 +903,91 @@ export function update(dt: number) {
     trailEmitter.rate = 30;
     nova64.fx.updateEmitter2D(trailEmitter, dt);
 
-    for (const e of embers) {
-      if (!e.active) continue;
-      const z = walkDist - e.spawnDist;
-      const bob = Math.sin(time * 1.6 + e.bobPhase) * 0.06;
-      nova64.scene.setPosition(e.mesh, e.laneX, 0.4 + bob, z);
-      nova64.scene.rotateMesh(e.mesh, 0, dt * 0.8, 0);
-      if (z > -1.2 && z < 1.2 && Math.abs(laneX - e.laneX) < EMBER_COLLECT_RADIUS) {
-        e.active = false;
-        kindled++;
-        nova64.scene.destroyMesh(e.mesh);
-        const flameScale = 1 + kindled * 0.18;
-        nova64.scene.setScale(flameMesh, flameScale, flameScale, flameScale);
-        if (flameMesh.material) flameMesh.material.emissiveIntensity = 1.7 + kindled * 0.3;
-        // A bigger, brighter burst than before — more "arcade pickup," less
-        // a quiet acknowledgment.
-        sparkleEmitter.x = w / 2;
-        sparkleEmitter.y = h * 0.5;
-        sparkleEmitter.rate = 420;
-        nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 22);
-        sparkleEmitter.rate = 0;
-      } else if (z > 1.6) {
-        e.active = false;
-        nova64.scene.destroyMesh(e.mesh);
+    // The flame's live world position — everything an ember does once it's
+    // been pulled loose is measured against this, not against the lane.
+    const flameY = 0.55 + flameBob;
+    const flameZ = 0.4;
+
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i]!;
+      const mat = e.mesh.material;
+
+      if (e.phase === 'waiting') {
+        // Still sitting where the tide left it, riding the shoreline toward
+        // the walker.
+        e.x = e.laneX;
+        e.y = 0.4 + Math.sin(time * 1.6 + e.bobPhase) * 0.06;
+        e.z = walkDist - e.spawnDist;
+        nova64.scene.rotateMesh(e.mesh, 0, dt * 0.8, 0);
+
+        const dx = flameX - e.x;
+        const dy = flameY - e.y;
+        const dz = flameZ - e.z;
+        if (Math.sqrt(dx * dx + dy * dy + dz * dz) < EMBER_ATTRACT_RADIUS) {
+          e.phase = 'drawn';
+        } else if (e.z > 1.6) {
+          // Walked past without ever coming into range — this one stays lost.
+          nova64.scene.destroyMesh(e.mesh);
+          embers.splice(i, 1);
+          continue;
+        }
+      } else if (e.phase === 'drawn') {
+        const dx = flameX - e.x;
+        const dy = flameY - e.y;
+        const dz = flameZ - e.z;
+        const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-4;
+        // Accelerating pull rather than a constant-speed tween — it hesitates,
+        // then rushes the last stretch, which is what reads as magnetic.
+        const closeness = 1 - Math.min(1, d / EMBER_ATTRACT_RADIUS);
+        const pull = Math.min(1, dt * (2.2 + closeness * 9));
+        e.x += dx * pull;
+        e.y += dy * pull;
+        e.z += dz * pull;
+        // Spins up and brightens the closer it gets — it's waking up.
+        nova64.scene.rotateMesh(e.mesh, 0, dt * (1.5 + closeness * 6), 0);
+        if (mat) mat.emissiveIntensity = 1.7 + closeness * 1.8;
+
+        if (d < EMBER_BIND_RADIUS) {
+          e.phase = 'binding';
+          e.bindT = 0;
+          kindled++;
+          const flameScale = 1 + kindled * 0.18;
+          nova64.scene.setScale(flameMesh, flameScale, flameScale, flameScale);
+          if (flameMesh.material) flameMesh.material.emissiveIntensity = 1.7 + kindled * 0.3;
+          sparkleEmitter.x = w / 2;
+          sparkleEmitter.y = h * 0.5;
+          sparkleEmitter.rate = 420;
+          nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 22);
+          sparkleEmitter.rate = 0;
+        }
+      } else {
+        // Bound: locked to the flame, swelling once, turning its colour, and
+        // fading out into it.
+        e.bindT += dt;
+        const f = Math.min(1, e.bindT / EMBER_BIND_SECONDS);
+        e.x = flameX;
+        e.y = flameY;
+        e.z = flameZ;
+        const swell = 1 + Math.sin(f * Math.PI) * 1.6;
+        nova64.scene.setScale(e.mesh, swell, swell, swell);
+        nova64.scene.rotateMesh(e.mesh, 0, dt * 7, 0);
+        if (mat) {
+          const blended = mixColor(e.color, signalColor, f);
+          mat.color?.setHex?.(blended);
+          mat.emissive?.setHex?.(blended);
+          mat.emissiveIntensity = 1.7 + Math.sin(f * Math.PI) * 3.4;
+          // Eased so it holds its brightness through the swell and then goes
+          // quickly, rather than dimming from the first frame.
+          mat.opacity = 1 - f * f;
+        }
+        if (f >= 1) {
+          nova64.scene.destroyMesh(e.mesh);
+          embers.splice(i, 1);
+          continue;
+        }
       }
+
+      nova64.scene.setPosition(e.mesh, e.x, e.y, e.z);
     }
 
     if (walkDist >= WALK_DISTANCE) setBeat('spirit');

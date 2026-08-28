@@ -127,11 +127,26 @@ Two constraints worth knowing before writing a new chapter's interaction:
 
 Chapter Two is a continuous shoreline walk (same drag/arrow steering as
 Chapter One's rail-ride): embers of the signal are scattered along the
-route, and walking near one gathers it into a carried flame that grows with
-each pickup, climaxing in the flame flaring up to answer the signal back —
-mirroring Chapter One's falling light with a rising one. Collection is
-proximity-based (walk near an ember) rather than a tap-and-hit-test, which
-is also how it works around the no-release-event constraint above.
+route, and gathering them feeds a carried flame that grows with each one,
+climaxing in the flame flaring up to answer the signal back — mirroring
+Chapter One's falling light with a rising one.
+
+Embers are **magnetic**, in three phases (`EmberPhase` in the cart):
+
+- `waiting` — sitting on its own lane, riding the shoreline toward you.
+- `drawn` — inside `EMBER_ATTRACT_RADIUS`, it pulls free of the sand and
+  travels to the flame under an *accelerating* pull (it hesitates, then
+  rushes the last stretch — a constant-speed tween doesn't read as magnetic),
+  spinning up and brightening as it closes.
+- `binding` — locked to the flame: one swell, its own hue crossfading into
+  the flame's amber, and an eased fade out into it. This is the moment the
+  light stops being its own and becomes part of yours, and it's when the
+  flame actually grows.
+
+The attract radius is deliberately well under the full lateral span, so
+steering toward an ember still matters — the walk is forgiving and tactile,
+not automatic. Note this is proximity-based rather than a tap-and-hit-test,
+which is also how it sidesteps the no-release-event constraint above.
 
 ### The ocean spirit (Chapter Two's `spirit` beat)
 
