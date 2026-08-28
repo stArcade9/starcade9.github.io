@@ -19,6 +19,7 @@
 import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { OceanSurface } from '../../../ocean/ocean-surface';
+import { ownMaterial } from '../../../own-material';
 
 declare const nova64: any;
 
@@ -162,24 +163,6 @@ let waveTimer = WAVE_INTERVAL_SECONDS * 0.5;
 let waveFlashTimer = 0;
 
 let ocean: OceanSurface | null = null;
-
-// createSphere/createCapsule hand back materials from a shared engine-side
-// cache keyed on colour/transparency/opacity — and notably *not* on
-// emissiveIntensity. Left alone, every spirit part built from the same colour
-// and opacity would share one material instance: the per-part glow variation
-// would collapse to whichever value happened to be set first, the per-frame
-// fade would bleed between parts, and destroying her at the end of the beat
-// would dispose a material the cache still hands out to meshes created later.
-// Giving each part its own clone avoids all three at once.
-function ownMaterial(mesh: any, glow: number) {
-  const cached = mesh?.material;
-  if (cached?.clone) {
-    const mat = cached.clone();
-    mat.emissiveIntensity = glow;
-    mesh.material = mat;
-  }
-  return mesh;
-}
 
 function hsvToHex(h: number, s: number, v: number): number {
   const i = Math.floor(h * 6);

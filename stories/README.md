@@ -166,26 +166,47 @@ Two things worth knowing before editing her:
 
 ### Prologue cinematics ("forgotten cartridge")
 
-Both chapters open on a short in-engine cold-open before the ride/walk
-begins, built entirely with existing `nova64` primitives — no separate
-overlay, video, or slide system, and no new engine API. The pattern (see
-`setWorldVisible`, the `prologue1`-`prologue4` beats, and the `targetAmbient`
-lerp at the top of each chapter's `update()`) is the same in both chapters:
+Both chapters open on an in-engine cold-open before the ride/walk begins,
+built entirely with existing `nova64` primitives — no separate overlay,
+video, or slide system, and no new engine API. The shared skeleton (see
+`setWorldVisible`, the `prologueN` beats, and the `targetAmbient` lerp at the
+top of each chapter's `update()`) is:
 
 1. Ambient light starts near black; every emissive prop in the scene (ship
    glows, embers, planets, fly-through rings, point lights, etc.) is hidden
    via `setWorldVisible(false)` — dimming ambient alone isn't enough, since
    emissive materials ignore ambient light and would otherwise stay visible
    as a cluttered mess of glowing bits in the dark.
-2. A single small pulsing spark and a deliberately-composed close-up camera
-   shot (explicit `setCameraPosition`/`setCameraTarget` — never the engine's
-   unset default) carry four caption beats that build the throughline: this
-   cartridge is real lost hardware, lost near this coast, still faintly
-   transmitting; the chapter is either catching its spark (Ch1) or giving
-   something back to it (Ch2).
+2. A deliberately-composed camera shot (explicit `setCameraPosition`/
+   `setCameraTarget` — never the engine's unset default) carries the caption
+   beats that build the throughline: this cartridge is real lost hardware,
+   lost near this coast, still faintly transmitting; the chapter is either
+   catching its spark (Ch1) or giving something back to it (Ch2).
 3. On the final beat, ambient lerps from ~0 up to the chapter's real
-   ambient target, the spark is destroyed, `setWorldVisible(true)` reveals
-   the world, and the chapter's normal beat sequence begins.
+   ambient target, the prologue props are destroyed, `setWorldVisible(true)`
+   reveals the world, and the chapter's normal beat sequence begins.
+
+Chapter One's is the more elaborate of the two — five beats staged as a
+cartridge failing to boot, with a continuous slow camera dolly eased on total
+prologue time (*not* `beatTime`, which resets per beat and would make the push
+restart with every caption):
+
+- A decaying `enableGlitch` pass, plus a `glitchBurst` sting on the cut into
+  gameplay — a corrupted picture that cleans up as the signal locks in is the
+  most direct possible read of "lost before it finished loading."
+- The spark flickers on layered frequencies with a periodic dropout rather
+  than a clean sine, so it reads as failing hardware, not a tidy pulse.
+- Shards of the cartridge orbit it, drift wide as the loss is described, then
+  draw back in and fade into it on the final beat.
+- The **boardwalk** fades up on the horizon as a string of unevenly twinkling
+  warm bulbs — the only warm colour in an otherwise cold opening, and the
+  thread the ocean spirit picks up in Chapter Two.
+- Sonar rings ping outward from the spark toward those lights once they're
+  visible, so the shot reads as *signalling toward the shore*.
+
+Note that all of these props animate material properties per frame and are
+destroyed together at the reveal, so they each take `ownMaterial` — see the
+ocean-spirit section above for why that matters.
 
 Extending this to a future chapter is mechanical: add the `prologueN` beats
 to that chapter's `Beat` type, port `setWorldVisible`/`targetAmbient`, and

@@ -13,6 +13,7 @@ import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
 import { OceanSurface } from '../../../ocean/ocean-surface';
+import { ownMaterial } from '../../../own-material';
 
 declare const nova64: any;
 
@@ -57,12 +58,24 @@ const WAVE_INTERVAL = 24;
 const WAVE_STOP_BUFFER = 20;
 const WAVE_CLEAR_Z = 14;
 
-// prologue1-4 play once, before the ride itself begins — a short in-engine
-// "cartridge booting" cinematic (a dark scene with a single pulsing spark,
-// resolving up into the bright ride) establishing the "forgotten cartridge"
-// framing, built the same way every other beat in this file is: nova64's
-// own scene/light/caption APIs, no separate overlay or new routing.
-type Beat = 'prologue1' | 'prologue2' | 'prologue3' | 'prologue4' | 'intro' | 'ride' | 'rising' | 'ready' | 'climax';
+// prologue1-5 play once, before the ride itself begins — an in-engine cold
+// open staged as a cartridge struggling to boot: a dark void, one flickering
+// spark, fragments of itself knocked loose and orbiting, sonar pings going
+// out into the water, and the far-off lights of the boardwalk it never
+// reached. It stabilises and the world powers on into the ride. Built the
+// same way every other beat in this file is — nova64's own scene/light/fx/
+// caption APIs, no separate overlay, video, or new routing.
+type Beat =
+  | 'prologue1'
+  | 'prologue2'
+  | 'prologue3'
+  | 'prologue4'
+  | 'prologue5'
+  | 'intro'
+  | 'ride'
+  | 'rising'
+  | 'ready'
+  | 'climax';
 
 let beat: Beat = 'prologue1';
 let beatTime = 0;
@@ -74,6 +87,43 @@ let rand: () => number = Math.random;
 // the world dark and lerp up to this exact value rather than a guessed one.
 let targetAmbient = 1.15;
 let prologueSpark: any = null;
+// Total elapsed prologue time, kept separately from beatTime (which resets on
+// every beat) so the camera dolly and the signal's stabilisation can ease
+// continuously across the whole cold open rather than restarting each beat.
+let prologueTime = 0;
+
+// Fragments knocked loose from the cartridge, orbiting it — they drift wider
+// as the story of its loss is told, then draw back in and snap home on the
+// final beat as it finally gets an answer.
+interface Shard {
+  mesh: any;
+  angle: number;
+  speed: number;
+  radius: number;
+  y: number;
+  tilt: number;
+}
+let prologueShards: Shard[] = [];
+
+// Expanding rings pushed out from the spark — the cartridge still calling out
+// into the water, decades after anyone was listening.
+interface Ping {
+  mesh: any;
+  t: number;
+}
+let prologuePings: Ping[] = [];
+let pingTimer = 0;
+
+// The far-off boardwalk: a low string of warm lights on the horizon, faded in
+// once the prologue places the cartridge off *this* coast. Ties Chapter One's
+// cold open to what the ocean spirit says in Chapter Two — the pier lights and
+// the cartridge are the same impulse — and it's the only warm colour in an
+// otherwise cold, dark opening.
+let prologueLights: any[] = [];
+// Eased rather than set directly, so the shards' spread and the boardwalk's
+// glow move smoothly across beat boundaries instead of stepping.
+let shardSpread = 0.25;
+let lightsGlow = 0;
 
 let dist = 0;
 let steerX = 0;
@@ -256,15 +306,24 @@ function hsvToHex(h: number, s: number, v: number): number {
 }
 
 const RIDE_HINT_SECONDS = 3.2;
-const PROLOGUE1_SECONDS = 2.6;
-const PROLOGUE2_SECONDS = 2.6;
-const PROLOGUE3_SECONDS = 2.6;
-const PROLOGUE4_SECONDS = 2.8; // also the ambient-light reveal — see update()
+const PROLOGUE1_SECONDS = 3.0;
+const PROLOGUE2_SECONDS = 3.0;
+const PROLOGUE3_SECONDS = 3.2;
+const PROLOGUE4_SECONDS = 3.2;
+const PROLOGUE5_SECONDS = 3.0; // also the ambient-light reveal — see update()
+// Where the cold open is staged, well in front of the ride's own props so
+// nothing hidden behind it can clip through the shot.
+const PROLOGUE_Z = -4;
+// Total run of the cold open, used to ease the camera dolly and the signal's
+// stabilisation continuously across all five beats.
+const PROLOGUE_TOTAL_SECONDS =
+  PROLOGUE1_SECONDS + PROLOGUE2_SECONDS + PROLOGUE3_SECONDS + PROLOGUE4_SECONDS + PROLOGUE5_SECONDS;
 const BEAT_CAPTIONS: Record<Beat, string | null> = {
   prologue1: 'Every cartridge remembers something.',
   prologue2: 'This one was lost before it finished loading.',
-  prologue3: 'Somewhere off this coast, it never powered down.',
-  prologue4: 'Tonight, it finally got a signal back.',
+  prologue3: 'It went into the water off this coast, a mile short of the lights.',
+  prologue4: 'It has been calling ever since. Nobody was tuned to listen.',
+  prologue5: 'Tonight, somebody finally was.',
   intro: 'Something is reaching for you',
   // A brief one-time controls hint, then cleared once RIDE_HINT_SECONDS
   // passes (see update()) — after that, pure visuals, no HUD text.
@@ -820,22 +879,74 @@ export function init() {
     colors: [0xffffff, 0xbfe0ff],
   });
 
-  // The one thing visible in the dark prologue — a small, gently pulsing
-  // point of light (the cartridge, still trying). Destroyed once the world
-  // finishes revealing itself (end of prologue4, see update()).
-  prologueSpark = nova64.scene.createSphere(0.14, crestColor, [0, 1.2, -4], 6, {
-    emissive: crestColor,
-    emissiveIntensity: 1.6,
-  });
+  // --- Cold open staging (all destroyed at the reveal, end of prologue5) ---
 
-  // Every other ride prop hidden until the reveal (see setWorldVisible), and
-  // a deliberate, centred shot on the spark — the previous version never
-  // explicitly set a camera for the prologue at all, leaving it at
-  // whatever the engine's own unset default happened to be, which is very
-  // likely the real reason the opening looked wrong rather than composed.
+  // The cartridge itself: one small, unsteady point of light, still trying.
+  // Every mesh in this cold open takes its own material (see own-material.ts)
+  // — they all animate glow/opacity per frame and are destroyed together at
+  // the reveal, which is exactly what the engine's shared material cache
+  // handles badly.
+  prologueSpark = ownMaterial(
+    nova64.scene.createSphere(0.14, crestColor, [0, 1.2, PROLOGUE_Z], 8, {
+      emissive: crestColor,
+      emissiveIntensity: 1.6,
+    }),
+    1.6
+  );
+
+  // Fragments it lost on the way down, still circling it.
+  prologueShards = [];
+  for (let i = 0; i < 7; i++) {
+    const f = i / 7;
+    prologueShards.push({
+      mesh: ownMaterial(
+        nova64.scene.createCube(0.05 + rand() * 0.04, crestColor, [0, 1.2, PROLOGUE_Z], {
+          emissive: crestColor,
+          emissiveIntensity: 1.1,
+          transparent: true,
+          opacity: 0.85,
+        }),
+        1.1
+      ),
+      angle: f * Math.PI * 2 + rand() * 0.4,
+      speed: 0.5 + rand() * 0.5,
+      radius: 0.35 + rand() * 0.25,
+      y: 1.2 + (rand() - 0.5) * 0.5,
+      tilt: rand() * Math.PI,
+    });
+  }
+
+  // The boardwalk it never reached — a low string of warm lights, far off and
+  // deliberately small, the only warm thing in an otherwise cold opening.
+  prologueLights = [];
+  for (let i = 0; i < 16; i++) {
+    const f = i / 15;
+    prologueLights.push(
+      ownMaterial(
+        nova64.scene.createSphere(0.075, 0xffcf8a, [-9 + f * 18, 0.55 + Math.sin(f * 3.1) * 0.07, PROLOGUE_Z - 15], 5, {
+          emissive: 0xffcf8a,
+          emissiveIntensity: 2.2,
+          transparent: true,
+          opacity: 0,
+        }),
+        2.2
+      )
+    );
+  }
+
+  // Every ride prop hidden until the reveal (see setWorldVisible), and a
+  // deliberate, centred shot on the spark — the earliest version never set a
+  // camera for the prologue at all, leaving it at whatever the engine's unset
+  // default happened to be, which is what made the opening read as odd rather
+  // than composed. The camera now also dollies in across the beats (update()).
   setWorldVisible(false);
-  nova64.camera.setCameraPosition(0, 1.2, 1.5);
-  nova64.camera.setCameraTarget(0, 1.2, -4);
+  nova64.camera.setCameraPosition(0, 1.2, PROLOGUE_Z + 5.5);
+  nova64.camera.setCameraTarget(0, 1.2, PROLOGUE_Z);
+
+  // The signal arrives corrupted and settles as it stabilises — a decaying
+  // glitch pass is the most on-the-nose possible read of "a cartridge that
+  // was lost before it finished loading," and it costs one call per frame.
+  nova64.fx.enableGlitch?.(0.55);
 
   setBeat('prologue1');
 }
@@ -876,24 +987,138 @@ export function update(dt: number) {
   // gentle pulse on the one visible spark, and (on the final stage) the
   // ambient-light reveal. Everything else in update() below is the ride
   // itself and shouldn't run yet.
-  if (beat === 'prologue1' || beat === 'prologue2' || beat === 'prologue3' || beat === 'prologue4') {
+  if (
+    beat === 'prologue1' ||
+    beat === 'prologue2' ||
+    beat === 'prologue3' ||
+    beat === 'prologue4' ||
+    beat === 'prologue5'
+  ) {
+    prologueTime += dt;
+    const stageIndex =
+      beat === 'prologue1' ? 0 : beat === 'prologue2' ? 1 : beat === 'prologue3' ? 2 : beat === 'prologue4' ? 3 : 4;
+    const finale = stageIndex === 4;
+    const finaleF = finale ? Math.min(1, beatTime / PROLOGUE5_SECONDS) : 0;
+
+    // A slow push-in across the whole cold open — eased on total prologue
+    // time, not beatTime, so it glides continuously instead of restarting
+    // with every caption.
+    const dolly = Math.min(1, prologueTime / PROLOGUE_TOTAL_SECONDS);
+    const dollyEase = dolly * dolly * (3 - 2 * dolly);
+    nova64.camera.setCameraPosition(
+      Math.sin(prologueTime * 0.25) * 0.28,
+      1.2 + dollyEase * 0.18,
+      PROLOGUE_Z + 5.5 - dollyEase * 2.9
+    );
+    nova64.camera.setCameraTarget(0, 1.2, PROLOGUE_Z);
+
+    // The signal arrives corrupted and cleans up as it stabilises, dropping to
+    // nothing through the finale.
+    const glitch = finale ? 0.28 * (1 - finaleF) : 0.5 - dollyEase * 0.24;
+    nova64.fx.setGlitchIntensity?.(Math.max(0, glitch));
+
     if (prologueSpark) {
-      const pulse = 1 + Math.sin(beatTime * 3) * 0.25;
-      nova64.scene.setScale(prologueSpark, pulse, pulse, pulse);
+      // Deliberately not a clean sine: layered frequencies plus a periodic
+      // dropout, so it reads as failing hardware rather than a tidy pulse.
+      const dropout = Math.sin(prologueTime * 7.3) > 0.86 ? 0.35 : 1;
+      const flicker =
+        (0.82 + Math.sin(prologueTime * 3.1) * 0.18 + Math.sin(prologueTime * 11.7) * 0.06) * dropout;
+      // It steadies and swells as it finally gets through.
+      const strength = flicker * (1 + finaleF * 1.4);
+      nova64.scene.setScale(prologueSpark, strength, strength, strength);
+      if (prologueSpark.material) prologueSpark.material.emissiveIntensity = 1.6 + finaleF * 2.6;
     }
+
+    // Shards hold tight at first, drift wide as the story of the loss is
+    // told, then draw back in and snap home on the final beat.
+    const targetSpread = stageIndex === 0 ? 0.3 : finale ? 0.04 : 1;
+    shardSpread += (targetSpread - shardSpread) * Math.min(1, dt * (finale ? 3.4 : 1.9));
+    for (const s of prologueShards) {
+      s.angle += dt * s.speed * (finale ? 2.6 : 1);
+      const r = s.radius * shardSpread;
+      nova64.scene.setPosition(
+        s.mesh,
+        Math.cos(s.angle) * r,
+        1.2 + (s.y - 1.2) * shardSpread,
+        PROLOGUE_Z + Math.sin(s.angle) * r
+      );
+      nova64.scene.setRotation(s.mesh, s.tilt + prologueTime * s.speed, s.angle, 0);
+      if (s.mesh.material) {
+        // Fade out as they merge back in, so they vanish into the spark
+        // rather than popping out of existence at the reveal.
+        s.mesh.material.opacity = 0.85 * (finale ? 1 - finaleF : Math.min(1, stageIndex * 0.5));
+      }
+    }
+
+    // The boardwalk fades up once the prologue places the cartridge off this
+    // particular coast, and stays lit for the rest of the cold open.
+    const targetGlow = stageIndex >= 2 ? 0.95 : 0;
+    lightsGlow += (targetGlow - lightsGlow) * Math.min(1, dt * 1.1);
+    for (let i = 0; i < prologueLights.length; i++) {
+      const mesh = prologueLights[i];
+      if (!mesh.material) continue;
+      // Each bulb twinkles slightly out of step with its neighbours — a dead-
+      // even row of lights reads as a UI element, not a distant pier.
+      mesh.material.opacity = lightsGlow * (0.75 + Math.sin(prologueTime * 1.7 + i * 0.9) * 0.25);
+    }
+
+    // Sonar pings — the cartridge calling out — begin once the boardwalk is
+    // visible, so the shot reads as "it is signalling toward those lights."
+    if (stageIndex >= 2 && !finale) {
+      pingTimer -= dt;
+      if (pingTimer <= 0) {
+        pingTimer = 1.15;
+        prologuePings.push({
+          mesh: nova64.scene.createTorus(0.5, 0.022, crestColor, [0, 1.2, PROLOGUE_Z], {
+            emissive: crestColor,
+            emissiveIntensity: 1.7,
+            transparent: true,
+            opacity: 0.6,
+            radialSegments: 6,
+            tubularSegments: 28,
+          }),
+          t: 0,
+        });
+      }
+    }
+    for (let i = prologuePings.length - 1; i >= 0; i--) {
+      const p = prologuePings[i]!;
+      p.t += dt;
+      const pf = p.t / 2.6;
+      const scale = 0.35 + pf * 4.2;
+      nova64.scene.setScale(p.mesh, scale, scale, scale);
+      nova64.scene.setRotation(p.mesh, Math.PI / 2, 0, 0);
+      if (p.mesh.material) p.mesh.material.opacity = Math.max(0, 0.6 * (1 - pf));
+      if (pf >= 1) {
+        nova64.scene.destroyMesh(p.mesh);
+        prologuePings.splice(i, 1);
+      }
+    }
+
     if (beat === 'prologue1' && beatTime >= PROLOGUE1_SECONDS) setBeat('prologue2');
     else if (beat === 'prologue2' && beatTime >= PROLOGUE2_SECONDS) setBeat('prologue3');
     else if (beat === 'prologue3' && beatTime >= PROLOGUE3_SECONDS) setBeat('prologue4');
-    else if (beat === 'prologue4') {
+    else if (beat === 'prologue4' && beatTime >= PROLOGUE4_SECONDS) setBeat('prologue5');
+    else if (finale) {
       // The world "powers on" — ambient light lerps from the dark prologue
       // starting value up to its real target as this final stage plays.
-      const f = Math.min(1, beatTime / PROLOGUE4_SECONDS);
-      nova64.light.setAmbientLight(0xffffff, 0.05 + (targetAmbient - 0.05) * f);
-      if (f >= 1) {
+      nova64.light.setAmbientLight(0xffffff, 0.05 + (targetAmbient - 0.05) * finaleF);
+      if (finaleF >= 1) {
+        for (const s of prologueShards) nova64.scene.destroyMesh(s.mesh);
+        prologueShards = [];
+        for (const p of prologuePings) nova64.scene.destroyMesh(p.mesh);
+        prologuePings = [];
+        for (const mesh of prologueLights) nova64.scene.destroyMesh(mesh);
+        prologueLights = [];
         if (prologueSpark) {
           nova64.scene.destroyMesh(prologueSpark);
           prologueSpark = null;
         }
+        // One last hit of interference as the signal locks in and the ride
+        // snaps into existence — the cut into gameplay lands much harder with
+        // a sting on it than as a clean fade.
+        nova64.fx.glitchBurst?.(0.65, 0.32);
+        nova64.fx.disableGlitch?.();
         setWorldVisible(true);
         setBeat('intro');
       }
