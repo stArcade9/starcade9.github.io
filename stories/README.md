@@ -80,6 +80,27 @@ Every story lives side by side under `content/`, and the database's `experiences
 
 ## Chapter design notes
 
+### Tone & influences
+
+Read this as a hazy summer-night Santa Cruz boardwalk story first, a
+mystery second: salt air, arcade neon, a retro cartridge that shouldn't
+still work. The touchstone is a light hint of Stranger Things / Goonies /
+The Lost Boys — something a little uncanny hiding just under a familiar,
+sunlit beach town — but pitched toward wonder and discovery, not dread.
+Concretely, that means:
+
+- **Mystery, not menace.** The cartridge and the ocean spirit are secrets
+  worth finding, not threats to survive — no jump-scares, no danger to the
+  player, no "being hunted" framing. The energy is kids-on-bikes-at-night
+  curiosity, not horror.
+- **Keep the warm, sunlit visual register** even as the mythology gets
+  stranger. The 80s-adventure references are a mood, not a genre swap — this
+  should still look and feel like a bright coastal boardwalk, not a dark
+  Upside-Down palette.
+- **Nostalgia is the throughline**, for an 18-35 audience: real lost
+  hardware, a real coast, a game that still remembers something — the pull
+  is "this could almost be true," not spectacle for its own sake.
+
 **This is an interactive story/journey, not a scored game.** Any interaction
 mechanic in a chapter (steering, firing, searching, tapping) exists to make a
 narrative moment feel *felt* rather than just read — not to add scoring,
@@ -111,6 +132,37 @@ each pickup, climaxing in the flame flaring up to answer the signal back —
 mirroring Chapter One's falling light with a rising one. Collection is
 proximity-based (walk near an ember) rather than a tap-and-hit-test, which
 is also how it works around the no-release-event constraint above.
+
+### The ocean spirit (Chapter Two's `spirit` beat)
+
+Between the walk and the flare, the walk pauses and the ocean herself rises
+out of the water to explain why the coast, the boardwalk, and the cartridge
+are the same old impulse in three different ages — the story's thesis stated
+out loud, and the longest stretch of writing in it. Her last line ("send it
+back up, where I can see it") is what gives the flare that follows its
+motivation.
+
+Two things worth knowing before editing her:
+
+- **Her form is an original silhouette assembled from named primitives**
+  (~28 spheres and capsules): head, an inner face-glow, a flowing mane, a
+  tapered torso with a brighter "heart-light," jointed drifting arms, and a
+  lower body that dissolves into wisps instead of resolving into legs — she's
+  a ghost of the ocean and shouldn't be standing on it. Carts get no
+  custom-geometry or model-loading path, so this is built shape-by-shape. Each
+  part carries its own sway/bob phase; that independent drift is most of what
+  sells "suspended in water" over "a rigid prop." She fades up out of nothing
+  and dissolves back into it via a shared opacity ramp, and the whole figure
+  swells gently in time with each spoken line.
+- **Every part gets its own cloned material (`ownMaterial`).** The engine's
+  `createSphere`/`createCapsule` return materials from a shared cache keyed on
+  colour/transparency/opacity — and *not* on `emissiveIntensity`. Without the
+  clone, parts sharing a colour and opacity would silently share one material:
+  per-part glow would collapse to whichever value was set first, the per-frame
+  fade would bleed across parts, and destroying her at the end of the beat
+  would dispose a material the cache still hands out to meshes created later.
+  Any future cart that both animates material properties per-frame *and*
+  destroys the meshes afterward needs the same treatment.
 
 ### Prologue cinematics ("forgotten cartridge")
 
