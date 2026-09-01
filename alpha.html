@@ -93,26 +93,63 @@
 <div style="position:relative; width:100%; overflow:hidden; background:#0a0b10;">
 
   <!-- ================= HEADER ================= -->
-  <header style="position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px clamp(16px,4vw,40px); background:rgba(10,11,16,0.82); backdrop-filter:blur(10px); border-bottom:1px solid rgba(236,231,219,0.14);">
-    <a href="#top" aria-label="Nova64 home" style="display:flex; align-items:center; gap:11px; text-decoration:none;">
-      <span style="position:relative; display:inline-block; transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:26px; line-height:1; letter-spacing:0.01em;">
-        <span aria-hidden="true" style="position:absolute; left:-2px; top:1px; color:#ff2fb4;">Nova64</span>
-        <span aria-hidden="true" style="position:absolute; left:2px; top:-1px; color:#22e0c8;">Nova64</span>
-        <span style="position:relative; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span>
-      </span>
-      <span style="font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.5); letter-spacing:0.14em;">™ / FA-64</span>
-    </a>
-    <nav style="display:flex; align-items:center; gap:26px; font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;">
-      <a href="#what" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">What</a>
-      <a href="#features" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">Specs</a>
-      <a href="#demo" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">Demo</a>
-      <a href="#vault" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">Vault</a>
-      <a href="#pricing" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">Price</a>
-      <a href="#faq" style="text-decoration:none; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">FAQ</a>
-    </nav>
-    <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:8px; padding:11px 18px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 66%,90% 100%,0 100%);" style-hover="background:#5cf0dc;">
-      Buy Nova64
-    </button>
+  <header style="position:sticky; top:0; z-index:60; background:rgba(10,11,16,0.82); backdrop-filter:blur(10px); border-bottom:1px solid rgba(236,231,219,0.14);">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px clamp(16px,4vw,40px);">
+      <a href="#top" aria-label="Nova64 home" onClick="{{ closeMenu }}" style="display:flex; align-items:center; gap:11px; text-decoration:none; flex-shrink:0;">
+        <span style="position:relative; display:inline-block; transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:26px; line-height:1; letter-spacing:0.01em;">
+          <span aria-hidden="true" style="position:absolute; left:-2px; top:1px; color:#ff2fb4;">Nova64</span>
+          <span aria-hidden="true" style="position:absolute; left:2px; top:-1px; color:#22e0c8;">Nova64</span>
+          <span style="position:relative; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span>
+        </span>
+        <sc-if value="{{ showLogoSuffix }}" hint-placeholder-val="{{ true }}">
+          <span style="font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.5); letter-spacing:0.14em; white-space:nowrap;">™ / FA-64</span>
+        </sc-if>
+      </a>
+
+      <!-- Full nav, wide viewports only. Below navBreakpoint it is replaced by the
+           hamburger + drop panel further down, so the ten items never wrap into
+           the logo or squeeze the Buy CTA off the row. -->
+      <sc-if value="{{ navExpanded }}" hint-placeholder-val="{{ true }}">
+        <nav aria-label="Primary" style="display:flex; align-items:center; gap:20px; font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;">
+          <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">{{ n.label }}</a>
+          </sc-for>
+          <span aria-hidden="true" style="width:1px; height:13px; background:rgba(236,231,219,0.22);"></span>
+          <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+          </sc-for>
+        </nav>
+      </sc-if>
+
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+        <button onClick="{{ buy }}" style="{{ buyBtnStyle }}" style-hover="background:#5cf0dc;">
+          {{ buyLabel }}
+        </button>
+        <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toggleMenu }}" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" aria-controls="site-menu"
+                  style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:42px; height:38px; padding:0; background:transparent; border:1px solid rgba(236,231,219,0.24); cursor:pointer;"
+                  style-hover="border-color:#22e0c8;">
+            <span aria-hidden="true" style="{{ barTop }}"></span>
+            <span aria-hidden="true" style="{{ barMid }}"></span>
+            <span aria-hidden="true" style="{{ barBot }}"></span>
+          </button>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- Drop panel. Absolutely positioned against the sticky header so it overlays
+         the page instead of pushing the hero down when it opens. -->
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <nav id="site-menu" aria-label="Primary" style="position:absolute; left:0; right:0; top:100%; display:flex; flex-direction:column; padding:6px clamp(16px,4vw,40px) 16px; background:rgba(10,11,16,0.97); backdrop-filter:blur(14px); border-bottom:1px solid rgba(236,231,219,0.14); box-shadow:0 24px 46px rgba(0,0,0,0.55); max-height:calc(100svh - 62px); overflow-y:auto; font-family:'Space Mono',monospace; letter-spacing:0.1em; text-transform:uppercase;">
+        <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#ece7db;">{{ n.label }}</a>
+        </sc-for>
+        <div style="padding:16px 2px 6px; font-size:10px; letter-spacing:0.2em; color:rgba(236,231,219,0.4);">[ Explore ]</div>
+        <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+        </sc-for>
+      </nav>
+    </sc-if>
   </header>
 
   <!-- ================= HERO ================= -->
@@ -639,6 +676,11 @@
 //  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
 //  change every "Buy" button on the page.
 // ============================================================================
+// Width at which the ten-item nav stops fitting beside the logo and the Buy CTA
+// and collapses into the hamburger. Sits above iPad landscape (1024) so tablets
+// get the drop panel rather than a cramped, wrapping row.
+const NAV_BREAKPOINT = 1040;
+
 const CHECKOUT_URL = 'https://www.patreon.com/login?ru=https%3A%2F%2Fwww.patreon.com%2Fcheckout%2Fstarcade9%3Fpvid%3D5157631';
 
 class Component extends DCLogic {
@@ -655,13 +697,15 @@ class Component extends DCLogic {
     priceNote: 'Buy once. Create forever.',
     // Update CHECKOUT_URL (top of this script) to change every Buy button.
     checkoutUrl: CHECKOUT_URL,
-    demoUrl: 'https://nova64.io/demo',
+    // Was https://nova64.io/demo — that route does not exist and 404s.
+    // Points at the local player instead, which ships in this repo.
+    demoUrl: './player.html?demoscene=f-zero-nova-3d',
   };
 
   // heroPlaying / demoPlaying stay false until the visitor clicks — nothing
   // heavy (no Three.js/WebGPU iframe) loads on first paint, so the page is fast.
   // `code` holds the REAL source of the selected cart (examples/<id>/code.js).
-  state = { w: 1280, openFaq: 0, activeDemo: 'star-fox-nova-3d',
+  state = { w: 1280, openFaq: 0, activeDemo: 'star-fox-nova-3d', menuOpen: false,
     heroPlaying: false, demoPlaying: false, code: '', codeName: '' };
 
   // The hero runs F-Zero Nova; the demo section starts on Star Fox and swaps via
@@ -705,13 +749,27 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
-    const set = () => this.setState({ w: window.innerWidth });
+    // Widening past the breakpoint restores the full nav, so the drop panel has
+    // to close with it — otherwise it is left open and orphaned over the hero.
+    const set = () => {
+      const w = window.innerWidth;
+      if (w >= NAV_BREAKPOINT) this.setState({ w, menuOpen: false });
+      else this.setState({ w });
+    };
     set();
+    const onKey = (e) => { if (e.key === 'Escape') this.setState({ menuOpen: false }); };
     window.addEventListener('resize', set);
-    this._off = () => window.removeEventListener('resize', set);
+    window.addEventListener('keydown', onKey);
+    this._off = () => {
+      window.removeEventListener('resize', set);
+      window.removeEventListener('keydown', onKey);
+    };
     this._loadCode(this.state.activeDemo); // populate the code panel for the default cart
   }
   componentWillUnmount() { if (this._off) this._off(); }
+
+  toggleMenu = () => this.setState({ menuOpen: !this.state.menuOpen });
+  closeMenu = () => { if (this.state.menuOpen) this.setState({ menuOpen: false }); };
 
   // Route the buyer to Patreon login/checkout.
   buy = () => {
@@ -729,6 +787,44 @@ class Component extends DCLogic {
     const regularStr = fmt(this.cfg.regularPrice);
     const onSale = this.cfg.onSale;
     const showSticky = (this.props.showStickyCTA ?? true) && isMobile;
+
+    // ── Header ───────────────────────────────────────────────────────
+    // One source of truth for both the wide nav and the drop panel, so the two
+    // can never drift apart. `close` rides on each item because sc-for resolves
+    // handlers off the iterated item (same shape as the demo switcher below).
+    const navCollapsed = w < NAV_BREAKPOINT;
+    const menuOpen = navCollapsed && this.state.menuOpen;
+    const withClose = (a) => a.map((n) => ({ ...n, close: this.closeMenu }));
+    const navLinks = withClose([
+      { href: '#what',     label: 'What' },
+      { href: '#features', label: 'Specs' },
+      { href: '#demo',     label: 'Demo' },
+      { href: '#vault',    label: 'Vault' },
+      { href: '#pricing',  label: 'Price' },
+      { href: '#faq',      label: 'FAQ' },
+    ]);
+    const navApps = withClose([
+      { href: './console.html',         label: 'Console' },
+      { href: './os9-shell/index.html', label: 'OS' },
+      { href: './docs/index.html',      label: 'Docs' },
+    ]);
+
+    // Three bars that cross into an X while the panel is open.
+    const bar = 'display:block; width:19px; height:1.5px; background:#ece7db;'
+      + ' transition:transform .22s ease, opacity .16s ease;';
+    const barTop = bar + (menuOpen ? ' transform:translateY(5.5px) rotate(45deg);' : '');
+    const barMid = bar + (menuOpen ? ' opacity:0;' : '');
+    const barBot = bar + (menuOpen ? ' transform:translateY(-5.5px) rotate(-45deg);' : '');
+
+    // The CTA shrinks before it is ever allowed to wrap or push the burger off.
+    const tightCta = w < 560;
+    const buyBtnStyle = 'display:inline-flex; align-items:center; gap:8px;'
+      + ' padding:' + (tightCta ? '10px 14px' : '11px 18px') + ';'
+      + ' background:#22e0c8; color:#0a0b10; border:none; cursor:pointer;'
+      + " font-family:'Space Mono',monospace; font-weight:700;"
+      + ' font-size:' + (tightCta ? '11px' : '12px') + ';'
+      + ' letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap;'
+      + ' clip-path:polygon(0 0,100% 0,100% 66%,90% 100%,0 100%);';
     const headline = this.props.headline ?? 'Make tiny 3D games with retro soul.';
 
     const features = [
@@ -849,6 +945,14 @@ class Component extends DCLogic {
 
     return { headline, priceStr, regularStr, onSale, priceNote: this.cfg.priceNote, buy: this.buy, play: this.play,
       features, whyBuy, included, faqs, manifest, showSticky,
+      // header
+      navLinks, navApps, navCollapsed, navExpanded: !navCollapsed,
+      menuOpen, menuExpanded: menuOpen ? 'true' : 'false',
+      menuLabel: menuOpen ? 'Close menu' : 'Open menu',
+      toggleMenu: this.toggleMenu, closeMenu: this.closeMenu,
+      barTop, barMid, barBot, buyBtnStyle,
+      buyLabel: tightCta ? 'Buy' : 'Buy Nova64',
+      showLogoSuffix: w >= 420,
       demos, demoSrc, heroSrc, activeDemoLabel: activeMeta.label,
       // hero viewport (deferred)
       heroPlaying, heroIdle: !heroPlaying, startHero: this.startHero,
