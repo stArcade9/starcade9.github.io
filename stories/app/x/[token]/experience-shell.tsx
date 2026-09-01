@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ExperienceState } from '@/lib/experience';
 import { deriveChapterSeed, deriveExperienceSeed } from '@/lib/seed';
 import type { ChapterResult } from '@/content/chapter-context';
 import { Countdown } from './countdown';
 import { ViewerCanvas } from './viewer-canvas';
 import { SignalBackdrop } from './signal-backdrop';
+import { SceneTransition } from './scene-transition';
 
 type ShellState = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: ExperienceState };
 
@@ -99,8 +100,18 @@ export function ExperienceShell({ token }: { token: string }) {
 
   const fallbackSeed = deriveExperienceSeed(token);
 
+  // Which of the six screens is being shown. Any change here plays the CRT
+  // transition (see scene-transition.tsx); anything else — a countdown
+  // ticking, a state refetch that lands on the same screen — re-renders
+  // underneath without one. The chapter id is part of the viewer's key so
+  // that an immediate-unlock chapter handing off to the next one is a
+  // transition too, not a silent cart swap.
+  let screen: ReactNode;
+  let screenKey: string;
+
   if (state.kind === 'loading') {
-    return (
+    screenKey = 'loading';
+    screen = (
       <main className="signal-screen">
         <SignalBackdrop seed={fallbackSeed} />
         <p className="signal-label" style={{ position: 'relative', zIndex: 2 }}>
@@ -108,10 +119,9 @@ export function ExperienceShell({ token }: { token: string }) {
         </p>
       </main>
     );
-  }
-
-  if (state.kind === 'error') {
-    return (
+  } else if (state.kind === 'error') {
+    screenKey = 'error';
+    screen = (
       <main className="signal-screen">
         <SignalBackdrop seed={fallbackSeed} />
         <div className="signal-frame">
@@ -120,53 +130,51 @@ export function ExperienceShell({ token }: { token: string }) {
         </div>
       </main>
     );
-  }
-
-  const { data } = state;
-
-  if (data.chapter.status === 'finished') {
-    return (
+  } else if (state.data.chapter.status === 'finished') {
+    screenKey = 'finished';
+    screen = (
       <main className="signal-screen">
-        <SignalBackdrop seed={data.experience.seed} />
+        <SignalBackdrop seed={state.data.experience.seed} />
         <div className="signal-frame">
           <p className="signal-eyebrow">SIGNAL COMPLETE</p>
           <p className="signal-label">Every chapter here has been received.</p>
         </div>
       </main>
     );
-  }
-
-  if (data.chapter.status === 'locked' && data.progress.nextUnlockAt) {
-    return (
+  } else if (state.data.chapter.status === 'locked' && state.data.progress.nextUnlockAt) {
+    screenKey = 'countdown';
+    screen = (
       <Countdown
-        nextUnlockAt={data.progress.nextUnlockAt}
-        serverTime={data.serverTime}
-        chapterTitle={data.chapter.title}
-        seed={data.experience.seed}
+        nextUnlockAt={state.data.progress.nextUnlockAt}
+        serverTime={state.data.serverTime}
+        chapterTitle={state.data.chapter.title}
+        seed={state.data.experience.seed}
         onUnlocked={() => void fetchState()}
       />
     );
-  }
-
-  if (!started || !data.chapter.cartUrl || !data.chapter.id) {
-    return (
+  } else if (!started || !state.data.chapter.cartUrl || !state.data.chapter.id) {
+    screenKey = 'gate';
+    screen = (
       <main className="signal-screen" onClick={handleTouch}>
-        <SignalBackdrop seed={data.experience.seed} />
+        <SignalBackdrop seed={state.data.experience.seed} />
         <div className="signal-frame">
-          <p className="signal-eyebrow">{data.chapter.title}</p>
+          <p className="signal-eyebrow">{state.data.chapter.title}</p>
           <p className="signal-label signal-blink">TOUCH TO RECEIVE SIGNAL</p>
         </div>
       </main>
     );
+  } else {
+    screenKey = `viewer:${state.data.chapter.id}`;
+    screen = (
+      <ViewerCanvas
+        cartUrl={state.data.chapter.cartUrl}
+        tokenSeed={state.data.experience.seed}
+        chapterSeed={deriveChapterSeed(state.data.experience.seed, state.data.chapter.id)}
+        onComplete={handleComplete}
+        onCartError={() => setState({ kind: 'error' })}
+      />
+    );
   }
 
-  return (
-    <ViewerCanvas
-      cartUrl={data.chapter.cartUrl}
-      tokenSeed={data.experience.seed}
-      chapterSeed={deriveChapterSeed(data.experience.seed, data.chapter.id)}
-      onComplete={handleComplete}
-      onCartError={() => setState({ kind: 'error' })}
-    />
-  );
+  return <SceneTransition screenKey={screenKey}>{screen}</SceneTransition>;
 }

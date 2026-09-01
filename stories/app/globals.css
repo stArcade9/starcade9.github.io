@@ -250,3 +250,170 @@ body {
       0 0 30px var(--signal-accent);
   }
 }
+
+/* --------------------------------------------------------------------------
+   Scene transition — see scene-transition.tsx.
+
+   A CRT power-down between screens: the picture squeezes vertically to a
+   bright line, holds on the phosphor trace while the screen underneath is
+   swapped, then opens back out. Driven entirely by `data-phase` on two
+   elements so React only has to change one attribute; the browser
+   interpolates the rest off the compositor.
+   -------------------------------------------------------------------------- */
+
+.scene-root {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--signal-bg);
+  overflow: hidden;
+}
+
+.scene-stage {
+  transform-origin: center center;
+}
+
+/* Only while a wipe is actually running. Left on permanently this promotes
+   the live WebGL canvas into its own filtered compositing layer for the whole
+   chapter, which costs more than the hint is worth. */
+.scene-stage[data-phase='closing'],
+.scene-stage[data-phase='opening'] {
+  will-change: transform, filter;
+}
+
+/* Collapse. The horizontal stretch as it squeezes is what separates a CRT
+   losing its vertical deflection from a plain vertical wipe, and the
+   brightness lift is the beam energy concentrating into fewer lines. */
+.scene-stage[data-phase='closing'] {
+  transform: scaleY(0.004) scaleX(1.08);
+  filter: brightness(2.8) saturate(1.4);
+  transition:
+    transform var(--scene-close, 380ms) cubic-bezier(0.7, 0, 0.32, 1),
+    filter var(--scene-close, 380ms) ease-in;
+}
+
+/* And back out, slower than it went in — a set warming up rather than
+   snapping on. */
+.scene-stage[data-phase='opening'] {
+  transform: none;
+  filter: none;
+  transition:
+    transform var(--scene-open, 560ms) cubic-bezier(0.16, 1, 0.3, 1),
+    filter var(--scene-open, 560ms) ease-out;
+}
+
+/* The phosphor trace: a hairline that draws across as the picture collapses
+   onto it, then decays. This is the part the eye actually reads as "a CRT",
+   more than the squeeze is. */
+.scene-flash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0.2);
+  background: var(--signal-fg);
+  box-shadow:
+    0 0 8px 1px var(--signal-fg),
+    0 0 28px 6px var(--signal-accent);
+}
+
+.scene-flash[data-phase='closing'] {
+  opacity: 1;
+  transform: translateY(-50%) scaleX(1);
+  transition:
+    transform var(--scene-close, 380ms) cubic-bezier(0.7, 0, 0.32, 1),
+    opacity 180ms ease-out;
+}
+
+.scene-flash[data-phase='opening'] {
+  opacity: 0;
+  transform: translateY(-50%) scaleX(1);
+  transition: opacity var(--scene-open, 560ms) ease-out;
+}
+
+/* In-canvas audio toggle — see viewer-canvas.tsx. Top left, because Chapter
+   One's own camera-swap icon is drawn by the cart in the top right. */
+.signal-audio {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top, 0px) + 10px);
+  left: 14px;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(232, 236, 243, 0.22);
+  background: rgba(5, 5, 7, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--signal-fg);
+  font-family: var(--signal-mono);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.signal-audio:hover,
+.signal-audio:focus-visible {
+  opacity: 1;
+}
+
+.signal-audio[data-muted='true'] {
+  color: var(--signal-dim);
+  border-color: rgba(232, 236, 243, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   Motion preferences. The captions animate hard (a letter-spacing collapse
+   plus a perpetual glow pulse) and the transition squeezes the whole screen —
+   both are exactly what a vestibular-motion sensitivity is triggered by.
+   Everything below keeps the timing and the meaning of each cue while
+   removing the movement: transitions become cross-fades, the caption still
+   announces itself, and the blink still marks the screen as waiting.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .scene-stage[data-phase='closing'] {
+    transform: none;
+    filter: none;
+    opacity: 0;
+    transition: opacity var(--scene-close, 380ms) ease-in;
+  }
+
+  .scene-stage[data-phase='opening'] {
+    opacity: 1;
+    transition: opacity var(--scene-open, 560ms) ease-out;
+  }
+
+  .scene-flash[data-phase='closing'],
+  .scene-flash[data-phase='opening'] {
+    transform: translateY(-50%) scaleX(1);
+    transition: opacity 200ms ease;
+  }
+
+  .signal-caption {
+    animation: signal-caption-fade 0.4s ease-out;
+  }
+
+  @keyframes signal-caption-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .signal-frame {
+    animation: none;
+  }
+
+  .signal-blink {
+    animation-duration: 3.2s;
+  }
+}

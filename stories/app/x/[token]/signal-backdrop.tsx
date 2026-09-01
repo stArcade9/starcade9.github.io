@@ -21,9 +21,22 @@ export function SignalBackdrop({ seed }: { seed: number }) {
     if (!ctx) return;
 
     const rand = mulberry32(seed);
-    const hue = Math.floor(rand() * 360);
-    const accent = `hsl(${hue}, 85%, 60%)`;
-    const accentDim = `hsla(${hue}, 85%, 60%, 0.25)`;
+    // Constrained to the story's own palette rather than the full colour
+    // wheel. A plain rand() * 360 gave some tokens a lime or magenta horizon
+    // sitting directly underneath the frame's corner brackets, which are a
+    // fixed teal (--signal-accent) and don't vary with the seed — so most
+    // tokens opened on a clash.
+    //
+    // Two disjoint bands, not one sweep between them: the arc from teal round
+    // to amber passes through violet and magenta, which reads as synthwave
+    // rather than as this coast. What's left is the two colours the chapters
+    // are actually lit with — the water and dusk at one end, the boardwalk's
+    // sodium light at the other — and both sit well against a teal accent.
+    // Weighted toward the cool end, since that's where both chapters open.
+    const warm = rand() > 0.62;
+    const hue = Math.round(warm ? 18 + rand() * 27 : 165 + rand() * 52);
+    const accent = `hsl(${hue}, 78%, 58%)`;
+    const accentDim = `hsla(${hue}, 78%, 58%, 0.25)`;
 
     let raf = 0;
     let start = performance.now();

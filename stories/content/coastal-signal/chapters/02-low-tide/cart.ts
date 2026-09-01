@@ -20,6 +20,9 @@ import { getChapterContext } from '../../../chapter-context';
 import { mulberry32 } from '../../../../lib/seed';
 import { OceanSurface } from '../../../ocean/ocean-surface';
 import { ownMaterial } from '../../../own-material';
+import { score } from '../../../audio/score';
+import { CameraRig } from '../../../camera-rig';
+import { CUES } from './score';
 
 declare const nova64: any;
 
@@ -49,6 +52,11 @@ const PROLOGUE4_SECONDS = 2.6; // also the ambient-light reveal — see update()
 // longest uninterrupted stretch of writing in the story; it's the payoff the
 // two chapters of collecting have been building toward, and the last line
 // hands the player their reason for the flare that follows.
+// How far up the beach the ocean spirit stands. Module-scope because both
+// setBeat (which builds her) and update (which animates her, moves her light,
+// and now frames her) need it — it was previously a local in setBeat and a
+// bare -1.4 repeated in the update branch.
+const SPIRIT_Z = -1.4;
 const SPIRIT_LINE_SECONDS = 3.3;
 const SPIRIT_LINES = [
   'The water goes still. Something steps out of the shine on the waves.',
@@ -69,12 +77,29 @@ const WALK_DISTANCE = 52; // total shoreline distance for the walk beat
 // carrying. The attract radius is deliberately well under the full lateral
 // span (2 * WALK_LATERAL_RANGE), so steering toward one still matters — this
 // makes the walk forgiving and tactile, not automatic.
-const EMBER_ATTRACT_RADIUS = 2.8;
+const EMBER_ATTRACT_RADIUS = 3;
 const EMBER_BIND_RADIUS = 0.4;
-// The bind itself: one swell, a colour shift from its own ember hue into the
-// flame's amber, and a fade — the moment the light stops being its own and
-// becomes part of yours.
-const EMBER_BIND_SECONDS = 0.7;
+// Pulled in on a spiral rather than a straight line. The radial pull
+// accelerates as it closes while the angular rate stays constant, so the path
+// curves hard at the end — a straight-line lerp reads as a tween between two
+// points, and this reads as capture.
+const EMBER_SWIRL_RATE = 2.6; // radians/sec about the carried flame
+
+// The bind is staged, not a single swell: the light expands out of itself,
+// beats a few times while its colour crosses over into the flame's amber, and
+// only then collapses inward and goes. Three separate readable moments —
+// it breaks free, it pulses as it merges, it's gone — where one symmetric
+// swell only ever read as "a thing got briefly bigger."
+// Every stage boundary below is continuous in scale, glow, colour and pulse
+// — the three stages are separate in *shape*, not in value, so none of them
+// starts with a visible pop.
+const EMBER_BIND_SECONDS = 1.25;
+const BIND_EXPAND = 0.22; // fraction of the bind spent expanding (0.28s)
+const BIND_PULSE = 0.5; // then pulsating (0.62s); the remainder is the fade
+// Three cycles across that stage puts the throb near 5Hz, and the linear
+// amplitude decay means what actually reads is two strong beats and a settle.
+const BIND_PULSES = 3;
+const BIND_EXPAND_SCALE = 3.4;
 
 let time = 0;
 let beatTime = 0;
@@ -184,6 +209,10 @@ let waveFlashTimer = 0;
 
 let ocean: OceanSurface | null = null;
 
+// Every camera placement in this chapter goes through the rig, so a beat that
+// wants a new framing can ask for a move instead of a cut. See camera-rig.ts.
+const camera = new CameraRig();
+
 // Straight per-channel blend between two packed 0xRRGGBB colours — used to
 // carry an ember's own hue over into the flame's amber as it binds.
 function mixColor(a: number, b: number, t: number): number {
@@ -239,8 +268,7 @@ export function init() {
   targetAmbient = 1.4;
   nova64.light.setAmbientLight(0xffffff, 0.05);
   nova64.light.setFog(skyHorizon, 18, 55);
-  nova64.camera.setCameraTarget(0, 0.3, -4);
-  nova64.camera.setCameraPosition(0, 2.2, 5);
+  camera.set(0, 2.2, 5, 0, 0.3, -4);
   // One warm accent light that travels with the walker, on top of the
   // bright ambient above — briefly brightens in colour with the tide
   // rhythm below.
@@ -559,15 +587,48 @@ export function init() {
   // and a deliberate close-up shot on the spark rather than the wide walk
   // camera the rest of the chapter uses.
   setWorldVisible(false);
-  nova64.camera.setCameraPosition(0, 0.7, 1.6);
-  nova64.camera.setCameraTarget(0, 0.6, 0.4);
+  camera.set(0, 0.7, 1.6, 0, 0.6, 0.4);
+
+  // Its own generator, not the world's `rand` — see Chapter One's cart for
+  // why. Seeded from the same chapter seed, so the performance is as
+  // reproducible per token as the shoreline it plays over.
+  score.start(mulberry32((ctx.chapterSeed ^ 0x10de) >>> 0));
 
   setBeat('prologue1');
 }
 
+// One cue per beat (./score.ts), crossfaded from the same place the caption
+// is set — the music changing is part of the beat changing.
+const BEAT_CUES: Record<Beat, keyof typeof CUES> = {
+  prologue1: 'undertow',
+  prologue2: 'remember',
+  prologue3: 'pieces',
+  prologue4: 'shore',
+  settle: 'settle',
+  walk: 'walk',
+  spirit: 'spirit',
+  flare: 'flare',
+  closing: 'closing',
+};
+
+// `spirit` gets a long fade because the walk has to be allowed to recede
+// before she speaks; `flare` gets a short one because it should arrive.
+const BEAT_CUE_FADE: Partial<Record<Beat, number>> = {
+  prologue1: 0.8,
+  walk: 1.4,
+  spirit: 2.6,
+  flare: 0.6,
+  closing: 2.2,
+};
+
 function setBeat(next: Beat) {
   beat = next;
   beatTime = 0;
+  score.cue(CUES[BEAT_CUES[next]], BEAT_CUE_FADE[next] ?? 1.6);
+  // The walk's music is written thin and filled in by the embers gathered
+  // during it (see setIntensity below), so each entry into the beat has to
+  // reset that — otherwise a replay would start at the previous run's level.
+  if (next === 'walk') score.setIntensity(kindled / EMBER_COUNT);
   if (next === 'prologue1') chapterCtx?.setCaption('You held it for only a second.');
   else if (next === 'prologue2') chapterCtx?.setCaption('Long enough for the tide to notice.');
   else if (next === 'prologue3') chapterCtx?.setCaption('It left pieces of itself behind.');
@@ -579,7 +640,6 @@ function setBeat(next: Beat) {
     chapterCtx?.setCaption(SPIRIT_LINES[0]!);
     const laneX = walkSteer * WALK_LATERAL_RANGE;
     const parts: SpiritPart[] = [];
-    const SPIRIT_Z = -1.4;
     // Two tones: the body is foam-teal, while a few interior accents use a
     // paler near-white so she has a visible core rather than reading as one
     // flat wash of colour.
@@ -741,8 +801,14 @@ function setBeat(next: Beat) {
     // A held, personal, slightly low shot — framed on her upper body so the
     // face and heart-light carry the scene. The walk's wide camera would put
     // her too far away for this to land as a real visitation.
-    nova64.camera.setCameraPosition(laneX * 0.2 + 0.25, 1.45, 1.15);
-    nova64.camera.setCameraTarget(laneX * 0.6, 1.42, SPIRIT_Z);
+    // The chapter's single most important framing change, and until now a
+    // cut: the wide walk shot jumped straight to this close-up on the frame
+    // she appeared. Pushed in over two and a half seconds instead, under her
+    // first line, so the camera moves toward her as she condenses out of the
+    // air — the two reveals become one gesture rather than a cut followed by
+    // a fade-up.
+    camera.blend(2.5);
+    camera.set(laneX * 0.2 + 0.25, 1.45, 1.15, laneX * 0.6, 1.42, SPIRIT_Z);
   } else if (next === 'flare') {
     chapterCtx?.setCaption('You send it back up — and the whole coast is watching');
     const laneX = walkSteer * WALK_LATERAL_RANGE;
@@ -750,8 +816,10 @@ function setBeat(next: Beat) {
     // whatever the previous beat last set — explicitly restore the walk's
     // own framing here rather than leaving it inherited from spirit's
     // close-up shot, which is too tight to hold the flare's rising arc.
-    nova64.camera.setCameraPosition(laneX * 0.35, 2.1, 4.6);
-    nova64.camera.setCameraTarget(laneX * 0.55, 0.5, -6);
+    // And back out. Faster than the push in — she has gone, and the shot
+    // should open onto the sky ahead of the flare rather than linger.
+    camera.blend(1.2);
+    camera.set(laneX * 0.35, 2.1, 4.6, laneX * 0.55, 0.5, -6);
     // A bright core plus a larger, softer, translucent halo around it — the
     // combination that actually reads as "glowing like a star" rather than
     // a single opaque bright ball. Bloom boosted for this one moment, same
@@ -795,6 +863,11 @@ function setWorldVisible(visible: boolean) {
 export function update(dt: number) {
   time += dt;
   beatTime += dt;
+  // Driven from the render loop rather than a timer — see content/audio/score.ts.
+  score.update(dt);
+  // Before any camera.set() this frame, so a blend started last frame is
+  // advanced exactly once regardless of which beat does the placing.
+  camera.update(dt);
 
   // The prologue plays before any walk logic — just a timer per stage, a
   // gentle pulse on the one visible spark, and (on the final stage) the
@@ -886,8 +959,7 @@ export function update(dt: number) {
     walkDist += dt * WALK_SPEED;
     const laneX = walkSteer * WALK_LATERAL_RANGE;
 
-    nova64.camera.setCameraPosition(laneX * 0.35, 2.1, 4.6);
-    nova64.camera.setCameraTarget(laneX * 0.55, 0.5, -6);
+    camera.set(laneX * 0.35, 2.1, 4.6, laneX * 0.55, 0.5, -6);
 
     // A small trailing lag rather than snapping straight to laneX — gives
     // the carried flame some physical weight as you steer, instead of
@@ -908,6 +980,11 @@ export function update(dt: number) {
     const flameY = 0.55 + flameBob;
     const flameZ = 0.4;
 
+    // Accumulated across every ember currently binding, taking the strongest
+    // rather than the sum: two embers arriving together should beat the flame
+    // once, in step, not stack into a spike.
+    let flamePulse = 0;
+
     for (let i = embers.length - 1; i >= 0; i--) {
       const e = embers[i]!;
       const mat = e.mesh.material;
@@ -925,6 +1002,12 @@ export function update(dt: number) {
         const dz = flameZ - e.z;
         if (Math.sqrt(dx * dx + dy * dy + dz * dz) < EMBER_ATTRACT_RADIUS) {
           e.phase = 'drawn';
+          // The instant it notices you: a pop of glow and a small, quiet
+          // sound. Without this the transition into 'drawn' has no moment —
+          // the ember just silently starts moving, and the player reads it as
+          // drift rather than as a reaction to them.
+          if (mat) mat.emissiveIntensity = 3.6;
+          score.stinger('spark', { gain: 0.22, degree: kindled + 2 });
         } else if (e.z > 1.6) {
           // Walked past without ever coming into range — this one stays lost.
           nova64.scene.destroyMesh(e.mesh);
@@ -943,42 +1026,110 @@ export function update(dt: number) {
         e.x += dx * pull;
         e.y += dy * pull;
         e.z += dz * pull;
-        // Spins up and brightens the closer it gets — it's waking up.
+        // A small lift over the middle of the flight, peaking halfway and
+        // gone by the end, so it arcs up off the sand into the flame instead
+        // of sliding along the beach toward it.
+        e.y += Math.sin(closeness * Math.PI) * dt * 0.7;
+        // Then rotate what's left of the offset about the flame. Constant
+        // angular rate on a shrinking radius means the tangential speed falls
+        // away on its own as it arrives — a spiral that tightens, with no
+        // extra easing needed.
+        const swirl = dt * EMBER_SWIRL_RATE;
+        const rx = e.x - flameX;
+        const rz = e.z - flameZ;
+        const cs = Math.cos(swirl);
+        const sn = Math.sin(swirl);
+        e.x = flameX + rx * cs - rz * sn;
+        e.z = flameZ + rx * sn + rz * cs;
+        // Spins up, swells and brightens the closer it gets — it's waking up.
         nova64.scene.rotateMesh(e.mesh, 0, dt * (1.5 + closeness * 6), 0);
-        if (mat) mat.emissiveIntensity = 1.7 + closeness * 1.8;
+        const charge = 1 + closeness * 0.35;
+        nova64.scene.setScale(e.mesh, charge, charge, charge);
+        if (mat) mat.emissiveIntensity = 1.7 + closeness * 2.4;
 
         if (d < EMBER_BIND_RADIUS) {
           e.phase = 'binding';
           e.bindT = 0;
           kindled++;
-          const flameScale = 1 + kindled * 0.18;
-          nova64.scene.setScale(flameMesh, flameScale, flameScale, flameScale);
           if (flameMesh.material) flameMesh.material.emissiveIntensity = 1.7 + kindled * 0.3;
           sparkleEmitter.x = w / 2;
           sparkleEmitter.y = h * 0.5;
           sparkleEmitter.rate = 420;
           nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 22);
           sparkleEmitter.rate = 0;
+          // The Nth ember plays the Nth degree of the chord that happens to
+          // be sounding — degrees past the end of the voicing wrap up an
+          // octave, so gathering the shoreline climbs a line rather than
+          // repeating one pickup noise eight times.
+          score.stinger('chime', { degree: kindled });
+          // ...and the walk's music thickens with the flame it's scoring.
+          score.setIntensity(kindled / EMBER_COUNT);
         }
       } else {
-        // Bound: locked to the flame, swelling once, turning its colour, and
-        // fading out into it.
+        // Bound: locked to the flame and played out in three stages — expand,
+        // pulsate, fade. `pulse` is exported out of here into `flamePulse`
+        // below so the flame itself beats in sympathy; the light being
+        // absorbed and the light absorbing it should move together.
         e.bindT += dt;
         const f = Math.min(1, e.bindT / EMBER_BIND_SECONDS);
         e.x = flameX;
         e.y = flameY;
         e.z = flameZ;
-        const swell = 1 + Math.sin(f * Math.PI) * 1.6;
-        nova64.scene.setScale(e.mesh, swell, swell, swell);
+
+        let scale: number;
+        let glow: number;
+        let opacity: number;
+        let mix: number;
+        let pulse = 0;
+
+        if (f < BIND_EXPAND) {
+          // Expand — easeOut, so it bursts open and settles rather than
+          // inflating linearly.
+          const k = f / BIND_EXPAND;
+          const eased = 1 - Math.pow(1 - k, 3);
+          scale = 1 + (BIND_EXPAND_SCALE - 1) * eased;
+          glow = 1.7 + eased * 3.8;
+          opacity = 1;
+          mix = eased * 0.35;
+          pulse = eased;
+        } else if (f < BIND_EXPAND + BIND_PULSE) {
+          // Pulsate — a decaying oscillation about the expanded size, with
+          // the glow beating in phase and the colour crossing over into the
+          // flame's amber across the whole stage.
+          const k = (f - BIND_EXPAND) / BIND_PULSE;
+          const decay = 1 - k;
+          const osc = Math.sin(k * Math.PI * 2 * BIND_PULSES);
+          scale = BIND_EXPAND_SCALE * (1 + osc * 0.3 * decay);
+          glow = 5.5 + osc * 2.8 * decay;
+          opacity = 1;
+          mix = 0.35 + k * 0.5;
+          pulse = 1 + osc * 0.6 * decay;
+        } else {
+          // Fade — collapses inward as it goes, on an easeIn so it holds its
+          // size and brightness and then leaves quickly. Shrinking rather
+          // than simply dimming is what makes it read as being taken *into*
+          // the flame instead of just switching off next to it.
+          const k = (f - BIND_EXPAND - BIND_PULSE) / (1 - BIND_EXPAND - BIND_PULSE);
+          const eased = k * k * k;
+          scale = BIND_EXPAND_SCALE + (0.12 - BIND_EXPAND_SCALE) * eased;
+          glow = 5.5 * (1 - eased);
+          opacity = 1 - k * k;
+          mix = 0.85 + k * 0.15;
+          // Leaves the pulsate stage at exactly the value it ended on (the
+          // oscillation has fully decayed to 1 by then) and falls to zero, so
+          // the flame settles out of its beat rather than dropping out of it.
+          pulse = 1 - k;
+        }
+
+        flamePulse = Math.max(flamePulse, pulse);
+        nova64.scene.setScale(e.mesh, scale, scale, scale);
         nova64.scene.rotateMesh(e.mesh, 0, dt * 7, 0);
         if (mat) {
-          const blended = mixColor(e.color, signalColor, f);
+          const blended = mixColor(e.color, signalColor, mix);
           mat.color?.setHex?.(blended);
           mat.emissive?.setHex?.(blended);
-          mat.emissiveIntensity = 1.7 + Math.sin(f * Math.PI) * 3.4;
-          // Eased so it holds its brightness through the swell and then goes
-          // quickly, rather than dimming from the first frame.
-          mat.opacity = 1 - f * f;
+          mat.emissiveIntensity = glow;
+          mat.opacity = opacity;
         }
         if (f >= 1) {
           nova64.scene.destroyMesh(e.mesh);
@@ -988,6 +1139,16 @@ export function update(dt: number) {
       }
 
       nova64.scene.setPosition(e.mesh, e.x, e.y, e.z);
+    }
+
+    // The flame answers what's binding into it. Applied here, once, after the
+    // whole ember pass rather than from inside it — the flame's size and glow
+    // are one value, and letting several binding embers each write it
+    // directly would mean whichever one happened to be last in the array won.
+    const flameScale = (1 + kindled * 0.18) * (1 + flamePulse * 0.14);
+    nova64.scene.setScale(flameMesh, flameScale, flameScale, flameScale);
+    if (flameMesh.material) {
+      flameMesh.material.emissiveIntensity = 1.7 + kindled * 0.3 + flamePulse * 2.2;
     }
 
     if (walkDist >= WALK_DISTANCE) setBeat('spirit');
@@ -1018,17 +1179,36 @@ export function update(dt: number) {
           p.mesh,
           spirit.laneX + p.ox + sway,
           p.oy + bob + hover,
-          -1.4 + p.oz + drift
+          SPIRIT_Z + p.oz + drift
         );
         if (p.mesh.material) p.mesh.material.opacity = p.opacity * presence;
       }
       if (spirit.light !== null) {
-        nova64.light.setPointLightPosition(spirit.light, spirit.laneX, 1.45 + hover, -1.4);
+        nova64.light.setPointLightPosition(spirit.light, spirit.laneX, 1.45 + hover, SPIRIT_Z);
       }
       spiritEmitter.x = w / 2 + spirit.laneX * 30;
       spiritEmitter.y = h * 0.55;
       spiritEmitter.rate = 10 + breath * 22;
       nova64.fx.updateEmitter2D(spiritEmitter, dt);
+
+      // Re-stated every frame rather than placed once when the beat began —
+      // the rig interpolates toward whatever the *live* framing is, so a
+      // goal set a single time would leave the blend interpolating toward a
+      // pose it already holds and the push-in would never happen.
+      //
+      // The framing also creeps very slightly closer across her six lines,
+      // which the blend absorbs on the way in and then carries on its own: an
+      // almost imperceptible drift toward her while she talks, so the shot is
+      // never quite static during the longest held moment in the story.
+      const creep = Math.min(1, beatTime / SPIRIT_SECONDS);
+      camera.set(
+        spirit.laneX * 0.2 + 0.25,
+        1.45,
+        1.15 - creep * 0.22,
+        spirit.laneX * 0.6,
+        1.42 - creep * 0.03,
+        SPIRIT_Z
+      );
     }
 
     const lineIndex = Math.min(SPIRIT_LINES.length - 1, Math.floor(beatTime / SPIRIT_LINE_SECONDS));
@@ -1042,6 +1222,10 @@ export function update(dt: number) {
       sparkleEmitter.rate = 140;
       nova64.fx.updateEmitter2D(sparkleEmitter, 1 / 26);
       sparkleEmitter.rate = 0;
+      // One low chime per line, descending through her chord as she goes on —
+      // the closest this cue gets to a pulse, and the only thing marking time
+      // during the longest stretch of text in the story.
+      score.stinger('chime', { degree: SPIRIT_LINES.length - lineIndex, gain: 0.55 });
     }
 
     if (beatTime >= SPIRIT_SECONDS) {
@@ -1052,6 +1236,10 @@ export function update(dt: number) {
       }
       spiritEmitter.rate = 0;
       setBeat('flare');
+      // After setBeat, so it reads the flare cue's major voicing rather than
+      // the spirit's — the whole mix lifting, under the light going up.
+      score.stinger('swell', { gain: 1 });
+      score.stinger('shimmer', { degree: 3 });
     }
     return;
   }
@@ -1084,6 +1272,19 @@ export function update(dt: number) {
       flareEmitter.y = fh * (0.5 - f * 0.15);
       flareEmitter.rate = 90;
       nova64.fx.updateEmitter2D(flareEmitter, dt);
+
+      // Held every frame for the blend back out of the close-up (see the
+      // spirit beat above for why once isn't enough), and tilted upward as
+      // the flare climbs so the shot follows the light rather than letting it
+      // leave the top of the screen.
+      camera.set(
+        flare.laneX * 0.35,
+        2.1 + f * 0.9,
+        4.6,
+        flare.laneX * 0.55,
+        0.5 + f * 3.4,
+        -6
+      );
 
       if (f >= 1) {
         nova64.scene.destroyMesh(flare.mesh);

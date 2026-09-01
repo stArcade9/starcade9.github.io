@@ -192,8 +192,8 @@ top of each chapter's `update()`) is:
    via `setWorldVisible(false)` — dimming ambient alone isn't enough, since
    emissive materials ignore ambient light and would otherwise stay visible
    as a cluttered mess of glowing bits in the dark.
-2. A deliberately-composed camera shot (explicit `setCameraPosition`/
-   `setCameraTarget` — never the engine's unset default) carries the caption
+2. A deliberately-composed camera shot (placed through the chapter's
+   `CameraRig` — never the engine's unset default) carries the caption
    beats that build the throughline: this cartridge is real lost hardware,
    lost near this coast, still faintly transmitting; the chapter is either
    catching its spark (Ch1) or giving something back to it (Ch2).
@@ -226,3 +226,102 @@ ocean-spirit section above for why that matters.
 Extending this to a future chapter is mechanical: add the `prologueN` beats
 to that chapter's `Beat` type, port `setWorldVisible`/`targetAmbient`, and
 write new captions — the reveal choreography itself doesn't change.
+
+### Score (`content/audio/score.ts`)
+
+Nova64's audio API gives a cart exactly `sfx()` and `setVolume()` — one-shot
+oscillator or noise bursts on eight channels, with no scheduler, no sustained
+voice, no filter and no notion of key or tempo. That is enough for a jump or a
+coin and nothing like enough for music, so the chapters carry their own small
+Web Audio score engine alongside the runtime (the same treatment
+`ocean-surface.ts` and `own-material.ts` get, and for the same reason: it's
+this story's problem, not Nova64's, and forking the shared runtime would push
+the change onto the root static site too).
+
+Five synthesised voices — `pad`, `bass`, `arp`, `bell`, `surf` — into a
+feedback delay and a compressor. No audio assets ship.
+
+The engine is shared; the **composition is per chapter**, in
+`chapters/<id>/score.ts`, as a table of `Cue`s — one per story beat:
+
+- `setBeat()` calls `score.cue()` in the same place it sets the caption. The
+  music changing *is* part of the beat changing. Tempo eases toward the cue's
+  `bpm` rather than snapping, so beats can accelerate into each other.
+- `score.update(dt)` is driven from the cart's `update()`, never a timer, so a
+  score can't outlive the cart playing it. It schedules against
+  `AudioContext.currentTime` with a look-ahead, and resyncs (dropping missed
+  notes) if the clock overtakes it — otherwise one backgrounded tab renders a
+  whole bar as a single cluster.
+- `score.stinger()` reads the chord currently sounding, so game events land
+  *inside* the harmony. Chapter Two passes its ember count straight in as a
+  chord degree; degrees past the end of a voicing wrap up an octave, so eight
+  pickups climb two octaves instead of repeating one noise.
+- `score.setIntensity(0..1)` thickens the arpeggio and bells and opens the pad
+  filter, for a long beat that has to build without a cut (Chapter One's ride
+  drives it from distance, Chapter Two's walk from embers gathered).
+
+Carts pass the score its **own** seeded generator, not the world's `rand` —
+both chapters consume random values during `update()` for procedural content,
+and sharing a stream would make the world depend on how long the music had
+been playing.
+
+A muted preference lives on `globalThis.__coastalSignalMuted` so a chapter
+booting after the visitor muted comes up silent; the viewer's audio toggle
+drives it (`viewer-canvas.tsx`).
+
+### Camera moves (`content/camera-rig.ts`)
+
+Nova64's camera calls are stateless, which is right while a chapter is
+following the player — both chapters recompute their framing every frame — but
+it means a beat wanting a *different* framing gets it as a cut.
+
+`CameraRig.set()` is a pass-through with identical behaviour, until
+`blend(seconds)` is called: then it eases from the pose held at the moment of
+the cut toward the live incoming framing. An existing cut becomes a move by
+adding one `blend()` call and changing nothing else about how the framing is
+computed.
+
+**The one thing to get right:** the beat must keep calling `set()` every frame
+for the whole blend. A beat that places the camera once when it begins gives
+the rig nothing to interpolate toward, and the camera silently never moves.
+Both chapters restate their framing every frame for exactly this reason — see
+Chapter Two's `spirit` and `flare` branches.
+
+Currently used for the push into the ocean spirit's close-up and back out
+(Chapter Two), the first/third-person swap and the climax framing (Chapter
+One).
+
+### Between screens (`app/x/[token]/scene-transition.tsx`)
+
+Every screen change in the shell — connecting → touch gate → chapter →
+countdown — used to be a single React render, so a chapter's climax was ripped
+out mid-glow and replaced on the next frame. `SceneTransition` wraps the shell
+and plays a CRT power-down and power-up across the join: the picture squeezes
+to a bright line, holds on the phosphor trace while the screen underneath is
+swapped, and opens back out.
+
+- Driven off a `screenKey`. Children changing under the same key (a countdown
+  ticking, a refetch landing on the same screen) re-render with no wipe.
+- While closing it renders the *frozen* outgoing element tree, so the chapter
+  stays mounted and playing right up to the point it is no longer visible.
+- It ducks the running score through the global registry as it closes —
+  otherwise the music plays at full level behind a screen that has gone, then
+  stops dead when the cart unmounts.
+- `prefers-reduced-motion` turns the squeeze into a cross-fade (see
+  `globals.css`), along with the caption and frame animations.
+
+### Climax staging
+
+Both chapters resolve on the same three-stage shape — **expand, pulsate, then
+collapse inward and fade** — because it is the same gesture at two scales: a
+light stops being its own and becomes part of yours. Chapter Two's embers do it
+eight times, small, binding into the carried flame; Chapter One's caught signal
+does it once, big, taking the camera and the bloom with it.
+
+If you write a third chapter, reuse the shape rather than inventing a new one —
+it is the story's visual signature by now. Two things to hold to when you do:
+every stage boundary should be continuous in scale, glow, colour and opacity
+(otherwise a stage begins with a visible pop — worth checking numerically, the
+maths is easy to get subtly wrong), and any bloom lift must return to the
+chapter's base value before completion, so the next screen isn't handed a
+blown-out frame.

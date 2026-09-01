@@ -290,6 +290,12 @@ export async function bootNova64({ canvas, cartUrl, onCartLoaded, onCartError })
     loadCart: (url) => nova.loadCart(url),
     stop() {
       stopped = true;
+      // Carts may run their own Web Audio score alongside Nova64's sfx
+      // channels (content/audio/score.ts registers itself here). Nothing else
+      // tears it down: its scheduler is driven by the cart's update(), which
+      // stops being called on unmount, but its sustained pad and surf voices
+      // would keep sounding over a page the visitor has already left.
+      globalThis.__coastalSignalScore?.stop?.();
       resizeObserver.disconnect();
       const r = gpu.getRenderer?.();
       if (r && typeof r.setAnimationLoop === 'function') r.setAnimationLoop(null);

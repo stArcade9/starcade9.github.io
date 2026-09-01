@@ -1,1724 +1,974 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NOVA64 // Disc 01 — The Browser Fantasy Console</title>
-  <meta name="description" content="A browser-native 3D fantasy console built on Three.js. Build N64/PS1-era games in JavaScript with zero WebGL boilerplate." />
-  <meta name="theme-color" content="#060810" />
-  <meta property="og:title" content="NOVA64 — Fantasy 3D Console" />
-  <meta property="og:description" content="Browser-native 3D games. Three.js power. Retro soul." />
-  <meta property="og:image" content="./assets/novaOS/nova64ConsoleBG.webp" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
-  <!-- GSAP + ScrollTrigger -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <style>
-    :root {
-      --bg-base:   #03010a;
-      --bg-mid:    #0a0518;
-      --bg-glass:  rgba(0,255,255,0.04);
-      --border:    rgba(157,0,255,0.15);
-      --border-el: rgba(0,255,255,0.30);
-      --electric:  #00ffff;
-      --neon-pink: #ff00ff;
-      --violet:    #9d00ff;
-      --lime:      #39ff14;
-      --chrome:    #c8d0e8;
-      --text:      #f0eeff;
-      --text-muted:#8878aa;
-      --glow-sm:   0 0 18px rgba(0,255,255,0.5);
-      --glow-lg:   0 0 40px rgba(0,255,255,0.25), 0 0 80px rgba(157,0,255,0.12);
-      --holo:      linear-gradient(135deg,#00ffff 0%,#ff00ff 50%,#9d00ff 100%);
-      --radius:    10px;
-      --trans:     all 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg-base);
-      color: var(--text);
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    /* CRT scanline overlay */
-    body::after {
-      content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
-      background-image: repeating-linear-gradient(
-        0deg, transparent 0px, transparent 2px,
-        rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px
-      );
-    }
-    a { color: inherit; text-decoration: none; }
-    img { display: block; max-width: 100%; }
-    button { cursor: pointer; border: none; background: none; font: inherit; }
-
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 48px; display:flex; flex: 1; flex-direction: row; }
-    footer .container,#cta .container, #demos .container, #install .container, #features .container, #press .container, #why .container{ flex-direction: column !important; }
-    @media (max-width: 768px) { .container { padding: 0 20px; } }
-
-    .stamp {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      letter-spacing: 0.15em;
-      color: var(--electric);
-      text-transform: uppercase;
-      display: inline-block;
-      margin-bottom: 20px;
-    }
-    .section-title {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: clamp(36px, 5vw, 56px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      margin-bottom: 16px;
-    }
-    .section-sub {
-      font-size: 17px;
-      color: var(--text-muted);
-      max-width: 560px;
-      line-height: 1.7;
-    }
-
-    /* Reveal base — GSAP animates these */
-    .reveal { opacity: 0; transform: translateY(48px); }
-    @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1 !important; transform: none !important; }
-      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-
-    /* ── NAV ── */
-    #nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(6,8,16,0.8);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(0,255,255,0.08);
-      height: 64px;
-      display: flex; align-items: center;
-      transition: border-color 0.3s;
-    }
-    #nav .container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-    .nav-brand {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.06em;
-    }
-    .nav-brand img { height: 28px; width: auto; }
-    .nav-links {
-      display: flex; align-items: center; gap: 32px;
-      font-size: 14px; font-weight: 500; color: var(--text-muted);
-    }
-    .nav-links a:hover { color: var(--text); }
-    @media (max-width: 900px) { .nav-links { display: none; } }
-    .nav-cta { display: flex; align-items: center; gap: 10px; }
-    .nav-trio { display: flex; align-items: center; gap: 6px; }
-    .nav-trio-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 13px; border-radius: 6px; font-size: 12px; font-weight: 700;
-      letter-spacing: 0.04em; transition: var(--trans); white-space: nowrap;
-      border: 1px solid var(--border); color: var(--text-muted);
-    }
-    .nav-trio-btn svg { flex-shrink: 0; }
-    .nav-trio-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
-    .nav-trio-btn.console { border-color: rgba(0,255,255,0.3); color: var(--electric); }
-    .nav-trio-btn.console:hover { background: rgba(0,255,255,0.08); box-shadow: 0 0 18px rgba(0,255,255,0.2); }
-    .nav-trio-btn.os { border-color: rgba(157,0,255,0.35); color: #c86fff; }
-    .nav-trio-btn.os:hover { background: rgba(157,0,255,0.09); box-shadow: 0 0 18px rgba(157,0,255,0.25); }
-    .nav-trio-btn.docs { border-color: rgba(255,238,0,0.3); color: #ffe566; }
-    .nav-trio-btn.docs:hover { background: rgba(255,238,0,0.07); box-shadow: 0 0 18px rgba(255,238,0,0.2); }
-    @media (max-width: 900px) { .nav-trio { display: none; } }
-    .drawer-trio { display: flex; flex-direction: column; gap: 6px; padding: 12px 0 4px; border-top: 1px solid var(--border); margin-top: 8px; }
-    .drawer-trio-btn {
-      display: flex; align-items: center; gap: 10px;
-      padding: 13px 16px; border-radius: 8px; font-size: 14px; font-weight: 700;
-      transition: var(--trans); border: 1px solid transparent;
-    }
-    .drawer-trio-btn.console { color: var(--electric); border-color: rgba(0,255,255,0.2); }
-    .drawer-trio-btn.console:hover { background: rgba(0,255,255,0.06); }
-    .drawer-trio-btn.os { color: #c86fff; border-color: rgba(157,0,255,0.2); }
-    .drawer-trio-btn.os:hover { background: rgba(157,0,255,0.06); }
-    .drawer-trio-btn.docs { color: #ffe566; border-color: rgba(255,238,0,0.2); }
-    .drawer-trio-btn.docs:hover { background: rgba(255,238,0,0.06); }
-    .lang-switcher {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-family: inherit;
-      padding: 5px 7px;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-    }
-    .lang-switcher:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-    .btn-primary {
-      background: var(--electric); color: #060810;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px;
-      padding: 10px 22px; border-radius: 4px; transition: var(--trans); white-space: nowrap;
-    }
-    .btn-primary:hover { box-shadow: var(--glow-sm); transform: translateY(-1px); }
-    .btn-ghost-sm {
-      font-size: 13px; font-weight: 500; color: var(--text-muted);
-      padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px;
-      transition: var(--trans); display: flex; align-items: center; gap: 6px;
-    }
-    .btn-ghost-sm:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .nav-hamburger {
-      display: none; flex-direction: column; gap: 5px; padding: 8px; cursor: pointer;
-    }
-    .nav-hamburger span { width: 22px; height: 2px; background: var(--chrome); border-radius: 2px; transition: var(--trans); }
-    @media (max-width: 900px) { .nav-hamburger { display: flex; } }
-    #nav-drawer {
-      position: fixed; top: 64px; left: 0; right: 0; z-index: 99;
-      background: rgba(6,8,16,0.97); backdrop-filter: blur(20px);
-      padding: 20px; display: flex; flex-direction: column; gap: 4px;
-      border-bottom: 1px solid var(--border);
-      transform: translateY(-100%); opacity: 0; pointer-events: none; transition: var(--trans);
-    }
-    #nav-drawer.open { transform: translateY(0); opacity: 1; pointer-events: all; }
-    #nav-drawer a {
-      padding: 14px 16px; font-size: 15px; font-weight: 500;
-      color: var(--text-muted); border-radius: 6px; transition: var(--trans);
-    }
-    #nav-drawer a:hover { color: var(--text); background: var(--bg-glass); }
-
-    /* ── HERO ── */
-    #hero {
-      position: relative; min-height: 100vh;
-      display: flex; align-items: center;
-      padding: 120px 0 80px; overflow: hidden;
-      background: linear-gradient(
-        180deg,
-        #000011 0%, #00001e 12%, #00003d 24%,
-        #110055 36%, #2b0066 46%,
-        #660066 54%, #880033 62%, #660022 70%,
-        #1a0033 82%, #06000f 100%
-      );
-    }
-    #hero-iframe {
-      position: absolute; inset: 0; z-index: 0;
-      pointer-events: none; width: 100%; height: 100%;
-      border: none; background: transparent;
-      opacity: 0; transition: opacity 0.8s ease;
-    }
-    #hero-iframe.loaded { opacity: 1; }
-    .no-webgl #hero-iframe { display: none; }
-
-    /* ── Hero Loader ── */
-    #hero-loader {
-      position: absolute; inset: 0; z-index: 2;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #03010a;
-      transition: opacity 0.6s ease, transform 0.6s ease;
-      overflow: hidden;
-      animation: flicker 4s ease-in-out infinite;
-    }
-    #hero-loader.loaded {
-      opacity: 0; transform: scale(1.03);
-      pointer-events: none;
-    }
-    .no-webgl #hero-loader { display: none; }
-    /* Scanline overlay */
-    #hero-loader::before {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px
-      );
-      animation: scanlineDrift 10s linear infinite;
-    }
-    .loader-content {
-      position: relative; z-index: 2; text-align: center;
-      animation: glitchPulse 5s ease-in-out infinite;
-    }
-    .loader-logo {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(26px, 5vw, 48px);
-      color: #fff; letter-spacing: 6px;
-      margin-bottom: 28px;
-      animation: glitchShift 4s steps(1) infinite, glitchColor 3s steps(1) infinite;
-    }
-    .loader-status {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(8px, 1.4vw, 12px);
-      color: #00ffcc; margin-bottom: 22px; min-height: 1.4em;
-    }
-    .loader-bar-wrap {
-      width: clamp(180px, 45vw, 380px); height: 10px;
-      border: 1px solid rgba(0,255,255,0.5); border-radius: 2px;
-      overflow: hidden; margin: 0 auto;
-      animation: barGlow 2s ease-in-out infinite;
-    }
-    .loader-bar-fill {
-      width: 0%; height: 100%;
-      background: linear-gradient(90deg, #00ffcc, #00ccff, #0088ff);
-      transition: width 0.12s linear;
-      box-shadow: 0 0 10px rgba(0,255,255,0.6);
-    }
-    .loader-percent {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(8px, 1.3vw, 11px);
-      color: #00ccff; margin-top: 10px;
-    }
-    @keyframes scanlineDrift {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(4px); }
-    }
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      5% { opacity: 0.94; }
-      10% { opacity: 1; }
-      35% { opacity: 0.97; }
-      40% { opacity: 0.92; }
-      45% { opacity: 1; }
-      70% { opacity: 0.96; }
-      75% { opacity: 0.93; }
-    }
-    @keyframes glitchShift {
-      0%, 89%, 100% { transform: translateX(0); clip-path: none; }
-      90% { transform: translateX(-6px); clip-path: inset(20% 0 60% 0); }
-      93% { transform: translateX(5px); clip-path: inset(50% 0 25% 0); }
-      96% { transform: translateX(-3px); clip-path: inset(10% 0 70% 0); }
-      98% { transform: translateX(2px); clip-path: none; }
-    }
-    @keyframes glitchColor {
-      0%, 84%, 100% { text-shadow: none; }
-      86% { text-shadow: 2px 0 #ff0040, -2px 0 #00ffff; }
-      90% { text-shadow: -3px 0 #ff0040, 3px 0 #00ffff; }
-      94% { text-shadow: 1px 0 #ff0040, -1px 0 #00ffff; }
-    }
-    @keyframes glitchPulse {
-      0%, 91%, 100% { transform: none; }
-      93% { transform: skewX(1.5deg) scale(1.008); }
-      95% { transform: skewX(-0.8deg) scale(1.004); }
-    }
-    @keyframes barGlow {
-      0%, 100% { box-shadow: 0 0 6px rgba(0,255,255,0.3); }
-      50% { box-shadow: 0 0 16px rgba(0,255,255,0.7), 0 0 32px rgba(0,255,255,0.2); }
-    }
-    /* Fallback sun for no-WebGL environments; hidden when canvas scene is active */
-    .hero-sun { display: none; }
-    .no-webgl .hero-sun { display: block; }
-    /* Left-side shadow: keeps text readable over bright sunset */
-    #hero::before {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(90deg,
-        rgba(3,1,10,0.75) 0%, rgba(3,1,10,0.44) 36%, transparent 60%);
-    }
-    /* Vignette: frames the scene cinematically */
-    #hero::after {
-      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(3,1,10,0.55) 100%);
-    }
-    /* Outrun sun disc with iconic horizontal scan lines */
-    .hero-sun {
-      position: absolute;
-      width: 340px; height: 340px; border-radius: 50%; overflow: hidden;
-      left: 50%; top: 52%;
-      transform: translate(-50%, -50%);
-      z-index: 0; pointer-events: none;
-      background:
-        linear-gradient(180deg,
-          transparent 0%, transparent 50%,
-          rgba(8,0,22,0.84) 50%,   rgba(8,0,22,0.84) 55.5%,
-          transparent 55.5%,       transparent 59.5%,
-          rgba(8,0,22,0.75) 59.5%, rgba(8,0,22,0.75) 64%,
-          transparent 64%,         transparent 68%,
-          rgba(8,0,22,0.67) 68%,   rgba(8,0,22,0.67) 72%,
-          transparent 72%,         transparent 75.5%,
-          rgba(8,0,22,0.60) 75.5%, rgba(8,0,22,0.60) 78.5%,
-          transparent 78.5%,       transparent 81.5%,
-          rgba(8,0,22,0.54) 81.5%, rgba(8,0,22,0.54) 84.5%,
-          transparent 84.5%,       transparent 87%,
-          rgba(8,0,22,0.48) 87%,   rgba(8,0,22,0.48) 89.5%,
-          transparent 89.5%,       transparent 92%,
-          rgba(8,0,22,0.44) 92%,   rgba(8,0,22,0.44) 94%,
-          transparent 94%,         transparent 96%,
-          rgba(8,0,22,0.40) 96%,   rgba(8,0,22,0.40) 97.5%,
-          transparent 97.5%,       transparent 99%
-        ),
-        linear-gradient(180deg,
-          #ffffff 0%, #ddeeff 7%, #88aaff 18%,
-          #4444ff 34%, #6600cc 50%,
-          #bb00ff 65%, #ff00cc 79%,
-          #ff0066 90%, #330011 100%
-        );
-      box-shadow:
-        0 0 55px 22px rgba(0,80,255,0.42),
-        0 0 130px 65px rgba(170,0,255,0.24),
-        0 0 260px 130px rgba(255,0,128,0.14);
-    }
-    @media (max-width: 900px) { .hero-sun { width: 200px; height: 200px; } }
-    .hero-inner {
-      padding: 10px;
-      background-color: #00000057;
-      border-radius: var(--radius);
-      position: relative; z-index: 2;
-      display: grid; grid-template-columns: 1fr; gap: 0; width: 100%;
-      max-width: 1400px;
-    }
-    .hero-content { max-width: 680px; visibility: hidden; }
-    .hero-badge {
-      font-family: 'Press Start 2P', monospace; font-size: 9px;
-      color: var(--electric); border: 1px solid var(--border-el); border-radius: 3px;
-      padding: 8px 14px; display: inline-flex; align-items: center; gap: 8px;
-      margin-bottom: 28px; background: rgba(0,255,255,0.05);
-    }
-    /* PS1 boot bar */
-    .hero-boot {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: var(--text-muted); letter-spacing: 0.12em;
-    }
-    .hero-boot-bar {
-      flex: 1; max-width: 100px; height: 2px;
-      background: rgba(0,255,255,0.15); border-radius: 1px; overflow: hidden;
-    }
-    .hero-boot-fill {
-      height: 100%; width: 100%; background: var(--electric);
-      animation: bootLoad 1.8s cubic-bezier(0.4,0,0.2,1) 0.6s both;
-      transform-origin: left; transform: scaleX(0);
-    }
-    @keyframes bootLoad { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-    .hero-boot-ok { color: var(--electric); }
-    .hero-badge .badge-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--electric); box-shadow: 0 0 8px var(--electric);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-    .hero-h1 {
-      font-family: 'Orbitron', sans-serif; font-weight: 900;
-      font-size: clamp(36px, 5.5vw, 72px); line-height: 0.95;
-      letter-spacing: -0.01em; margin-bottom: 0px; color: var(--text);
-    }
-    .hero-h1 .line-accent {
-      background: var(--holo); -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero-sub {
-      font-size: clamp(16px, 2vw, 20px); color: #47ff00;
-      line-height: 1.6; margin-bottom: 40px; max-width: 480px;
-    }
-    .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .btn-hero-primary {
-      background: var(--electric); color: #060810;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px;
-      padding: 15px 32px; border-radius: 4px; transition: var(--trans);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-hero-primary:hover { box-shadow: var(--glow-sm), 0 8px 32px rgba(0,255,255,0.2); transform: translateY(-2px); }
-    .btn-hero-secondary {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 14px 24px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans);
-    }
-    .btn-hero-secondary:hover { background: rgba(0,255,255,0.06); border-color: var(--electric); }
-    .btn-hero-ghost {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 14px;
-      padding: 14px 20px; border: 1px solid var(--border); border-radius: 4px;
-      color: var(--text-muted); transition: var(--trans); display: flex; align-items: center; gap: 7px;
-    }
-    .btn-hero-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .hero-scroll {
-      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); z-index: 2;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: var(--text-muted); letter-spacing: 0.1em;
-      visibility: hidden;
-    }
-    .hero-scroll-line {
-      width: 1px; height: 48px; background: linear-gradient(var(--electric), transparent);
-      animation: scrollLine 2s ease-in-out infinite;
-    }
-    @keyframes scrollLine {
-      0%   { transform: scaleY(0); transform-origin: top; }
-      50%  { transform: scaleY(1); transform-origin: top; }
-      50.01% { transform: scaleY(1); transform-origin: bottom; }
-      100% { transform: scaleY(0); transform-origin: bottom; }
-    }
-
-    /* ── WHAT IS ── */
-    #what { padding: 120px 0; position: relative; overflow: hidden; }
-    .what-inner { display: grid; grid-template-columns: 1fr 440px; gap: 80px; align-items: center; }
-    @media (max-width: 1000px) { .what-inner { grid-template-columns: 1fr; } }
-    #what::before {
-      content: ''; position: absolute; width: 800px; height: 800px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(157,0,255,0.08) 0%, transparent 70%);
-      top: -200px; right: -200px; pointer-events: none;
-    }
-    .what-quote-mark {
-      font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 120px; line-height: 0.8;
-      background: var(--holo); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; display: block; margin-bottom: -20px; user-select: none;
-    }
-    .what-pull-quote {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(22px, 3.5vw, 36px); line-height: 1.2; letter-spacing: -0.01em;
-      margin-bottom: 28px; color: var(--text);
-    }
-    .what-body { font-size: 17px; color: var(--text-muted); line-height: 1.75; max-width: 580px; }
-    .what-body p + p { margin-top: 16px; }
-    .what-body strong { color: var(--chrome); font-weight: 600; }
-    .what-visual { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-    .what-logo { width: 220px; filter: drop-shadow(0 0 32px rgba(0,255,255,0.25)); }
-    .what-cart { width: 180px; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)); }
-    .code-block {
-      background: rgba(3,1,10,0.98); border: 1px solid var(--border); border-left: 3px solid var(--electric);
-      border-radius: 8px; padding: 24px 28px; font-family: 'Courier New', monospace;
-      font-size: 13px; line-height: 1.8; margin-top: 32px; overflow-x: auto;
-    }
-    .code-line     { color: var(--text-muted); }
-    .code-keyword  { color: #ff8a00; }
-    .code-fn       { color: var(--electric); }
-    .code-string   { color: #a8ff80; }
-    .code-comment  { color: #445; font-style: italic; }
-
-    /* ── FEATURES ── */
-    #features {
-      padding: 120px 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(15,10,12,0.6) 50%, transparent 100%);
-    }
-    .features-header { text-align: center; margin-bottom: 56px; }
-    .features-header .section-sub { max-width: 480px; margin: 0 auto; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .feat-card-large { grid-column: span 2; }
-    .feat-col-stack { display: flex; flex-direction: column; gap: 20px; }
-    @media (max-width: 1100px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .feat-card-large { grid-column: span 2; }
-    }
-    @media (max-width: 640px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .feat-card-large { grid-column: span 1; }
-    }
-    .feat-card {
-      background: rgba(15,11,13,0.88); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 32px; display: flex; flex-direction: column; gap: 16px;
-      transition: var(--trans); position: relative; overflow: hidden;
-    }
-    .feat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.12); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
-    .feat-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0;
-    }
-    .feat-3d::before    { background: linear-gradient(90deg, var(--electric), var(--violet)); }
-    .feat-voxel::before { background: linear-gradient(90deg, var(--lime), #0f3a1a); }
-    .feat-physics::before { background: linear-gradient(90deg, var(--neon-pink), var(--violet)); }
-    .feat-audio::before { background: linear-gradient(90deg, var(--violet), #1e0840); }
-    .feat-input::before { background: linear-gradient(90deg, var(--neon-pink), var(--electric)); }
-    .feat-fx::before    { background: linear-gradient(90deg, var(--violet), var(--electric)); }
-    .feat-os::before    { background: linear-gradient(90deg, var(--chrome), var(--violet)); }
-    .feat-dev::before   { background: linear-gradient(90deg, var(--electric), var(--lime)); }
-    .feat-card-large .feat-deco {
-      position: absolute; top: 0; right: 0; width: 300px; height: 200px;
-      background: radial-gradient(ellipse at top right, rgba(0,255,255,0.06) 0%, transparent 70%); pointer-events: none;
-    }
-    .feat-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px;
-      color: var(--text); display: flex; align-items: center; gap: 10px;
-    }
-    .feat-card-large .feat-title { font-size: 20px; }
-    .feat-badge {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-muted);
-      border: 1px solid var(--border); border-radius: 3px; padding: 4px 8px;
-      letter-spacing: 0.05em; margin-left: auto;
-    }
-    .feat-3d .feat-badge { color: var(--electric); border-color: var(--border-el); }
-    .feat-body { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
-    .feat-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .feat-list li {
-      font-size: 14px; color: var(--text-muted);
-      display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
-    }
-    .feat-list li::before { content: '›'; color: var(--electric); font-size: 16px; line-height: 1.3; flex-shrink: 0; }
-    .feat-card-large .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
-    @media (max-width: 640px) { .feat-card-large .feat-list { grid-template-columns: 1fr; } }
-
-    /* ── DEMOS ── */
-    #demos { padding: 120px 0; position: relative; }
-    .demos-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 48px; gap: 24px; flex-wrap: wrap; }
-    .demos-header-left { max-width: 540px; }
-    .btn-outline {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 12px 24px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans); white-space: nowrap; flex-shrink: 0;
-    }
-    .btn-outline:hover { background: rgba(0,255,255,0.06); }
-    .demos-sub { font-size: 15px; color: var(--text-muted); margin-top: 10px; line-height: 1.6; }
-    .demo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    @media (max-width: 1100px) { .demo-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px)  { .demo-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px)  { .demo-grid { grid-template-columns: 1fr; } }
-    .demo-featured { grid-column: span 2; }
-    @media (max-width: 768px) { .demo-featured { grid-column: span 1; } }
-    .demo-card {
-      position: relative; border-radius: var(--radius); border: 1px solid var(--border);
-      background: var(--bg-mid); overflow: hidden; cursor: pointer; transition: var(--trans);
-      display: flex; flex-direction: column;
-    }
-    .demo-card:hover { transform: translateY(-6px); border-color: rgba(10,255,237,0.25); box-shadow: 0 20px 56px rgba(0,0,0,0.5); }
-    .demo-visual { height: 140px; position: relative; overflow: hidden; }
-    .demo-featured .demo-visual { height: 180px; }
-    .demo-fps       .demo-visual { background: radial-gradient(ellipse at 30% 30%, #ff4500 0%, #b91c1c 40%, #0a0810 100%); }
-    .demo-noir      .demo-visual { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 60%, #111 100%); }
-    .demo-crystal   .demo-visual { background: conic-gradient(from 45deg at 50% 50%, #00ffff, #ff00ff, #9d00ff, #00ffff); }
-    .demo-fzero     .demo-visual { background: conic-gradient(from 90deg at 60% 50%, #ff00ff 0deg, #9d00ff 120deg, #030712 240deg, #00c8ff 360deg); }
-    .demo-space     .demo-visual { background: radial-gradient(circle at 20% 80%, #7c3aed 0%, transparent 50%), radial-gradient(circle at 80% 20%, #1e3a8a 0%, transparent 50%), #030712; }
-    .demo-voxel     .demo-visual { background: linear-gradient(160deg, #065f46 0%, #14532d 40%, #713f12 60%, #44403c 100%); }
-    .demo-plumber   .demo-visual { background: linear-gradient(160deg, #1d4ed8 0%, #2563eb 30%, #16a34a 55%, #15803d 100%); }
-    .demo-cyber     .demo-visual { background: radial-gradient(ellipse at 70% 30%, #ff00ff 0%, transparent 50%), radial-gradient(ellipse at 30% 70%, #9d00ff 0%, transparent 50%), #03010a; }
-    .demo-strider   .demo-visual { background: linear-gradient(135deg, #14532d 0%, #713f12 60%, #1c1917 100%); }
-    .demo-model     .demo-visual { background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); }
-    .demo-demoscene .demo-visual { background: conic-gradient(from 180deg at 50% 50%, #00ffff, #ff00ff, #9d00ff, #39ff14, #00ffff); }
-    .demo-pbr       .demo-visual { background: radial-gradient(circle at 50% 50%, #c4cbd8 0%, #64748b 40%, #1e293b 100%); }
-    .demo-visual::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
-      background-size: 20px 20px;
-    }
-    .demo-genre {
-      position: absolute; top: 10px; left: 12px;
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.45);
-      padding: 4px 8px; border-radius: 3px; letter-spacing: 0.06em;
-    }
-    .demo-play-btn {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.8); opacity: 0;
-      background: rgba(0,255,255,0.15); backdrop-filter: blur(8px);
-      border: 1px solid var(--electric); border-radius: 50%;
-      width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-      transition: var(--trans); color: var(--electric); font-size: 18px;
-    }
-    .demo-card:hover .demo-play-btn { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    .demo-info { padding: 16px 18px 18px; }
-    .demo-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; }
-    .demo-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-    /* ── NOVAOS ── */
-    #novaos { padding: 120px 0; position: relative; overflow: hidden; }
-    #novaos::before {
-      content: ''; position: absolute; inset: 0;
-      background-image: url('./assets/novaOS/nova64ConsoleBG.webp');
-      background-size: cover; background-position: center; opacity: 0.06; z-index: 0;
-    }
-    #novaos::after {
-      content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
-    }
-    .novaos-inner {
-      position: relative; z-index: 1;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center;
-    }
-    @media (max-width: 900px) { .novaos-inner { grid-template-columns: 1fr; gap: 40px; } }
-    .novaos-visual { position: relative; }
-    .novaos-img {
-      width: 100%; border-radius: 12px; border: 1px solid rgba(0,255,255,0.15);
-      box-shadow: 0 0 0 1px rgba(157,0,255,0.10), 0 0 40px rgba(0,255,255,0.10), 0 0 80px rgba(157,0,255,0.06), 0 40px 80px rgba(0,0,0,0.7);
-    }
-    .novaos-visual::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-      border-radius: 12px 12px 0 0; pointer-events: none; z-index: 1;
-    }
-    .novaos-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(26px, 3.5vw, 42px); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 24px;
-    }
-    .novaos-body { font-size: 16px; color: var(--text-muted); line-height: 1.7; margin-bottom: 28px; }
-    .novaos-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
-    .novaos-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: var(--text-muted); line-height: 1.5; }
-    .novaos-list li .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--electric); box-shadow: 0 0 6px var(--electric); margin-top: 6px; flex-shrink: 0; }
-    .coming-soon {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--neon-pink);
-      border: 1px solid rgba(255,45,120,0.3); padding: 3px 7px; border-radius: 3px;
-      letter-spacing: 0.05em; vertical-align: middle; margin-left: 8px;
-    }
-    .btn-novaos {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px;
-      padding: 13px 26px; border: 1px solid var(--border-el); border-radius: 4px;
-      color: var(--electric); transition: var(--trans);
-    }
-    .btn-novaos:hover { background: rgba(0,255,255,0.06); }
-
-    /* ── WHY ── */
-    #why {
-      padding: 140px 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(15,8,12,0.5) 50%, transparent 100%);
-    }
-    .why-header { text-align: center; margin-bottom: 72px; }
-    .why-phrases {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-      background: var(--border); border: 1px solid var(--border); border-radius: var(--radius);
-      overflow: hidden; margin-bottom: 80px;
-    }
-    @media (max-width: 768px) { .why-phrases { grid-template-columns: 1fr; } }
-    .why-phrase { background: var(--bg-base); padding: 52px 40px; text-align: center; transition: var(--trans); }
-    .why-phrase:hover { background: rgba(10,2,24,0.9); }
-    .why-phrase-text {
-      font-family: 'Orbitron', sans-serif; font-weight: 700;
-      font-size: clamp(20px, 2.5vw, 34px); line-height: 1.2; letter-spacing: -0.01em; white-space: pre-line;
-    }
-    .why-phrase:nth-child(1) .why-phrase-text { color: var(--electric); }
-    .why-phrase:nth-child(2) .why-phrase-text { color: var(--text); }
-    .why-phrase:nth-child(3) .why-phrase-text {
-      background: var(--holo); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .why-manifesto { max-width: 720px; margin: 0 auto; text-align: center; }
-    .why-manifesto blockquote {
-      font-size: clamp(16px, 2vw, 20px); font-style: italic; color: var(--text-muted);
-      line-height: 1.8; margin-bottom: 52px; border: none;
-    }
-    .why-manifesto blockquote strong { color: var(--chrome); font-style: normal; }
-    .tech-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; padding: 24px 0; border-top: 1px solid var(--border); }
-    .tech-item { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.08em; display: flex; align-items: center; gap: 10px; }
-    .tech-item::after { content: '·'; color: var(--border-el); }
-    .tech-item:last-child::after { display: none; }
-
-    /* ── PRESS KIT ── */
-    #press { padding: 120px 0; position: relative; }
-    .press-header { margin-bottom: 52px; }
-    .press-assets-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 56px; }
-    @media (max-width: 900px)  { .press-assets-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px)  { .press-assets-grid { grid-template-columns: 1fr; } }
-    .press-asset { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--trans); }
-    .press-asset:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-3px); }
-    .press-asset-thumb { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; background: var(--bg-base); padding: 20px; overflow: hidden; }
-    .press-asset-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .press-asset-info { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .press-asset-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-    .press-download {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--electric);
-      border: 1px solid var(--border-el); border-radius: 3px; padding: 5px 9px;
-      letter-spacing: 0.04em; transition: var(--trans); white-space: nowrap;
-    }
-    .press-download:hover { background: rgba(10,255,237,0.08); }
-    .press-copy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 768px) { .press-copy-grid { grid-template-columns: 1fr; } }
-    .press-copy-block { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; }
-    .press-copy-title {
-      font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; color: var(--chrome);
-      margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
-    }
-    .copy-btn {
-      font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-muted);
-      border: 1px solid var(--border); border-radius: 3px; padding: 5px 9px; transition: var(--trans); cursor: pointer;
-    }
-    .copy-btn:hover { color: var(--electric); border-color: var(--border-el); }
-    .copy-btn.copied { color: var(--electric); border-color: var(--border-el); }
-    .press-blurb { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
-    .press-specs { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .press-specs li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-muted); }
-    .press-specs li::before { content: '›'; color: var(--electric); font-size: 16px; line-height: 1.3; flex-shrink: 0; }
-    .press-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; }
-    .press-link-pill {
-      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px;
-      padding: 9px 18px; border: 1px solid var(--border); border-radius: 20px;
-      color: var(--text-muted); transition: var(--trans); display: flex; align-items: center; gap: 6px;
-    }
-    .press-link-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-
-    /* ── INSTALL ── */
-    #install { padding: 120px 0; text-align: center; position: relative; overflow: hidden; }
-    #install::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0,255,255,0.04) 0%, transparent 70%);
-    }
-    .install-inner { position: relative; z-index: 1; }
-    .install-sub { font-size: 17px; color: var(--text-muted); max-width: 520px; margin: 0 auto 52px; line-height: 1.75; }
-    .install-win {
-      display: inline-block; text-align: left; border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--electric); max-width: 600px; width: 100%;
-      box-shadow: 0 0 40px rgba(0,255,255,0.15), 0 0 90px rgba(0,0,0,0.7);
-    }
-    .install-titlebar {
-      background: #1a1c22; display: flex; align-items: center; gap: 7px;
-      padding: 11px 16px; border-bottom: 1px solid #2a2e3e;
-    }
-    .win-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
-    .win-dot.r { background: #ff5f57; } .win-dot.y { background: #febc2e; } .win-dot.g { background: #28c840; }
-    .install-titlebar-label {
-      flex: 1; text-align: center; font-family: 'Press Start 2P', monospace;
-      font-size: 9px; color: #555; margin-right: 26px; letter-spacing: 0.05em;
-    }
-    .install-body {
-      background: #050810; padding: 24px 28px;
-      font-family: monospace; font-size: 14px; line-height: 2.1;
-    }
-    .iline { color: #7a8ba0; }
-    .iline.ok { color: var(--lime); }
-    .iline.cmd { color: var(--electric); }
-    .iline.final { color: var(--chrome); }
-    .icursor {
-      display: inline-block; width: 9px; height: 1.1em;
-      background: var(--electric); vertical-align: text-bottom;
-      animation: iblink 1.1s step-end infinite;
-    }
-    @keyframes iblink { 50% { opacity: 0; } }
-    .install-note { margin-top: 32px; font-size: 13px; color: var(--text-muted); }
-    .install-note a { color: var(--electric); border-bottom: 1px solid rgba(0,255,255,0.3); transition: var(--trans); }
-    .install-note a:hover { color: #fff; border-bottom-color: #fff; text-decoration: none; }
-
-    /* ── FINAL CTA ── */
-    #cta { padding: 160px 0; text-align: center; position: relative; overflow: hidden; }
-    #cta::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(157,0,255,0.06) 0%, transparent 70%),
-                  radial-gradient(ellipse 60% 40% at 30% 80%, rgba(0,255,255,0.05) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .cta-watermark {
-      position: absolute; width: 420px; height: auto; top: 50%; left: 50%;
-      transform: translate(-50%, -50%); opacity: 0.04; filter: grayscale(1); pointer-events: none; z-index: 0;
-    }
-    .cta-content { position: relative; z-index: 1; }
-    .cta-h2 {
-      font-family: 'Orbitron', sans-serif; font-weight: 900;
-      font-size: clamp(32px, 6vw, 68px); line-height: 1.0; letter-spacing: -0.01em;
-      margin-bottom: 20px; white-space: pre-line;
-    }
-    .cta-sub { font-size: 18px; color: var(--text-muted); margin-bottom: 44px; font-style: italic; }
-    .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 32px; }
-    .cta-note { font-size: 13px; color: #445; letter-spacing: 0.05em; }
-
-    /* ── FOOTER ── */
-    footer { border-top: 1px solid var(--border); padding: 48px 0 36px; }
-    .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 32px; margin-bottom: 40px; }
-    .footer-brand { display: flex; flex-direction: column; gap: 12px; }
-    .footer-brand img { width: auto; }
-    .footer-brand-tag { font-size: 13px; color: var(--text-muted); max-width: 260px; line-height: 1.6; }
-    .footer-links { display: flex; gap: 40px; flex-wrap: wrap; }
-    .footer-col { display: flex; flex-direction: column; gap: 12px; }
-    .footer-col-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 4px; }
-    .footer-col a { font-size: 14px; color: var(--text-muted); transition: var(--trans); line-height: 1.4; }
-    .footer-col a:hover { color: var(--text); }
-    .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-    .footer-bottom p { font-size: 12px; color: var(--text-muted); opacity: 0.6; }
-    .footer-bottom a { color: var(--text-muted); }
-    .footer-bottom a:hover { color: var(--electric); }
-    :focus-visible { outline: 2px solid var(--electric); outline-offset: 3px; border-radius: 2px; }
-  </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-B3RDWLFWVF');
-</script>
-</head>
-<body>
-
-<!-- ── I18N STRINGS ── -->
-<!-- To localize: create ./i18n/<lang>.json with key overrides, then add ?lang=<lang> to the URL -->
-<script type="application/json" id="nova64-i18n">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova64 — JavaScript 3D Fantasy Console &amp; Browser Game Engine</title>
+<meta name="description" content="Nova64 is a JavaScript 3D fantasy console and browser game engine for building low-poly, voxel, glitch and vaporwave games. Build portable game carts in the browser and run them on web and mobile.">
+<meta name="keywords" content="fantasy console, JavaScript 3D engine, browser game engine, low-poly game engine, voxel engine, retro 3D games, PS1 style games, N64 style games, demoscene, vaporwave, glitch art, portable game carts, cross-platform game engine, mobile game development, WebGPU game engine">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Starcade9">
+<meta name="theme-color" content="#0a0b10">
+<link rel="canonical" href="https://nova64.io/alpha.html">
+<link rel="icon" type="image/svg+xml" href="./nova-icon.svg">
+<link rel="apple-touch-icon" href="./public/assets/cart-thumbs/f-zero-nova-3d.png">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="Nova64">
+<meta property="og:title" content="Nova64 — JavaScript 3D Fantasy Console">
+<meta property="og:description" content="Build low-poly, voxel and glitch 3D games in your browser with JavaScript, then ship them as portable game carts. One-time launch license.">
+<meta property="og:url" content="https://nova64.io/alpha.html">
+<meta property="og:image" content="https://nova64.io/public/assets/cart-thumbs/f-zero-nova-3d.png">
+<meta property="og:image:alt" content="Nova64 fantasy console running a low-poly racer">
+<meta property="product:price:amount" content="14.99">
+<meta property="product:price:currency" content="USD">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@starcade9_io">
+<meta name="twitter:title" content="Nova64 — JavaScript 3D Fantasy Console">
+<meta name="twitter:description" content="A browser-native fantasy console for low-poly, voxel and glitch 3D games. Code in JavaScript, ship portable carts.">
+<meta name="twitter:image" content="https://nova64.io/public/assets/cart-thumbs/f-zero-nova-3d.png">
+<script type="application/ld+json">
 {
-  "page.title": "NOVA64 // Disc 01 \u2014 The Browser Fantasy Console",
-  "nav.what": "What Is It",
-  "nav.features": "Features",
-  "nav.demos": "Demos",
-  "nav.novaos": "NovaOS",
-  "nav.press": "Press Kit",
-  "nav.github": "GitHub",
-  "nav.launch": "Launch Console",
-  "nav.drawer.launch": "Launch Console \u2192",
-  "hero.badge": "NOVA64 v0.4.8 // MEM CARD DETECTED",
-  "hero.boot.check": "DISC CHECK",
-  "hero.boot.ok": "OK",
-  "hero.h1.html": "Born From<br><span class=\"line-accent\">64-Bit Dreams.</span>",
-  "hero.sub": "The darkness between polygons. The hum of a disc loading. NOVA64 is the fantasy console that never shipped in 1997 \u2014 running live, in your browser, right now.",
-  "hero.cta.launch": "Launch Console",
-  "hero.cta.demo": "Load a Demo",
-  "hero.cta.docs": "Docs",
-  "hero.scroll": "SCROLL",
-  "what.h2": "Everything you remember. Everything they never shipped.",
-  "what.p1": "NOVA64 is the ghost of a console that should have shipped in 1997. Built entirely in JavaScript, it requires no install and runs anywhere a browser runs. Point it at a tab \u2014 and start making games.",
-  "what.p2.html": "Under the hood: <strong>Three.js 0.182.0</strong>, a hot-reloading cart system, voxel engine, physics, spatial audio, and a full sprite pipeline \u2014 all accessible through an API tight enough to fit in a memory card manual.",
-  "features.stamp": "MEM BLOCK 01",
-  "features.h2.html": "The specs they drew<br>on graph paper in \u201896.",
-  "features.sub": "35+ API functions. Every system accounted for. Every shortcut removed. If a 90s dev would have dreamed it, it\u2019s here.",
-  "features.3d.title": "3D Graphics Engine",
-  "features.3d.body": "Hardware-accelerated 3D built on Three.js 0.182.0. Advanced materials, cinematic lighting, 4K shadow maps \u2014 exposed through a dead-simple API.",
-  "features.voxel.title": "Voxel Engine",
-  "features.voxel.body": "Chunked voxel world with biomes, fluid simulation, raycasting, pathfinding, and a full entity-component system. Think Minecraft in 50 lines.",
-  "features.physics.title": "Physics & Collision",
-  "features.physics.body": "AABB collision, gravity, raycasting, and spatial partitioning. Plug in setCollisionMap() and your world becomes solid.",
-  "features.audio.title": "Spatial Audio",
-  "features.audio.body": "WebAudio with 3D positioning, named sound presets (jump, coin, explosion...), and a simple sfx() call to trigger any sound.",
-  "features.input.title": "Input System",
-  "features.input.body": "WASD + gamepad + mouse in a unified API. key(), btn(), btnp() \u2014 works the same across keyboard and controller.",
-  "features.gameutils.title": "Game Utils",
-  "features.gameutils.body": "Cooldowns, hit states, spawners, object pools, floating text, minimap, state machines, timers \u2014 the full toolkit.",
-  "features.novaos_s.title": "NovaOS Shell",
-  "features.novaos_s.body": "A retro operating system skin with a filesystem, app launcher, and terminal. Runs carts natively. Ships with the console.",
-  "features.dev.title": "Developer Tools",
-  "features.dev.body": "In-browser sprite editor, real-time cart hot reload, FPS counter, triangle count \u2014 all accessible without leaving the tab.",
-  "features.3d.list.1": "Cube, Sphere, Plane, Cylinder, Cone, Capsule, Torus primitives",
-  "features.3d.list.2": "Holographic, metallic, and emissive material presets",
-  "features.3d.list.3": "Dynamic camera: position, target, FOV, smooth transitions",
-  "features.3d.list.4": "Atmospheric fog, ambient light, point lights",
-  "features.3d.list.5": "Space, gradient, and solid skybox generators",
-  "features.3d.list.6": "Bloom, vignette, glitch, chromatic aberration post-FX",
-  "features.3d.list.7": "N64 low-poly mode, PSX dither mode",
-  "features.3d.list.8": "Hot-reloading cart system \u2014 save to reload",
-  "novaos.list.1": "Window manager with draggable apps & z-ordering",
-  "novaos.list.2": "Built-in file browser & text editor",
-  "novaos.list.3": "Native cart launcher with live preview",
-  "novaos.list.4": "Settings panel with display & audio controls",
-  "novaos.list.5": "Mobile-optimized shell variant",
-  "demos.fps.name": "FPS Combat",
-  "demos.fps.desc": "First-person shooter with raycasting & particle explosions",
-  "demos.crystal.name": "Crystal Cathedral",
-  "demos.crystal.desc": "Ultimate graphics showcase. Holographic architecture & dynamic lighting",
-  "demos.noir.name": "Noir Adventure",
-  "demos.noir.desc": "Comic-style adventure with cel-shading & dynamic panels",
-  "demos.fzero.name": "F-Zero Nova",
-  "demos.fzero.desc": "High-speed anti-grav racing through futuristic circuits",
-  "demos.starfox.name": "Star Fox Nova",
-  "demos.starfox.desc": "Epic rail shooter with squadron battles & boss fights",
-  "demos.cyber.name": "Cyberpunk City",
-  "demos.cyber.desc": "Neon-soaked open world with volumetric rain & atmosphere",
-  "demos.voxel.name": "Voxel World",
-  "demos.voxel.desc": "Procedural terrain, biomes & real-time block editing",
-  "demos.plumber.name": "Super Plumber 64",
-  "demos.plumber.desc": "3D platformer with coins, enemies & N64-era charm",
-  "demos.strider.name": "Knight Strider",
-  "demos.strider.desc": "Fantasy sword-fighter with spell effects & dungeon crawling",
-  "demos.demoscene.name": "Tron Demoscene",
-  "demos.demoscene.desc": "Audio-reactive visuals & real-time shader art",
-  "demos.model.name": "Model Viewer",
-  "demos.model.desc": "Rigged .glb model loaded with full skeletal animation",
-  "demos.pbr.name": "PBR Showcase",
-  "demos.pbr.desc": "Metalness & roughness grid with IBL reflections",
-  "press.github.link": "GitHub Repository",
-  "press.apidocs.link": "API Documentation",
-  "press.console.link": "Live Console",
-  "press.novaos.link": "NovaOS Shell",
-  "demos.stamp": "DISC VAULT",
-  "demos.h2": "Insert Disc. Begin.",
-  "demos.sub": "Every title in the vault loads cold. No waiting. No install. One click \u2014 and the dark fades to game.",
-  "demos.browse": "Browse All Demos \u2192",
-  "novaos.stamp": "BONUS DISC",
-  "novaos.h2.html": "System menu.<br>Dark as the disc.",
-  "novaos.body": "NovaOS is what happens when a love of Mac OS 9, PS1 system menus, and dark terminals converge at 2am. Boot it \u2014 and the past comes alive in your tab.",
-  "novaos.cta": "Boot NovaOS",
-  "why.stamp": "DEV.LOG",
-  "why.h2": "Why we built this.",
-  "why.phrase1": "No disc tray.\nJust the code.",
-  "why.phrase2": "Retro soul,\nmodern GPU.",
-  "why.phrase3": "Born in shadows.\nRuns in light.",
-  "why.quote.html": "\u201cEvery disc you ever loaded began the same way. A logo. A boot chime. The dark \u2014 then everything. <strong>NOVA64 rebuilds that ritual for the browser.</strong> One import. One tab. The game begins.\u201d",
-  "tech.threejs": "Three.js 0.182.0",
-  "tech.webgl2": "WebGL2",
-  "tech.webaudio": "Web Audio API",
-  "tech.esmodules": "ES Modules",
-  "tech.vite": "Vite 5.4",
-  "tech.gsap": "GSAP 3",
-  "tech.nodeps": "Zero Runtime Deps",
-  "press.stamp": "PRESS KIT",
-  "press.h2": "Assets & copy.",
-  "press.sub": "Everything you need to write about NOVA64. High-res assets, approved copy, and technical specs.",
-  "press.logo.label": "Primary Logo",
-  "press.console.label": "Console Render",
-  "press.cart.label": "Cart Art",
-  "press.mascot.label": "Mascot",
-  "press.blurb.title": "Brand Description",
-  "press.blurb.copy": "COPY",
-  "press.blurb.text": "NOVA64 is a browser-native 3D fantasy console built on Three.js. It lets developers build N64/PlayStation-era games in plain JavaScript with zero WebGL boilerplate. Over 35 API functions cover 3D graphics, audio, physics, input, voxel worlds, and a retro OS shell \u2014 all running live in the browser.",
-  "press.specs.title": "Technical Summary",
-  "press.spec.1": "Three.js 0.182.0 3D renderer (WebGL2 + Canvas2D fallbacks)",
-  "press.spec.2": "Chunked voxel engine with fluid, lighting & pathfinding",
-  "press.spec.3": "AABB physics with raycasting & spatial partitioning",
-  "press.spec.4": "WebAudio spatial sound with named preset library",
-  "press.spec.5": "Hot-reloading ES module cart system via Vite 5.4",
-  "press.spec.6": "NovaOS shell: window manager, file browser, cart launcher",
-  "cta.stamp": "BOOT SEQUENCE",
-  "cta.h2.html": "One more game.<br><span class=\"line-accent\">Press start.</span>",
-  "cta.sub": "No install disc. No memory card. Just the code and the dark.",
-  "cta.launch": "Launch Console",
-  "cta.docs": "Read the Docs",
-  "cta.github": "Star on GitHub",
-  "cta.note": "MIT License \u2014 fork it, ship it, make something weird.",
-  "footer.brand": "The browser console built from \u201997 dreams. Zero boilerplate. Zero compromise.",
-  "footer.col.product": "PRODUCT",
-  "footer.col.develop": "DEVELOP",
-  "footer.col.links": "LINKS",
-  "footer.tagline": "No memory cards were corrupted in the making of this project."
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Nova64",
+  "alternateName": "FA-64",
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "Game Engine",
+  "operatingSystem": "Web browser, iOS, Android",
+  "url": "https://nova64.io/alpha.html",
+  "image": "https://nova64.io/public/assets/cart-thumbs/f-zero-nova-3d.png",
+  "description": "Nova64 is a JavaScript 3D fantasy console and browser game engine for building low-poly, voxel, glitch, demoscene and vaporwave games as portable carts.",
+  "softwareVersion": "1.0",
+  "publisher": { "@type": "Organization", "name": "Starcade9", "url": "https://www.starcade9.io/" },
+  "offers": { "@type": "Offer", "price": "14.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://nova64.io/alpha.html#pricing" }
 }
 </script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..900&family=Saira:ital,wght@1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:#0a0b10; color:#ece7db; font-family:'Archivo',system-ui,sans-serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden; }
+  ::selection{ background:#22e0c8; color:#0a0b10; }
+  a{ color:inherit; }
+  @keyframes n64blink{ 0%,48%{ opacity:1; } 49%,100%{ opacity:0.12; } }
+  @keyframes n64marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  @keyframes n64scan{ 0%{ transform:translateY(-10%); opacity:0; } 12%{ opacity:0.5; } 88%{ opacity:0.5; } 100%{ transform:translateY(520%); opacity:0; } }
+  @keyframes n64pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
 
-<!-- ── NAV ── -->
-<nav id="nav">
-  <div class="container">
-    <a href="#" class="nav-brand">
-      <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64" />
-      NOVA64
-    </a>
-    <div class="nav-links">
-      <a href="#what" data-i18n="nav.what">What Is It</a>
-      <a href="#features" data-i18n="nav.features">Features</a>
-      <a href="#demos" data-i18n="nav.demos">Demos</a>
-      <a href="#novaos" data-i18n="nav.novaos">NovaOS</a>
-      <a href="#install">Install</a>
-      <a href="#press" data-i18n="nav.press">Press Kit</a>
-    </div>
-    <div class="nav-cta">
-      <div class="nav-trio">
-        <a href="./console.html" class="nav-trio-btn console">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8M12 18v2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7 11l3-3-3-3M13 12h4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-          Console
-        </a>
-        <a href="./os9-shell/index.html" class="nav-trio-btn os">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 7h18M7 5h.01M9 5h.01M11 5h.01"/><path d="M8 21h8M12 17v4" stroke-width="1.5"/></svg>
-          OS
-        </a>
-        <a href="./docs/index.html" class="nav-trio-btn docs">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-          Docs
-        </a>
-      </div>
-      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="btn-ghost-sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span data-i18n="nav.github">GitHub</span>
+  /* ── Disc Vault (cartridge gallery) ─────────────────────────── */
+  .vault-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr)); gap:16px; }
+  .cart{ position:relative; display:flex; flex-direction:column; text-decoration:none; color:inherit; background:#0c0e15; border:1px solid rgba(236,231,219,0.14); overflow:hidden; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .cart:hover{ transform:translateY(-5px); border-color:var(--cart-color,#22e0c8); box-shadow:0 18px 44px rgba(0,0,0,0.55), 0 0 0 1px var(--cart-color,#22e0c8); }
+  .cart:focus-visible{ outline:2px solid var(--cart-color,#22e0c8); outline-offset:2px; }
+  .cart-shell{ position:relative; padding:16px 16px 0; }
+  .cart-top{ height:8px; margin:-16px -16px 14px; background:var(--cart-color,#22e0c8); opacity:0.55; }
+  .cart-screw{ position:absolute; width:5px; height:5px; border-radius:50%; background:rgba(236,231,219,0.22); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4); z-index:2; }
+  .cart-screw.tl{ top:16px; left:11px } .cart-screw.tr{ top:16px; right:11px }
+  .cart-screw.bl{ bottom:9px; left:11px } .cart-screw.br{ bottom:9px; right:11px }
+  .cart-stripe{ height:3px; width:38%; margin-bottom:12px; background:var(--cart-color,#22e0c8); }
+  .cart-label{ aspect-ratio:1/1; overflow:hidden; border:1px solid rgba(236,231,219,0.12); background:#07080c; }
+  .cart-label img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s ease; }
+  .cart:hover .cart-label img{ transform:scale(1.05); }
+  .cart-plate{ display:flex; justify-content:space-between; align-items:flex-end; gap:8px; padding:12px 2px 14px; }
+  .cart-plate-name{ font-family:'Archivo',sans-serif; font-stretch:112%; font-weight:700; font-size:15px; line-height:1.1; }
+  .cart-plate-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.45); white-space:nowrap; }
+  .cart-plate-meta .genre{ color:var(--cart-color,#22e0c8); letter-spacing:0.08em; text-transform:uppercase; }
+  .cart-action{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid rgba(236,231,219,0.12); background:rgba(255,255,255,0.015); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,231,219,0.55); }
+  .cart:hover .cart-action{ color:var(--cart-color,#22e0c8); }
+  .cart-action .arrow::after{ content:'→'; transition:transform .18s ease; display:inline-block; }
+  .cart:hover .cart-action .arrow::after{ transform:translateX(4px); }
+  .cart.featured{ grid-column:span 2; }
+  .cart.featured .cart-label{ aspect-ratio:16/9; }
+  @media (max-width:600px){ .cart.featured{ grid-column:span 1; } .cart.featured .cart-label{ aspect-ratio:1/1; } }
+</style>
+</helmet>
+
+<div style="position:relative; width:100%; overflow:hidden; background:#0a0b10;">
+
+  <!-- ================= HEADER ================= -->
+  <header style="position:sticky; top:0; z-index:60; background:rgba(10,11,16,0.82); backdrop-filter:blur(10px); border-bottom:1px solid rgba(236,231,219,0.14);">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px clamp(16px,4vw,40px);">
+      <a href="#top" aria-label="Nova64 home" onClick="{{ closeMenu }}" style="display:flex; align-items:center; gap:11px; text-decoration:none; flex-shrink:0;">
+        <span style="position:relative; display:inline-block; transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:26px; line-height:1; letter-spacing:0.01em;">
+          <span aria-hidden="true" style="position:absolute; left:-2px; top:1px; color:#ff2fb4;">Nova64</span>
+          <span aria-hidden="true" style="position:absolute; left:2px; top:-1px; color:#22e0c8;">Nova64</span>
+          <span style="position:relative; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span>
+        </span>
+        <sc-if value="{{ showLogoSuffix }}" hint-placeholder-val="{{ true }}">
+          <span style="font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.5); letter-spacing:0.14em; white-space:nowrap;">™ / FA-64</span>
+        </sc-if>
       </a>
-      <select id="lang-select" class="lang-switcher" aria-label="Language">
-        <option value="en">EN</option>
-        <option value="es">ES</option>
-        <option value="ja">JA</option>
-      </select>
+
+      <!-- Full nav, wide viewports only. Below navBreakpoint it is replaced by the
+           hamburger + drop panel further down, so the ten items never wrap into
+           the logo or squeeze the Buy CTA off the row. -->
+      <sc-if value="{{ navExpanded }}" hint-placeholder-val="{{ true }}">
+        <nav aria-label="Primary" style="display:flex; align-items:center; gap:20px; font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;">
+          <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">{{ n.label }}</a>
+          </sc-for>
+          <span aria-hidden="true" style="width:1px; height:13px; background:rgba(236,231,219,0.22);"></span>
+          <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+          </sc-for>
+        </nav>
+      </sc-if>
+
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+        <button onClick="{{ buy }}" style="{{ buyBtnStyle }}" style-hover="background:#5cf0dc;">
+          {{ buyLabel }}
+        </button>
+        <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toggleMenu }}" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" aria-controls="site-menu"
+                  style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:42px; height:38px; padding:0; background:transparent; border:1px solid rgba(236,231,219,0.24); cursor:pointer;"
+                  style-hover="border-color:#22e0c8;">
+            <span aria-hidden="true" style="{{ barTop }}"></span>
+            <span aria-hidden="true" style="{{ barMid }}"></span>
+            <span aria-hidden="true" style="{{ barBot }}"></span>
+          </button>
+        </sc-if>
+      </div>
     </div>
-    <button class="nav-hamburger" id="nav-toggle" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+
+    <!-- Drop panel. Absolutely positioned against the sticky header so it overlays
+         the page instead of pushing the hero down when it opens. -->
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <nav id="site-menu" aria-label="Primary" style="position:absolute; left:0; right:0; top:100%; display:flex; flex-direction:column; padding:6px clamp(16px,4vw,40px) 16px; background:rgba(10,11,16,0.97); backdrop-filter:blur(14px); border-bottom:1px solid rgba(236,231,219,0.14); box-shadow:0 24px 46px rgba(0,0,0,0.55); max-height:calc(100svh - 62px); overflow-y:auto; font-family:'Space Mono',monospace; letter-spacing:0.1em; text-transform:uppercase;">
+        <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#ece7db;">{{ n.label }}</a>
+        </sc-for>
+        <div style="padding:16px 2px 6px; font-size:10px; letter-spacing:0.2em; color:rgba(236,231,219,0.4);">[ Explore ]</div>
+        <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+        </sc-for>
+      </nav>
+    </sc-if>
+  </header>
+
+  <!-- ================= HERO ================= -->
+  <section id="top" style="position:relative; min-height:calc(100svh - 58px); display:flex; align-items:center; padding:clamp(24px,4vw,48px) clamp(16px,4vw,40px) clamp(40px,5vw,64px);">
+    <!-- backdrop grid -->
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(236,231,219,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(236,231,219,0.05) 1px,transparent 1px); background-size:64px 64px; mask-image:radial-gradient(120% 90% at 70% 20%,#000 30%,transparent 90%); pointer-events:none;"></div>
+    <div style="position:absolute; top:0; right:0; width:min(46vw,620px); height:100%; background:radial-gradient(60% 50% at 80% 30%,rgba(34,224,200,0.16),transparent 70%); pointer-events:none;"></div>
+
+    <div style="position:relative; width:100%; max-width:1240px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:clamp(28px,4vw,52px); align-items:center;">
+
+      <!-- LEFT: pitch + CTA -->
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+          <span style="display:inline-flex; align-items:center; gap:7px; padding:5px 10px; border:1px solid rgba(236,231,219,0.28); font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,231,219,0.82);">
+            <span style="width:7px; height:7px; background:#46f0a0; border-radius:50%; animation:n64pulse 1.4s infinite;"></span>Fantasy Console
+          </span>
+          <span style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.14em; color:rgba(236,231,219,0.44);">ノヴァ64 / BROWSER-NATIVE</span>
+        </div>
+
+        <!-- hero lockup: channel-shifted chrome wordmark + double blade -->
+        <div style="display:flex; flex-direction:column; align-items:flex-start; gap:9px; margin-bottom:18px;">
+          <div style="position:relative; display:inline-block; transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:clamp(50px,8.6vw,104px); line-height:0.9;">
+            <span aria-hidden="true" style="position:absolute; left:-5px; top:3px; color:#ff2fb4;">Nova64</span>
+            <span aria-hidden="true" style="position:absolute; left:5px; top:-3px; color:#22e0c8;">Nova64</span>
+            <span style="position:relative; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span>
+          </div>
+          <div style="width:min(100%,470px); height:clamp(14px,2.4vw,20px); clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(180deg,#ffffff 0%,#c9d5e4 40%,#7f8da2 100%);"></div>
+          <div style="width:min(78%,366px); height:7px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></div>
+          <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.52em; color:rgba(236,231,219,0.55); padding-left:0.52em; margin-top:4px;">STARCADE9</div>
+        </div>
+        <h1 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(26px,3.6vw,40px); line-height:1.02; letter-spacing:-0.01em; margin:0 0 18px; text-transform:none;">{{ headline }}</h1>
+
+        <p style="max-width:46ch; font-size:clamp(15px,1.7vw,18px); line-height:1.5; color:rgba(236,231,219,0.72); margin:0 0 26px;">Nova64 is a browser-based fantasy console for creating, playing, and sharing stylish retro 3D games with JavaScript — built for desktop <span style="color:#ece7db;">and mobile</span>.</p>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:22px;">
+          <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 26px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc;">
+            Buy Nova64 <span style="font-size:12px; opacity:0.7;">→</span>
+          </button>
+          <button onClick="{{ play }}" style="display:inline-flex; align-items:center; gap:9px; padding:16px 24px; background:transparent; color:#ece7db; border:1.5px solid rgba(236,231,219,0.34); cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase;" style-hover="border-color:#46f0a0; color:#46f0a0;">
+            ▶ Play Demo
+          </button>
+        </div>
+
+        <!-- price strip -->
+        <div style="display:inline-flex; align-items:stretch; border:1px solid rgba(236,231,219,0.2); background:rgba(236,231,219,0.03); max-width:100%;">
+          <div style="display:flex; flex-direction:column; justify-content:center; padding:12px 16px; border-right:1px solid rgba(236,231,219,0.18);">
+            <span style="display:inline-flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.14em; color:#22e0c8; margin-bottom:3px;">LAUNCH LICENSE <span style="padding:1px 5px; background:#46f0a0; color:#0a0b10; letter-spacing:0.06em;">SALE</span></span>
+            <span style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:26px; line-height:1;">{{ priceStr }}</span>
+              <span style="font-family:'Space Mono',monospace; font-size:12px; text-decoration:line-through; color:rgba(236,231,219,0.42);">{{ regularStr }}</span>
+            </span>
+          </div>
+          <div style="display:flex; flex-direction:column; justify-content:center; padding:12px 16px; gap:3px;">
+            <span style="font-size:13px; color:#ece7db;">{{ priceNote }}</span>
+            <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; color:rgba(236,231,219,0.5);">SECURE CHECKOUT · PATREON</span>
+          </div>
+        </div>
+
+        <!-- trust badges -->
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(236,231,219,0.62);">
+          <span style="padding:5px 9px; border:1px solid rgba(236,231,219,0.16);">◈ Browser-based</span>
+          <span style="padding:5px 9px; border:1px solid rgba(236,231,219,0.16);">◈ Mobile supported</span>
+          <span style="padding:5px 9px; border:1px solid rgba(236,231,219,0.16);">◈ JavaScript powered</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: console viewport preview -->
+      <div style="position:relative;">
+        <!-- corner label -->
+        <div style="position:absolute; top:-14px; left:0; z-index:3; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.16em; color:rgba(236,231,219,0.5);">NOVA64 // VIEWPORT_01 · {{ heroStatus }}</div>
+        <div style="position:relative; aspect-ratio:4/3; width:100%; border:1.5px solid rgba(236,231,219,0.28); background:#040309; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.5);">
+          <!-- IDLE poster (default) — nothing heavy loads until the visitor opts in -->
+          <sc-if value="{{ heroIdle }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ startHero }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98;">
+              <img src="{{ heroThumb }}" alt="F-Zero Nova preview" loading="lazy" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.5;">
+              <div style="position:absolute; inset:0; background:radial-gradient(60% 60% at 50% 45%,transparent,rgba(4,3,9,0.75));"></div>
+              <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
+                <span style="display:flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:50%; background:#22e0c8; color:#0a0b10; font-size:22px; box-shadow:0 0 40px rgba(34,224,200,0.6);">▶</span>
+                <span style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:20px; letter-spacing:0.02em; color:#ece7db;">Play F-Zero Nova</span>
+                <span style="font-family:'Space Mono',monospace; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(236,231,219,0.66);">Tap to boot the live nova64 runtime</span>
+              </div>
+            </button>
+          </sc-if>
+          <!-- LIVE nova64 runtime — real cart via the loader (demo-embed.html → src/main.js), booted only on click -->
+          <sc-if value="{{ heroPlaying }}" hint-placeholder-val="{{ false }}">
+            <iframe src="{{ heroSrc }}" title="Nova64 live demo — F-Zero Nova (real runtime)" loading="eager" scrolling="no" style="position:absolute; inset:0; width:100%; height:100%; border:0; display:block; background:#040309;"></iframe>
+          </sc-if>
+          <!-- HUD overlays — pointer-events:none so the cart underneath stays playable -->
+          <div style="position:absolute; top:10px; left:12px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:rgba(236,231,219,0.66); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);">CEE-D-DA · 44.1kHz</div>
+          <div style="position:absolute; top:10px; right:12px; display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:10px; color:#46f0a0; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);"><span style="width:7px; height:7px; background:#46f0a0; border-radius:50%; animation:n64blink 1s steps(1) infinite;"></span>{{ heroStatus }}</div>
+          <div style="position:absolute; bottom:10px; left:12px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:rgba(236,231,219,0.62); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);">F-ZERO NOVA · MODE:PS1</div>
+          <div style="position:absolute; bottom:10px; right:12px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(70,240,160,0.9); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);">{{ heroBars }}</div>
+          <!-- scanline sweep -->
+          <div style="position:absolute; inset:0; height:20%; background:linear-gradient(rgba(70,240,160,0.06),transparent); animation:n64scan 4.5s linear infinite; pointer-events:none;"></div>
+          <!-- edge vignette + corner registration marks -->
+          <div style="position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 90px 20px rgba(4,3,9,0.7);"></div>
+          <div style="position:absolute; top:6px; left:6px; width:12px; height:12px; border-top:1.5px solid rgba(34,224,200,0.7); border-left:1.5px solid rgba(34,224,200,0.7); pointer-events:none;"></div>
+          <div style="position:absolute; bottom:6px; right:6px; width:12px; height:12px; border-bottom:1.5px solid rgba(34,224,200,0.7); border-right:1.5px solid rgba(34,224,200,0.7); pointer-events:none;"></div>
+        </div>
+        <!-- under-caption -->
+        <div style="display:flex; justify-content:space-between; margin-top:10px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:rgba(236,231,219,0.44);">
+          <span>[ REAL-TIME LOW-POLY RENDER ]</span><span>W'0'11</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= MARQUEE ================= -->
+  <div style="border-top:1px solid rgba(236,231,219,0.14); border-bottom:1px solid rgba(236,231,219,0.14); background:#22e0c8; overflow:hidden; padding:9px 0;">
+    <div style="display:flex; width:max-content; animation:n64marquee 26s linear infinite; font-family:'Space Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0a0b10;">
+      <span style="padding:0 22px;">CODE LIKE IT'S 1998 ✳ PUBLISH LIKE IT'S TODAY ✳ YOUR BROWSER BECOMES THE CONSOLE ✳ SHIP TINY GAMES WITH BIG CONSOLE ENERGY ✳ BUILD STRANGE LITTLE WORLDS ✳ </span>
+      <span style="padding:0 22px;">CODE LIKE IT'S 1998 ✳ PUBLISH LIKE IT'S TODAY ✳ YOUR BROWSER BECOMES THE CONSOLE ✳ SHIP TINY GAMES WITH BIG CONSOLE ENERGY ✳ BUILD STRANGE LITTLE WORLDS ✳ </span>
+    </div>
   </div>
-</nav>
-<div id="nav-drawer">
-  <a href="#what" data-i18n="nav.what">What Is It</a>
-  <a href="#features" data-i18n="nav.features">Features</a>
-  <a href="#demos" data-i18n="nav.demos">Demos</a>
-  <a href="#novaos" data-i18n="nav.novaos">NovaOS</a>
-  <a href="#install">Install</a>
-  <a href="#press" data-i18n="nav.press">Press Kit</a>
-  <div class="drawer-trio">
-    <a href="./console.html" class="drawer-trio-btn console">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M7 11l3-3-3-3M13 12h4" stroke="#060810" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-      Console
-    </a>
-    <a href="./os9-shell/index.html" class="drawer-trio-btn os">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 7h18M7 5h.01M9 5h.01M11 5h.01"/><path d="M8 21h8M12 17v4" stroke-width="1.5"/></svg>
-      NovaOS
-    </a>
-    <a href="./docs/index.html" class="drawer-trio-btn docs">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-      Documentation
-    </a>
+
+  <!-- ================= WHAT IS NOVA64 ================= -->
+  <section id="what" style="position:relative; max-width:1240px; margin:0 auto; padding:clamp(56px,8vw,110px) clamp(16px,4vw,40px);">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:clamp(28px,5vw,64px); align-items:start;">
+      <div>
+        <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#22e0c8; margin-bottom:18px;">[ 01 ] WHAT IS NOVA64?</div>
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:700; font-size:clamp(26px,3.4vw,42px); line-height:1.04; margin:0;">A tiny creative machine for building retro 3D games.</h2>
+      </div>
+      <div>
+        <p style="font-size:clamp(16px,1.8vw,20px); line-height:1.55; color:rgba(236,231,219,0.78); margin:0 0 22px;">Code with JavaScript, experiment with low-poly worlds, and publish playable experiences that feel like <span style="color:#22e0c8;">lost cartridges from another timeline.</span></p>
+        <p style="font-size:15px; line-height:1.6; color:rgba(236,231,219,0.58); margin:0;">Nova64 is a complete fantasy console — not just a framework. It gives you the editor, the runtime, the renderer, and a place for your games to live. Approachable enough for a first sketch, powerful enough for a full mini-game.</p>
+        <div style="display:flex; gap:22px; margin-top:30px; flex-wrap:wrap; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(236,231,219,0.55);">
+          <span>◐ Desktop</span><span>◐ Tablet</span><span>◐ Mobile</span><span>◐ Web</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── blade divider ── -->
+  <div aria-hidden="true" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:32px clamp(16px,4vw,40px);">
+    <div style="width:min(100%,420px); height:11px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(180deg,#ffffff 0%,#c9d5e4 40%,#7f8da2 100%);"></div>
+    <div style="width:min(72%,300px); height:5px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></div>
   </div>
+
+  <!-- ================= FEATURE GRID ================= -->
+  <section id="features" style="position:relative; border-top:1px solid rgba(236,231,219,0.14);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(48px,6vw,88px) clamp(16px,4vw,40px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:36px;">
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:700; font-size:clamp(24px,3vw,38px); margin:0;">Console specs.</h2>
+        <span style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.16em; color:rgba(236,231,219,0.5);">[ 02 ] / FEATURE.MATRIX</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); gap:1px; background:rgba(236,231,219,0.14); border:1px solid rgba(236,231,219,0.14);">
+        <sc-for list="{{ features }}" as="f" hint-placeholder-count="8">
+          <div style="background:#0c0e15; padding:24px 22px 26px; position:relative; min-height:186px; display:flex; flex-direction:column;" style-hover="background:#101320;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
+              <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#22e0c8;">{{ f.code }}</span>
+              <span style="font-size:18px; line-height:1; color:rgba(236,231,219,0.5);">{{ f.glyph }}</span>
+            </div>
+            <h3 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:700; font-size:19px; line-height:1.08; margin:0 0 10px;">{{ f.title }}</h3>
+            <p style="font-size:13.5px; line-height:1.5; color:rgba(236,231,219,0.6); margin:0;">{{ f.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VISUAL DEMO ================= -->
+  <section id="demo" style="position:relative; border-top:1px solid rgba(236,231,219,0.14); background:radial-gradient(80% 60% at 50% 0%,rgba(34,224,200,0.08),transparent 70%);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(56px,7vw,100px) clamp(16px,4vw,40px);">
+      <div style="text-align:center; margin-bottom:44px;">
+        <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#22e0c8; margin-bottom:14px;">[ 03 ] THE MACHINE</div>
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(28px,4.2vw,56px); line-height:0.98; margin:0;">Write code.<br>Watch a world appear.</h2>
+      </div>
+
+      <!-- fake IDE + viewport -->
+      <div style="border:1.5px solid rgba(236,231,219,0.26); background:#07080c;">
+        <!-- window bar -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid rgba(236,231,219,0.16); background:#0c0e15;">
+          <div style="display:flex; align-items:center; gap:8px; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; color:rgba(236,231,219,0.6);">
+            <span style="width:10px; height:10px; background:#22e0c8;"></span>
+            <span style="width:10px; height:10px; background:#46f0a0;"></span>
+            <span style="width:10px; height:10px; background:#a35bff;"></span>
+            <span style="margin-left:8px;">nova64 · {{ activeDemoLabel }}</span>
+          </div>
+          <div style="display:inline-flex; align-items:center; gap:12px;">
+            <span style="display:inline-flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:10px; color:#46f0a0;"><span style="width:7px; height:7px; background:#46f0a0; border-radius:50%; animation:n64blink 1s steps(1) infinite;"></span>{{ demoStatus }}</span>
+            <sc-if value="{{ demoPlaying }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ stopDemo }}" style="padding:4px 10px; background:transparent; border:1px solid rgba(236,231,219,0.3); color:rgba(236,231,219,0.75); cursor:pointer; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#ff6ed3; color:#ff6ed3;">◼ Stop</button>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));">
+          <!-- code panel — the REAL source of the selected cart (examples/<id>/code.js), fetched live -->
+          <div style="display:flex; flex-direction:column; border-right:1px solid rgba(236,231,219,0.14); min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 14px; border-bottom:1px solid rgba(236,231,219,0.1); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; color:rgba(236,231,219,0.5);">
+              <span style="color:#5cf0dc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ codeName }}</span>
+              <span style="white-space:nowrap;">{{ codeLines }} LINES · SOURCE</span>
+            </div>
+            <div style="height:min(58vw,440px); overflow:auto; padding:16px 18px; margin:0; font-family:'Space Mono',monospace; font-size:12px; line-height:1.6; white-space:pre; tab-size:2; color:rgba(236,231,219,0.9);">{{ codeEl }}</div>
+          </div>
+          <!-- viewport panel — real nova64 cart, booted only when the visitor presses RUN -->
+          <div style="position:relative; min-height:min(58vw,440px); background:#040309; overflow:hidden;">
+            <!-- IDLE poster: thumbnail + RUN button; no runtime loads until pressed -->
+            <sc-if value="{{ demoIdle }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ startDemo }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98;">
+                <img src="{{ demoThumb }}" alt="{{ activeDemoLabel }} preview" loading="lazy" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.5;">
+                <div style="position:absolute; inset:0; background:radial-gradient(60% 60% at 50% 45%,transparent,rgba(4,3,9,0.78));"></div>
+                <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; padding:16px;">
+                  <span style="display:flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:50%; background:#22e0c8; color:#0a0b10; font-size:20px; box-shadow:0 0 34px rgba(34,224,200,0.55);">▶</span>
+                  <span style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:18px; color:#ece7db;">Run {{ activeDemoLabel }}</span>
+                  <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(236,231,219,0.62);">Boots the live runtime · WASD / arrows</span>
+                </div>
+              </button>
+            </sc-if>
+            <!-- LIVE cart -->
+            <sc-if value="{{ demoPlaying }}" hint-placeholder-val="{{ false }}">
+              <iframe src="{{ demoSrc }}" title="Nova64 live cart preview" loading="lazy" scrolling="no" style="position:absolute; inset:0; width:100%; height:100%; border:0; display:block; background:#040309;"></iframe>
+            </sc-if>
+            <div style="position:absolute; top:12px; left:14px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.7); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);">PREVIEW · {{ demoStatus }}</div>
+            <div style="position:absolute; bottom:12px; right:14px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(70,240,160,0.9); pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.85);">{{ demoBars }}</div>
+            <div style="position:absolute; inset:0; height:18%; background:linear-gradient(rgba(70,240,160,0.06),transparent); animation:n64scan 5s linear infinite; pointer-events:none;"></div>
+            <div style="position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 80px 16px rgba(4,3,9,0.6);"></div>
+          </div>
+        </div>
+        <!-- cartridge switcher — loads a different nova64 example through the same loader -->
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px; border-top:1px solid rgba(236,231,219,0.16); background:#0c0e15;">
+          <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.16em; color:#22e0c8; white-space:nowrap;">◆ LOAD CARTRIDGE</span>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <sc-for list="{{ demos }}" as="d" hint-placeholder-count="4">
+              <button onClick="{{ d.select }}" style="{{ d.style }}" style-hover="border-color:#22e0c8; color:#ece7db;">
+                <span style="font-size:9px; letter-spacing:0.14em; color:#22e0c8;">{{ d.tag }}</span>
+                <span style="font-weight:700; font-size:13px; letter-spacing:0.02em;">{{ d.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- cartridge + mobile row -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:16px; margin-top:16px;">
+        <div style="border:1px solid rgba(236,231,219,0.16); padding:18px; background:#0c0e15; display:flex; align-items:center; gap:14px;">
+          <div style="width:52px; height:64px; background:linear-gradient(#22e0c8,#3f6bff); clip-path:polygon(0 0,100% 0,100% 82%,78% 100%,0 100%); flex-shrink:0; position:relative;">
+            <div style="position:absolute; top:8px; left:8px; right:8px; height:14px; background:rgba(10,11,16,0.35);"></div>
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#22e0c8; margin-bottom:4px;">CART_FMT</div>
+            <div style="font-weight:700; font-size:15px; margin-bottom:3px;">Cartridge-like games</div>
+            <div style="font-size:12.5px; color:rgba(236,231,219,0.58);">Each game is a shareable object with its own label.</div>
+          </div>
+        </div>
+        <div style="border:1px solid rgba(236,231,219,0.16); padding:18px; background:#0c0e15; display:flex; align-items:center; gap:14px;">
+          <div style="width:40px; height:66px; border:2px solid rgba(236,231,219,0.5); border-radius:7px; flex-shrink:0; position:relative; overflow:hidden;">
+            <div style="position:absolute; inset:3px; background:linear-gradient(160deg,#0e0a24,#0a0f1e); border-radius:3px;"></div>
+            <div style="position:absolute; bottom:6px; left:5px; right:5px; height:2px; background:#22e0c8;"></div>
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#46f0a0; margin-bottom:4px;">TOUCH_OK</div>
+            <div style="font-weight:700; font-size:15px; margin-bottom:3px;">Plays on your phone</div>
+            <div style="font-size:12.5px; color:rgba(236,231,219,0.58);">Build and test on mobile — touch controls included.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── blade divider ── -->
+  <div aria-hidden="true" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:32px clamp(16px,4vw,40px);">
+    <div style="width:min(100%,420px); height:11px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(180deg,#ffffff 0%,#c9d5e4 40%,#7f8da2 100%);"></div>
+    <div style="width:min(72%,300px); height:5px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></div>
+  </div>
+
+  <!-- ================= DISC VAULT ================= -->
+  <section id="vault" style="border-top:1px solid rgba(236,231,219,0.14); background:radial-gradient(90% 60% at 50% 0%,rgba(34,224,200,0.06),transparent 70%);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(56px,7vw,100px) clamp(16px,4vw,40px);">
+      <!-- vault head -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:28px; flex-wrap:wrap; margin-bottom:38px;">
+        <div style="max-width:44ch;">
+          <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#22e0c8; margin-bottom:14px;">[ 04 ] DISC VAULT</div>
+          <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(28px,4vw,52px); line-height:1; margin:0 0 16px;">Insert disc. Begin.</h2>
+          <p style="font-size:clamp(15px,1.7vw,18px); line-height:1.55; color:rgba(236,231,219,0.72); margin:0;">Every title in the vault loads cold — no waiting, no install. One click and the dark fades to game, straight in your browser.</p>
+        </div>
+        <div style="display:flex; gap:26px; flex-wrap:wrap; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(236,231,219,0.5);">
+          <span style="display:flex; flex-direction:column; gap:3px;"><strong style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:20px; color:#22e0c8;">{{ vaultCount }}</strong>titles</span>
+          <span style="display:flex; flex-direction:column; gap:3px;"><strong style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:20px; color:#46f0a0;">0</strong>ms install</span>
+          <span style="display:flex; flex-direction:column; gap:3px;"><strong style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:20px; color:#ece7db;">v0.4.8</strong>runtime</span>
+        </div>
+      </div>
+
+      <!-- cartridge grid -->
+      <div class="vault-grid">
+        <sc-for list="{{ vault }}" as="v" hint-placeholder-count="12">
+          <a class="{{ v.cls }}" href="{{ v.href }}" target="_blank" rel="noopener" style="{{ v.cvar }}">
+            <span class="cart-screw tl"></span>
+            <span class="cart-screw tr"></span>
+            <span class="cart-screw bl"></span>
+            <span class="cart-screw br"></span>
+            <div class="cart-shell">
+              <div class="cart-top"></div>
+              <div class="cart-stripe"></div>
+              <div class="cart-label"><img src="{{ v.thumb }}" alt="{{ v.name }}" loading="lazy"></div>
+              <div class="cart-plate">
+                <div class="cart-plate-name">{{ v.name }}</div>
+                <div class="cart-plate-meta"><span class="genre">{{ v.genre }}</span><span>{{ v.n }}</span></div>
+              </div>
+            </div>
+            <div class="cart-action"><span>Insert disc</span><span class="arrow"></span></div>
+          </a>
+        </sc-for>
+      </div>
+
+      <!-- vault foot -->
+      <div style="text-align:center; margin-top:30px;">
+        <a href="./console.html" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:14px 26px; border:1.5px solid #22e0c8; color:#22e0c8; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#22e0c8; color:#0a0b10;">Browse all 70+ titles →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHY BUY ================= -->
+  <section style="border-top:1px solid rgba(236,231,219,0.14);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(56px,7vw,100px) clamp(16px,4vw,40px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:40px;">
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(26px,3.6vw,46px); line-height:1; margin:0; max-width:16ch;">Why buy a fantasy console?</h2>
+        <span style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.16em; color:#22e0c8;">[ 05 ] / THE INVESTMENT</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr)); gap:16px;">
+        <sc-for list="{{ whyBuy }}" as="r" hint-placeholder-count="6">
+          <div style="border:1px solid rgba(236,231,219,0.16); padding:24px 22px; background:#0c0e15; position:relative; overflow:hidden;">
+            <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:44px; line-height:0.8; color:rgba(34,224,200,0.9); margin-bottom:16px;">{{ r.n }}</div>
+            <h3 style="font-weight:700; font-size:17px; margin:0 0 8px;">{{ r.title }}</h3>
+            <p style="font-size:13.5px; line-height:1.55; color:rgba(236,231,219,0.62); margin:0;">{{ r.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NOVA64 + STARCADE9 ================= -->
+  <section style="border-top:1px solid rgba(236,231,219,0.14); background:linear-gradient(90deg,#0c0e15,#0a0b10);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(48px,6vw,84px) clamp(16px,4vw,40px);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:clamp(24px,4vw,52px); align-items:center;">
+        <div>
+          <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#a35bff; margin-bottom:16px;">[ 06 ] THE UNIVERSE</div>
+          <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:700; font-size:clamp(26px,3.2vw,40px); line-height:1.05; margin:0 0 18px;">Nova64 is the engine.<br>Starcade9 is the arcade.</h2>
+          <p style="font-size:16px; line-height:1.6; color:rgba(236,231,219,0.72); margin:0 0 24px; max-width:48ch;">Nova64 is the creation machine. Starcade9 is part of the arcade universe around it — where the strange little worlds you build come to live. Same timeline, same signal.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; padding:13px 22px; border:1.5px solid #a35bff; color:#a35bff; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#a35bff; color:#0a0b10;">Enter Starcade9 ↗</a>
+            <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff;">♥ Support on Patreon</a>
+          </div>
+        </div>
+        <div style="position:relative; aspect-ratio:16/10; border:1px solid rgba(163,91,255,0.4); background:#07080c; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(163,91,255,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(163,91,255,0.08) 1px,transparent 1px); background-size:36px 36px;"></div>
+          <div style="position:relative; text-align:center;">
+            <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:900; font-size:clamp(30px,5vw,58px); letter-spacing:0.02em; color:#ece7db;">STARCADE<span style="color:#a35bff;">9</span></div>
+            <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.3em; color:rgba(163,91,255,0.8); margin-top:6px;">スターケード / NODE_09</div>
+          </div>
+          <div style="position:absolute; bottom:10px; left:12px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(236,231,219,0.4);">SIGNAL LINK · ESTABLISHED</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── blade divider ── -->
+  <div aria-hidden="true" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:32px clamp(16px,4vw,40px);">
+    <div style="width:min(100%,420px); height:11px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(180deg,#ffffff 0%,#c9d5e4 40%,#7f8da2 100%);"></div>
+    <div style="width:min(72%,300px); height:5px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></div>
+  </div>
+
+  <!-- ================= PRICING ================= -->
+  <section id="pricing" style="border-top:1px solid rgba(236,231,219,0.14);">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(56px,7vw,100px) clamp(16px,4vw,40px);">
+      <div style="text-align:center; margin-bottom:44px;">
+        <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.2em; color:#22e0c8; margin-bottom:14px;">[ 07 ] BUY ONCE. CREATE FOREVER.</div>
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(28px,4vw,52px); line-height:1; margin:0;">Get the console.</h2>
+      </div>
+
+      <div style="max-width:560px; margin:0 auto; border:1.5px solid #22e0c8; background:#0c0e15; position:relative;">
+        <!-- ticket top: notched chrome bar with CMYK inner rail -->
+        <div style="padding:4px; background:linear-gradient(180deg,#ffffff 0%,#d3dde9 30%,#93a1b5 50%,#f4f8fd 56%,#aab7c9 80%,#66738a 100%); clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);">
+          <div style="clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%); background:#0d1018; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 26px;">
+            <span style="display:inline-flex; align-items:center; gap:9px; min-width:0;">
+              <span style="width:26px; height:5px; background:#22e0c8; flex:none;"></span>
+              <span style="font-family:'Archivo',sans-serif; font-stretch:112%; font-weight:800; font-size:16px; letter-spacing:0.02em; white-space:nowrap; background:linear-gradient(180deg,#ffffff 0%,#e6edf7 34%,#8e9db3 48%,#ffffff 54%,#c6d2e2 74%,#77859a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">LAUNCH LICENSE</span>
+              <span style="font-family:'Space Mono',monospace; font-weight:700; font-size:10px; padding:2px 6px; background:#ff2fb4; color:#0a0b10; letter-spacing:0.08em; flex:none;">SALE</span>
+            </span>
+            <span style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; color:rgba(236,231,219,0.72); white-space:nowrap;">FA-64 / v1.0</span>
+          </div>
+        </div>
+        <div style="padding:28px 26px 30px;">
+          <div style="display:flex; align-items:flex-end; gap:14px; margin-bottom:8px; flex-wrap:wrap;">
+            <span style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:900; font-size:clamp(48px,8vw,72px); line-height:0.85;">{{ priceStr }}</span>
+            <span style="display:flex; flex-direction:column; gap:2px; padding-bottom:10px;">
+              <span style="font-family:'Space Mono',monospace; font-size:13px; text-decoration:line-through; color:rgba(236,231,219,0.45);">{{ regularStr }}</span>
+              <span style="font-family:'Space Mono',monospace; font-size:11px; color:#46f0a0; letter-spacing:0.06em;">USD · one-time</span>
+            </span>
+          </div>
+          <p style="font-size:14px; color:rgba(236,231,219,0.66); margin:0 0 22px;"><span style="color:#46f0a0; font-weight:600;">Temporary launch price</span> — normally {{ regularStr }}. One payment, yours to keep. No subscription, no seats, no expiry.</p>
+
+          <div style="border-top:1px solid rgba(236,231,219,0.16); padding-top:20px; margin-bottom:24px;">
+            <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.16em; color:#22e0c8; margin-bottom:14px;">WHAT'S INCLUDED</div>
+            <div style="display:flex; flex-direction:column; gap:11px;">
+              <sc-for list="{{ included }}" as="i" hint-placeholder-count="7">
+                <div style="display:flex; gap:12px; align-items:flex-start; font-size:14px; line-height:1.4;">
+                  <span style="color:#46f0a0; font-family:'Space Mono',monospace; flex-shrink:0;">◆</span>
+                  <span style="color:rgba(236,231,219,0.85);">{{ i }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <button onClick="{{ buy }}" style="width:100%; padding:18px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 →</button>
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; font-family:'Space Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:rgba(236,231,219,0.5);">
+            <span style="width:6px; height:6px; background:#46f0a0; border-radius:50%;"></span>SECURE CHECKOUT BY PATREON
+          </div>
+        </div>
+        <!-- corner marks -->
+        <div style="position:absolute; top:-1px; right:-1px; width:16px; height:16px; border-top:2px solid #46f0a0; border-right:2px solid #46f0a0;"></div>
+        <div style="position:absolute; bottom:-1px; left:-1px; width:16px; height:16px; border-bottom:2px solid #46f0a0; border-left:2px solid #46f0a0;"></div>
+      </div>
+      <p style="text-align:center; font-family:'Space Mono',monospace; font-size:11px; color:rgba(236,231,219,0.4); margin-top:18px;">License delivery + download handled automatically after checkout · secured by Patreon</p>
+    </div>
+  </section>
+
+  <!-- ── blade divider ── -->
+  <div aria-hidden="true" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:32px clamp(16px,4vw,40px);">
+    <div style="width:min(100%,420px); height:11px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(180deg,#ffffff 0%,#c9d5e4 40%,#7f8da2 100%);"></div>
+    <div style="width:min(72%,300px); height:5px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></div>
+  </div>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq" style="border-top:1px solid rgba(236,231,219,0.14);">
+    <div style="max-width:960px; margin:0 auto; padding:clamp(56px,7vw,100px) clamp(16px,4vw,40px);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:34px;">
+        <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(26px,3.4vw,44px); margin:0;">Questions.</h2>
+        <span style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.16em; color:#22e0c8;">[ 08 ] / MANUAL.FAQ</span>
+      </div>
+      <div style="border-top:1px solid rgba(236,231,219,0.16);">
+        <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="8">
+          <div style="border-bottom:1px solid rgba(236,231,219,0.16);">
+            <button onClick="{{ q.toggle }}" style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 4px; background:none; border:none; cursor:pointer; text-align:left; color:#ece7db;">
+              <span style="display:flex; align-items:baseline; gap:14px;">
+                <span style="font-family:'Space Mono',monospace; font-size:11px; color:#22e0c8; flex-shrink:0;">{{ q.code }}</span>
+                <span style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:600; font-size:clamp(16px,2vw,20px);">{{ q.q }}</span>
+              </span>
+              <span style="font-family:'Space Mono',monospace; font-size:22px; color:#22e0c8; flex-shrink:0; line-height:1;">{{ q.sign }}</span>
+            </button>
+            <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 4px 24px 40px; max-width:70ch;">
+                <p style="font-size:15px; line-height:1.6; color:rgba(236,231,219,0.72); margin:0;">{{ q.a }}</p>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER + CONFIG ================= -->
+  <footer style="border-top:1px solid rgba(236,231,219,0.14); background:#07080c;">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(48px,6vw,80px) clamp(16px,4vw,40px) 40px;">
+      <!-- final CTA band -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; padding-bottom:44px; border-bottom:1px solid rgba(236,231,219,0.14);">
+        <div>
+          <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(24px,3vw,38px); line-height:1;">Build strange little worlds.</div>
+          <div style="font-family:'Space Mono',monospace; font-size:12px; color:rgba(236,231,219,0.5); margin-top:8px;">Your browser becomes the console.</div>
+        </div>
+        <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 28px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 · {{ priceStr }}</button>
+      </div>
+
+      <!-- SHIP MANIFEST — what every buyer gets -->
+      <div style="padding:44px 0;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#46f0a0; margin-bottom:20px;">◆ SHIP MANIFEST / EVERY COPY INCLUDES</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:14px;">
+          <sc-for list="{{ manifest }}" as="m" hint-placeholder-count="4">
+            <div style="background:#0c0e15; border:1px solid rgba(236,231,219,0.16); padding:20px 18px; clip-path:polygon(0 0,100% 0,100% 82%,92% 100%,0 100%);" style-hover="border-color:{{ m.color }};">
+              <div style="font-family:'Space Mono',monospace; font-size:20px; color:{{ m.color }}; line-height:1; margin-bottom:12px;">{{ m.glyph }}</div>
+              <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:15px; letter-spacing:0.02em; margin-bottom:6px;">{{ m.title }}</div>
+              <div style="font-size:12.5px; line-height:1.5; color:rgba(236,231,219,0.6);">{{ m.desc }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <p style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.04em; color:rgba(236,231,219,0.42); margin:20px 0 0; line-height:1.6;">Secure checkout by <span style="color:#46f0a0;">Patreon</span>. Your license and download arrive automatically the moment payment clears.</p>
+      </div>
+
+      <!-- socials / patreon -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:22px 0; border-top:1px solid rgba(236,231,219,0.14);">
+        <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#a35bff;">◆ CONNECT / STARCADE9 NETWORK</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-left:auto;">
+          <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff;">♥ Patreon</a>
+          <a href="https://x.com/starcade9_io" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">X / Twitter</a>
+          <a href="https://www.instagram.com/starcade9/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">Instagram</a>
+          <a href="https://www.facebook.com/people/StArcade9/61577704620836/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">Facebook</a>
+        </div>
+      </div>
+
+      <!-- footer bottom -->
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; padding-top:24px; border-top:1px solid rgba(236,231,219,0.14); font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.08em; color:rgba(236,231,219,0.5);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="display:flex; flex-direction:column; gap:3px;">
+            <span style="transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:19px; line-height:1; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span>
+            <span style="width:100%; height:4px; clip-path:polygon(0 0,100% 0,100% 40%,50% 100%,0 40%); background:linear-gradient(90deg,#22e0c8 0%,#ff2fb4 100%);"></span>
+          </span>
+          <span>© {{ year }} · FANTASY CONSOLE</span>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <a href="https://nova64.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#22e0c8;">nova64.io</a>
+          <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#a35bff;">starcade9.io</a>
+          <span>デザイナーズリパブリック</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= STICKY MOBILE CTA ================= -->
+  <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; left:0; right:0; bottom:0; z-index:80; display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(10,11,16,0.94); backdrop-filter:blur(10px); border-top:1.5px solid #22e0c8;">
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:baseline; gap:8px;"><span style="transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:17px; line-height:1; background:linear-gradient(180deg,#ffffff 0%,#e9f0f9 32%,#93a1b6 47%,#ffffff 54%,#c6d2e2 74%,#75839a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">Nova64</span><span style="font-family:'Space Mono',monospace; font-weight:700; font-size:14px; color:#ece7db;">{{ priceStr }}</span></div>
+        <div style="font-family:'Space Mono',monospace; font-size:9.5px; letter-spacing:0.08em; color:rgba(236,231,219,0.55); margin-top:3px;">BUY ONCE · CREATE FOREVER</div>
+      </div>
+      <button onClick="{{ play }}" style="padding:12px 14px; background:transparent; color:#46f0a0; border:1.5px solid rgba(70,240,160,0.5); cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; text-transform:uppercase; flex-shrink:0;">Demo</button>
+      <button onClick="{{ buy }}" style="padding:12px 20px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; flex-shrink:0; clip-path:polygon(0 0,100% 0,100% 66%,90% 100%,0 100%);">Buy</button>
+    </div>
+  </sc-if>
+
 </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;headline&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Make tiny 3D games with retro soul.&quot;,&quot;The fantasy console for low-poly dreamers.&quot;,&quot;Build PS1/N64-inspired games in your browser.&quot;],&quot;default&quot;:&quot;Make tiny 3D games with retro soul.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;price&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:14.99,&quot;min&quot;:0,&quot;max&quot;:200,&quot;step&quot;:1,&quot;unit&quot;:&quot;USD&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Pricing&quot;},&quot;showStickyCTA&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+// ============================================================================
+//  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
+//  change every "Buy" button on the page.
+// ============================================================================
+// Width at which the ten-item nav stops fitting beside the logo and the Buy CTA
+// and collapses into the hamburger. Sits above iPad landscape (1024) so tablets
+// get the drop panel rather than a cramped, wrapping row.
+const NAV_BREAKPOINT = 1040;
 
-<!-- ── HERO ── -->
-<section id="hero">
-  <div class="hero-sun" aria-hidden="true"></div>
-  <div id="hero-loader">
-    <div class="loader-content">
-      <div class="loader-logo">NOVA64</div>
-      <div class="loader-status" id="loader-status">INITIALIZING GPU...</div>
-      <div class="loader-bar-wrap">
-        <div class="loader-bar-fill" id="loader-bar"></div>
-      </div>
-      <div class="loader-percent" id="loader-percent">0%</div>
-    </div>
-  </div>
-  <iframe id="hero-iframe" src="./hero-embed.html?path=/examples/hero-demo/code.js" loading="eager" title="Nova64 Hero Demo"></iframe>
-  <div class="container">
-    <div class="hero-inner">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="badge-dot"></span>
-          <span data-i18n="hero.badge">NOVA64 v0.4.8 // MEM CARD DETECTED</span>
-        </div>
-        <div class="hero-boot">
-          <span data-i18n="hero.boot.check">DISC CHECK</span>
-          <div class="hero-boot-bar"><div class="hero-boot-fill"></div></div>
-          <span class="hero-boot-ok" data-i18n="hero.boot.ok">OK</span>
-        </div>
-        <h1 class="hero-h1" data-i18n-html="hero.h1.html">
-          Born From<br>
-          <span class="line-accent">64-Bit Dreams.</span>
-        </h1>
-        <img src="./assets/novaOS/novaMascot.png" alt="NOVA64" />
-        <p class="hero-sub" data-i18n="hero.sub">The darkness between polygons. The hum of a disc loading. NOVA64 is the fantasy console that never shipped in 1997 &mdash; running live, in your browser, right now.</p>
-        
-        <div class="hero-ctas">
-          <a href="./console.html" class="btn-hero-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            <span data-i18n="hero.cta.launch">Launch Console</span>
-          </a>
-          <a href="#demos" class="btn-hero-secondary" data-i18n="hero.cta.demo">Load a Demo</a>
-          <a href="./docs/index.html" class="btn-hero-ghost">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span data-i18n="hero.cta.docs">Docs</span>
-          </a>
-          
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="hero-scroll" id="hero-scroll">
-    <div class="hero-scroll-line"></div>
-    <span data-i18n="hero.scroll">SCROLL</span>
-  </div>
-</section>
+const CHECKOUT_URL = 'https://www.patreon.com/login?ru=https%3A%2F%2Fwww.patreon.com%2Fcheckout%2Fstarcade9%3Fpvid%3D5157631';
 
-<!-- ── WHAT IS ── -->
-<section id="what">
-  <div class="container">
-    <div class="what-inner">
-      <div class="reveal">
-        <span class="what-quote-mark">&ldquo;</span>
-        <h2 class="what-pull-quote" data-i18n="what.h2">Everything you remember. Everything they never shipped.</h2>
-        <div class="what-body">
-          <p data-i18n="what.p1">NOVA64 is the ghost of a console that should have shipped in 1997. Built entirely in JavaScript, it requires no install and runs anywhere a browser runs. Point it at a tab &mdash; and start making games.</p>
-          <p data-i18n-html="what.p2.html">Under the hood: <strong>Three.js 0.182.0</strong>, a hot-reloading cart system, voxel engine, physics, spatial audio, and a full sprite pipeline &mdash; all accessible through an API tight enough to fit in a memory card manual.</p>
-        </div>
-        <div class="code-block">
-          <div class="code-comment">// Your entire game in three functions</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">init</span>() {</div>
-          <div class="code-line">&nbsp;&nbsp;cube = <span class="code-fn">createCube</span>(<span class="code-string">2</span>, <span class="code-string">0x0affed</span>, [<span class="code-string">0,0,-5</span>]);</div>
-          <div class="code-line">}</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">update</span>(dt) {</div>
-          <div class="code-line">&nbsp;&nbsp;<span class="code-fn">rotateMesh</span>(cube, <span class="code-string">0</span>, dt, <span class="code-string">0</span>);</div>
-          <div class="code-line">}</div>
-          <div class="code-line"><span class="code-keyword">export function</span> <span class="code-fn">draw</span>() {</div>
-          <div class="code-line">&nbsp;&nbsp;<span class="code-fn">print</span>(<span class="code-string">&apos;Score: 1000&apos;</span>, <span class="code-string">10</span>, <span class="code-string">10</span>);</div>
-          <div class="code-line">}</div>
-          <div class="code-comment">// That&apos;s it. Insert disc.</div>
-          <span class="cursor"></span>
-        </div>
-      </div>
-      <div class="what-visual reveal">
-        <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64 Logo" class="what-logo" />
-        <img src="./assets/novaOS/nova64Cart2.png" alt="Nova Cart" class="what-cart" />
-      </div>
-    </div>
-  </div>
-</section>
+class Component extends DCLogic {
+  // ============================================================================
+  //  PATREON CHECKOUT CONFIG  —  fill these in before launch
+  //  In a Next.js / React app, read these from process.env.* at build/runtime.
+  //
+  //    NEXT_PUBLIC_PATREON_CHECKOUT_URL   -> checkoutUrl (public)
+  // ============================================================================
+  cfg = {
+    price: 14.99,          // launch-sale price
+    regularPrice: 19.99,   // normal price (shown struck-through)
+    onSale: true,
+    priceNote: 'Buy once. Create forever.',
+    // Update CHECKOUT_URL (top of this script) to change every Buy button.
+    checkoutUrl: CHECKOUT_URL,
+    // Was https://nova64.io/demo — that route does not exist and 404s.
+    // Points at the local player instead, which ships in this repo.
+    demoUrl: './player.html?demoscene=f-zero-nova-3d',
+  };
 
-<!-- ── FEATURES ── -->
-<section id="features">
-  <div class="container">
-    <div class="features-header reveal">
-      <span class="stamp" data-i18n="features.stamp">MEM BLOCK 01</span>
-      <h2 class="section-title" data-i18n-html="features.h2.html">The specs they drew<br>on graph paper in &rsquo;96.</h2>
-      <p class="section-sub" data-i18n="features.sub">35+ API functions. Every system accounted for. Every shortcut removed. If a 90s dev would have dreamed it, it&rsquo;s here.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feat-card feat-3d feat-card-large reveal">
-        <div class="feat-deco"></div>
-        <div class="feat-title">
-          <span data-i18n="features.3d.title">3D Graphics Engine</span>
-          <span class="feat-badge">THREE.JS</span>
-        </div>
-        <p class="feat-body" data-i18n="features.3d.body">Hardware-accelerated 3D built on Three.js 0.182.0. Advanced materials, cinematic lighting, 4K shadow maps &mdash; exposed through a dead-simple API.</p>
-        <ul class="feat-list">
-          <li data-i18n="features.3d.list.1">Cube, Sphere, Plane, Cylinder, Cone, Capsule, Torus primitives</li>
-          <li data-i18n="features.3d.list.2">Holographic, metallic, and emissive material presets</li>
-          <li data-i18n="features.3d.list.3">Dynamic camera: position, target, FOV, smooth transitions</li>
-          <li data-i18n="features.3d.list.4">Atmospheric fog, ambient light, point lights</li>
-          <li data-i18n="features.3d.list.5">Space, gradient, and solid skybox generators</li>
-          <li data-i18n="features.3d.list.6">Bloom, vignette, glitch, chromatic aberration post-FX</li>
-          <li data-i18n="features.3d.list.7">N64 low-poly mode, PSX dither mode</li>
-          <li data-i18n="features.3d.list.8">Hot-reloading cart system &mdash; save to reload</li>
-        </ul>
-      </div>
-      <div class="feat-col-stack">
-        <div class="feat-card feat-voxel reveal">
-          <div class="feat-title" data-i18n="features.voxel.title">Voxel Engine</div>
-          <p class="feat-body" data-i18n="features.voxel.body">Chunked voxel world with biomes, fluid simulation, raycasting, pathfinding, and a full entity-component system. Think Minecraft in 50 lines.</p>
-        </div>
-        <div class="feat-card feat-physics reveal">
-          <div class="feat-title" data-i18n="features.physics.title">Physics &amp; Collision</div>
-          <p class="feat-body" data-i18n="features.physics.body">AABB collision, gravity, raycasting, and spatial partitioning. Plug in setCollisionMap() and your world becomes solid.</p>
-        </div>
-      </div>
-      <div class="feat-card feat-audio reveal">
-        <div class="feat-title" data-i18n="features.audio.title">Spatial Audio</div>
-        <p class="feat-body" data-i18n="features.audio.body">WebAudio with 3D positioning, named sound presets (jump, coin, explosion...), and a simple sfx() call to trigger any sound.</p>
-      </div>
-      <div class="feat-card feat-input reveal">
-        <div class="feat-title" data-i18n="features.input.title">Input System</div>
-        <p class="feat-body" data-i18n="features.input.body">WASD + gamepad + mouse in a unified API. key(), btn(), btnp() &mdash; works the same across keyboard and controller.</p>
-      </div>
-      <div class="feat-card feat-fx reveal">
-        <div class="feat-title" data-i18n="features.gameutils.title">Game Utils</div>
-        <p class="feat-body" data-i18n="features.gameutils.body">Cooldowns, hit states, spawners, object pools, floating text, minimap, state machines, timers &mdash; the full toolkit.</p>
-      </div>
-      <div class="feat-card feat-os reveal">
-        <div class="feat-title" data-i18n="features.novaos_s.title">NovaOS Shell</div>
-        <p class="feat-body" data-i18n="features.novaos_s.body">A retro operating system skin with a filesystem, app launcher, and terminal. Runs carts natively. Ships with the console.</p>
-      </div>
-      <div class="feat-card feat-dev reveal">
-        <div class="feat-title" data-i18n="features.dev.title">Developer Tools</div>
-        <p class="feat-body" data-i18n="features.dev.body">In-browser sprite editor, real-time cart hot reload, FPS counter, triangle count &mdash; all accessible without leaving the tab.</p>
-      </div>
-    </div>
-  </div>
-</section>
+  // heroPlaying / demoPlaying stay false until the visitor clicks — nothing
+  // heavy (no Three.js/WebGPU iframe) loads on first paint, so the page is fast.
+  // `code` holds the REAL source of the selected cart (examples/<id>/code.js).
+  state = { w: 1280, openFaq: 0, activeDemo: 'star-fox-nova-3d', menuOpen: false,
+    heroPlaying: false, demoPlaying: false, code: '', codeName: '' };
 
-<!-- ── DEMOS ── -->
-<section id="demos">
-  <div class="container">
-    <div class="demos-header">
-      <div class="demos-header-left reveal">
-        <span class="stamp" data-i18n="demos.stamp">DISC VAULT</span>
-        <h2 class="section-title" data-i18n="demos.h2">Insert Disc. Begin.</h2>
-        <p class="demos-sub" data-i18n="demos.sub">Every title in the vault loads cold. No waiting. No install. One click &mdash; and the dark fades to game.</p>
-      </div>
-      <a href="./console.html" class="btn-outline reveal" data-i18n="demos.browse">Browse All Demos &rarr;</a>
-    </div>
-    <div class="demo-grid">
-      <div class="demo-card demo-fps reveal" onclick="location.href='./console.html?demo=fps-demo-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">FPS / SHOOTER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.fps.name">FPS Combat</div>
-          <div class="demo-desc" data-i18n="demos.fps.desc">First-person shooter with raycasting &amp; particle explosions</div>
-        </div>
-      </div>
-      <div class="demo-card demo-crystal demo-featured reveal" onclick="location.href='./console.html?demo=crystal-cathedral-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">SHOWCASE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.crystal.name">Crystal Cathedral</div>
-          <div class="demo-desc" data-i18n="demos.crystal.desc">Ultimate graphics showcase. Holographic architecture &amp; dynamic lighting</div>
-        </div>
-      </div>
-      <div class="demo-card demo-noir reveal" onclick="location.href='./console.html?demo=adventure-comic-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">ADVENTURE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.noir.name">Noir Adventure</div>
-          <div class="demo-desc" data-i18n="demos.noir.desc">Comic-style adventure with cel-shading &amp; dynamic panels</div>
-        </div>
-      </div>
-      <div class="demo-card demo-fzero demo-featured reveal" onclick="location.href='./console.html?demo=f-zero-nova-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">RACING</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.fzero.name">F-Zero Nova</div>
-          <div class="demo-desc" data-i18n="demos.fzero.desc">High-speed anti-grav racing through futuristic circuits</div>
-        </div>
-      </div>
-      <div class="demo-card demo-space reveal" onclick="location.href='./console.html?demo=star-fox-nova-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">SPACE COMBAT</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.starfox.name">Star Fox Nova</div>
-          <div class="demo-desc" data-i18n="demos.starfox.desc">Epic rail shooter with squadron battles &amp; boss fights</div>
-        </div>
-      </div>
-      <div class="demo-card demo-cyber demo-featured reveal" onclick="location.href='./console.html?demo=cyberpunk-city-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">OPEN WORLD</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.cyber.name">Cyberpunk City</div>
-          <div class="demo-desc" data-i18n="demos.cyber.desc">Neon-soaked open world with volumetric rain &amp; atmosphere</div>
-        </div>
-      </div>
-      <div class="demo-card demo-voxel reveal" onclick="location.href='./console.html?demo=minecraft-demo'">
-        <div class="demo-visual">
-          <span class="demo-genre">VOXEL / BUILD</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.voxel.name">Voxel World</div>
-          <div class="demo-desc" data-i18n="demos.voxel.desc">Procedural terrain, biomes &amp; real-time block editing</div>
-        </div>
-      </div>
-      <div class="demo-card demo-plumber reveal" onclick="location.href='./console.html?demo=super-plumber-64'">
-        <div class="demo-visual">
-          <span class="demo-genre">PLATFORMER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.plumber.name">Super Plumber 64</div>
-          <div class="demo-desc" data-i18n="demos.plumber.desc">3D platformer with coins, enemies &amp; N64-era charm</div>
-        </div>
-      </div>
-      <div class="demo-card demo-strider reveal" onclick="location.href='./console.html?demo=strider-demo-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">ACTION RPG</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.strider.name">Knight Strider</div>
-          <div class="demo-desc" data-i18n="demos.strider.desc">Fantasy sword-fighter with spell effects &amp; dungeon crawling</div>
-        </div>
-      </div>
-      <div class="demo-card demo-demoscene demo-featured reveal" onclick="location.href='./console.html?demo=demoscene'">
-        <div class="demo-visual">
-          <span class="demo-genre">DEMOSCENE</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.demoscene.name">Tron Demoscene</div>
-          <div class="demo-desc" data-i18n="demos.demoscene.desc">Audio-reactive visuals &amp; real-time shader art</div>
-        </div>
-      </div>
-      <div class="demo-card demo-model reveal" onclick="location.href='./console.html?demo=model-viewer-3d'">
-        <div class="demo-visual">
-          <span class="demo-genre">3D VIEWER</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.model.name">Model Viewer</div>
-          <div class="demo-desc" data-i18n="demos.model.desc">Rigged .glb model loaded with full skeletal animation</div>
-        </div>
-      </div>
-      <div class="demo-card demo-pbr reveal" onclick="location.href='./console.html?demo=pbr-showcase'">
-        <div class="demo-visual">
-          <span class="demo-genre">PBR / MATERIALS</span>
-          <div class="demo-play-btn">&#9654;</div>
-        </div>
-        <div class="demo-info">
-          <div class="demo-name" data-i18n="demos.pbr.name">PBR Showcase</div>
-          <div class="demo-desc" data-i18n="demos.pbr.desc">Metalness &amp; roughness grid with IBL reflections</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+  // The hero runs F-Zero Nova; the demo section starts on Star Fox and swaps via
+  // the cartridge switcher. Every id is a real /examples/* cart resolved by
+  // src/main.js (see demoMap) and loaded through demo-embed.html.
+  selectDemo = (id) => { this.setState({ activeDemo: id }); this._loadCode(id); };
+  startHero = () => this.setState({ heroPlaying: true });
+  startDemo = () => this.setState({ demoPlaying: true });
+  stopDemo = () => this.setState({ demoPlaying: false });
 
-<!-- ── NOVAOS ── -->
-<section id="novaos">
-  <div class="container">
-    <div class="novaos-inner">
-      <div class="novaos-visual reveal">
-        <img src="./assets/novaOS/nova64console-v1notxt.png" alt="NovaOS Shell" class="novaos-img" id="novaos-img" />
-      </div>
-      <div class="novaos-content reveal">
-        <span class="stamp" data-i18n="novaos.stamp">BONUS DISC</span>
-        <h2 class="novaos-title" data-i18n-html="novaos.h2.html">System menu.<br>Dark as the disc.</h2>
-        <p class="novaos-body" data-i18n="novaos.body">NovaOS is what happens when a love of Mac OS 9, PS1 system menus, and dark terminals converge at 2am. Boot it &mdash; and the past comes alive in your tab.</p>
-        <ul class="novaos-list">
-          <li><span class="dot"></span><span data-i18n="novaos.list.1">Window manager with draggable apps &amp; z-ordering</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.2">Built-in file browser &amp; text editor</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.3">Native cart launcher with live preview</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.4">Settings panel with display &amp; audio controls</span></li>
-          <li><span class="dot"></span><span data-i18n="novaos.list.5">Mobile-optimized shell variant</span> <span class="coming-soon">BETA</span></li>
-        </ul>
-        <a href="./os9-shell/index.html" class="btn-novaos">
-          <span data-i18n="novaos.cta">Boot NovaOS</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
+  // Fetch the actual game source so the IDE window shows real code, not a mock.
+  // Results are cached per-cart to avoid refetching on switch-back.
+  _loadCode = (id) => {
+    const cache = this._codeCache || (this._codeCache = {});
+    const name = id + '/code.js';
+    if (cache[id] != null) { this.setState({ code: cache[id], codeName: name }); return; }
+    this.setState({ code: '// fetching ' + name + ' …', codeName: name });
+    fetch('examples/' + id + '/code.js')
+      .then((r) => (r.ok ? r.text() : Promise.reject(r.status)))
+      .then((txt) => { cache[id] = txt; if (this.state.activeDemo === id) this.setState({ code: txt }); })
+      .catch(() => { if (this.state.activeDemo === id) this.setState({ code: '// Could not load ' + name }); });
+  };
 
-<!-- ── WHY ── -->
-<section id="why">
-  <div class="container">
-    <div class="why-header reveal">
-      <span class="stamp" data-i18n="why.stamp">DEV.LOG</span>
-      <h2 class="section-title" data-i18n="why.h2">Why we built this.</h2>
-    </div>
-    <div class="why-phrases">
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase1">No disc tray.&#10;Just the code.</div>
-      </div>
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase2">Retro soul,&#10;modern GPU.</div>
-      </div>
-      <div class="why-phrase reveal">
-        <div class="why-phrase-text" data-i18n="why.phrase3">Born in shadows.&#10;Runs in light.</div>
-      </div>
-    </div>
-    <div class="why-manifesto reveal">
-      <blockquote data-i18n-html="why.quote.html">
-        &ldquo;Every disc you ever loaded began the same way. A logo. A boot chime. The dark &mdash; then everything. <strong>NOVA64 rebuilds that ritual for the browser.</strong> One import. One tab. The game begins.&rdquo;
-      </blockquote>
-      <div class="tech-strip">
-        <span class="tech-item" data-i18n="tech.threejs">Three.js 0.182.0</span>
-        <span class="tech-item" data-i18n="tech.webgl2">WebGL2</span>
-        <span class="tech-item" data-i18n="tech.webaudio">Web Audio API</span>
-        <span class="tech-item" data-i18n="tech.esmodules">ES Modules</span>
-        <span class="tech-item" data-i18n="tech.vite">Vite 5.4</span>
-        <span class="tech-item" data-i18n="tech.gsap">GSAP 3</span>
-        <span class="tech-item" data-i18n="tech.nodeps">Zero Runtime Deps</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── PRESS KIT ── -->
-<section id="press">
-  <div class="container">
-    <div class="press-header reveal">
-      <span class="stamp" data-i18n="press.stamp">PRESS KIT</span>
-      <h2 class="section-title" data-i18n="press.h2">Assets &amp; copy.</h2>
-      <p class="section-sub" data-i18n="press.sub">Everything you need to write about NOVA64. High-res assets, approved copy, and technical specs.</p>
-    </div>
-    <div class="press-assets-grid">
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64 Logo" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.logo.label">Primary Logo</span>
-          <a href="./assets/novaOS/nova64Logo.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Console1.webp" alt="Console Render" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.console.label">Console Render</span>
-          <a href="./assets/novaOS/nova64Console1.webp" download class="press-download">&#8595; WEBP</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/nova64Cart.png" alt="Cartridge Art" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.cart.label">Cart Art</span>
-          <a href="./assets/novaOS/nova64Cart.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-      <div class="press-asset reveal">
-        <div class="press-asset-thumb">
-          <img src="./assets/novaOS/novaMascot.png" alt="Nova Mascot" />
-        </div>
-        <div class="press-asset-info">
-          <span class="press-asset-label" data-i18n="press.mascot.label">Mascot</span>
-          <a href="./assets/novaOS/novaMascot.png" download class="press-download">&#8595; PNG</a>
-        </div>
-      </div>
-    </div>
-    <div class="press-copy-grid">
-      <div class="press-copy-block reveal">
-        <div class="press-copy-title">
-          <span data-i18n="press.blurb.title">Brand Description</span>
-          <button class="copy-btn" id="copy-blurb-btn" data-i18n="press.blurb.copy">COPY</button>
-        </div>
-        <p class="press-blurb" id="press-blurb-text" data-i18n="press.blurb.text">NOVA64 is a browser-native 3D fantasy console built on Three.js. It lets developers build N64/PlayStation-era games in plain JavaScript with zero WebGL boilerplate. Over 35 API functions cover 3D graphics, audio, physics, input, voxel worlds, and a retro OS shell &mdash; all running live in the browser.</p>
-      </div>
-      <div class="press-copy-block reveal">
-        <div class="press-copy-title" data-i18n="press.specs.title">Technical Summary</div>
-        <ul class="press-specs">
-          <li data-i18n="press.spec.1">Three.js 0.182.0 3D renderer (WebGL2 + Canvas2D fallbacks)</li>
-          <li data-i18n="press.spec.2">Chunked voxel engine with fluid, lighting &amp; pathfinding</li>
-          <li data-i18n="press.spec.3">AABB physics with raycasting &amp; spatial partitioning</li>
-          <li data-i18n="press.spec.4">WebAudio spatial sound with named preset library</li>
-          <li data-i18n="press.spec.5">Hot-reloading ES module cart system via Vite 5.4</li>
-          <li data-i18n="press.spec.6">NovaOS shell: window manager, file browser, cart launcher</li>
-        </ul>
-      </div>
-    </div>
-    <div class="press-links">
-      <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="press-link-pill">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span data-i18n="press.github.link">GitHub Repository</span>
-      </a>
-      <a href="./docs/index.html" class="press-link-pill">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span data-i18n="press.apidocs.link">API Documentation</span>
-      </a>
-      <a href="./console.html" class="press-link-pill">&#9654; <span data-i18n="press.console.link">Live Console</span></a>
-      <a href="./os9-shell/index.html" class="press-link-pill">&#9632; <span data-i18n="press.novaos.link">NovaOS Shell</span></a>
-    </div>
-  </div>
-</section>
-
-<!-- ── FINAL CTA ── -->
-<!-- ── INSTALL ── -->
-<section id="install">
-  <div class="container">
-    <div class="install-inner reveal">
-      <span class="stamp">ONE COMMAND</span>
-      <h2 class="section-title" style="margin-bottom:18px">Install in seconds.<br><span style="color:var(--electric)">Ship forever.</span></h2>
-      <p class="install-sub">Global CLI. No config. No compile step. One command and you're running a 3D fantasy console with a live demo &mdash; straight from your terminal.</p>
-      <div class="install-win">
-        <div class="install-titlebar">
-          <span class="win-dot r"></span><span class="win-dot y"></span><span class="win-dot g"></span>
-          <span class="install-titlebar-label">nova64 &mdash; zsh</span>
-        </div>
-        <div class="install-body">
-          <div class="iline cmd">$ pnpm add -g nova64</div>
-          <div class="iline ok">&#10003; GPU acceleration initialized</div>
-          <div class="iline ok">&#10003; 3D engine loaded (with actual lighting!)</div>
-          <div class="iline ok">&#10003; Voxel renderer standing by</div>
-          <div class="iline ok">&#10003; Physics engine activated</div>
-          <div class="iline ok">&#10003; NovaOS shell... wait what?</div>
-          <div class="iline cmd">$ nova64 --start-demo</div>
-          <div class="iline final">&gt;&gt;&gt; Let's make something cool <span class="icursor"></span></div>
-        </div>
-      </div>
-      <p class="install-note">Requires Node 18+. Also works with <a href="https://npmjs.com/package/nova64" target="_blank" rel="noopener">npm</a> or <a href="https://yarnpkg.com" target="_blank" rel="noopener">yarn</a>. &nbsp;&middot;&nbsp; <a href="./docs/index.html">Read the docs &rarr;</a></p>
-    </div>
-  </div>
-</section>
-
-<section id="cta">
-  <img src="./assets/novaOS/nova64Logo.png" alt="" class="cta-watermark" aria-hidden="true" />
-  <div class="container">
-    <div class="cta-content reveal">
-      <span class="stamp" data-i18n="cta.stamp">BOOT SEQUENCE</span>
-      <h2 class="cta-h2" data-i18n-html="cta.h2.html">One more game.<br><span class="line-accent">Press start.</span></h2>
-      <p class="cta-sub" data-i18n="cta.sub">No install disc. No memory card. Just the code and the dark.</p>
-      <div class="cta-buttons">
-        <!-- Lemon Squeezy checkout overlay (store: nova64). ?embed=1 + the
-             lemonsqueezy-button class make it open in-page via lemon.js.
-             See docs/LEMONSQUEEZY_SELLING.md. -->
-        <a href="https://nova64.lemonsqueezy.com/checkout/buy/cc794be3-4e71-4cad-bed9-0248233631b4?embed=1"
-           class="btn-hero-primary lemonsqueezy-button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2v2h1l2 9h11l2-9h-13"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
-          <span>Buy Nova64</span>
-        </a>
-        <a href="./console.html" class="btn-hero-secondary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          <span data-i18n="cta.launch">Launch Console</span>
-        </a>
-        <a href="./docs/index.html" class="btn-hero-secondary" data-i18n="cta.docs">Read the Docs</a>
-        <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener" class="btn-hero-ghost">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span data-i18n="cta.github">Star on GitHub</span>
-        </a>
-      </div>
-      <p class="cta-note" data-i18n="cta.note">MIT License &mdash; fork it, ship it, make something weird.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ── FOOTER ── -->
-<footer>
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <img src="./assets/novaOS/nova64Logo.png" alt="NOVA64" />
-        <p class="footer-brand-tag" data-i18n="footer.brand">The browser console built from &rsquo;97 dreams. Zero boilerplate. Zero compromise.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.product">PRODUCT</span>
-          <a href="./console.html">Launch Console</a>
-          <a href="./os9-shell/index.html">NovaOS Shell</a>
-          <a href="#demos">Demo Gallery</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.develop">DEVELOP</span>
-          <a href="./docs/index.html">API Reference</a>
-          <a href="./docs/NOVA64_3D_API.md">3D API Guide</a>
-          <a href="./docs/CHEATSHEET.md">Cheat Sheet</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-col-title" data-i18n="footer.col.links">LINKS</span>
-          <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">GitHub</a>
-          <a href="#press">Press Kit</a>
-          <a href="#what">About</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; 2024 NOVA64. MIT License. <a href="https://github.com/seacloud9/nova64" target="_blank" rel="noopener">seacloud9/nova64</a></p>
-      <p data-i18n="footer.tagline">No memory cards were corrupted in the making of this project.</p>
-    </div>
-  </div>
-</footer>
-
-<!-- ── HERO LOADER LOGIC ── -->
-<script>
-(function() {
-  var loader = document.getElementById('hero-loader');
-  var iframe = document.getElementById('hero-iframe');
-  if (!loader || !iframe) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    loader.remove();
-    iframe.classList.add('loaded');
-    return;
-  }
-  var bar = document.getElementById('loader-bar');
-  var status = document.getElementById('loader-status');
-  var pct = document.getElementById('loader-percent');
-  var stages = [
-    [0,'INITIALIZING GPU...'],[20,'LOADING SHADERS...'],[45,'COMPILING TSL...'],
-    [70,'MOUNTING SCENE...'],[95,'READY']
-  ];
-  var progress = 0, iframeReady = false, timerDone = false;
-  var iv = setInterval(function() {
-    progress = Math.min(progress + 1, 100);
-    bar.style.width = progress + '%';
-    pct.textContent = progress + '%';
-    for (var i = 0; i < stages.length; i++) {
-      if (progress >= stages[i][0]) status.textContent = stages[i][1];
+  // Lightweight JS syntax highlighter → array of React nodes (comments, strings,
+  // keywords, numbers). Memoised so resize re-renders don't re-tokenise.
+  _highlight = (src) => {
+    if (this._hlSrc === src && this._hlOut) return this._hlOut;
+    this._hlSrc = src;
+    const R = window.React;
+    if (!R || !src) return (this._hlOut = src || '');
+    const out = []; let key = 0; let last = 0; let m;
+    const re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|(`(?:\\[\s\S]|[^`\\])*`|'(?:\\[\s\S]|[^'\\])*'|"(?:\\[\s\S]|[^"\\])*")|\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|new|class|extends|export|import|from|default|await|async|of|in|typeof|instanceof|this|null|true|false|undefined)\b|\b(0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b/g;
+    while ((m = re.exec(src))) {
+      if (m.index > last) out.push(src.slice(last, m.index));
+      const color = m[1] ? 'rgba(236,231,219,0.4)' : m[2] ? '#5cf0dc' : m[3] ? '#46f0a0' : '#a35bff';
+      out.push(R.createElement('span', { key: key++, style: { color } }, m[0]));
+      last = re.lastIndex;
     }
-    if (progress >= 100) { clearInterval(iv); timerDone = true; dismiss(); }
-  }, 35);
-  iframe.addEventListener('load', function() { iframeReady = true; dismiss(); });
-  function dismiss() {
-    if (!timerDone || !iframeReady) return;
-    setTimeout(function() {
-      loader.classList.add('loaded');
-      iframe.classList.add('loaded');
-      setTimeout(function() {
-        loader.remove();
-        window._heroLoaderDismissed = true;
-        window.dispatchEvent(new CustomEvent('hero-loader-dismissed'));
-      },800);
-    }, 300);
+    if (last < src.length) out.push(src.slice(last));
+    return (this._hlOut = out);
+  };
+
+  componentDidMount() {
+    // Widening past the breakpoint restores the full nav, so the drop panel has
+    // to close with it — otherwise it is left open and orphaned over the hero.
+    const set = () => {
+      const w = window.innerWidth;
+      if (w >= NAV_BREAKPOINT) this.setState({ w, menuOpen: false });
+      else this.setState({ w });
+    };
+    set();
+    const onKey = (e) => { if (e.key === 'Escape') this.setState({ menuOpen: false }); };
+    window.addEventListener('resize', set);
+    window.addEventListener('keydown', onKey);
+    this._off = () => {
+      window.removeEventListener('resize', set);
+      window.removeEventListener('keydown', onKey);
+    };
+    this._loadCode(this.state.activeDemo); // populate the code panel for the default cart
   }
-})();
-</script>
+  componentWillUnmount() { if (this._off) this._off(); }
 
-<!-- ── GSAP ANIMATIONS ── -->
-<script>
-window.addEventListener('load', () => {
-  if (!window.gsap || !window.ScrollTrigger) return;
-  gsap.registerPlugin(ScrollTrigger);
+  toggleMenu = () => this.setState({ menuOpen: !this.state.menuOpen });
+  closeMenu = () => { if (this.state.menuOpen) this.setState({ menuOpen: false }); };
 
-  // Hero text reveal — triggered when the hero cart finishes loading
-  var heroRevealed = false;
-  function revealHeroText() {
-    if (heroRevealed) return;
-    heroRevealed = true;
-    var hc = document.querySelector('.hero-content');
-    var hs = document.getElementById('hero-scroll');
-    if (hc) hc.style.visibility = 'visible';
-    if (hs) hs.style.visibility = 'visible';
-    gsap.timeline({ defaults: { ease: 'power3.out' } })
-      .from('.hero-badge',   { opacity:0, y:20, duration:0.7, delay:0.15 })
-      .from('.hero-h1',      { opacity:0, y:40, duration:0.8 }, '-=0.3')
-      .from('.hero-sub',     { opacity:0, y:30, duration:0.7 }, '-=0.5')
-      .from('.hero-ctas',    { opacity:0, y:24, duration:0.6 }, '-=0.4')
-      .from('#hero-scroll',  { opacity:0, duration:0.5 }, '-=0.2');
-  }
+  // Route the buyer to Patreon login/checkout.
+  buy = () => {
+    const url = this.cfg.checkoutUrl; // process.env.NEXT_PUBLIC_PATREON_CHECKOUT_URL
+    window.open(url, '_blank', 'noopener');
+  };
+  play = () => { window.open(this.cfg.demoUrl, '_blank', 'noopener'); };
 
-  // Reveal text after the loader overlay has been dismissed
-  if (window._heroLoaderDismissed) {
-    revealHeroText();
-  } else {
-    window.addEventListener('hero-loader-dismissed', revealHeroText);
-  }
+  renderVals() {
+    const w = this.state.w;
+    const isMobile = w < 760;
+    const price = this.props.price ?? this.cfg.price;
+    const fmt = (n) => '$' + Number(n).toFixed(2).replace(/\.00$/, '');
+    const priceStr = fmt(price);
+    const regularStr = fmt(this.cfg.regularPrice);
+    const onSale = this.cfg.onSale;
+    const showSticky = (this.props.showStickyCTA ?? true) && isMobile;
 
-  // Safety timeout — reveal text even if loader/cart fails
-  setTimeout(revealHeroText, 8000);
+    // ── Header ───────────────────────────────────────────────────────
+    // One source of truth for both the wide nav and the drop panel, so the two
+    // can never drift apart. `close` rides on each item because sc-for resolves
+    // handlers off the iterated item (same shape as the demo switcher below).
+    const navCollapsed = w < NAV_BREAKPOINT;
+    const menuOpen = navCollapsed && this.state.menuOpen;
+    const withClose = (a) => a.map((n) => ({ ...n, close: this.closeMenu }));
+    const navLinks = withClose([
+      { href: '#what',     label: 'What' },
+      { href: '#features', label: 'Specs' },
+      { href: '#demo',     label: 'Demo' },
+      { href: '#vault',    label: 'Vault' },
+      { href: '#pricing',  label: 'Price' },
+      { href: '#faq',      label: 'FAQ' },
+    ]);
+    const navApps = withClose([
+      { href: './console.html',         label: 'Console' },
+      { href: './os9-shell/index.html', label: 'OS' },
+      { href: './docs/index.html',      label: 'Docs' },
+    ]);
 
-  // ScrollTrigger animations for the rest of the page
-  ScrollTrigger.batch('.reveal', {
-    onEnter: b => gsap.to(b, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out' }),
-    start: 'top 88%',
-  });
-  gsap.to('#novaos-img', { yPercent:-10, ease:'none',
-    scrollTrigger:{ trigger:'#novaos', start:'top bottom', end:'bottom top', scrub:1.5 }});
-});
-</script>
+    // Three bars that cross into an X while the panel is open.
+    const bar = 'display:block; width:19px; height:1.5px; background:#ece7db;'
+      + ' transition:transform .22s ease, opacity .16s ease;';
+    const barTop = bar + (menuOpen ? ' transform:translateY(5.5px) rotate(45deg);' : '');
+    const barMid = bar + (menuOpen ? ' opacity:0;' : '');
+    const barBot = bar + (menuOpen ? ' transform:translateY(-5.5px) rotate(-45deg);' : '');
 
-<!-- ── INTERACTIONS ── -->
-<script>
-  const navToggle = document.getElementById('nav-toggle');
-  const navDrawer = document.getElementById('nav-drawer');
-  navToggle.addEventListener('click', () => {
-    const open = navDrawer.classList.toggle('open');
-    navToggle.setAttribute('aria-expanded', String(open));
-  });
-  navDrawer.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    navDrawer.classList.remove('open');
-    navToggle.setAttribute('aria-expanded', 'false');
-  }));
-  window.addEventListener('scroll', () => {
-    document.getElementById('nav').style.borderBottomColor =
-      window.scrollY > 20 ? 'rgba(0,255,255,0.22)' : 'rgba(0,255,255,0.08)';
-  }, { passive: true });
-  const copyBtn = document.getElementById('copy-blurb-btn');
-  const blurbText = document.getElementById('press-blurb-text');
-  if (copyBtn && blurbText) {
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(blurbText.textContent);
-        copyBtn.textContent = 'COPIED!';
-        copyBtn.classList.add('copied');
-        setTimeout(() => { copyBtn.textContent = 'COPY'; copyBtn.classList.remove('copied'); }, 2000);
-      } catch(e) {}
+    // The CTA shrinks before it is ever allowed to wrap or push the burger off.
+    const tightCta = w < 560;
+    const buyBtnStyle = 'display:inline-flex; align-items:center; gap:8px;'
+      + ' padding:' + (tightCta ? '10px 14px' : '11px 18px') + ';'
+      + ' background:#22e0c8; color:#0a0b10; border:none; cursor:pointer;'
+      + " font-family:'Space Mono',monospace; font-weight:700;"
+      + ' font-size:' + (tightCta ? '11px' : '12px') + ';'
+      + ' letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap;'
+      + ' clip-path:polygon(0 0,100% 0,100% 66%,90% 100%,0 100%);';
+    const headline = this.props.headline ?? 'Make tiny 3D games with retro soul.';
+
+    const features = [
+      { code: 'FA-01', glyph: '{ }', title: 'JavaScript-first', desc: 'Write games in the language you already know. No new toolchain, no build step.' },
+      { code: 'FA-02', glyph: '◈', title: 'Retro 3D rendering', desc: 'PS1/N64-flavoured low-poly, flat shading, warp textures and dithered fog.' },
+      { code: 'FA-03', glyph: '▤', title: 'Mobile supported', desc: 'Create and play on your phone. Touch controls and a mobile editor built in.' },
+      { code: 'FA-04', glyph: '◐', title: 'Browser playable', desc: 'No installs. Everything runs in the browser — for you and your players.' },
+      { code: 'FA-05', glyph: '⊘', title: 'Indie-friendly flow', desc: 'A calm workspace made for one person and a strange idea, not a studio.' },
+      { code: 'FA-06', glyph: '↗', title: 'Shareable games', desc: 'Publish a playable link in a click. Every game is its own little cartridge.' },
+      { code: 'FA-07', glyph: '◇', title: 'Built for tiny worlds', desc: 'Constraints on purpose. Small scenes, big personality, fast to finish.' },
+      { code: 'FA-08', glyph: '⌗', title: 'Prototype anything', desc: 'Experiments, game jams, prototypes, or a full mini-game — all fit here.' },
+    ];
+
+    const whyBuy = [
+      { n: '01', title: 'Own the tool', desc: 'One payment, yours forever. No subscription, no seats, no lock-in.' },
+      { n: '02', title: 'Build a library', desc: 'Grow a collection of games and worlds that all live in one console.' },
+      { n: '03', title: 'Back the project', desc: 'Support an independent fantasy console made by real people, not a platform.' },
+      { n: '04', title: 'Join early', desc: 'Get in during the launch era and lock the launch price before it moves.' },
+      { n: '05', title: 'Shape it', desc: 'Early creators steer the roadmap — your feedback goes straight to the source.' },
+      { n: '06', title: 'Wired to Starcade9', desc: 'Your games plug into the wider Starcade9 arcade universe as it grows.' },
+    ];
+
+    const included = [
+      'The full Nova64 fantasy console',
+      'Browser editor + JavaScript runtime',
+      'Retro 3D renderer (PS1/N64 modes)',
+      'Mobile + tablet + desktop support',
+      'One-click publish & shareable game links',
+      'Free updates through the launch era',
+      'A signal-link into the Starcade9 universe',
+    ];
+
+    const faqData = [
+      { code: 'Q1', q: 'What is Nova64?', a: 'A browser-based fantasy console for making, playing, and sharing retro-inspired 3D games. It bundles an editor, a JavaScript runtime, and a low-poly renderer into one small creative machine.' },
+      { code: 'Q2', q: 'Do I need to know JavaScript?', a: 'A little helps, but not much. Nova64 is designed to be approachable — start from an example, change a few numbers, and watch the world react. It grows with you as you learn.' },
+      { code: 'Q3', q: 'Does it work on mobile?', a: 'Yes. Mobile is a first-class citizen. You can build and play on a phone or tablet, with touch controls and a mobile-friendly editor included.' },
+      { code: 'Q4', q: 'Is this like PICO-8 or TIC-80?', a: 'Same spirit — a self-contained fantasy console with real constraints — but Nova64 is built for stylish low-poly 3D and JavaScript, not 2D sprites. Think PS1/N64 energy in the browser.' },
+      { code: 'Q5', q: 'What do I get when I buy?', a: 'The full console: editor, runtime, renderer, mobile support, publishing, and free updates through the launch era. Delivery and download are handled automatically after checkout.' },
+      { code: 'Q6', q: 'How does checkout work?', a: 'Checkout is handled through Patreon. You are routed to log in (or sign up) and complete membership checkout, and your license is delivered right after purchase.' },
+      { code: 'Q7', q: 'Can I make commercial games?', a: 'Yes. Build prototypes, jam entries, or full mini-games and ship them however you like. The games you make are yours.' },
+      { code: 'Q8', q: 'Is Starcade9 included?', a: 'Nova64 is the product you buy here — the creation engine. Starcade9 is the surrounding arcade universe your games connect into; explore it any time at starcade9.io.' },
+    ];
+    const faqs = faqData.map((f, i) => ({
+      ...f,
+      open: this.state.openFaq === i,
+      sign: this.state.openFaq === i ? '\u2212' : '+',
+      toggle: () => this.setState(s => ({ openFaq: s.openFaq === i ? -1 : i })),
+    }));
+
+    // ── Live demo gallery ─────────────────────────────────────────────
+    // Each cart is loaded by the nova64 loader (demo-embed.html?demo=<id>),
+    // which boots src/main.js and runs the real runtime — no fake canvas.
+    const demoData = [
+      { id: 'f-zero-nova-3d',    label: 'F-Zero Nova',   tag: 'RACER' },
+      { id: 'star-fox-nova-3d',  label: 'Star Fox Nova', tag: 'RAIL SHOOTER' },
+      { id: 'space-harrier-3d',  label: 'Space Harrier', tag: 'ARCADE' },
+      { id: 'cyberpunk-city-3d', label: 'Cyberpunk City', tag: 'NEON CITY' },
+    ];
+    const activeDemo = this.state.activeDemo;
+    const demos = demoData.map((d) => {
+      const active = d.id === activeDemo;
+      return {
+        ...d,
+        active,
+        select: () => this.selectDemo(d.id),
+        style: 'display:flex; flex-direction:column; gap:3px; align-items:flex-start;'
+          + ' padding:10px 14px; cursor:pointer; text-align:left; line-height:1.15;'
+          + " font-family:'Space Mono',monospace;"
+          + ' background:' + (active ? 'rgba(34,224,200,0.14)' : 'transparent') + ';'
+          + ' border:1px solid ' + (active ? '#22e0c8' : 'rgba(236,231,219,0.16)') + ';'
+          + ' box-shadow:' + (active ? '0 0 0 1px rgba(34,224,200,0.35), 0 0 22px rgba(34,224,200,0.18)' : 'none') + ';'
+          + ' color:' + (active ? '#ece7db' : 'rgba(236,231,219,0.72)') + ';',
+      };
     });
+    const activeMeta = demoData.find((d) => d.id === activeDemo) || demoData[0];
+    const demoSrc = 'demo-embed.html?demo=' + activeDemo;
+    const heroSrc = 'demo-embed.html?demo=f-zero-nova-3d';
+
+    // Deferred-playback + real-source state for the hero and demo viewports.
+    const heroPlaying = this.state.heroPlaying;
+    const demoPlaying = this.state.demoPlaying;
+    const codeText = this.state.code || '';
+    const codeEl = this._highlight(codeText);
+    const codeLines = codeText ? codeText.split('\n').length : 0;
+
+    // ── Disc Vault ───────────────────────────────────────────────────
+    // Browse grid of real carts. Each "Insert disc" opens the full console
+    // (console.html?demo=<id>) — the same runtime, framed in the CRT bezel.
+    const vault = [
+      { id: 'crystal-cathedral-3d', name: 'Crystal Cathedral', genre: 'Showcase',  color: '#7ad9ff', featured: true },
+      { id: 'f-zero-nova-3d',       name: 'F-Zero Nova',       genre: 'Racer',      color: '#ff6ed3' },
+      { id: 'cyberpunk-city-3d',    name: 'Cyberpunk City',    genre: 'Open World', color: '#c886ff' },
+      { id: 'minecraft-demo',       name: 'Voxel World',       genre: 'Voxel',      color: '#88e58a' },
+      { id: 'demoscene',            name: 'Tron Demoscene',    genre: 'Audio FX',   color: '#ffd166' },
+      { id: 'adventure-comic-3d',   name: 'Noir Adventure',    genre: 'Cel Shade',  color: '#e8e8e8' },
+      { id: 'dungeon-crawler-3d',   name: 'Dungeon Crawler',   genre: 'RPG',        color: '#ff8a4a' },
+      { id: 'pbr-showcase',         name: 'PBR Showcase',      genre: 'Materials',  color: '#a0b8d0' },
+      { id: 'model-viewer-3d',      name: 'Model Viewer',      genre: 'GLTF',       color: '#7ad9ff' },
+      { id: 'hero-demo',            name: 'Hero Prototype',    genre: 'Action',     color: '#ff6ed3' },
+      { id: 'fps-demo-3d',          name: 'FPS Combat',        genre: 'Shooter',    color: '#ff5252' },
+      { id: 'mystical-realm-3d',    name: 'Mystical Realm',    genre: 'Fantasy',    color: '#c886ff' },
+    ].map((v, i) => ({
+      ...v,
+      n: String(i + 1).padStart(3, '0'),
+      href: './console.html?demo=' + v.id,
+      thumb: 'public/assets/cart-thumbs/' + v.id + '.png',
+      cls: 'cart' + (v.featured ? ' featured' : ''),
+      cvar: '--cart-color:' + v.color,
+    }));
+    const vaultCount = vault.length;
+
+    const manifest = [
+      { glyph: '⬇', color: '#22e0c8', title: 'Instant access', desc: 'Download + license land in your inbox the second checkout clears.' },
+      { glyph: '▶', color: '#46f0a0', title: 'Runs in-browser', desc: 'No install. WebGPU-powered. Plays on desktop and mobile alike.' },
+      { glyph: '∞', color: '#a35bff', title: 'Free updates', desc: 'Every launch-era update baked in — buy once, create forever.' },
+      { glyph: '◈', color: '#f0c94a', title: 'Own your work', desc: 'Ship your carts anywhere. No royalties, no lock-in, no strings.' },
+    ];
+
+    return { headline, priceStr, regularStr, onSale, priceNote: this.cfg.priceNote, buy: this.buy, play: this.play,
+      features, whyBuy, included, faqs, manifest, showSticky,
+      // header
+      navLinks, navApps, navCollapsed, navExpanded: !navCollapsed,
+      menuOpen, menuExpanded: menuOpen ? 'true' : 'false',
+      menuLabel: menuOpen ? 'Close menu' : 'Open menu',
+      toggleMenu: this.toggleMenu, closeMenu: this.closeMenu,
+      barTop, barMid, barBot, buyBtnStyle,
+      buyLabel: tightCta ? 'Buy' : 'Buy Nova64',
+      showLogoSuffix: w >= 420,
+      demos, demoSrc, heroSrc, activeDemoLabel: activeMeta.label,
+      // hero viewport (deferred)
+      heroPlaying, heroIdle: !heroPlaying, startHero: this.startHero,
+      heroThumb: 'public/assets/cart-thumbs/f-zero-nova-3d.png',
+      heroStatus: heroPlaying ? 'LIVE' : 'STANDBY',
+      heroBars: heroPlaying ? '▮▮▮▮▮ RUN' : '▮▮▮▯▯ READY',
+      // demo viewport (deferred) + real source
+      demoPlaying, demoIdle: !demoPlaying, startDemo: this.startDemo, stopDemo: this.stopDemo,
+      demoThumb: 'public/assets/cart-thumbs/' + activeDemo + '.png',
+      demoStatus: demoPlaying ? 'LIVE' : 'STANDBY',
+      demoBars: demoPlaying ? '▮▮▮▮▮ OK' : '▮▮▮▯▯ READY',
+      codeEl, codeName: this.state.codeName || (activeDemo + '/code.js'), codeLines,
+      vault, vaultCount,
+      year: new Date().getFullYear() };
   }
+}
 </script>
-
-<!-- ── I18N HYDRATION ── -->
-<script>(function () {
-  var el = document.getElementById('nova64-i18n');
-  if (!el) return;
-  var strings = JSON.parse(el.textContent);
-  function apply(map) {
-    document.querySelectorAll('[data-i18n]').forEach(function (n) {
-      var v = map[n.dataset.i18n];
-      if (v !== undefined) n.textContent = v;
-    });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (n) {
-      var v = map[n.dataset.i18nHtml];
-      if (v !== undefined) n.innerHTML = v;
-    });
-    if (map['page.title']) document.title = map['page.title'];
-  }
-  apply(strings);
-  /* Resolve language: URL param overrides stored preference */
-  var urlLang = new URLSearchParams(location.search).get('lang');
-  var storedLang = localStorage.getItem('nova64-lang');
-  var lang = urlLang || storedLang || 'en';
-  if (urlLang && urlLang !== storedLang) localStorage.setItem('nova64-lang', urlLang);
-  /* Wire up language picker */
-  var sel = document.getElementById('lang-select');
-  if (sel) {
-    sel.value = lang;
-    sel.addEventListener('change', function () {
-      var l = sel.value;
-      localStorage.setItem('nova64-lang', l);
-      var u = new URL(location.href);
-      if (l === 'en') { u.searchParams.delete('lang'); } else { u.searchParams.set('lang', l); }
-      location.href = u.toString();
-    });
-  }
-  /* Load locale file for non-English languages */
-  if (lang && lang !== 'en') {
-    fetch('./i18n/' + encodeURIComponent(lang) + '.json')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (data) {
-          apply(Object.assign({}, strings, data));
-          if (sel) sel.value = lang;
-        }
-      })
-      .catch(function () {});
-  }
-}());
-</script>
-
-<!-- Lemon Squeezy checkout overlay. Auto-binds any <a class="lemonsqueezy-button">
-     (see the Buy Nova64 button above) and opens the in-page overlay for ?embed=1
-     links. No config needed. Docs: docs/LEMONSQUEEZY_SELLING.md -->
-<script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
-
 </body>
 </html>

@@ -14,6 +14,9 @@ import { mulberry32 } from '../../../../lib/seed';
 import { packColor } from '../../../pack-color';
 import { OceanSurface } from '../../../ocean/ocean-surface';
 import { ownMaterial } from '../../../own-material';
+import { score } from '../../../audio/score';
+import { CameraRig } from '../../../camera-rig';
+import { CUES } from './score';
 
 declare const nova64: any;
 
@@ -32,6 +35,19 @@ const RIDGE_COUNT = 9;
 const SIGNAL_SPAWN_DIST = 95; // total ride distance before the signal appears ahead
 const SIGNAL_SPAWN_Z = -55;
 const CAM_ICON_ZONE = { x0: 552, y0: 10, x1: 630, y1: 54 }; // input-space hit box
+
+// The catch. Deliberately the same three-stage shape Chapter Two's embers
+// use when they bind into the carried flame — expand, pulsate, then collapse
+// inward and go — because it is the same gesture: a light stops being its own
+// and becomes part of yours. Chapter Two's version is small and happens eight
+// times; this one is the whole chapter resolving, so it is bigger, slower, and
+// takes the camera and the bloom with it.
+const CLIMAX_SECONDS = 2.4;
+const CLIMAX_EXPAND = 0.3;
+const CLIMAX_PULSE = 0.32;
+const CLIMAX_PULSES = 2;
+const CLIMAX_EXPAND_SCALE = 2.6;
+const BASE_BLOOM = 1.1; // matches enableBloom() in init
 
 const BLOCK_WALL_Z = -42;
 const PROJECTILE_SPEED = 55; // faster bullets read as snappier and clear the screen sooner
@@ -129,6 +145,9 @@ let dist = 0;
 let steerX = 0;
 let fireTimer = 0;
 let cameraMode: 'first' | 'third' = 'third';
+// All camera placement goes through the rig so the view swap can be a move
+// rather than a cut. See camera-rig.ts.
+const camera = new CameraRig();
 
 interface ShipPart {
   mesh: any;
@@ -333,10 +352,37 @@ const BEAT_CAPTIONS: Record<Beat, string | null> = {
   climax: 'You caught it',
 };
 
+// Every beat has a matching cue in ./score.ts, crossfaded here rather than
+// anywhere else — the music changing is part of the beat changing, exactly
+// like the caption is, so both live in the one place that knows a beat began.
+const BEAT_CUES: Record<Beat, keyof typeof CUES> = {
+  prologue1: 'void',
+  prologue2: 'spark',
+  prologue3: 'scatter',
+  prologue4: 'boardwalk',
+  prologue5: 'ignition',
+  intro: 'ride',
+  ride: 'ride',
+  rising: 'rising',
+  ready: 'ready',
+  climax: 'climax',
+};
+
+// Longer crossfades through the cold open, where the beats are slow and a
+// fast cut would be audible as an edit; shorter ones once the ride is moving
+// and the music is expected to react.
+const BEAT_CUE_FADE: Partial<Record<Beat, number>> = {
+  prologue1: 0.8,
+  rising: 1.1,
+  ready: 0.9,
+  climax: 0.7,
+};
+
 function setBeat(next: Beat) {
   beat = next;
   beatTime = 0;
   chapterCtx?.setCaption(BEAT_CAPTIONS[next]);
+  score.cue(CUES[BEAT_CUES[next]], BEAT_CUE_FADE[next] ?? 1.6);
 }
 
 // Hides/reveals every ride prop except the ocean (which already reads as
@@ -940,13 +986,20 @@ export function init() {
   // default happened to be, which is what made the opening read as odd rather
   // than composed. The camera now also dollies in across the beats (update()).
   setWorldVisible(false);
-  nova64.camera.setCameraPosition(0, 1.2, PROLOGUE_Z + 5.5);
-  nova64.camera.setCameraTarget(0, 1.2, PROLOGUE_Z);
+  camera.set(0, 1.2, PROLOGUE_Z + 5.5, 0, 1.2, PROLOGUE_Z);
 
   // The signal arrives corrupted and settles as it stabilises — a decaying
   // glitch pass is the most on-the-nose possible read of "a cartridge that
   // was lost before it finished loading," and it costs one call per frame.
   nova64.fx.enableGlitch?.(0.55);
+
+  // Its own generator rather than the world's `rand`: the score consumes
+  // random values every bar (bell placement) and the ride consumes them every
+  // few seconds (comet spawns, wave colours, explosion debris), so sharing one
+  // stream would make the world's procedural content depend on how long the
+  // music had been playing. Derived from the same chapter seed, so a given
+  // token still hears the same performance every time.
+  score.start(mulberry32((ctx.chapterSeed ^ 0x5c07e) >>> 0));
 
   setBeat('prologue1');
 }
@@ -972,16 +1025,19 @@ function generateInvaderPattern(rows: number, cols: number): boolean[][] {
 
 function updateCamera(boardX: number, boardY: number) {
   if (cameraMode === 'third') {
-    nova64.camera.setCameraPosition(boardX * 0.5, boardY + 2.3, 6.5);
-    nova64.camera.setCameraTarget(boardX * 0.7, boardY + 0.2, -6);
+    camera.set(boardX * 0.5, boardY + 2.3, 6.5, boardX * 0.7, boardY + 0.2, -6);
   } else {
-    nova64.camera.setCameraPosition(boardX, boardY + 0.55, 0.4);
-    nova64.camera.setCameraTarget(boardX + steerX * 2.5, boardY + 0.1, -12);
+    camera.set(boardX, boardY + 0.55, 0.4, boardX + steerX * 2.5, boardY + 0.1, -12);
   }
 }
 
 export function update(dt: number) {
   beatTime += dt;
+  // Driven from the render loop rather than a timer, so the score can never
+  // outlive the cart that's playing it — see content/audio/score.ts.
+  score.update(dt);
+  // Before any camera.set() this frame — see Chapter Two's cart for the note.
+  camera.update(dt);
 
   // The prologue plays before any ride logic — just a timer per stage, a
   // gentle pulse on the one visible spark, and (on the final stage) the
@@ -1005,12 +1061,14 @@ export function update(dt: number) {
     // with every caption.
     const dolly = Math.min(1, prologueTime / PROLOGUE_TOTAL_SECONDS);
     const dollyEase = dolly * dolly * (3 - 2 * dolly);
-    nova64.camera.setCameraPosition(
+    camera.set(
       Math.sin(prologueTime * 0.25) * 0.28,
       1.2 + dollyEase * 0.18,
-      PROLOGUE_Z + 5.5 - dollyEase * 2.9
+      PROLOGUE_Z + 5.5 - dollyEase * 2.9,
+      0,
+      1.2,
+      PROLOGUE_Z
     );
-    nova64.camera.setCameraTarget(0, 1.2, PROLOGUE_Z);
 
     // The signal arrives corrupted and cleans up as it stabilises, dropping to
     // nothing through the finale.
@@ -1068,6 +1126,10 @@ export function update(dt: number) {
       pingTimer -= dt;
       if (pingTimer <= 0) {
         pingTimer = 1.15;
+        // The ping is heard as well as seen, and `stinger` pitches it from
+        // the chord currently sounding, so the cartridge calling out lands
+        // inside the music rather than on top of it.
+        score.stinger('ping', { degree: prologuePings.length });
         prologuePings.push({
           mesh: nova64.scene.createTorus(0.5, 0.022, crestColor, [0, 1.2, PROLOGUE_Z], {
             emissive: crestColor,
@@ -1119,6 +1181,10 @@ export function update(dt: number) {
         // a sting on it than as a clean fade.
         nova64.fx.glitchBurst?.(0.65, 0.32);
         nova64.fx.disableGlitch?.();
+        // A flourish up the chord under the glitch burst — the visual sting
+        // alone reads as a fault; with this it reads as the machine coming
+        // back to life.
+        score.stinger('shimmer', { gain: 0.9 });
         setWorldVisible(true);
         setBeat('intro');
       }
@@ -1161,7 +1227,12 @@ export function update(dt: number) {
     const rotOy = part.ox * bankSin + part.oy * bankCos;
     nova64.scene.setPosition(part.mesh, boardX + rotOx, boardY + rotOy, part.oz);
     nova64.scene.setRotation(part.mesh, part.extraRotX, 0, bank + part.extraRotZ);
-    nova64.scene.setMeshVisible?.(part.mesh, cameraMode === 'third');
+    // Held visible for the duration of a view change as well as in third
+    // person: hiding the board the instant first-person is selected pops it
+    // out while the camera is still several units behind it. By the time the
+    // blend lands, the camera is on the board and its disappearance is out of
+    // frame.
+    nova64.scene.setMeshVisible?.(part.mesh, cameraMode === 'third' || camera.blending);
   }
 
   // Throttle: hold Enter or T for a speed boost — a little vehicle-control
@@ -1169,6 +1240,10 @@ export function update(dt: number) {
   const throttling = nova64.input.key?.('Enter') || nova64.input.key?.('KeyT');
   const speed = FORWARD_SPEED * (throttling ? THROTTLE_MULT : 1);
   if (beat !== 'climax') dist += dt * speed;
+  // The ride is one long cue, so the sense of closing in has to come from
+  // somewhere other than a cut: proximity to the signal opens the pad filter
+  // and thickens the arpeggio continuously across the whole approach.
+  if (beat === 'intro' || beat === 'ride') score.setIntensity(dist / SIGNAL_SPAWN_DIST);
 
   // Clouds and asteroid-chunks stream toward the camera on an endless loop,
   // each with its own independent bob — the constant sense of motion the
@@ -1387,6 +1462,9 @@ export function update(dt: number) {
   const wantsToFire = !pressingIcon && (nova64.input.key?.('Space') || nova64.input.mouseDown?.());
   if (wantsToFire && fireTimer <= 0) {
     fireTimer = FIRE_COOLDOWN;
+    // Quiet, and pitched — at seven shots a second anything louder would sit
+    // on top of the arpeggio instead of inside it.
+    score.stinger('spark', { gain: 0.28, degree: 4 });
     const px = boardX;
     const py = boardY + 0.25;
     const pz = -0.6;
@@ -1422,6 +1500,9 @@ export function update(dt: number) {
         nova64.scene.destroyMesh(b.mesh);
         nova64.scene.destroyMesh(b.bgMesh);
         hit = true;
+        // Tuned to the chord root, so a run of kills reads as a bassline
+        // rather than as repeated noise.
+        score.stinger('thump', { gain: 0.75 });
         burstEmitter.x =
           (typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640) / 2;
         burstEmitter.y =
@@ -1506,7 +1587,10 @@ export function update(dt: number) {
     }
   }
 
-  updateCamera(boardX, boardY);
+  // The climax frames itself (below) — letting the ride's follow camera run
+  // here as well would overwrite that framing every frame and the push in
+  // would never happen.
+  if (beat !== 'climax') updateCamera(boardX, boardY);
 
   const w = typeof nova64.draw.screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
   const h = typeof nova64.draw.screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
@@ -1533,6 +1617,11 @@ export function update(dt: number) {
     nova64.input.keyp?.('KeyC')
   ) {
     cameraMode = cameraMode === 'third' ? 'first' : 'third';
+    // Fly between the two views instead of cutting. Short enough to still
+    // feel like a responsive button press, long enough to read as the camera
+    // dropping onto the board or pulling off it.
+    camera.blend(0.55);
+    score.stinger('spark', { gain: 0.35, degree: cameraMode === 'first' ? 5 : 2 });
   }
 
   if (beat === 'intro' && beatTime > 2.2) setBeat('ride');
@@ -1543,11 +1632,28 @@ export function update(dt: number) {
 
   if (beat === 'ride' && dist >= SIGNAL_SPAWN_DIST && !crest) {
     crestSpawnDist = dist;
-    crest = nova64.scene.createSphere(0.55, crestColor, [0, 1.1, SIGNAL_SPAWN_Z], 7, {
-      emissive: crestColor,
-      emissiveIntensity: 1.7,
-    });
-    ring = nova64.scene.createTorus(1.3, 0.045, ringColor, [0, 1.1, SIGNAL_SPAWN_Z], { metallic: true, roughness: 0.15 });
+    // Both get their own material (see own-material.ts) and are created
+    // transparent: the climax animates each one's glow and opacity per frame,
+    // which on the engine's shared material cache would bleed into every
+    // other mesh built from the same options and hand a disposed material to
+    // the next one created after these are destroyed.
+    crest = ownMaterial(
+      nova64.scene.createSphere(0.55, crestColor, [0, 1.1, SIGNAL_SPAWN_Z], 7, {
+        emissive: crestColor,
+        emissiveIntensity: 1.7,
+        transparent: true,
+        opacity: 1,
+      }),
+      1.7
+    );
+    ring = ownMaterial(
+      nova64.scene.createTorus(1.3, 0.045, ringColor, [0, 1.1, SIGNAL_SPAWN_Z], {
+        metallic: true,
+        roughness: 0.15,
+        transparent: true,
+        opacity: 1,
+      })
+    );
     setBeat('rising');
   }
 
@@ -1570,12 +1676,88 @@ export function update(dt: number) {
       nova64.fx.updateEmitter2D(burstEmitter, 1 / 20);
       burstEmitter.rate = 0;
       setBeat('climax');
+      // Ease off the ride's chase camera into the climax framing rather than
+      // cutting to it — the world has just stopped moving, and a cut on top of
+      // that reads as a freeze rather than as an arrival.
+      camera.blend(0.9);
+      // Fired after setBeat so it reads the climax cue's own major voicing —
+      // the chapter's single biggest sound, on its single biggest moment.
+      score.stinger('swell', { gain: 1 });
+      score.stinger('shimmer', { degree: 2 });
     }
   }
 
-  if (beat === 'climax' && beatTime >= 1.1 && !completeSent) {
-    completeSent = true;
-    void chapterCtx?.complete({ discovered: ['coastal-signal:chapter-01:caught-the-signal'] });
+  if (beat === 'climax') {
+    const f = Math.min(1, beatTime / CLIMAX_SECONDS);
+
+    // Expand, pulsate, fade — see the constants above. Every boundary is
+    // continuous in scale and glow, so none of the three stages begins with a
+    // pop.
+    let scale: number;
+    let glow: number;
+    let opacity: number;
+    if (f < CLIMAX_EXPAND) {
+      const k = f / CLIMAX_EXPAND;
+      const eased = 1 - Math.pow(1 - k, 3);
+      scale = 1 + (CLIMAX_EXPAND_SCALE - 1) * eased;
+      glow = 1.7 + eased * 4.3;
+      opacity = 1;
+    } else if (f < CLIMAX_EXPAND + CLIMAX_PULSE) {
+      const k = (f - CLIMAX_EXPAND) / CLIMAX_PULSE;
+      const decay = 1 - k;
+      const osc = Math.sin(k * Math.PI * 2 * CLIMAX_PULSES);
+      scale = CLIMAX_EXPAND_SCALE * (1 + osc * 0.26 * decay);
+      glow = 6 + osc * 3 * decay;
+      opacity = 1;
+    } else {
+      const k = (f - CLIMAX_EXPAND - CLIMAX_PULSE) / (1 - CLIMAX_EXPAND - CLIMAX_PULSE);
+      const eased = k * k * k;
+      scale = CLIMAX_EXPAND_SCALE + (0.1 - CLIMAX_EXPAND_SCALE) * eased;
+      glow = 6 * (1 - eased);
+      opacity = 1 - k * k;
+    }
+
+    if (crest) {
+      // Drawn in toward the rider as it goes, not just shrinking in place —
+      // the same "taken aboard" read the embers have.
+      const z = -8 + (1 - opacity) * 6.5;
+      nova64.scene.setPosition(crest, 0, 1.1, z);
+      nova64.scene.setScale(crest, scale, scale, scale);
+      nova64.scene.rotateMesh(crest, dt * 0.6, dt * 2.4, 0);
+      if (crest.material) {
+        crest.material.emissiveIntensity = glow;
+        crest.material.opacity = opacity;
+      }
+    }
+
+    // The ring goes the other way: it keeps opening outward and thinning to
+    // nothing, a wavefront leaving as the signal itself is drawn in. Two
+    // opposite motions off one moment is most of what makes a climax read as
+    // an event rather than as an object getting bigger.
+    if (ring) {
+      const spread = 1 + f * f * 7;
+      nova64.scene.setPosition(ring, 0, 1.1, -8 - f * 2);
+      nova64.scene.setScale(ring, spread, spread, 1);
+      nova64.scene.rotateMesh(ring, 0, dt * 1.4, 0);
+      if (ring.material) ring.material.opacity = Math.max(0, 1 - f * 1.35);
+    }
+
+    // Bloom lifts with the pulse and settles back to the ride's base value, so
+    // the chapter doesn't hand the next screen a blown-out frame.
+    const bloomF = f < 0.6 ? f / 0.6 : 1 - (f - 0.6) / 0.4;
+    nova64.fx.setBloomStrength(BASE_BLOOM + 2.6 * Math.max(0, bloomF));
+
+    // A slow push in on the caught signal. The `camera.blend` started when the
+    // beat began carries the first second of this off the chase framing.
+    camera.set(0, 1.35 + f * 0.15, 2.4 - f * 0.9, 0, 1.15, -8);
+
+    // Was 1.1s, when the climax was a frozen world under a static starburst.
+    // Now it plays for the full length of the staging above and of the 2.6s
+    // musical resolution the beat fires on entry.
+    if (f >= 1 && !completeSent) {
+      completeSent = true;
+      void chapterCtx?.complete({ discovered: ['coastal-signal:chapter-01:caught-the-signal'] });
+    }
   }
 }
 
@@ -1608,6 +1790,11 @@ export function draw() {
   // viewer-canvas.tsx's setCaption bridge) — vector typography, not the
   // engine's fixed bitmap font. Only the starburst visual stays in-canvas.
   if (beat === 'climax') {
-    nova64.draw.drawStarburst(w / 2, h * 0.4, 30, 12, 8, packColor(0xffffff), true);
+    // Grows and thins across the beat instead of holding one fixed size for
+    // the whole thing — at 2.4s a static starburst reads as a stuck frame.
+    const f = Math.min(1, beatTime / CLIMAX_SECONDS);
+    const burst = 18 + f * 64;
+    const points = 8 + Math.round(f * 8);
+    nova64.draw.drawStarburst(w / 2, h * 0.4, burst, burst * 0.4, points, packColor(0xffffff), true);
   }
 }
