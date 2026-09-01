@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nova64 — Player</title>
+<meta name="description" content="Minimal full-screen player for Nova64 carts. Pick a demo, press play, and the fantasy console boots in your browser.">
+<link rel="icon" href="./nova-icon.svg">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --bg:#040309; --ink:#ece7db; --accent:#22e0c8; --dim:rgba(236,231,219,0.55);
+    --line:rgba(236,231,219,0.16);
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Archivo',system-ui,-apple-system,sans-serif;
+  }
+  html,body{ width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink);
+             font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  body{ position:relative; }
+
+  /* The runtime's canvas fills the viewport; main.js keeps it responsive as long
+     as we never pass ?w=/?h= (that would pin it to fixed-resolution mode). */
+  canvas#screen{ display:block; width:100%; height:100%; background:var(--bg); }
+  #nova64-fullscreen-btn{ display:none !important; }
+
+  /* ── Chrome ─────────────────────────────────────────────── */
+  .chrome{ position:fixed; top:0; left:0; right:0; z-index:30; display:flex; align-items:center;
+           justify-content:space-between; gap:12px; padding:14px clamp(12px,2.4vw,20px);
+           pointer-events:none; transition:opacity .45s ease; }
+  .chrome > *{ pointer-events:auto; }
+  body.playing.idle-chrome .chrome{ opacity:0.16; }
+  body.playing .chrome:hover, body.playing .chrome:focus-within{ opacity:1 !important; }
+
+  .picker{ position:relative; display:inline-flex; align-items:center; }
+  .picker::after{ content:''; position:absolute; right:13px; top:50%; width:6px; height:6px;
+                  margin-top:-4px; border-right:1.5px solid var(--accent);
+                  border-bottom:1.5px solid var(--accent); transform:rotate(45deg);
+                  pointer-events:none; }
+  #demo-select{
+    appearance:none; -webkit-appearance:none;
+    padding:10px 34px 10px 14px; max-width:min(62vw,320px);
+    font-family:var(--mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--ink); background:rgba(8,9,14,0.78); backdrop-filter:blur(10px);
+    border:1px solid var(--line); border-radius:0; cursor:pointer;
+    clip-path:polygon(0 0,100% 0,100% 68%,94% 100%,0 100%);
+    transition:border-color .18s ease, box-shadow .18s ease;
+  }
+  #demo-select:hover{ border-color:rgba(34,224,200,0.55); }
+  #demo-select:focus-visible{ outline:none; border-color:var(--accent);
+                              box-shadow:0 0 0 1px rgba(34,224,200,0.4), 0 0 22px rgba(34,224,200,0.18); }
+  #demo-select option{ background:#0c0e15; color:var(--ink); text-transform:none; letter-spacing:0; }
+  #demo-select optgroup{ background:#0c0e15; color:var(--accent); font-style:normal; }
+
+  .icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px;
+             color:var(--dim); background:rgba(8,9,14,0.78); backdrop-filter:blur(10px);
+             border:1px solid var(--line); cursor:pointer; transition:color .18s ease, border-color .18s ease; }
+  .icon-btn:hover{ color:var(--accent); border-color:rgba(34,224,200,0.55); }
+  .icon-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .icon-btn svg{ width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8;
+                 stroke-linecap:square; }
+
+  /* ── Poster (pre-engagement) ────────────────────────────── */
+  .poster{ position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+           background:var(--bg); border:0; width:100%; padding:0; cursor:pointer; color:inherit; }
+  .poster[hidden]{ display:none; }
+  .poster-art{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+               opacity:0.42; filter:saturate(0.85); }
+  .poster-art[hidden]{ display:none; }
+  .poster-wash{ position:absolute; inset:0;
+                background:radial-gradient(62% 62% at 50% 46%,rgba(4,3,9,0.15),rgba(4,3,9,0.88));
+                box-shadow:inset 0 0 120px 30px rgba(4,3,9,0.75); }
+  .poster-inner{ position:relative; display:flex; flex-direction:column; align-items:center;
+                 gap:16px; text-align:center; padding:24px; }
+  .play-ring{ display:flex; align-items:center; justify-content:center; width:74px; height:74px;
+              border-radius:50%; background:var(--accent); color:#0a0b10; font-size:24px;
+              padding-left:5px; box-shadow:0 0 46px rgba(34,224,200,0.55);
+              transition:transform .2s ease, box-shadow .2s ease; }
+  .poster:hover .play-ring, .poster:focus-visible .play-ring{
+              transform:scale(1.06); box-shadow:0 0 62px rgba(34,224,200,0.75); }
+  .poster:focus-visible{ outline:none; }
+  .poster:focus-visible .play-ring{ outline:2px solid var(--ink); outline-offset:5px; }
+  .poster-title{ font-family:var(--sans); font-stretch:125%; font-weight:800;
+                 font-size:clamp(20px,3.4vw,30px); letter-spacing:0.01em; }
+  .poster-hint{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.14em;
+                text-transform:uppercase; color:var(--dim); }
+
+  /* ── Status overlays ────────────────────────────────────── */
+  .status{ position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center;
+           background:rgba(4,3,9,0.9); font-family:var(--mono); font-size:11px; letter-spacing:0.18em;
+           text-transform:uppercase; color:var(--dim); pointer-events:none; text-align:center; padding:24px; }
+  .status[hidden]{ display:none; }
+  #error{ pointer-events:auto; color:#ff8a8a; letter-spacing:0.06em; text-transform:none;
+          line-height:1.6; font-size:12px; }
+  #error a{ color:var(--accent); }
+  .blink{ animation:blink 1.1s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity:0.25; } }
+  @media (prefers-reduced-motion:reduce){
+    .blink{ animation:none; }
+    .chrome, .play-ring{ transition:none; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.182.0",
+    "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+    "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+    "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/",
+    "@babylonjs/core": "https://esm.sh/@babylonjs/core@9.4.1",
+    "@babylonjs/core/": "https://esm.sh/@babylonjs/core@9.4.1/",
+    "@babylonjs/loaders": "https://esm.sh/@babylonjs/loaders@9.4.1",
+    "@babylonjs/loaders/": "https://esm.sh/@babylonjs/loaders@9.4.1/"
+  }
+}
+</script>
+</head>
+<body>
+  <canvas id="screen"></canvas>
+
+  <div class="chrome">
+    <div class="picker">
+      <select id="demo-select" aria-label="Choose a demo"></select>
+    </div>
+    <button id="fs" class="icon-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 5.5v-4h4M14.5 5.5v-4h-4M1.5 10.5v4h4M14.5 10.5v4h-4"/></svg>
+    </button>
+  </div>
+
+  <button class="poster" id="poster" type="button">
+    <img class="poster-art" id="poster-art" alt="" aria-hidden="true">
+    <span class="poster-wash" aria-hidden="true"></span>
+    <span class="poster-inner">
+      <span class="play-ring" aria-hidden="true">&#9654;</span>
+      <span class="poster-title" id="poster-title">&nbsp;</span>
+      <span class="poster-hint">Tap to boot the nova64 runtime</span>
+    </span>
+  </button>
+
+  <div class="status" id="loading" hidden><span class="blink">Booting cart&hellip;</span></div>
+  <div class="status" id="error" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Catalog of every cart under examples/ (id, label, group, has-thumbnail).
+  // ?demoscene= also accepts any folder name not listed here — src/main.js falls
+  // back to /examples/<name>/code.js for unmapped ids.
+  var DEMOS = [
+  { id: "crystal-cathedral-3d",    l: "Crystal Cathedral",     g: "Showcase",    t: true },
+  { id: "f-zero-nova-3d",          l: "F-Zero Nova",           g: "Showcase",    t: true },
+  { id: "cyberpunk-city-3d",       l: "Cyberpunk City",        g: "Showcase",    t: true },
+  { id: "minecraft-demo",          l: "Voxel World",           g: "Showcase",    t: true },
+  { id: "demoscene",               l: "Tron Demoscene",        g: "Showcase",    t: true },
+  { id: "adventure-comic-3d",      l: "Noir Adventure",        g: "Showcase",    t: true },
+  { id: "dungeon-crawler-3d",      l: "Dungeon Crawler 3D",    g: "Showcase",    t: true },
+  { id: "pbr-showcase",            l: "PBR Showcase",          g: "Showcase",    t: true },
+  { id: "model-viewer-3d",         l: "Model Viewer",          g: "Showcase",    t: true },
+  { id: "hero-demo",               l: "Hero Prototype",        g: "Showcase",    t: true },
+  { id: "fps-demo-3d",             l: "FPS Combat",            g: "Showcase",    t: true },
+  { id: "mystical-realm-3d",       l: "Mystical Realm",        g: "Showcase",    t: true },
+  { id: "camera-platformer",       l: "Camera Platformer",     g: "Games",       t: true },
+  { id: "dungeon-crawler",         l: "Dungeon Crawler",       g: "Games",       t: false },
+  { id: "indie-odyssey",           l: "Indie Odyssey",         g: "Games",       t: false },
+  { id: "metaverse",               l: "Metaverse",             g: "Games",       t: false },
+  { id: "multiplayer-lobby",       l: "Multiplayer Lobby",     g: "Games",       t: false },
+  { id: "nature-explorer-3d",      l: "Nature Explorer 3D",    g: "Games",       t: true },
+  { id: "neon-pinball",            l: "Neon Pinball",          g: "Games",       t: false },
+  { id: "neon-snake",              l: "Neon Snake",            g: "Games",       t: false },
+  { id: "nova-drift",              l: "Nova Drift",            g: "Games",       t: false },
+  { id: "platformer",              l: "Platformer",            g: "Games",       t: false },
+  { id: "shooter-demo-3d",         l: "Shooter Demo 3D",       g: "Games",       t: true },
+  { id: "sky-rider",               l: "Sky Rider",             g: "Games",       t: false },
+  { id: "space-combat-3d",         l: "Space Combat 3D",       g: "Games",       t: true },
+  { id: "space-harrier-3d",        l: "Space Harrier 3D",      g: "Games",       t: true },
+  { id: "space-shooter",           l: "Space Shooter",         g: "Games",       t: false },
+  { id: "star-fox-nova-3d",        l: "Star Fox Nova",         g: "Games",       t: true },
+  { id: "stealth-runner",          l: "Stealth Runner",        g: "Games",       t: false },
+  { id: "storage-quest",           l: "Storage Quest",         g: "Games",       t: true },
+  { id: "strider-demo-3d",         l: "Strider Demo 3D",       g: "Games",       t: true },
+  { id: "super-plumber-64",        l: "Super Plumber 64",      g: "Games",       t: true },
+  { id: "the-last-save-file",      l: "The Last Save File",    g: "Games",       t: false },
+  { id: "voxel-creative",          l: "Voxel Creative",        g: "Games",       t: true },
+  { id: "voxel-creatures",         l: "Voxel Creatures",       g: "Games",       t: true },
+  { id: "voxel-terrain",           l: "Voxel Terrain",         g: "Games",       t: true },
+  { id: "vr-sword-combat",         l: "VR Sword Combat",       g: "Games",       t: true },
+  { id: "wad-demo",                l: "WAD Demo",              g: "Games",       t: true },
+  { id: "wave-survival",           l: "Wave Survival",         g: "Games",       t: false },
+  { id: "wing-commander-space",    l: "Wing Commander Space",  g: "Games",       t: true },
+  { id: "wizardry-3d",             l: "Wizardry 3D",           g: "Games",       t: true },
+  { id: "3d-advanced",             l: "3D Advanced",           g: "Demos & FX",  t: true },
+  { id: "ar-hand-demo",            l: "AR Hand Demo",          g: "Demos & FX",  t: true },
+  { id: "audio-lab",               l: "Audio Lab",             g: "Demos & FX",  t: true },
+  { id: "babylon-demo",            l: "Babylon Demo",          g: "Demos & FX",  t: true },
+  { id: "blend-aurora",            l: "Blend Aurora",          g: "Demos & FX",  t: true },
+  { id: "boids-flocking",          l: "Boids Flocking",        g: "Demos & FX",  t: true },
+  { id: "canvas-ui-showcase",      l: "Canvas UI Showcase",    g: "Demos & FX",  t: true },
+  { id: "creative-coding",         l: "Creative Coding",       g: "Demos & FX",  t: true },
+  { id: "filter-glitch",           l: "Filter Glitch",         g: "Demos & FX",  t: true },
+  { id: "flash-demo",              l: "Flash Demo",            g: "Demos & FX",  t: true },
+  { id: "game-of-life-3d",         l: "Game Of Life 3D",       g: "Demos & FX",  t: true },
+  { id: "generative-art",          l: "Generative Art",        g: "Demos & FX",  t: true },
+  { id: "hud-demo",                l: "HUD Demo",              g: "Demos & FX",  t: true },
+  { id: "hype-demo",               l: "Hype Demo",             g: "Demos & FX",  t: true },
+  { id: "input-showcase",          l: "Input Showcase",        g: "Demos & FX",  t: true },
+  { id: "instancing-demo",         l: "Instancing Demo",       g: "Demos & FX",  t: true },
+  { id: "movie-clock",             l: "Movie Clock",           g: "Demos & FX",  t: true },
+  { id: "nft-art-generator",       l: "NFT Art Generator",     g: "Demos & FX",  t: true },
+  { id: "nft-worlds",              l: "NFT Worlds",            g: "Demos & FX",  t: true },
+  { id: "particle-fireworks",      l: "Particle Fireworks",    g: "Demos & FX",  t: true },
+  { id: "particle-trail",          l: "Particle Trail",        g: "Demos & FX",  t: true },
+  { id: "particles-demo",          l: "Particles Demo",        g: "Demos & FX",  t: true },
+  { id: "physics-demo-3d",         l: "Physics Demo 3D",       g: "Demos & FX",  t: true },
+  { id: "screen-demo",             l: "Screen Demo",           g: "Demos & FX",  t: true },
+  { id: "shader-showcase",         l: "Shader Showcase",       g: "Demos & FX",  t: true },
+  { id: "skybox-showcase",         l: "Skybox Showcase",       g: "Demos & FX",  t: true },
+  { id: "stage-cards",             l: "Stage Cards",           g: "Demos & FX",  t: true },
+  { id: "stage-menu",              l: "Stage Menu",            g: "Demos & FX",  t: true },
+  { id: "startscreen-demo",        l: "Startscreen Demo",      g: "Demos & FX",  t: true },
+  { id: "story-video-demo",        l: "Story Video Demo",      g: "Demos & FX",  t: false },
+  { id: "tsl-showcase",            l: "TSL Showcase",          g: "Demos & FX",  t: true },
+  { id: "tv-demo",                 l: "TV Demo",               g: "Demos & FX",  t: false },
+  { id: "tween-bounce",            l: "Tween Bounce",          g: "Demos & FX",  t: true },
+  { id: "tween-logo",              l: "Tween Logo",            g: "Demos & FX",  t: true },
+  { id: "tween-typewriter",        l: "Tween Typewriter",      g: "Demos & FX",  t: true },
+  { id: "ui-demo",                 l: "UI Demo",               g: "Demos & FX",  t: true },
+  { id: "vox-viewer",              l: "VOX Viewer",            g: "Demos & FX",  t: true },
+  { id: "vr-demo",                 l: "VR Demo",               g: "Demos & FX",  t: true },
+  { id: "00-boot",                 l: "00 \u00b7 Boot",        g: "Basics",      t: false },
+  { id: "01-cube",                 l: "01 \u00b7 Cube",        g: "Basics",      t: false },
+  { id: "02-input",                l: "02 \u00b7 Input",       g: "Basics",      t: false },
+  { id: "03-texture",              l: "03 \u00b7 Texture",     g: "Basics",      t: false },
+  { id: "04-instances",            l: "04 \u00b7 Instances",   g: "Basics",      t: false },
+  { id: "05-particles",            l: "05 \u00b7 Particles",   g: "Basics",      t: false },
+  { id: "08-capabilities",         l: "08 \u00b7 Capabilities", g: "Basics",      t: false },
+  { id: "09-errors",               l: "09 \u00b7 Errors",      g: "Basics",      t: false },
+  { id: "10-stress",               l: "10 \u00b7 Stress",      g: "Basics",      t: false },
+  { id: "hello-3d",                l: "Hello 3D",              g: "Basics",      t: true },
+  { id: "hello-helpers",           l: "Hello Helpers",         g: "Basics",      t: false },
+  { id: "hello-namespaced",        l: "Hello Namespaced",      g: "Basics",      t: true },
+  { id: "hello-skybox",            l: "Hello Skybox",          g: "Basics",      t: true },
+  { id: "hello-world",             l: "Hello World",           g: "Basics",      t: true },
+  { id: "test-2d-overlay",         l: "Test 2D Overlay",       g: "Tests",       t: true },
+  { id: "test-font",               l: "Test Font",             g: "Tests",       t: true },
+  { id: "test-minimal",            l: "Test Minimal",          g: "Tests",       t: true },
+  ];
+
+  var GROUPS = ['Showcase', 'Games', 'Demos & FX', 'Basics', 'Tests'];
+  var DEFAULT_ID = 'f-zero-nova-3d';
+  var THUMB_DIR = 'public/assets/cart-thumbs/';
+  var RUNTIME = '/src/main.js';
+  var CLEAR_COLOR = '0x040309';
+
+  var selectEl = document.getElementById('demo-select');
+  var posterEl = document.getElementById('poster');
+  var posterArt = document.getElementById('poster-art');
+  var posterTitle = document.getElementById('poster-title');
+  var loadingEl = document.getElementById('loading');
+  var errorEl = document.getElementById('error');
+  var fsBtn = document.getElementById('fs');
+
+  function byId(id) {
+    for (var i = 0; i < DEMOS.length; i++) if (DEMOS[i].id === id) return DEMOS[i];
+    return null;
+  }
+
+  // ── Which cart? ?demoscene= is canonical; ?demo=/?cart= stay valid aliases
+  // so links copied out of console.html and demo-embed.html keep working.
+  var params = new URLSearchParams(window.location.search);
+  var requested = (params.get('demoscene') || params.get('demo') || params.get('cart') || '').trim();
+  // Folder names only — no slashes, no traversal, no scheme.
+  if (!/^[A-Za-z0-9._-]+$/.test(requested)) requested = '';
+
+  var current = requested || DEFAULT_ID;
+  var known = byId(current);
+  if (!known) {
+    // Unlisted but syntactically valid: offer it anyway and let the runtime try.
+    DEMOS.push({ id: current, l: current, g: 'Unlisted', t: false });
+    if (GROUPS.indexOf('Unlisted') === -1) GROUPS.push('Unlisted');
+  }
+
+  // ── Build the dropdown ──────────────────────────────────────
+  GROUPS.forEach(function (group) {
+    var members = DEMOS.filter(function (d) { return d.g === group; });
+    if (!members.length) return;
+    var og = document.createElement('optgroup');
+    og.label = group;
+    members.forEach(function (d) {
+      var opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.l;
+      og.appendChild(opt);
+    });
+    selectEl.appendChild(og);
+  });
+  selectEl.value = current;
+
+  function cleanUrl(id) {
+    return window.location.pathname + '?demoscene=' + encodeURIComponent(id);
+  }
+
+  function paint(id) {
+    var d = byId(id) || { id: id, l: id, t: false };
+    posterTitle.textContent = d.l;
+    document.title = 'Nova64 — ' + d.l;
+    if (d.t) {
+      posterArt.hidden = false;
+      posterArt.src = THUMB_DIR + d.id + '.png';
+    } else {
+      posterArt.hidden = true;
+      posterArt.removeAttribute('src');
+    }
+  }
+  // A missing/failed thumbnail just falls back to the plain backdrop.
+  posterArt.addEventListener('error', function () { posterArt.hidden = true; });
+
+  paint(current);
+  history.replaceState(null, '', cleanUrl(current));
+
+  // ── Switching carts ─────────────────────────────────────────
+  // Before boot it's a cheap repaint. After boot we navigate: the runtime has no
+  // per-cart teardown hook, so a full reload is the only clean way to swap.
+  var booted = false;
+  selectEl.addEventListener('change', function () {
+    var next = selectEl.value;
+    if (next === current && !booted) return;
+    if (booted) { window.location.href = cleanUrl(next); return; }
+    current = next;
+    paint(current);
+    history.replaceState(null, '', cleanUrl(current));
+    selectEl.blur(); // hand the keyboard back to the cart
+  });
+
+  // ── Boot ────────────────────────────────────────────────────
+  function fail(msg) {
+    loadingEl.hidden = true;
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+
+  function watchCartLoad() {
+    var started = Date.now();
+    var timer = setInterval(function () {
+      var state = window.__nova64CartLoadState;
+      if (state && state.ready) {
+        clearInterval(timer);
+        loadingEl.hidden = true;
+        document.body.classList.add('playing');
+        armChromeFade();
+      } else if (state && state.error) {
+        clearInterval(timer);
+        fail('Cart failed to load: ' + state.error);
+      } else if (Date.now() - started > 45000) {
+        clearInterval(timer);
+        fail('Timed out loading examples/' + current + '/code.js — check that the cart exists.');
+      }
+    }, 120);
+  }
+
+  function boot() {
+    if (booted) return;
+    booted = true;
+    posterEl.hidden = true;
+    loadingEl.hidden = false;
+
+    // src/main.js reads its options off window.location.search at module-eval
+    // time, and the param it looks for is ?demo=. Set it (plus the clear color)
+    // just long enough for the module to read, then restore the ?demoscene= URL
+    // once the module has finished evaluating, so what's in the address bar
+    // stays the shareable form. Deliberately no ?w=/?h= — omitting them keeps
+    // main.js on its responsive ResizeObserver path so the cart fills the frame.
+    var runUrl = new URL(window.location.href);
+    runUrl.searchParams.set('demo', current);
+    runUrl.searchParams.set('clearColor', CLEAR_COLOR);
+    history.replaceState(null, '', runUrl.pathname + runUrl.search);
+
+    var script = document.createElement('script');
+    script.type = 'module';
+    script.src = RUNTIME;
+    script.addEventListener('load', function () {
+      history.replaceState(null, '', cleanUrl(current));
+    });
+    script.addEventListener('error', function () {
+      fail('Could not load the Nova64 runtime at ' + RUNTIME + '.');
+    });
+    document.head.appendChild(script);
+    watchCartLoad();
+  }
+
+  posterEl.addEventListener('click', boot);
+
+  // ── Chrome auto-fade while playing ──────────────────────────
+  var fadeTimer = null;
+  function armChromeFade() {
+    clearTimeout(fadeTimer);
+    document.body.classList.remove('idle-chrome');
+    fadeTimer = setTimeout(function () {
+      document.body.classList.add('idle-chrome');
+    }, 2600);
+  }
+  ['pointermove', 'pointerdown', 'keydown'].forEach(function (evt) {
+    window.addEventListener(evt, function () {
+      if (document.body.classList.contains('playing')) armChromeFade();
+    }, { passive: true });
+  });
+
+  // ── Fullscreen ──────────────────────────────────────────────
+  fsBtn.addEventListener('click', function () {
+    var el = document.documentElement;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (el.requestFullscreen) {
+      el.requestFullscreen().catch(function () { /* user-denied or unsupported */ });
+    }
+    fsBtn.blur();
+  });
+  if (!document.documentElement.requestFullscreen) fsBtn.hidden = true;
+})();
+</script>
+</body>
+</html>

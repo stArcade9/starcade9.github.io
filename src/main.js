@@ -1,6 +1,5 @@
 import { Nova64, NOVA64_VERSION } from '../runtime/console.js';
 import { GpuThreeJS } from '../runtime/gpu-threejs.js';
-import { GpuBabylon } from '../runtime/gpu-babylon.js';
 import { logger } from '../runtime/logger.js';
 globalThis.novaLogger = logger;
 import { createLogger } from '../runtime/debug-logger.js';
@@ -42,7 +41,6 @@ import { levelApi } from '../runtime/api-level.js';
 import { videoApi } from '../runtime/api-video.js';
 import { netApi } from '../runtime/api-net.js';
 import { authApi } from '../runtime/api-auth.js';
-import { configureSupabaseAuth } from '../runtime/supabase-auth.js';
 import { movieClipApi } from '../runtime/movie-clip.js';
 import { filtersApi } from '../runtime/api-filters.js';
 import { camera2DApi } from '../runtime/camera-2d.js';
@@ -79,6 +77,11 @@ let gpu;
 let backendLabel = 'Three.js';
 try {
   if (_useBabylon) {
+    // Loaded on demand, never statically: the Babylon backend imports bare
+    // '@babylonjs/*' specifiers, so a top-level import makes the whole module
+    // graph fail to resolve on any page whose import map only declares three —
+    // which took the default Three.js path down with it (demo-embed.html).
+    const { GpuBabylon } = await import('../runtime/gpu-babylon.js');
     gpu = new GpuBabylon(canvas, _paramW, _paramH);
     backendLabel = 'Babylon.js';
     console.log(`✅ Using Babylon.js renderer (${_paramW}x${_paramH}) - experimental backend`);
@@ -255,8 +258,16 @@ globalThis.nova64.post = {
   },
 };
 
-const supabaseClient = configureSupabaseAuth(globalThis.nova64.auth, import.meta.env);
-if (supabaseClient) globalThis.nova64.auth.supabase = supabaseClient;
+// Loaded on demand for the same reason as the Babylon backend above: this
+// module resolves a bare '@supabase/supabase-js' specifier, so importing it
+// statically breaks the whole graph on any page whose import map doesn't
+// declare it. It was already inert without VITE_SUPABASE_* (configureSupabaseAuth
+// returns null), so pages served from raw source simply skip it.
+if (import.meta.env && import.meta.env.VITE_SUPABASE_URL) {
+  const { configureSupabaseAuth } = await import('../runtime/supabase-auth.js');
+  const supabaseClient = configureSupabaseAuth(globalThis.nova64.auth, import.meta.env);
+  if (supabaseClient) globalThis.nova64.auth.supabase = supabaseClient;
+}
 
 // inject camera ref into sprite system
 if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
