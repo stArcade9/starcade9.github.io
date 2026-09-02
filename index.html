@@ -84,9 +84,6 @@
   .cart:hover .cart-action{ color:var(--cart-color,#22e0c8); }
   .cart-action .arrow::after{ content:'→'; transition:transform .18s ease; display:inline-block; }
   .cart:hover .cart-action .arrow::after{ transform:translateX(4px); }
-  .cart.featured{ grid-column:span 2; }
-  .cart.featured .cart-label{ aspect-ratio:16/9; }
-  @media (max-width:600px){ .cart.featured{ grid-column:span 1; } .cart.featured .cart-label{ aspect-ratio:1/1; } }
 </style>
 </helmet>
 
@@ -112,23 +109,23 @@
       <sc-if value="{{ navExpanded }}" hint-placeholder-val="{{ true }}">
         <nav aria-label="Primary" style="display:flex; align-items:center; gap:20px; font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;">
           <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
-            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db;">{{ n.label }}</a>
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#ece7db !important;">{{ n.label }}</a>
           </sc-for>
           <span aria-hidden="true" style="width:1px; height:13px; background:rgba(236,231,219,0.22);"></span>
           <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
-            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+            <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#22e0c8 !important;">{{ n.label }}</a>
           </sc-for>
         </nav>
       </sc-if>
 
       <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-        <button onClick="{{ buy }}" style="{{ buyBtnStyle }}" style-hover="background:#5cf0dc;">
+        <button onClick="{{ buy }}" style="{{ buyBtnStyle }}" style-hover="background:#5cf0dc !important;">
           {{ buyLabel }}
         </button>
         <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ toggleMenu }}" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" aria-controls="site-menu"
                   style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:42px; height:38px; padding:0; background:transparent; border:1px solid rgba(236,231,219,0.24); cursor:pointer;"
-                  style-hover="border-color:#22e0c8;">
+                  style-hover="border-color:#22e0c8 !important;">
             <span aria-hidden="true" style="{{ barTop }}"></span>
             <span aria-hidden="true" style="{{ barMid }}"></span>
             <span aria-hidden="true" style="{{ barBot }}"></span>
@@ -142,11 +139,11 @@
     <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
       <nav id="site-menu" aria-label="Primary" style="position:absolute; left:0; right:0; top:100%; display:flex; flex-direction:column; padding:6px clamp(16px,4vw,40px) 16px; background:rgba(10,11,16,0.97); backdrop-filter:blur(14px); border-bottom:1px solid rgba(236,231,219,0.14); box-shadow:0 24px 46px rgba(0,0,0,0.55); max-height:calc(100svh - 62px); overflow-y:auto; font-family:'Space Mono',monospace; letter-spacing:0.1em; text-transform:uppercase;">
         <sc-for list="{{ navLinks }}" as="n" hint-placeholder-count="6">
-          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#ece7db;">{{ n.label }}</a>
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#ece7db !important;">{{ n.label }}</a>
         </sc-for>
         <div style="padding:16px 2px 6px; font-size:10px; letter-spacing:0.2em; color:rgba(236,231,219,0.4);">[ Explore ]</div>
         <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
-          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#22e0c8;">{{ n.label }}</a>
+          <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#22e0c8 !important;">{{ n.label }}</a>
         </sc-for>
       </nav>
     </sc-if>
@@ -185,10 +182,10 @@
         <p style="max-width:46ch; font-size:clamp(15px,1.7vw,18px); line-height:1.5; color:rgba(236,231,219,0.72); margin:0 0 26px;">Nova64 is a browser-based fantasy console for creating, playing, and sharing stylish retro 3D games with JavaScript — built for desktop <span style="color:#ece7db;">and mobile</span>.</p>
 
         <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:22px;">
-          <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 26px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc;">
+          <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 26px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc !important;">
             Buy Nova64 <span style="font-size:12px; opacity:0.7;">→</span>
           </button>
-          <button onClick="{{ play }}" style="display:inline-flex; align-items:center; gap:9px; padding:16px 24px; background:transparent; color:#ece7db; border:1.5px solid rgba(236,231,219,0.34); cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase;" style-hover="border-color:#46f0a0; color:#46f0a0;">
+          <button onClick="{{ play }}" style="display:inline-flex; align-items:center; gap:9px; padding:16px 24px; background:transparent; color:#ece7db; border:1.5px solid rgba(236,231,219,0.34); cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase;" style-hover="border-color:#46f0a0 !important; color:#46f0a0 !important;">
             ▶ Play Demo
           </button>
         </div>
@@ -223,7 +220,7 @@
         <div style="position:relative; aspect-ratio:4/3; width:100%; border:1.5px solid rgba(236,231,219,0.28); background:#040309; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.5);">
           <!-- IDLE poster (default) — nothing heavy loads until the visitor opts in -->
           <sc-if value="{{ heroIdle }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ startHero }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98;">
+            <button onClick="{{ startHero }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98 !important;">
               <img src="{{ heroThumb }}" alt="F-Zero Nova preview" loading="lazy" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.5;">
               <div style="position:absolute; inset:0; background:radial-gradient(60% 60% at 50% 45%,transparent,rgba(4,3,9,0.75));"></div>
               <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;">
@@ -298,7 +295,7 @@
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); gap:1px; background:rgba(236,231,219,0.14); border:1px solid rgba(236,231,219,0.14);">
         <sc-for list="{{ features }}" as="f" hint-placeholder-count="8">
-          <div style="background:#0c0e15; padding:24px 22px 26px; position:relative; min-height:186px; display:flex; flex-direction:column;" style-hover="background:#101320;">
+          <div style="background:#0c0e15; padding:24px 22px 26px; position:relative; min-height:186px; display:flex; flex-direction:column;" style-hover="background:#101320 !important;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
               <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#22e0c8;">{{ f.code }}</span>
               <span style="font-size:18px; line-height:1; color:rgba(236,231,219,0.5);">{{ f.glyph }}</span>
@@ -332,7 +329,7 @@
           <div style="display:inline-flex; align-items:center; gap:12px;">
             <span style="display:inline-flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:10px; color:#46f0a0;"><span style="width:7px; height:7px; background:#46f0a0; border-radius:50%; animation:n64blink 1s steps(1) infinite;"></span>{{ demoStatus }}</span>
             <sc-if value="{{ demoPlaying }}" hint-placeholder-val="{{ false }}">
-              <button onClick="{{ stopDemo }}" style="padding:4px 10px; background:transparent; border:1px solid rgba(236,231,219,0.3); color:rgba(236,231,219,0.75); cursor:pointer; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#ff6ed3; color:#ff6ed3;">◼ Stop</button>
+              <button onClick="{{ stopDemo }}" style="padding:4px 10px; background:transparent; border:1px solid rgba(236,231,219,0.3); color:rgba(236,231,219,0.75); cursor:pointer; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#ff6ed3 !important; color:#ff6ed3 !important;">◼ Stop</button>
             </sc-if>
           </div>
         </div>
@@ -349,7 +346,7 @@
           <div style="position:relative; min-height:min(58vw,440px); background:#040309; overflow:hidden;">
             <!-- IDLE poster: thumbnail + RUN button; no runtime loads until pressed -->
             <sc-if value="{{ demoIdle }}" hint-placeholder-val="{{ true }}">
-              <button onClick="{{ startDemo }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98;">
+              <button onClick="{{ startDemo }}" style="position:absolute; inset:0; width:100%; height:100%; padding:0; border:0; cursor:pointer; background:#040309; display:flex; align-items:center; justify-content:center;" style-hover="opacity:0.98 !important;">
                 <img src="{{ demoThumb }}" alt="{{ activeDemoLabel }} preview" loading="lazy" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.5;">
                 <div style="position:absolute; inset:0; background:radial-gradient(60% 60% at 50% 45%,transparent,rgba(4,3,9,0.78));"></div>
                 <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; padding:16px;">
@@ -374,7 +371,7 @@
           <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.16em; color:#22e0c8; white-space:nowrap;">◆ LOAD CARTRIDGE</span>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <sc-for list="{{ demos }}" as="d" hint-placeholder-count="4">
-              <button onClick="{{ d.select }}" style="{{ d.style }}" style-hover="border-color:#22e0c8; color:#ece7db;">
+              <button onClick="{{ d.select }}" style="{{ d.style }}" style-hover="border-color:#22e0c8 !important; color:#ece7db !important;">
                 <span style="font-size:9px; letter-spacing:0.14em; color:#22e0c8;">{{ d.tag }}</span>
                 <span style="font-weight:700; font-size:13px; letter-spacing:0.02em;">{{ d.label }}</span>
               </button>
@@ -435,7 +432,7 @@
 
       <!-- cartridge grid -->
       <div class="vault-grid">
-        <sc-for list="{{ vault }}" as="v" hint-placeholder-count="12">
+        <sc-for list="{{ vault }}" as="v" hint-placeholder-count="20">
           <a class="{{ v.cls }}" href="{{ v.href }}" target="_blank" rel="noopener" style="{{ v.cvar }}">
             <span class="cart-screw tl"></span>
             <span class="cart-screw tr"></span>
@@ -457,7 +454,7 @@
 
       <!-- vault foot -->
       <div style="text-align:center; margin-top:30px;">
-        <a href="./console.html" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:14px 26px; border:1.5px solid #22e0c8; color:#22e0c8; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#22e0c8; color:#0a0b10;">Browse all 70+ titles →</a>
+        <a href="./console.html" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:14px 26px; border:1.5px solid #22e0c8; color:#22e0c8; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#22e0c8 !important; border-color:#22e0c8 !important; color:#0a0b10 !important;">Browse all 70+ titles →</a>
       </div>
     </div>
   </section>
@@ -490,8 +487,8 @@
           <h2 style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:700; font-size:clamp(26px,3.2vw,40px); line-height:1.05; margin:0 0 18px;">Nova64 is the engine.<br>Starcade9 is the arcade.</h2>
           <p style="font-size:16px; line-height:1.6; color:rgba(236,231,219,0.72); margin:0 0 24px; max-width:48ch;">Nova64 is the creation machine. Starcade9 is part of the arcade universe around it — where the strange little worlds you build come to live. Same timeline, same signal.</p>
           <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; padding:13px 22px; border:1.5px solid #a35bff; color:#a35bff; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#a35bff; color:#0a0b10;">Enter Starcade9 ↗</a>
-            <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff;">♥ Support on Patreon</a>
+            <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:10px; padding:13px 22px; border:1.5px solid #a35bff; color:#a35bff; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#a35bff !important; border-color:#a35bff !important; color:#0a0b10 !important;">Enter Starcade9 ↗</a>
+            <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff !important;">♥ Support on Patreon</a>
           </div>
         </div>
         <div style="position:relative; aspect-ratio:16/10; border:1px solid rgba(163,91,255,0.4); background:#07080c; overflow:hidden; display:flex; align-items:center; justify-content:center;">
@@ -554,7 +551,7 @@
             </div>
           </div>
 
-          <button onClick="{{ buy }}" style="width:100%; padding:18px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 →</button>
+          <button onClick="{{ buy }}" style="width:100%; padding:18px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%);" style-hover="background:#5cf0dc !important;">Buy Nova64 →</button>
           <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; font-family:'Space Mono',monospace; font-size:10.5px; letter-spacing:0.08em; color:rgba(236,231,219,0.5);">
             <span style="width:6px; height:6px; background:#46f0a0; border-radius:50%;"></span>SECURE CHECKOUT BY PATREON
           </div>
@@ -610,7 +607,7 @@
           <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:clamp(24px,3vw,38px); line-height:1;">Build strange little worlds.</div>
           <div style="font-family:'Space Mono',monospace; font-size:12px; color:rgba(236,231,219,0.5); margin-top:8px;">Your browser becomes the console.</div>
         </div>
-        <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 28px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc;">Buy Nova64 · {{ priceStr }}</button>
+        <button onClick="{{ buy }}" style="display:inline-flex; align-items:center; gap:10px; padding:16px 28px; background:#22e0c8; color:#0a0b10; border:none; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:0.06em; text-transform:uppercase; clip-path:polygon(0 0,100% 0,100% 68%,93% 100%,0 100%);" style-hover="background:#5cf0dc !important;">Buy Nova64 · {{ priceStr }}</button>
       </div>
 
       <!-- SHIP MANIFEST — what every buyer gets -->
@@ -618,7 +615,7 @@
         <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#46f0a0; margin-bottom:20px;">◆ SHIP MANIFEST / EVERY COPY INCLUDES</div>
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:14px;">
           <sc-for list="{{ manifest }}" as="m" hint-placeholder-count="4">
-            <div style="background:#0c0e15; border:1px solid rgba(236,231,219,0.16); padding:20px 18px; clip-path:polygon(0 0,100% 0,100% 82%,92% 100%,0 100%);" style-hover="border-color:{{ m.color }};">
+            <div style="background:#0c0e15; border:1px solid rgba(236,231,219,0.16); padding:20px 18px; clip-path:polygon(0 0,100% 0,100% 82%,92% 100%,0 100%);" style-hover="border-color:{{ m.color }} !important;">
               <div style="font-family:'Space Mono',monospace; font-size:20px; color:{{ m.color }}; line-height:1; margin-bottom:12px;">{{ m.glyph }}</div>
               <div style="font-family:'Archivo',sans-serif; font-stretch:125%; font-weight:800; font-size:15px; letter-spacing:0.02em; margin-bottom:6px;">{{ m.title }}</div>
               <div style="font-size:12.5px; line-height:1.5; color:rgba(236,231,219,0.6);">{{ m.desc }}</div>
@@ -632,10 +629,10 @@
       <div style="display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:22px 0; border-top:1px solid rgba(236,231,219,0.14);">
         <span style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.18em; color:#a35bff;">◆ CONNECT / STARCADE9 NETWORK</span>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-left:auto;">
-          <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff;">♥ Patreon</a>
-          <a href="https://x.com/starcade9_io" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">X / Twitter</a>
-          <a href="https://www.instagram.com/starcade9/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">Instagram</a>
-          <a href="https://www.facebook.com/people/StArcade9/61577704620836/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8; color:#22e0c8;">Facebook</a>
+          <a href="https://www.patreon.com/cw/starcade9" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:#a35bff; color:#0a0b10; text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="background:#b980ff !important;">♥ Patreon</a>
+          <a href="https://x.com/starcade9_io" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8 !important; color:#22e0c8 !important;">X / Twitter</a>
+          <a href="https://www.instagram.com/starcade9/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8 !important; color:#22e0c8 !important;">Instagram</a>
+          <a href="https://www.facebook.com/people/StArcade9/61577704620836/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; padding:9px 15px; border:1px solid rgba(236,231,219,0.22); color:rgba(236,231,219,0.72); text-decoration:none; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;" style-hover="border-color:#22e0c8 !important; color:#22e0c8 !important;">Facebook</a>
         </div>
       </div>
 
@@ -649,8 +646,8 @@
           <span>© {{ year }} · FANTASY CONSOLE</span>
         </div>
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
-          <a href="https://nova64.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#22e0c8;">nova64.io</a>
-          <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#a35bff;">starcade9.io</a>
+          <a href="https://nova64.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#22e0c8 !important;">nova64.io</a>
+          <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#a35bff !important;">starcade9.io</a>
           <span>デザイナーズリパブリック</span>
         </div>
       </div>
@@ -851,7 +848,8 @@ class Component extends DCLogic {
       'The full Nova64 fantasy console',
       'Browser editor + JavaScript runtime',
       'Retro 3D renderer (PS1/N64 modes)',
-      'Mobile + tablet + desktop support',
+      'JavaScript in RetroArch — run your cart on emulators!',
+      'Godot JavaScript support for mobile + tablet + desktop',
       'One-click publish & shareable game links',
       'Free updates through the launch era',
       'A signal-link into the Starcade9 universe',
@@ -914,7 +912,7 @@ class Component extends DCLogic {
     // Browse grid of real carts. Each "Insert disc" opens the full console
     // (console.html?demo=<id>) — the same runtime, framed in the CRT bezel.
     const vault = [
-      { id: 'crystal-cathedral-3d', name: 'Crystal Cathedral', genre: 'Showcase',  color: '#7ad9ff', featured: true },
+      { id: 'crystal-cathedral-3d', name: 'Crystal Cathedral', genre: 'Showcase',  color: '#7ad9ff' },
       { id: 'f-zero-nova-3d',       name: 'F-Zero Nova',       genre: 'Racer',      color: '#ff6ed3' },
       { id: 'cyberpunk-city-3d',    name: 'Cyberpunk City',    genre: 'Open World', color: '#c886ff' },
       { id: 'minecraft-demo',       name: 'Voxel World',       genre: 'Voxel',      color: '#88e58a' },
@@ -926,12 +924,20 @@ class Component extends DCLogic {
       { id: 'hero-demo',            name: 'Hero Prototype',    genre: 'Action',     color: '#ff6ed3' },
       { id: 'fps-demo-3d',          name: 'FPS Combat',        genre: 'Shooter',    color: '#ff5252' },
       { id: 'mystical-realm-3d',    name: 'Mystical Realm',    genre: 'Fantasy',    color: '#c886ff' },
+      { id: 'star-fox-nova-3d',     name: 'Star Fox Nova',     genre: 'Rail Shooter', color: '#7ad9ff' },
+      { id: 'super-plumber-64',     name: 'Super Plumber 64',  genre: 'Platformer', color: '#ff5252' },
+      { id: 'space-harrier-3d',     name: 'Space Harrier',     genre: 'Arcade',     color: '#ffd166' },
+      { id: 'wing-commander-space', name: 'Wing Commander',    genre: 'Space Sim',  color: '#a0b8d0' },
+      { id: 'strider-demo-3d',      name: 'Strider',           genre: 'Action',     color: '#ff8a4a' },
+      { id: 'wizardry-3d',          name: 'Wizardry',          genre: 'Grid RPG',   color: '#c886ff' },
+      { id: 'nature-explorer-3d',   name: 'Nature Explorer',   genre: 'Exploration', color: '#88e58a' },
+      { id: 'shader-showcase',      name: 'Shader Lab',        genre: 'Shaders',    color: '#ff6ed3' },
     ].map((v, i) => ({
       ...v,
       n: String(i + 1).padStart(3, '0'),
       href: './console.html?demo=' + v.id,
       thumb: 'public/assets/cart-thumbs/' + v.id + '.png',
-      cls: 'cart' + (v.featured ? ' featured' : ''),
+      cls: 'cart',
       cvar: '--cart-color:' + v.color,
     }));
     const vaultCount = vault.length;
