@@ -197,14 +197,14 @@ globalThis.__HELLO_HELPERS_DEBUG = {
     //    with a real .mp4 you've dropped in /public to test on the real
     //    threejs/babylon backends. Stub returns { played:false } on hosts
     //    that don't have a working VideoTexture.
-    return nova64.video.playFullscreen('/assets/sample.mp4', {
+    return nova64.video.playFullscreen('/assets/nova64-demo-reel-long-2x.mp4', {
       onFinish: info => console.log('[hello-helpers] video finished:', info),
     });
   },
   meshVideo(meshId) {
     // In-world: bind a video texture to an existing mesh. On threejs this
     // returns a THREE.VideoTexture handle; on babylon a BABYLON.VideoTexture.
-    const tex = nova64.video.loadTexture('/assets/sample.mp4', {
+    const tex = nova64.video.loadTexture('/assets/nova64-demo-reel-long-2x.mp4', {
       loop: true,
       muted: true,
     });

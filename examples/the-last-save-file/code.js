@@ -249,7 +249,7 @@ function setupRoom() {
   }
 
   if (nova64.video && typeof nova64.video.loadTexture === 'function') {
-    tv = nova64.video.loadTexture('/assets/sample.mp4', {
+    tv = nova64.video.loadTexture('/assets/nova64-demo-reel-long-2x.mp4', {
       muted: true,
       loop: true,
     });

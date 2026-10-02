@@ -429,9 +429,9 @@ property of the source, not the player. Use a clip that actually has audio.</p>
 <h2>Authoring a cart</h2>
 <pre><code class="language-js">function playOutro() {
   nova64.video
-    .playFullscreen(&#39;/assets/sample.mp4&#39;, {
-      nativeUrl: &#39;assets/video/sample.ogv&#39;, // Godot: native Theora
-      mpgUrl: &#39;assets/video/sample.mpg&#39;,    // RetroArch: MPEG1 via pl_mpeg
+    .playFullscreen(&#39;/assets/nova64-demo-reel-long-2x.mp4&#39;, {
+      nativeUrl: &#39;assets/video/nova64-demo-reel-long-2x.ogv&#39;, // Godot: native Theora
+      mpgUrl: &#39;assets/video/nova64-demo-reel-long-2x.mpg&#39;,    // RetroArch: MPEG1 via pl_mpeg
       muted: false,
       onFinish: () =&gt; setScreen(&#39;done&#39;),
     })
@@ -465,7 +465,7 @@ package. Web <code>.mp4</code>s are served from <code>public/</code>, not packag
 </ol>
 <h3>Manifest + packaging (RetroArch)</h3>
 <p>Add the <code>.mpg</code> to the cart&#39;s <code>manifest.json</code>:</p>
-<pre><code class="language-json">{ &quot;assets&quot;: [&quot;assets/story/title.png&quot;, &quot;assets/video/sample.mpg&quot;] }
+<pre><code class="language-json">{ &quot;assets&quot;: [&quot;assets/story/title.png&quot;, &quot;assets/video/nova64-demo-reel-long-2x.mpg&quot;] }
 </code></pre>
 <p>Then repackage so the <code>.nova</code> picks it up:</p>
 <pre><code class="language-sh">python3 retroarch/tools/package_example_cart.py &lt;cart&gt; --out-dir retroarch/games

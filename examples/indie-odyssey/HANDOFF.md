@@ -346,14 +346,14 @@ are filed in **mempalace** (wings `nova64_retroarch`, `nova64`, `nova64_runtime`
 
 ## Uncommitted (working tree) — needs a decision
 
-- **Video demo** (NOT committed; user OK pending on the binary):
+- **Video demo** (asset updated October 2, 2026):
   - `examples/story-video-demo/` (code.js + meta.json) — `nova64.story.play(…,
-    {autoAdvance:3})` → `nova64.video.playFullscreen('/assets/sample.mp4')` →
+    {autoAdvance:3})` → `nova64.video.playFullscreen('/assets/nova64-demo-reel-long-2x.mp4')` →
     "THE END". User confirmed it "looked wonderful on the web".
-  - `public/assets/sample.mp4` — public-domain Big Buck Bunny (991 KB). Also
+  - `public/assets/nova64-demo-reel-long-2x.mp4` — NOVA64 long demo reel at 2× speed (126 seconds, 31 MiB). Also
     makes hello-helpers' existing video demo work.
   - `console.html` — added the "🎬 Story → Video Demo" dropdown option.
-  - **Decide:** commit the ~1 MB mp4 into the repo, or keep the asset external.
+  - The MP4 is stored in both `assets/` and `public/assets/` for the web hosts.
 - **Godot cart copies** (`nova64-godot/.../carts/indie-odyssey/code.js`) are
   diverged and were **NOT synced** with this session's cart changes (combat
   revert, uiColor BigInt, rect). The uiColor/rect fixes are RetroArch-specific
@@ -367,7 +367,7 @@ Video is implemented **web-only** (`runtime/api-video.js`: HTML5 `<video>`
 overlay + THREE/BABYLON VideoTexture). The **RetroArch core has no mp4 decoder**
 — `playFullscreen` is a no-op there. Godot has a host-contract path
 (`docs/GODOT_HOST_CONTRACT.md`). Before this session there was no real mp4 in
-the repo, so video had never been demoed; now there is (`sample.mp4` + the demo
+the repo, so video had never been demoed; now there is (`nova64-demo-reel-long-2x.mp4` + the demo
 cart). KEY: a cart must call `nova64.story._tick(dt)` in `update()` — the engine
 does not auto-drive helper ticks.
 

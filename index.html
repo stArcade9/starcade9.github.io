@@ -53,6 +53,8 @@
 }
 </script>
 <script src="./support.js"></script>
+<link rel="stylesheet" href="./homepage-demo.css">
+<script src="./homepage-demo.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -749,6 +751,21 @@
 
 </div>
 </x-dc>
+<dialog id="homepage-demo" class="demo-modal" aria-labelledby="homepage-demo-title">
+  <div class="demo-modal__header">
+    <div class="demo-modal__heading">
+      <span class="demo-modal__eyebrow">NOVA64 / PLAYABLE DEMO</span>
+      <h2 id="homepage-demo-title">The Last Save File</h2>
+    </div>
+    <button class="demo-modal__close" type="button" aria-label="Close demo" autofocus>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="demo-modal__stage">
+    <p class="demo-modal__loading" role="status">Loading demo…</p>
+  </div>
+  <div class="demo-modal__footer"><span>PLAY SOMETHING STRANGE.</span><span>ESC / × TO CLOSE</span></div>
+</dialog>
 <script type="text/x-dc" data-dc-script data-props="{&quot;headline&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Make tiny 3D games with retro soul.&quot;,&quot;The fantasy console for low-poly dreamers.&quot;,&quot;Build PS1/N64-inspired games in your browser.&quot;],&quot;default&quot;:&quot;Make tiny 3D games with retro soul.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;price&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:14.99,&quot;min&quot;:0,&quot;max&quot;:200,&quot;step&quot;:1,&quot;unit&quot;:&quot;USD&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Pricing&quot;},&quot;showStickyCTA&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
 // ============================================================================
 //  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
@@ -775,9 +792,6 @@ class Component extends DCLogic {
     priceNote: 'Buy once. Create forever.',
     // Update CHECKOUT_URL (top of this script) to change every Buy button.
     checkoutUrl: CHECKOUT_URL,
-    // Was https://nova64.io/demo — that route does not exist and 404s.
-    // Points at the local player instead, which ships in this repo.
-    demoUrl: './player.html?demoscene=f-zero-nova-3d',
   };
 
   // heroPlaying / demoPlaying stay false until the visitor clicks — nothing
@@ -861,7 +875,7 @@ class Component extends DCLogic {
     const url = this.cfg.checkoutUrl; // process.env.NEXT_PUBLIC_PATREON_CHECKOUT_URL
     window.open(url, '_blank', 'noopener');
   };
-  play = () => { window.open(this.cfg.demoUrl, '_blank', 'noopener'); };
+  play = () => { window.NovaDemo.open('f-zero-nova-3d', 'button'); };
 
   renderVals() {
     const w = this.state.w;

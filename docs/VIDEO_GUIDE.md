@@ -31,9 +31,9 @@ Because the three hosts need three containers, a cart ships a `.mpg` and/or
 ```js
 function playOutro() {
   nova64.video
-    .playFullscreen('/assets/sample.mp4', {
-      nativeUrl: 'assets/video/sample.ogv', // Godot: native Theora
-      mpgUrl: 'assets/video/sample.mpg',    // RetroArch: MPEG1 via pl_mpeg
+    .playFullscreen('/assets/nova64-demo-reel-long-2x.mp4', {
+      nativeUrl: 'assets/video/nova64-demo-reel-long-2x.ogv', // Godot: native Theora
+      mpgUrl: 'assets/video/nova64-demo-reel-long-2x.mpg',    // RetroArch: MPEG1 via pl_mpeg
       muted: false,
       onFinish: () => setScreen('done'),
     })
@@ -71,7 +71,7 @@ Three things that bite people, all shown in
 Add the `.mpg` to the cart's `manifest.json`:
 
 ```json
-{ "assets": ["assets/story/title.png", "assets/video/sample.mpg"] }
+{ "assets": ["assets/story/title.png", "assets/video/nova64-demo-reel-long-2x.mpg"] }
 ```
 
 Then repackage so the `.nova` picks it up:

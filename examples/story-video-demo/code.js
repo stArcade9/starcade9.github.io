@@ -7,7 +7,7 @@
 // Open: http://localhost:3000/console.html?demo=story-video-demo
 //
 // The story auto-advances hands-free; then the outro video plays fullscreen
-// (public-domain "Big Buck Bunny" clip), and the cart shows "THE END". Press
+// (NOVA64 long demo reel at 2× speed), and the cart shows "THE END". Press
 // Enter to advance slides manually, Escape/Enter to skip the video.
 
 let screen = 'story';
@@ -74,9 +74,9 @@ function playOutro() {
     return;
   }
   nova64.video
-    .playFullscreen('/assets/sample.mp4', {
-      nativeUrl: 'assets/video/sample.ogv', // Godot: native Theora
-      mpgUrl: 'assets/video/sample.mpg', // RetroArch: MPEG1 decoded by pl_mpeg
+    .playFullscreen('/assets/nova64-demo-reel-long-2x.mp4', {
+      nativeUrl: 'assets/video/nova64-demo-reel-long-2x.ogv', // Godot: native Theora
+      mpgUrl: 'assets/video/nova64-demo-reel-long-2x.mpg', // RetroArch: MPEG1 decoded by pl_mpeg
       muted: false,
       onFinish: () => {
         screen = 'done';

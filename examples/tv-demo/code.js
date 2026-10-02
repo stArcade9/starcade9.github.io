@@ -37,9 +37,9 @@ export function init() {
   if (nova64.scene.setRotation) nova64.scene.setRotation(ground, -Math.PI / 2, 0, 0);
 
   if (nova64.video && nova64.video.loadTexture) {
-    tv = nova64.video.loadTexture('/assets/sample.mp4', {
-      nativeUrl: 'assets/video/sample.ogv', // Godot
-      mpgUrl: 'assets/video/sample.mpg', // RetroArch
+    tv = nova64.video.loadTexture('/assets/nova64-demo-reel-long-2x.mp4', {
+      nativeUrl: 'assets/video/nova64-demo-reel-long-2x.ogv', // Godot
+      mpgUrl: 'assets/video/nova64-demo-reel-long-2x.mpg', // RetroArch
       muted: false,
       loop: true,
     });
