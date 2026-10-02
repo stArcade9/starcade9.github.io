@@ -53,10 +53,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..900&family=Saira:ital,wght@1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   *{ box-sizing:border-box; }
-  html{ scroll-behavior:smooth; }
+  html{ scroll-behavior:smooth; scroll-padding-top:88px; }
   body{ margin:0; background:#0a0b10; color:#ece7db; font-family:'Archivo',system-ui,sans-serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden; }
   ::selection{ background:#22e0c8; color:#0a0b10; }
   a{ color:inherit; }
+  /* Clip decorative overflow without creating a scroll container for sticky. */
+  .site-shell{ overflow:clip; }
+  .site-header{
+    position:sticky; top:0; z-index:60;
+    background:rgba(10,11,16,0.82);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(236,231,219,0.14);
+  }
+  @media (min-width:1040px){
+    .site-header{
+      background:#0a0b10;
+      -webkit-backdrop-filter:none; backdrop-filter:none;
+      transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .site-header.is-scrolled{
+      background:rgba(10,11,16,0.76);
+      -webkit-backdrop-filter:blur(16px) saturate(115%);
+      backdrop-filter:blur(16px) saturate(115%);
+      border-bottom-color:rgba(236,231,219,0.2);
+      box-shadow:0 8px 24px rgba(0,0,0,0.16);
+    }
+  }
   @keyframes n64blink{ 0%,48%{ opacity:1; } 49%,100%{ opacity:0.12; } }
   @keyframes n64marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   @keyframes n64scan{ 0%{ transform:translateY(-10%); opacity:0; } 12%{ opacity:0.5; } 88%{ opacity:0.5; } 100%{ transform:translateY(520%); opacity:0; } }
@@ -112,6 +134,7 @@
   }
   @media (prefers-reduced-motion:reduce){
     .n64-sponsor, .n64-sponsor__heart{ transition:none; animation:none; }
+    .site-header{ transition:none; }
   }
   /* once the hamburger appears the bar is tight — collapse to the heart */
   @media (max-width:560px){
@@ -122,10 +145,10 @@
 </style>
 </helmet>
 
-<div style="position:relative; width:100%; overflow:hidden; background:#0a0b10;">
+<div class="site-shell" style="position:relative; width:100%; background:#0a0b10;">
 
   <!-- ================= HEADER ================= -->
-  <header style="position:sticky; top:0; z-index:60; background:rgba(10,11,16,0.82); backdrop-filter:blur(10px); border-bottom:1px solid rgba(236,231,219,0.14);">
+  <header class="{{ headerClass }}">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px clamp(16px,4vw,40px);">
       <a href="#top" aria-label="Nova64 home" onClick="{{ closeMenu }}" style="display:flex; align-items:center; gap:11px; text-decoration:none; flex-shrink:0;">
         <span style="position:relative; display:inline-block; transform:skewX(-7deg); font-family:'Saira',sans-serif; font-style:italic; font-weight:900; font-size:26px; line-height:1; letter-spacing:0.01em;">
@@ -742,7 +765,7 @@ class Component extends DCLogic {
   // heroPlaying / demoPlaying stay false until the visitor clicks — nothing
   // heavy (no Three.js/WebGPU iframe) loads on first paint, so the page is fast.
   // `code` holds the REAL source of the selected cart (examples/<id>/code.js).
-  state = { w: 1280, openFaq: 0, activeDemo: 'star-fox-nova-3d', menuOpen: false,
+  state = { w: 1280, openFaq: 0, activeDemo: 'star-fox-nova-3d', menuOpen: false, headerScrolled: false,
     heroPlaying: false, demoPlaying: false, code: '', codeName: '' };
 
   // The hero runs F-Zero Nova; the demo section starts on Star Fox and swaps via
@@ -790,14 +813,21 @@ class Component extends DCLogic {
     // to close with it — otherwise it is left open and orphaned over the hero.
     const set = () => {
       const w = window.innerWidth;
-      if (w >= NAV_BREAKPOINT) this.setState({ w, menuOpen: false });
-      else this.setState({ w });
+      const headerScrolled = w >= NAV_BREAKPOINT && window.scrollY > 12;
+      if (w >= NAV_BREAKPOINT) this.setState({ w, menuOpen: false, headerScrolled });
+      else this.setState({ w, headerScrolled });
     };
     set();
+    const onScroll = () => {
+      const headerScrolled = window.innerWidth >= NAV_BREAKPOINT && window.scrollY > 12;
+      if (headerScrolled !== this.state.headerScrolled) this.setState({ headerScrolled });
+    };
     const onKey = (e) => { if (e.key === 'Escape') this.setState({ menuOpen: false }); };
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', set);
     window.addEventListener('keydown', onKey);
     this._off = () => {
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', set);
       window.removeEventListener('keydown', onKey);
     };
@@ -992,6 +1022,7 @@ class Component extends DCLogic {
     return { headline, priceStr, regularStr, onSale, priceNote: this.cfg.priceNote, buy: this.buy, play: this.play,
       features, whyBuy, included, faqs, manifest, showSticky,
       // header
+      headerClass: this.state.headerScrolled ? 'site-header is-scrolled' : 'site-header',
       navLinks, navApps, navCollapsed, navExpanded: !navCollapsed,
       menuOpen, menuExpanded: menuOpen ? 'true' : 'false',
       menuLabel: menuOpen ? 'Close menu' : 'Open menu',
