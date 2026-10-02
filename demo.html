@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TRENCH RUN 2099 - N64 DEMO STYLE</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Courier New', monospace;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #ff0000;
+      font-size: 14px;
+      pointer-events: none;
+      text-shadow: 0 0 5px #ff0000;
+      z-index: 100;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 100;
+      color: #00ff00;
+      font-size: 20px;
+      text-align: center;
+      line-height: 20px;
+      opacity: 0.8;
+    }
+    #reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 100;
+      border: 2px solid #00ff00;
+      border-radius: 50%;
+      box-sizing: border-box;
+      opacity: 0.7;
+    }
+    #reticle::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 2px;
+      height: 2px;
+      background: #00ff00;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #reticle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: transparent;
+      border: 1px solid #00ff00;
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="info">TRENCH RUN 2099 - N64 DEMO STYLE</div>
+  <div id="crosshair">+</div>
+  <div id="reticle"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+
+    // === SCENE SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 10);
+    camera.lookAt(0, 0, -5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(1); // No upscale — we want low-res look
+    renderer.setClearColor(0x000000, 0);
+    document.body.appendChild(renderer.domElement);
+
+    // === TEXTURE FILTERING ===
+    const texture = new THREE.CanvasTexture(createLowResTexture());
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(10, 10);
+
+    // === TRENCH GEOMETRY ===
+    const trenchWidth = 8;
+    const trenchHeight = 4;
+    const trenchLength = 100;
+
+    // Create with fewer vertices for chunky look
+    const trenchGeometry = new THREE.BufferGeometry();
+    const positions = [];
+    const indices = [];
+
+    // Only 8 vertices per face — chunky!
+    for (let z = 0; z <= trenchLength; z += 10) {
+      for (let x = -trenchWidth / 2; x <= trenchWidth / 2; x += trenchWidth) {
+        positions.push(x, -trenchHeight / 2, z);
+        positions.push(x, trenchHeight / 2, z);
+      }
+    }
+
+    // Create triangle strips
+    for (let i = 0; i < positions.length / 3 - 2; i += 2) {
+      indices.push(i, i + 1, i + 2);
+      indices.push(i + 1, i + 2, i + 3);
+    }
+
+    trenchGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    trenchGeometry.setIndex(indices);
+
+    // === MATERIAL: N64-Style ===
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      color: 0x202020,
+      side: THREE.DoubleSide,
+    });
+
+    const trench = new THREE.Mesh(trenchGeometry, material);
+    trench.position.z = -trenchLength / 2;
+    scene.add(trench);
+
+    // === FLOOR: Low-Res with Dithering ===
+    const floorGeometry = new THREE.PlaneGeometry(trenchWidth, trenchLength, 20, 20);
+    const floorTexture = new THREE.CanvasTexture(createDitheredFloor());
+    floorTexture.magFilter = THREE.NearestFilter;
+    floorTexture.minFilter = THREE.NearestFilter;
+    floorTexture.wrapS = THREE.RepeatWrapping;
+    floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(8, 8);
+
+    const floorMaterial = new THREE.MeshBasicMaterial({
+      map: floorTexture,
+      color: 0x003300,
+      side: THREE.DoubleSide,
+    });
+
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -trenchHeight / 2;
+    floor.position.z = -trenchLength / 2;
+    scene.add(floor);
+
+    // === DEBRIS: Chunky & Wobbly ===
+    const debris = [];
+    const debrisCount = 10;
+
+    for (let i = 0; i < debrisCount; i++) {
+      const geo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x303030,
+        side: THREE.DoubleSide,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(
+        (Math.random() - 0.5) * trenchWidth,
+        Math.random() * 0.5 + 0.5,
+        -trenchLength / 2 + Math.random() * trenchLength
+      );
+      mesh.userData = {
+        wobble: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.1 + 0.05,
+      };
+      scene.add(mesh);
+      debris.push(mesh);
+    }
+
+    // === POST-PROCESSING ===
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.8, 0.4, 0.85
+    );
+    composer.addPass(bloomPass);
+
+    const scanlineShader = {
+      uniforms: { tDiffuse: { value: null }, time: { value: 0 }, intensity: { value: 0.04 } },
+      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform float time; uniform float intensity; uniform sampler2D tDiffuse; varying vec2 vUv; void main() { float y = vUv.y; float scanline = 0.5 + 0.5 * sin(y * 100.0 + time * 10.0); vec4 color = texture2D(tDiffuse, vUv); color.rgb *= (1.0 - intensity * scanline); gl_FragColor = color; }`
+    };
+
+    const scanlinePass = new ShaderPass(scanlineShader);
+    composer.addPass(scanlinePass);
+
+    const smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
+    composer.addPass(smaaPass);
+
+    // === CONTROLS ===
+    const keys = {};
+    const controls = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+      boost: false,
+    };
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') controls.boost = true;
+    });
+
+    document.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+      if (e.code === 'Space') controls.boost = false;
+    });
+
+    const clock = new THREE.Clock();
+    let elapsed = 0;
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      elapsed = clock.getElapsedTime();
+
+      // Camera motion
+      camera.position.z -= 0.02 + (controls.boost ? 0.06 : 0.02);
+      camera.position.x += Math.sin(elapsed * 2) * 0.01;
+
+      // Vertex wobble
+      debris.forEach(d => {
+        d.rotation.y += d.userData.speed;
+        d.rotation.z += d.userData.speed * 0.5;
+        d.position.x += Math.sin(elapsed + d.userData.wobble) * 0.01;
+      });
+
+      // Update scanlines
+      scanlinePass.uniforms.time.value = elapsed;
+
+      // Update bloom
+      bloomPass.threshold = 0.7 + Math.sin(elapsed * 3) * 0.1;
+
+      // Render
+      composer.render();
+    };
+
+    animate();
+
+    // === HELPER: Low-Res Texture ===
+    function createLowResTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 8;
+      canvas.height = 8;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#202020';
+      ctx.fillRect(0, 0, 8, 8);
+
+      ctx.fillStyle = '#404040';
+      for (let i = 0; i < 8; i += 2) {
+        for (let j = 0; j < 8; j += 2) {
+          ctx.fillRect(i, j, 1, 1);
+        }
+      }
+
+      return canvas;
+    }
+
+    // === HELPER: Dithered Floor ===
+    function createDitheredFloor() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 8;
+      canvas.height = 8;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#003300';
+      ctx.fillRect(0, 0, 8, 8);
+
+      ctx.fillStyle = '#005500';
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          if ((i + j) % 2 === 0) {
+            ctx.fillRect(i, j, 1, 1);
+          }
+        }
+      }
+
+      return canvas;
+    }
+
+    // === RESIZE ===
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

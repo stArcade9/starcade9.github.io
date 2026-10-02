@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Effects, Shaders &amp; Post-Processing API - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Effects, Shaders &amp; Post-Processing API</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Overview</h2>
+<p>Nova64 now includes a comprehensive effects system with custom shaders, post-processing, and particle effects for creating stunning visual experiences.</p>
+        </section>
+
+        <section class="md">
+<h2>Features</h2>
+<p>✅ <strong>Post-Processing Effects</strong>: Bloom, FXAA anti-aliasing<br>✅ <strong>Custom Shaders</strong>: Holographic, energy shield, water, fire/plasma<br>✅ <strong>Particle Systems</strong>: GPU-accelerated particle effects<br>✅ <strong>Real-time Updates</strong>: Animated shaders with time-based effects<br>✅ <strong>Easy Integration</strong>: Simple API for adding effects to any game</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Post-Processing Effects</h2>
+<h3>Bloom Effect</h3>
+<p>Creates a glow around bright objects for a cinematic look.</p>
+<pre><code class="language-javascript">// Enable bloom with default settings
+enableBloom();
+
+// Enable with custom settings
+enableBloom(
+  1.5, // strength (0-3, default: 1.0)
+  0.5, // radius (0-1, default: 0.5)
+  0.85 // threshold (0-1, default: 0.85)
+);
+
+// Adjust bloom at runtime
+setBloomStrength(2.0); // Increase intensity
+setBloomRadius(0.8); // Wider glow
+setBloomThreshold(0.5); // Glow on darker objects
+
+// Disable bloom
+disableBloom();
+</code></pre>
+<p><strong>Best For</strong>: Sci-fi environments, neon cities, energy effects, explosions</p>
+<h3>FXAA Anti-Aliasing</h3>
+<p>Smooths jagged edges for cleaner visuals.</p>
+<pre><code class="language-javascript">// Enable FXAA
+enableFXAA();
+
+// Disable FXAA
+disableFXAA();
+</code></pre>
+<p><strong>Best For</strong>: All games - improves visual quality with minimal performance cost</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Custom Shaders</h2>
+<h3>Holographic Shader</h3>
+<p>Creates a futuristic holographic effect with scanlines and glitches.</p>
+<pre><code class="language-javascript">export async function init() {
+  // Create holographic material
+  const holo = createShaderMaterial(&#39;holographic&#39;, {
+    color: new THREE.Color(0x00ffff), // Cyan hologram
+    scanlineSpeed: 3.0, // Fast scanlines
+    glitchAmount: 0.15, // Subtle glitch
+    opacity: 0.7, // Semi-transparent
+  });
+
+  // Create a holographic cube
+  const cube = createCube(2, 0xffffff, [0, 0, -5]);
+  const mesh = getMesh(cube);
+  mesh.material = holo.material;
+}
+
+// Update at runtime
+export function update(dt) {
+  updateShaderUniform(holo.id, &#39;color&#39;, new THREE.Color(0xff00ff)); // Change color
+  updateShaderUniform(holo.id, &#39;scanlineSpeed&#39;, 5.0); // Faster effect
+}
+</code></pre>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>color</code>: Hologram color (THREE.Color)</li>
+<li><code>scanlineSpeed</code>: Speed of scanline animation (0-10)</li>
+<li><code>glitchAmount</code>: Intensity of glitch effect (0-1)</li>
+<li><code>opacity</code>: Transparency (0-1)</li>
+</ul>
+<p><strong>Best For</strong>: Holograms, UI elements, data displays, sci-fi terminals</p>
+<h3>Energy Shield Shader</h3>
+<p>Creates a force field effect with hexagon pattern and hit ripples.</p>
+<pre><code class="language-javascript">export async function init() {
+  // Create shield material
+  const shield = createShaderMaterial(&#39;shield&#39;, {
+    color: new THREE.Color(0x0088ff), // Blue shield
+    opacity: 0.5, // Transparent
+    hitPosition: new THREE.Vector3(0, 0, 0),
+    hitStrength: 0, // No hit initially
+  });
+
+  // Create spherical shield around player
+  const shieldMesh = createSphere(3, 0xffffff, [0, 0, 0], 32);
+  const mesh = getMesh(shieldMesh);
+  mesh.material = shield.material;
+}
+
+// Trigger hit effect
+function onShieldHit(position) {
+  updateShaderUniform(shield.id, &#39;hitPosition&#39;, position);
+  updateShaderUniform(shield.id, &#39;hitStrength&#39;, 1.0);
+
+  // Fade out hit effect
+  setTimeout(() =&gt; {
+    updateShaderUniform(shield.id, &#39;hitStrength&#39;, 0.0);
+  }, 500);
+}
+</code></pre>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>color</code>: Shield color (THREE.Color)</li>
+<li><code>opacity</code>: Base transparency (0-1)</li>
+<li><code>hitPosition</code>: World position of impact (THREE.Vector3)</li>
+<li><code>hitStrength</code>: Impact intensity (0-1)</li>
+</ul>
+<p><strong>Best For</strong>: Force fields, protective barriers, energy shields, bubble effects</p>
+<h3>Water Shader</h3>
+<p>Animated water surface with waves and caustics.</p>
+<pre><code class="language-javascript">export async function init() {
+  // Create water material
+  const water = createShaderMaterial(&#39;water&#39;, {
+    color: new THREE.Color(0x0088ff), // Ocean blue
+    waveSpeed: 1.0, // Wave animation speed
+    waveHeight: 0.3, // Wave amplitude
+    transparency: 0.8, // See-through water
+  });
+
+  // Create water plane
+  const waterPlane = createPlane(50, 50, [0, -1, 0]);
+  const mesh = getMesh(waterPlane);
+  mesh.material = water.material;
+  mesh.rotation.x = -Math.PI / 2; // Horizontal
+}
+</code></pre>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>color</code>: Water color (THREE.Color)</li>
+<li><code>waveSpeed</code>: Animation speed (0-5)</li>
+<li><code>waveHeight</code>: Wave amplitude (0-2)</li>
+<li><code>transparency</code>: Opacity (0-1)</li>
+</ul>
+<p><strong>Best For</strong>: Oceans, lakes, rivers, liquid surfaces, underwater scenes</p>
+<h3>Fire/Plasma Shader</h3>
+<p>Animated fire effect with noise-based flames.</p>
+<pre><code class="language-javascript">export async function init() {
+  // Create fire material
+  const fire = createShaderMaterial(&#39;fire&#39;, {
+    color1: new THREE.Color(0xff4400), // Orange base
+    color2: new THREE.Color(0xffff00), // Yellow tips
+    intensity: 1.5, // Brightness
+    speed: 2.0, // Animation speed
+  });
+
+  // Create fire plane
+  const firePlane = createPlane(2, 3, [0, 1.5, 0]);
+  const mesh = getMesh(firePlane);
+  mesh.material = fire.material;
+}
+</code></pre>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>color1</code>: Base fire color (THREE.Color)</li>
+<li><code>color2</code>: Flame tip color (THREE.Color)</li>
+<li><code>intensity</code>: Brightness (0-3)</li>
+<li><code>speed</code>: Animation speed (0-5)</li>
+</ul>
+<p><strong>Best For</strong>: Fire, explosions, energy beams, plasma effects, lava</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Particle Systems</h2>
+<p>Create GPU-accelerated particle effects for explosions, smoke, sparks, etc.</p>
+<h3>Basic Particle System</h3>
+<pre><code class="language-javascript">let explosionParticles;
+
+export async function init() {
+  // Create explosion particle system
+  explosionParticles = createParticleSystem(1000, {
+    color: 0xff8800, // Orange
+    size: 0.2, // Particle size
+    speed: 5.0, // Initial velocity
+    lifetime: 2.0, // Seconds before respawn
+    spread: 1.0, // Spawn area radius
+    gravity: -2.0, // Downward acceleration
+  });
+
+  explosionParticles.position.set(0, 0, -5);
+}
+
+export function update(dt) {
+  // Update particle physics
+  updateParticles(explosionParticles, dt);
+}
+</code></pre>
+<h3>Advanced Examples</h3>
+<p><strong>Smoke Effect</strong>:</p>
+<pre><code class="language-javascript">const smoke = createParticleSystem(500, {
+  color: 0x888888, // Gray smoke
+  size: 0.5,
+  speed: 1.0,
+  lifetime: 3.0,
+  spread: 0.5,
+  gravity: 1.0, // Rises up
+});
+</code></pre>
+<p><strong>Sparks</strong>:</p>
+<pre><code class="language-javascript">const sparks = createParticleSystem(200, {
+  color: 0xffff00, // Yellow sparks
+  size: 0.1,
+  speed: 8.0,
+  lifetime: 0.5, // Short-lived
+  spread: 0.2,
+  gravity: -5.0, // Falls quickly
+});
+</code></pre>
+<p><strong>Magic Spell</strong>:</p>
+<pre><code class="language-javascript">const magic = createParticleSystem(300, {
+  color: 0xff00ff, // Purple magic
+  size: 0.15,
+  speed: 2.0,
+  lifetime: 2.5,
+  spread: 1.0,
+  gravity: 0.5, // Slow rise
+});
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Complete Game Examples</h2>
+<h3>Sci-Fi Space Shooter</h3>
+<pre><code class="language-javascript">let shieldEffect, engineParticles, explosionEffect;
+let bloomEnabled = false;
+
+export async function init() {
+  // Enable bloom for glowing effects
+  enableBloom(1.5, 0.5, 0.8);
+  bloomEnabled = true;
+
+  // Enable anti-aliasing
+  enableFXAA();
+
+  // Create player shield
+  const shield = createShaderMaterial(&#39;shield&#39;, {
+    color: new THREE.Color(0x00ffff),
+    opacity: 0.3,
+  });
+
+  const playerShield = createSphere(2, 0xffffff, [0, 0, 0], 32);
+  const shieldMesh = getMesh(playerShield);
+  shieldMesh.material = shield.material;
+  shieldEffect = shield.id;
+
+  // Engine trail particles
+  engineParticles = createParticleSystem(500, {
+    color: 0x0088ff,
+    size: 0.1,
+    speed: 3.0,
+    lifetime: 1.0,
+    spread: 0.3,
+    gravity: 0,
+  });
+  engineParticles.position.set(0, 0, 2); // Behind player
+}
+
+export function update(dt) {
+  // Update particle effects
+  updateParticles(engineParticles, dt);
+
+  // Follow player position
+  engineParticles.position.copy(player.position);
+  engineParticles.position.z += 2;
+
+  // Pulse bloom intensity based on speed
+  const bloomIntensity = 1.0 + player.speed * 0.5;
+  setBloomStrength(bloomIntensity);
+}
+
+function onPlayerHit(hitPosition) {
+  // Flash shield on hit
+  updateShaderUniform(shieldEffect, &#39;hitPosition&#39;, hitPosition);
+  updateShaderUniform(shieldEffect, &#39;hitStrength&#39;, 1.0);
+
+  setTimeout(() =&gt; {
+    updateShaderUniform(shieldEffect, &#39;hitStrength&#39;, 0.0);
+  }, 300);
+}
+
+function createExplosion(position) {
+  const explosion = createParticleSystem(300, {
+    color: 0xff4400,
+    size: 0.3,
+    speed: 10.0,
+    lifetime: 1.5,
+    spread: 0.1,
+    gravity: 0,
+  });
+  explosion.position.copy(position);
+
+  // Remove after lifetime
+  setTimeout(() =&gt; {
+    scene.remove(explosion);
+  }, 1500);
+}
+</code></pre>
+<h3>Cyberpunk City</h3>
+<pre><code class="language-javascript">let hologramBillboards = [];
+let neonGlow;
+
+export async function init() {
+  // Enable bloom for neon glow
+  enableBloom(2.0, 0.8, 0.6);
+  enableFXAA();
+
+  // Create holographic billboards
+  for (let i = 0; i &lt; 10; i++) {
+    const holo = createShaderMaterial(&#39;holographic&#39;, {
+      color: new THREE.Color(Math.random() * 0xffffff),
+      scanlineSpeed: 2.0 + Math.random() * 3.0,
+      glitchAmount: 0.1,
+      opacity: 0.8,
+    });
+
+    const billboard = createPlane(4, 3, [
+      (Math.random() - 0.5) * 50,
+      10 + Math.random() * 20,
+      (Math.random() - 0.5) * 50,
+    ]);
+
+    const mesh = getMesh(billboard);
+    mesh.material = holo.material;
+
+    hologramBillboards.push(holo.id);
+  }
+
+  // Add atmospheric particles (rain/dust)
+  const atmosphere = createParticleSystem(2000, {
+    color: 0x4488ff,
+    size: 0.05,
+    speed: 5.0,
+    lifetime: 3.0,
+    spread: 30.0,
+    gravity: -8.0, // Falling rain
+  });
+  atmosphere.position.set(0, 50, 0);
+}
+
+export function update(dt) {
+  // Random glitch effects on holograms
+  hologramBillboards.forEach(holoId =&gt; {
+    if (Math.random() &lt; 0.01) {
+      // 1% chance per frame
+      updateShaderUniform(holoId, &#39;glitchAmount&#39;, 0.5);
+      setTimeout(() =&gt; {
+        updateShaderUniform(holoId, &#39;glitchAmount&#39;, 0.1);
+      }, 100);
+    }
+  });
+}
+</code></pre>
+<h3>Fantasy Water World</h3>
+<pre><code class="language-javascript">let oceanSurface, bubbleParticles;
+
+export async function init() {
+  enableFXAA();
+
+  // Create animated ocean
+  const ocean = createShaderMaterial(&#39;water&#39;, {
+    color: new THREE.Color(0x0066cc),
+    waveSpeed: 0.5,
+    waveHeight: 0.5,
+    transparency: 0.7,
+  });
+
+  const waterPlane = createPlane(100, 100, [0, 0, 0]);
+  const mesh = getMesh(waterPlane);
+  mesh.material = ocean.material;
+  mesh.rotation.x = -Math.PI / 2;
+  oceanSurface = ocean.id;
+
+  // Underwater bubbles
+  bubbleParticles = createParticleSystem(500, {
+    color: 0xaaddff,
+    size: 0.2,
+    speed: 2.0,
+    lifetime: 4.0,
+    spread: 20.0,
+    gravity: 2.0, // Bubbles rise
+  });
+  bubbleParticles.position.set(0, -5, 0);
+}
+
+export function update(dt) {
+  updateParticles(bubbleParticles, dt);
+
+  // Vary wave intensity based on game events
+  const waveIntensity = 0.3 + Math.sin(Date.now() * 0.001) * 0.2;
+  updateShaderUniform(oceanSurface, &#39;waveHeight&#39;, waveIntensity);
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Performance Tips</h2>
+<h3>1. <strong>Use Bloom Wisely</strong></h3>
+<pre><code class="language-javascript">// Good - bloom on bright emissive objects
+setBloomThreshold(0.85); // Only very bright objects glow
+
+// Bad - everything glows (performance hit)
+setBloomThreshold(0.0);
+</code></pre>
+<h3>2. <strong>Limit Particle Count</strong></h3>
+<pre><code class="language-javascript">// Mobile/Low-end: 500 particles max
+const particles = createParticleSystem(500, {...});
+
+// Desktop/High-end: 2000 particles
+const particles = createParticleSystem(2000, {...});
+</code></pre>
+<h3>3. <strong>Reuse Particle Systems</strong></h3>
+<pre><code class="language-javascript">// Good - one system for all explosions
+const explosionPool = createParticleSystem(1000, {...});
+
+// Bad - new system for each explosion (memory leak!)
+function explode() {
+  createParticleSystem(500, {...}); // Don&#39;t do this repeatedly!
+}
+</code></pre>
+<h3>4. <strong>Shader Complexity</strong></h3>
+<ul>
+<li>Holographic: Low cost</li>
+<li>Shield/Water: Medium cost</li>
+<li>Fire: Higher cost (noise calculations)</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Troubleshooting</h2>
+<h3>Effects Not Visible</h3>
+<p><strong>Problem</strong>: Called <code>enableBloom()</code> but no effect visible</p>
+<p><strong>Solution</strong>: Check bloom threshold and material emissive</p>
+<pre><code class="language-javascript">enableBloom(1.5, 0.5, 0.5); // Lower threshold
+
+// Make materials emissive for bloom
+const material = createN64Material({
+  color: 0xff0000,
+  emissive: 0xff0000,
+  emissiveIntensity: 1.0,
+});
+</code></pre>
+<h3>Particles Not Moving</h3>
+<p><strong>Problem</strong>: Particles created but stationary</p>
+<p><strong>Solution</strong>: Call <code>updateParticles()</code> every frame</p>
+<pre><code class="language-javascript">export function update(dt) {
+  updateParticles(myParticles, dt); // Must call this!
+}
+</code></pre>
+<h3>Shader Appears Black</h3>
+<p><strong>Problem</strong>: Custom shader shows as black</p>
+<p><strong>Solution</strong>: Check lighting and transparency</p>
+<pre><code class="language-javascript">const shader = createShaderMaterial(&#39;holographic&#39;, {
+  color: new THREE.Color(0xff0000), // Ensure color is set
+  opacity: 1.0, // Not fully transparent
+});
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>API Reference</h2>
+<h3>Post-Processing</h3>
+<ul>
+<li><code>enableBloom(strength, radius, threshold)</code> - Enable bloom glow</li>
+<li><code>disableBloom()</code> - Disable bloom</li>
+<li><code>setBloomStrength(value)</code> - Adjust bloom intensity (0-3)</li>
+<li><code>setBloomRadius(value)</code> - Adjust bloom spread (0-1)</li>
+<li><code>setBloomThreshold(value)</code> - Minimum brightness for bloom (0-1)</li>
+<li><code>enableFXAA()</code> - Enable anti-aliasing</li>
+<li><code>disableFXAA()</code> - Disable anti-aliasing</li>
+</ul>
+<h3>Custom Shaders</h3>
+<ul>
+<li><code>createShaderMaterial(name, uniforms)</code> - Create shader material<ul>
+<li>Shaders: <code>&#39;holographic&#39;</code>, <code>&#39;shield&#39;</code>, <code>&#39;water&#39;</code>, <code>&#39;fire&#39;</code></li>
+</ul>
+</li>
+<li><code>updateShaderUniform(shaderId, name, value)</code> - Update shader parameter</li>
+</ul>
+<h3>Particles</h3>
+<ul>
+<li><code>createParticleSystem(count, options)</code> - Create particle effect</li>
+<li><code>updateParticles(system, deltaTime)</code> - Update particle physics</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Conclusion</h2>
+<p>The Nova64 effects system brings professional-quality visuals to your games with minimal code. Combine bloom, custom shaders, and particles to create stunning sci-fi, fantasy, or modern environments.</p>
+<p>For more examples, check out the updated game demos in <code>/examples/</code>.</p>
+<p>Happy creating! ✨</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

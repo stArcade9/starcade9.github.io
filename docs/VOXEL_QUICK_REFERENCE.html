@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Voxel Engine - Quick Reference - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Voxel Engine - Quick Reference</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>🎮 Getting Started (3 lines)</h2>
+<pre><code class="language-javascript">export function init() {
+  updateVoxelWorld(0, 0); // Generate world
+}
+
+export function update(dt) {
+  if (Math.random() &lt; 0.1) updateVoxelWorld(playerX, playerZ);
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>📦 Block Types</h2>
+<pre><code class="language-javascript">BLOCK_TYPES.AIR; // 0  - Empty
+BLOCK_TYPES.GRASS; // 1  - Green grass
+BLOCK_TYPES.DIRT; // 2  - Brown dirt
+BLOCK_TYPES.STONE; // 3  - Gray stone
+BLOCK_TYPES.SAND; // 4  - Yellow sand
+BLOCK_TYPES.WATER; // 5  - Blue water (transparent)
+BLOCK_TYPES.WOOD; // 6  - Tree trunk
+BLOCK_TYPES.LEAVES; // 7  - Green leaves
+BLOCK_TYPES.COBBLESTONE; // 8  - Gray cobble
+BLOCK_TYPES.PLANKS; // 9  - Wood planks
+BLOCK_TYPES.GLASS; // 10 - Transparent
+BLOCK_TYPES.BRICK; // 11 - Red brick
+BLOCK_TYPES.SNOW; // 12 - White snow
+BLOCK_TYPES.ICE; // 13 - Ice
+BLOCK_TYPES.BEDROCK; // 14 - Bottom layer
+BLOCK_TYPES.COAL_ORE; // 15 - Coal ore
+BLOCK_TYPES.IRON_ORE; // 16 - Iron ore
+BLOCK_TYPES.GOLD_ORE; // 17 - Gold ore
+BLOCK_TYPES.DIAMOND_ORE; // 18 - Diamond ore
+BLOCK_TYPES.GRAVEL; // 19 - Gravel
+BLOCK_TYPES.CLAY; // 20 - Clay
+BLOCK_TYPES.TORCH; // 21 - Torch (light)
+BLOCK_TYPES.GLOWSTONE; // 22 - Glowstone (max light)
+BLOCK_TYPES.LAVA; // 23 - Lava (fluid, light)
+BLOCK_TYPES.OBSIDIAN; // 24 - Obsidian
+BLOCK_TYPES.MOSSY_COBBLESTONE; // 25 - Mossy cobble
+// Shape blocks
+BLOCK_TYPES.STONE_SLAB; // 26 - Stone slab (bottom)
+BLOCK_TYPES.STONE_SLAB_TOP; // 27 - Stone slab (top)
+BLOCK_TYPES.PLANK_SLAB; // 28 - Plank slab
+BLOCK_TYPES.STONE_STAIR; // 29 - Stone stair
+BLOCK_TYPES.PLANK_STAIR; // 30 - Plank stair
+BLOCK_TYPES.FENCE; // 31 - Fence post
+BLOCK_TYPES.FLOWER; // 32 - Flower (cross)
+BLOCK_TYPES.TALL_GRASS; // 33 - Tall grass (cross)
+BLOCK_TYPES.BRICK_SLAB; // 34 - Brick slab
+BLOCK_TYPES.BRICK_STAIR; // 35 - Brick stair
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>🔧 Core Functions</h2>
+<h3>World Management</h3>
+<pre><code class="language-javascript">// Load chunks around player (call in update loop)
+updateVoxelWorld(playerX, playerZ);
+
+// Force-load all chunks synchronously (use in init)
+forceLoadVoxelChunks(playerX, playerZ);
+
+// Configure world before generating
+configureVoxelWorld({ seed: 42, renderDistance: 6, seaLevel: 62 });
+
+// Reset everything
+resetVoxelWorld();
+getVoxelConfig(); // current config
+</code></pre>
+<h3>Block Get/Set</h3>
+<pre><code class="language-javascript">// Get block type at position
+const block = getVoxelBlock(x, y, z);
+
+// Place block
+setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
+
+// Remove block
+setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+</code></pre>
+<h3>Raycasting (Mining/Building)</h3>
+<pre><code class="language-javascript">const result = raycastVoxelBlock(
+  [playerX, playerY, playerZ], // Origin
+  [dirX, dirY, dirZ], // Direction (normalized)
+  10 // Max distance
+);
+
+if (result.hit) {
+  const [x, y, z] = result.position;
+  console.log(`Hit ${result.blockType} at ${x},${y},${z}`);
+  console.log(`Distance: ${result.distance}`);
+}
+</code></pre>
+<h3>Collision Detection</h3>
+<pre><code class="language-javascript">const isColliding = checkVoxelCollision(
+  [x, y, z], // Center position
+  0.3 // Radius (half-size)
+);
+
+// Player collision example
+const onGround = checkVoxelCollision([player.x, player.y, player.z], 0.3);
+</code></pre>
+<h3>Structure Generation</h3>
+<pre><code class="language-javascript">// Place a tree
+placeVoxelTree(x, y, z);
+
+// Forest
+for (let i = 0; i &lt; 20; i++) {
+  const x = Math.random() * 200 - 100;
+  const z = Math.random() * 200 - 100;
+  placeVoxelTree(x, 35, z);
+}
+</code></pre>
+<h3>Custom Block Shapes</h3>
+<pre><code class="language-javascript">getVoxelBlockShape(blockId); // &#39;cube&#39;, &#39;slab_bottom&#39;, &#39;stair&#39;, etc.
+getVoxelBlockBoundingBox(blockId); // [minX,minY,minZ, maxX,maxY,maxZ]
+isVoxelBlockFullCube(blockId); // true for cubes only
+</code></pre>
+<h3>Lighting &amp; Day/Night</h3>
+<pre><code class="language-javascript">getVoxelLightLevel(x, y, z); // 0-15
+setVoxelDayTime(0.5); // 0.0=midnight, 0.5=noon
+</code></pre>
+<h3>Fluid Simulation</h3>
+<pre><code class="language-javascript">setVoxelFluidSource(x, y, z, BLOCK_TYPES.WATER);
+removeVoxelFluidSource(x, y, z);
+getVoxelFluidLevel(x, y, z); // 0=full, 7=thinnest, -1=none
+</code></pre>
+<h3>Entity System</h3>
+<pre><code class="language-javascript">const e = spawnVoxelEntity(&#39;zombie&#39;, [10, 65, 10], { health: 20 });
+damageVoxelEntity(e.id, 5);
+healVoxelEntity(e.id, 3);
+updateVoxelEntities(dt); // Call in update()
+getVoxelEntitiesInRadius(pos, 16); // Spatial query
+getVoxelEntitiesByType(&#39;zombie&#39;);
+getVoxelEntityCount();
+removeVoxelEntity(e.id);
+cleanupVoxelEntities();
+</code></pre>
+<h3>ECS Components</h3>
+<pre><code class="language-javascript">setVoxelEntityComponent(id, &#39;hostile&#39;, { damage: 3 });
+getVoxelEntityComponent(id, &#39;hostile&#39;);
+hasVoxelEntityComponent(id, &#39;hostile&#39;);
+removeVoxelEntityComponent(id, &#39;hostile&#39;);
+queryVoxelEntities([&#39;hostile&#39;, &#39;ai&#39;]); // All with both components
+createVoxelEntityArchetype(&#39;skeleton&#39;, { health: 15, hostile: {} });
+spawnVoxelEntityFromArchetype(&#39;skeleton&#39;, [x, y, z]);
+findVoxelPath([x1, y1, z1], [x2, y2, z2]); // A* pathfinding
+</code></pre>
+<h3>Schematics &amp; Persistence</h3>
+<pre><code class="language-javascript">// Region export/import (RLE compressed)
+const data = exportVoxelRegion(x1, y1, z1, x2, y2, z2);
+importVoxelRegion(data, x, y, z, { skipAir: true });
+
+// World export/import (JSON)
+const world = exportVoxelWorldJSON();
+importVoxelWorldJSON(world);
+
+// IndexedDB persistence
+await saveVoxelWorld(&#39;my-world&#39;);
+await loadVoxelWorld(&#39;my-world&#39;);
+const worlds = await listVoxelWorlds();
+await deleteVoxelWorld(&#39;old&#39;);
+</code></pre>
+<h3>Textures</h3>
+<pre><code class="language-javascript">enableVoxelTextures(true); // Procedural 27-tile atlas
+loadVoxelTextureAtlas(&#39;atlas.png&#39;, mapping); // Custom atlas
+</code></pre>
+<h3>Swept AABB Physics</h3>
+<pre><code class="language-javascript">const result = moveVoxelEntity(pos, vel, [0.6, 1.8, 0.6], dt);
+// result: { position, velocity, grounded, hitCeiling, onIce }
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>💡 Common Patterns</h2>
+<h3>Mining System</h3>
+<pre><code class="language-javascript">// In update()
+const lookDir = getCameraDirection();
+const eyePos = [player.x, player.y + 1.6, player.z];
+const result = raycastVoxelBlock(eyePos, lookDir, 10);
+
+if (result.hit &amp;&amp; isMousePressed(0)) {
+  const [x, y, z] = result.position;
+  setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+  console.log(&#39;Block broken!&#39;);
+}
+</code></pre>
+<h3>Building System</h3>
+<pre><code class="language-javascript">// In update()
+const result = raycastVoxelBlock(eyePos, lookDir, 10);
+
+if (result.hit &amp;&amp; isMousePressed(2)) {
+  // Place adjacent to hit block
+  const [x, y, z] = result.position;
+  const placeX = x - Math.sign(lookDir[0]);
+  const placeY = y - Math.sign(lookDir[1]);
+  const placeZ = z - Math.sign(lookDir[2]);
+
+  setVoxelBlock(placeX, placeY, placeZ, selectedBlockType);
+}
+</code></pre>
+<h3>Player Physics</h3>
+<pre><code class="language-javascript">// Gravity
+player.velY -= 20 * dt;
+
+// Apply movement
+player.y += player.velY * dt;
+
+// Ground collision
+const onGround = checkVoxelCollision([player.x, player.y, player.z], 0.3);
+if (onGround &amp;&amp; player.velY &lt;= 0) {
+  player.y = Math.floor(player.y) + 1;
+  player.velY = 0;
+}
+
+// Jump
+if (isKeyPressed(&#39;Space&#39;) &amp;&amp; onGround) {
+  player.velY = 8.0;
+}
+</code></pre>
+<h3>Find Ground Height</h3>
+<pre><code class="language-javascript">function getGroundHeight(x, z) {
+  for (let y = 63; y &gt;= 0; y--) {
+    const block = getVoxelBlock(x, y, z);
+    if (block !== BLOCK_TYPES.AIR &amp;&amp; block !== BLOCK_TYPES.WATER) {
+      return y + 1;
+    }
+  }
+  return 0;
+}
+</code></pre>
+<h3>Build Structure</h3>
+<pre><code class="language-javascript">// Simple house
+function buildHouse(x, y, z) {
+  // Floor (8x8)
+  for (let dx = 0; dx &lt; 8; dx++) {
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
+    }
+  }
+
+  // Walls (4 blocks high)
+  for (let dy = 1; dy &lt;= 4; dy++) {
+    // Front and back
+    for (let dx = 0; dx &lt; 8; dx++) {
+      setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
+      setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
+    }
+    // Left and right
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
+    }
+  }
+
+  // Roof
+  for (let dx = 0; dx &lt; 8; dx++) {
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
+    }
+  }
+
+  // Door (2 blocks high)
+  setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
+  setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>🎯 Minimal Minecraft Clone</h2>
+<pre><code class="language-javascript">const player = {
+  pos: [8, 40, 8],
+  vel: [0, 0, 0],
+  rot: [0, 0],
+  selectedBlock: BLOCK_TYPES.GRASS,
+};
+
+let locked = false;
+
+export function init() {
+  setAmbientLight(0x666666);
+  updateVoxelWorld(0, 0);
+
+  const canvas = document.getElementById(&#39;screen&#39;);
+  canvas.addEventListener(&#39;click&#39;, () =&gt; canvas.requestPointerLock());
+  document.addEventListener(&#39;pointerlockchange&#39;, () =&gt; {
+    locked = document.pointerLockElement === canvas;
+  });
+  canvas.addEventListener(&#39;mousemove&#39;, e =&gt; {
+    if (locked) {
+      player.rot[0] -= e.movementX * 0.002;
+      player.rot[1] -= e.movementY * 0.002;
+    }
+  });
+}
+
+export function update(dt) {
+  if (!locked) return;
+
+  // Movement
+  const speed = 4;
+  if (isKeyDown(&#39;KeyW&#39;)) player.vel[2] -= speed * dt;
+  if (isKeyDown(&#39;KeyS&#39;)) player.vel[2] += speed * dt;
+  if (isKeyDown(&#39;KeyA&#39;)) player.vel[0] -= speed * dt;
+  if (isKeyDown(&#39;KeyD&#39;)) player.vel[0] += speed * dt;
+
+  // Physics
+  player.vel[1] -= 20 * dt;
+  if (isKeyPressed(&#39;Space&#39;) &amp;&amp; checkVoxelCollision(player.pos, 0.3)) {
+    player.vel[1] = 8;
+  }
+
+  player.pos[0] += player.vel[0] * dt;
+  player.pos[1] += player.vel[1] * dt;
+  player.pos[2] += player.vel[2] * dt;
+
+  if (checkVoxelCollision(player.pos, 0.3)) {
+    player.pos[1] = Math.floor(player.pos[1]) + 1;
+    player.vel[1] = 0;
+  }
+
+  player.vel[0] *= 0.8;
+  player.vel[2] *= 0.8;
+
+  // Camera
+  setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
+  const lookDir = [
+    -Math.sin(player.rot[0]) * Math.cos(player.rot[1]),
+    Math.sin(player.rot[1]),
+    -Math.cos(player.rot[0]) * Math.cos(player.rot[1]),
+  ];
+  setCameraLookAt(lookDir);
+
+  // Block interaction
+  const result = raycastVoxelBlock(
+    [player.pos[0], player.pos[1] + 1.6, player.pos[2]],
+    lookDir,
+    10
+  );
+
+  if (result.hit) {
+    const [x, y, z] = result.position;
+    if (isMousePressed(0)) setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+    if (isMousePressed(2)) setVoxelBlock(x, y, z, player.selectedBlock);
+  }
+
+  // World update
+  if (Math.random() &lt; 0.1) updateVoxelWorld(player.pos[0], player.pos[2]);
+
+  // Block selection
+  for (let i = 1; i &lt;= 9; i++) {
+    if (isKeyPressed(i.toString())) player.selectedBlock = i;
+  }
+}
+
+export function draw() {
+  cls();
+  if (locked) {
+    rectfill(318, 179, 322, 181, rgba8(1, 1, 1, 1));
+    rectfill(319, 178, 321, 182, rgba8(1, 1, 1, 1));
+  }
+  print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>⚡ Performance Tips</h2>
+<h3>✅ DO:</h3>
+<pre><code class="language-javascript">// Update chunks occasionally
+if (frameCount % 10 === 0) {
+  updateVoxelWorld(playerX, playerZ);
+}
+
+// Use collision detection
+const onGround = checkVoxelCollision(pos, 0.3);
+
+// Batch block changes
+for (let i = 0; i &lt; 100; i++) {
+  setVoxelBlock(x + i, y, z, type);
+}
+</code></pre>
+<h3>❌ DON&#39;T:</h3>
+<pre><code class="language-javascript">// Don&#39;t update every frame
+export function update() {
+  updateVoxelWorld(x, z); // TOO EXPENSIVE!
+}
+
+// Don&#39;t check many blocks manually
+for (let x = -10; x &lt; 10; x++) {
+  for (let z = -10; z &lt; 10; z++) {
+    getVoxelBlock(x, y, z); // Use collision instead!
+  }
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>🌍 World Info</h2>
+<ul>
+<li><strong>Chunk Size</strong>: 16×128×16 blocks</li>
+<li><strong>Render Distance</strong>: 4 chunks (64 blocks), configurable</li>
+<li><strong>World Height</strong>: 0-127 blocks</li>
+<li><strong>Bedrock Layer</strong>: Y=0 (indestructible)</li>
+<li><strong>Sea Level</strong>: Y=62 (configurable)</li>
+<li><strong>Block Types</strong>: 36 built-in (IDs 0-35)</li>
+<li><strong>Infinite</strong>: Chunks generate on demand</li>
+<li><strong>Persistence</strong>: Save/load via IndexedDB</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>🎨 Terrain Features</h2>
+<ul>
+<li><strong>Height</strong>: Multi-octave Perlin noise</li>
+<li><strong>Biomes</strong>: Grass, Sand, Snow (based on temperature/moisture)</li>
+<li><strong>Caves</strong>: 3D noise threshold underground</li>
+<li><strong>Trees</strong>: Procedural with random height</li>
+<li><strong>Water</strong>: Fills below Y=30</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>🔍 Debugging</h2>
+<pre><code class="language-javascript">// Check block under player
+const block = getVoxelBlock(Math.floor(player.x), Math.floor(player.y) - 1, Math.floor(player.z));
+console.log(`Standing on: ${block}`);
+
+// Draw debug info
+print(`Pos: ${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}`, 4, 4);
+print(`Chunks loaded: ${chunkCount}`, 4, 12);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>📊 Performance Costs</h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>updateVoxelWorld()</code></td>
+<td>High</td>
+<td>Call every 10 frames</td>
+</tr>
+<tr>
+<td><code>setVoxelBlock()</code></td>
+<td>Medium</td>
+<td>Auto-updates chunk</td>
+</tr>
+<tr>
+<td><code>getVoxelBlock()</code></td>
+<td>Low</td>
+<td>Fast lookup</td>
+</tr>
+<tr>
+<td><code>raycastVoxelBlock()</code></td>
+<td>Low</td>
+<td>&lt;0.1ms per ray</td>
+</tr>
+<tr>
+<td><code>checkVoxelCollision()</code></td>
+<td>Low</td>
+<td>Checks ~8 blocks</td>
+</tr>
+<tr>
+<td><code>placeVoxelTree()</code></td>
+<td>Medium</td>
+<td>Places ~100 blocks</td>
+</tr>
+</tbody></table>
+        </section>
+
+        <section class="md">
+<h2>🚀 Ready to Build!</h2>
+<p>Check out the full Minecraft demo in <code>examples/minecraft-demo/</code> for a complete working game!</p>
+<p>See <code>VOXEL_ENGINE_GUIDE.md</code> for detailed documentation and advanced examples.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

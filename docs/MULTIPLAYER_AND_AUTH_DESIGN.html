@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Multiplayer + Identity Design (`nova64.net` + `nova64.auth`) - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Multiplayer + Identity Design (`nova64.net` + `nova64.auth`)</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p>Status: <strong>design / phased plan</strong> — nothing implemented yet. This document is the
+plan we execute against.</p>
+<p>Two new cart-facing namespaces:</p>
+<ul>
+<li><strong><code>nova64.net</code></strong> — realtime multiplayer over <a href="https://colyseus.io">Colyseus</a>
+(authoritative rooms, schema state sync, messages). Targets <strong>web + Godot</strong>
+first; RetroArch is a later, separate model (see <a href="#7-retroarch-later">§7</a>).</li>
+<li><strong><code>nova64.auth</code></strong> — an <strong>extensible identity</strong> layer: OAuth/OIDC (social +
+generic JWT) and crypto wallet sign-in, behind a pluggable provider registry.
+Auth issues the JWT that <code>nova64.net</code> presents when joining a room.</li>
+</ul>
+<p>They are designed together because <strong>auth gates net</strong>: a player authenticates
+once via <code>nova64.auth</code>, and the resulting token authorizes room joins.</p>
+<p>Related: <a href="VIDEO_GUIDE.html">VIDEO_GUIDE.md</a> (the same &quot;one cart API, per-backend
+host implementation&quot; pattern), <a href="GODOT_HOST_CONTRACT.html">GODOT_HOST_CONTRACT.md</a>,
+<a href="api-improvements.html">api-improvements.md</a>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>1. Goals &amp; non-goals</h2>
+<p><strong>Goals</strong></p>
+<ul>
+<li>One cart API that runs the same multiplayer cart on <strong>web and Godot</strong>.</li>
+<li>Authoritative server (anti-cheat-friendly); clients send intents, server owns
+state and broadcasts patches.</li>
+<li>Pluggable identity: social login, generic OAuth2/OIDC → JWT, and crypto
+wallet (EVM Sign-In-With-Ethereum) — <strong>extensible</strong> so new ID methods drop in.</li>
+<li>Graceful degradation: a cart that calls <code>nova64.net</code>/<code>nova64.auth</code> on a host
+that lacks them gets a clean &quot;unsupported&quot; result, never a crash (same
+contract as <code>nova64.video</code>).</li>
+</ul>
+<p><strong>Non-goals (initially)</strong></p>
+<ul>
+<li>Cart-authored server game logic (carts shipping sandboxed server code). v1
+uses generic server room types; cart-defined server logic is a later phase.</li>
+<li>P2P / rollback netcode. We are client–server. (RetroArch may force a different
+model — see §7.)</li>
+<li>Being an identity provider of record. We <strong>broker</strong> existing IdPs and wallets
+and mint our own short-lived session JWT.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>2. Architecture overview</h2>
+<pre><code>   Cart (init/update/draw)
+        │  nova64.net / nova64.auth   (identical API on every backend)
+        ▼
+   ┌─────────────────────────────────────────────────────────┐
+   │  Nova64 runtime shim (JS)                                 │
+   │   - colyseus.js client (schema decode, room protocol)     │
+   │   - auth provider registry                                │
+   │   - pluggable transport seam ───────────────┐             │
+   └──────────────────────────────────────────────┼───────────┘
+            web │                          Godot   │
+                ▼                                  ▼
+        browser WebSocket             bridge: net.* over Godot WebSocketPeer
+        window.ethereum (wallet)      OS.shell_open + loopback (OAuth)
+                │                                  │
+                └──────────────┬───────────────────┘
+                               ▼
+              ┌──────────────────────────────────┐
+              │  nova64-server (Node)             │
+              │   - Colyseus rooms (@schema)      │
+              │   - onAuth: verify session JWT    │
+              │  nova64-auth (Node)               │
+              │   - OAuth code exchange → JWT     │
+              │   - wallet nonce/verify (SIWE)→JWT│
+              └──────────────────────────────────┘
+</code></pre>
+<p><strong>Key decision — one JS client, two transports.</strong> <code>colyseus.js</code> and
+<code>@colyseus/schema</code> are pure JS and run in both the browser and Godot&#39;s QuickJS.
+The only backend-specific piece is the <strong>WebSocket transport</strong>:</p>
+<ul>
+<li><strong>Web</strong> uses the browser&#39;s event-driven <code>WebSocket</code>.</li>
+<li><strong>Godot</strong> has no JS WebSocket, but the host does (<code>WebSocketPeer</code>). The bridge
+exposes <code>net.connect / net.poll / net.send / net.close</code>; the shim wraps these
+in a <code>WebSocket</code>-shaped object and <strong>pumps <code>net.poll</code> every frame</strong> via
+<code>nova64.net._tick(dt)</code> (the same per-frame-pump contract as <code>nova64.video</code>).</li>
+</ul>
+<p>This keeps the room protocol and schema decoding in <strong>one</strong> codebase <strong>on web</strong>
+(verified — the web lobby works end to end).</p>
+<blockquote>
+<p><strong>Phase 2 Godot — revised (2026-06-22).</strong> The &quot;run colyseus.js in QuickJS&quot;
+idea proved <strong>costly</strong>: the published colyseus.js bundles (node and the
+<code>colyseus-cocos-creator</code> engine build) drag in <code>ws</code>/<code>Buffer</code>/<code>process</code>
+internals (<code>isUtf8</code>, etc.) that don&#39;t run in a bare QuickJS sandbox (verified
+via a sandbox test). Making it work needs a <strong>custom browser-clean rollup of
+colyseus.js&#39;s browser entry + Buffer/TextEncoder/process polyfills</strong> — a real
+bundling effort.</p>
+<p><strong>The cleaner path (recommended) is the official Colyseus Godot SDK</strong>
+(<a href="https://docs.colyseus.io/getting-started/godot">https://docs.colyseus.io/getting-started/godot</a>) — a native GDExtension addon
+(GDScript, beta) that already speaks the protocol + schema over WebSockets.
+Integration shape for Nova64: the Godot host drives the native client and the
+bridge exposes the same <code>nova64.net</code> surface to the JS cart — <code>net.join</code>,
+per-frame <code>net.poll</code> returning state diffs (player add/change/remove) +
+inbound messages, and <code>net.send</code>. The cart code stays identical to web; only
+the Godot host&#39;s net implementation differs (native client instead of a JS
+WebSocket). Trade-off: a C++/GDScript ↔ QuickJS marshaling layer for state
+callbacks, vs. the colyseus.js-bundling effort.</p>
+<p><strong>Resolved — this is exactly what shipped.</strong> See <em>Phase 2 — DONE</em> below; the
+integration was built and verified headlessly (Godot 4.5, cross-play with a
+Node client). The marshaling layer is <code>_forward_net</code> (C++) → <code>NovaNet.gd</code>.</p>
+</blockquote>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>3. <code>nova64.net</code> — cart API</h2>
+<p>Modeled closely on <code>colyseus.js</code> so it&#39;s familiar and thin:</p>
+<pre><code class="language-js">// 1) connect (token comes from nova64.auth; optional for guest/dev)
+await nova64.net.connect({ url: &#39;wss://play.nova64.dev&#39;, token: nova64.auth.token() });
+
+// 2) join a room (joinOrCreate | create | join | joinById)
+const room = await nova64.net.joinOrCreate(&#39;arena&#39;, { name: &#39;IO&#39;, skin: 3 });
+
+// 3) authoritative state (server-owned). Schema add/remove/change callbacks:
+room.state.players.onAdd((p, id) =&gt; spawnAvatar(id, p));
+room.state.players.onRemove((p, id) =&gt; despawn(id));
+room.state.players.onChange((p, id) =&gt; moveAvatar(id, p.x, p.y));
+
+// 4) messages (client → server intents, server → client events)
+room.send(&#39;move&#39;, { dx, dy });
+room.onMessage(&#39;hit&#39;, e =&gt; flash(e.target));
+
+// 5) lifecycle
+room.sessionId;                       // this client&#39;s id in the room
+room.onLeave(code =&gt; toLobby());
+room.onError((code, msg) =&gt; toast(msg));
+nova64.net.leave();                   // leave current room
+nova64.net.isSupported();             // false on hosts without net
+</code></pre>
+<p><strong>Per-frame pump (native):</strong> carts call <code>nova64.net._tick(dt)</code> in <code>update()</code> (no-op
+on web, drives the Godot transport poll). The reference helpers (<code>nova64.level</code>
+etc.) and a <code>multiplayer-demo</code> cart will model this.</p>
+<p><strong>Helpers we ship on top</strong> (reduce per-cart boilerplate):</p>
+<ul>
+<li><code>nova64.net.interpolate(entity, state, dt)</code> — smoothing for remote actors.</li>
+<li><code>nova64.net.onPresence(cb)</code> / room player list convenience.</li>
+<li><code>nova64.net.reconnect()</code> with backoff + session resume token.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>4. The server — <code>nova64-server</code> (Colyseus)</h2>
+<p>A Node project (new top-level <code>server/</code> or repo) running Colyseus.</p>
+<p><strong>Room model (phased):</strong></p>
+<ul>
+<li><strong>Phase 1 — <code>RelayRoom</code> / <code>StateRoom</code> (generic).</strong> A schema with
+<code>players: MapSchema&lt;Player&gt;</code> (id, name, x, y, custom blob) plus a typed
+message relay. Carts get presence + position sync + chat/events with <strong>zero
+server code</strong>. Authoritative enough for casual play (server validates rate +
+bounds); not cheat-proof for competitive.</li>
+<li><strong>Phase 4 — typed/authoritative rooms.</strong> Named room types with real
+server-side rules (movement validation, hit detection, scoring), selected by
+the cart via room name. Either built-in game templates or, later, a vetted
+cart-server module system (sandboxed) — explicitly a later decision.</li>
+</ul>
+<p><strong>Auth hook:</strong> <code>onAuth(client, options)</code> verifies the <code>options.token</code> (session
+JWT from <code>nova64-auth</code>) — signature, expiry, audience. Rejects on failure;
+attaches <code>{ userId, displayName, provider }</code> to the client. Guest mode (no token)
+is allowed in dev / for public rooms, gated by config.</p>
+<p><strong>Hosting:</strong> self-host (Docker) or Colyseus Cloud — a Phase 0 decision (§9).</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>5. <code>nova64.auth</code> — extensible identity</h2>
+<h3>5.1 Cart API</h3>
+<pre><code class="language-js">// sign in with a provider (returns a session)
+const s = await nova64.auth.signIn(&#39;google&#39;);                  // social preset
+const s = await nova64.auth.signIn(&#39;oauth&#39;, {                  // generic OIDC
+  issuer: &#39;https://id.example.com&#39;, clientId: &#39;...&#39;, scopes: [&#39;openid&#39;,&#39;profile&#39;],
+});
+const s = await nova64.auth.signIn(&#39;wallet&#39;);                  // EVM SIWE
+
+nova64.auth.signOut();
+const me = nova64.auth.identity();   // unified profile (below) or null
+const jwt = nova64.auth.token();     // session JWT for nova64.net.connect
+nova64.auth.onChange(session =&gt; updateHud(session));
+await nova64.auth.restore();         // silent resume from stored token
+
+// EXTENSIBILITY — register a custom provider
+nova64.auth.registerProvider(&#39;steam&#39;, mySteamProvider);
+</code></pre>
+<h3>5.2 Unified identity model</h3>
+<pre><code class="language-ts">type Identity = {
+  id: string;            // stable, provider-namespaced: &quot;google:1234&quot;, &quot;wallet:0xabc…&quot;
+  provider: string;      // &quot;google&quot; | &quot;discord&quot; | &quot;oauth&quot; | &quot;wallet&quot; | custom
+  displayName: string;
+  avatar?: string;       // URL or data URI
+  address?: string;      // wallet address when provider is crypto
+  claims: object;        // verified JWT claims / profile
+  token: string;         // session JWT (short-lived) for the server
+};
+</code></pre>
+<p>A <strong>stable, provider-namespaced <code>id</code></strong> lets the same human link multiple methods
+later (account linking is a future claim on the server). The server is the
+source of truth for <code>userId</code>; the client identity mirrors it.</p>
+<h3>5.3 Provider interface (the extensibility seam)</h3>
+<pre><code class="language-ts">interface AuthProvider {
+  name: string;
+  signIn(opts?): Promise&lt;Session&gt;;   // run the flow, return identity + token
+  restore?(): Promise&lt;Session|null&gt;; // silent re-auth from stored refresh/token
+  signOut?(): Promise&lt;void&gt;;
+}
+</code></pre>
+<p>Built-in providers:</p>
+<ul>
+<li><strong><code>oauth</code></strong> — generic OAuth2 + OIDC (Authorization Code + PKCE). The browser
+side does the redirect/popup; the <strong>code exchange and JWT minting happen in
+<code>nova64-auth</code> (server)</strong> so client secrets never ship in a cart.</li>
+<li><strong><code>social</code></strong> — thin presets (<code>google</code>, <code>discord</code>, <code>github</code>, …) configured on
+top of <code>oauth</code>.</li>
+<li><strong><code>wallet</code></strong> — EVM <strong>Sign-In-With-Ethereum</strong> (EIP-4361): server issues a
+nonce → wallet signs → server verifies the signature and mints a session JWT.
+<code>id = &quot;wallet:&lt;address&gt;&quot;</code>. Extensible to other chains (Solana <code>signMessage</code>,
+etc.) behind the same provider seam.</li>
+</ul>
+<h3>5.4 JWT / session</h3>
+<p><code>nova64-auth</code> mints a <strong>short-lived session JWT</strong> (e.g. 15 min) + a refresh
+token. The session JWT is what <code>nova64.net</code> presents to Colyseus <code>onAuth</code>.
+Algorithm RS256 (server holds the private key; Colyseus verifies with the public
+key). Claims: <code>sub</code> (userId), <code>provider</code>, <code>name</code>, <code>iat/exp/aud/iss</code>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>6. Per-backend matrix</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Web</th>
+<th>Godot</th>
+<th>RetroArch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>net transport</strong></td>
+<td>browser <code>WebSocket</code></td>
+<td>bridge <code>net.*</code> over <code>WebSocketPeer</code> (poll each frame)</td>
+<td>none in-core → §7</td>
+</tr>
+<tr>
+<td><strong>net protocol</strong></td>
+<td>colyseus.js (shared)</td>
+<td>colyseus.js in QuickJS (shared)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>OAuth flow</strong></td>
+<td>popup/redirect</td>
+<td><code>OS.shell_open</code> + loopback <code>TCPServer</code> (or custom URI scheme) to catch the redirect</td>
+<td>Device Code grant (RFC 8628): show code+URL, poll</td>
+</tr>
+<tr>
+<td><strong>wallet</strong></td>
+<td><code>window.ethereum</code> (EIP-1193) SIWE</td>
+<td>WalletConnect (QR / deep link)</td>
+<td>out of scope (no secure signer)</td>
+</tr>
+<tr>
+<td><strong>token storage</strong></td>
+<td><code>localStorage</code> (or cookie)</td>
+<td><code>user://</code> encrypted store</td>
+<td>core save storage (if pursued)</td>
+</tr>
+</tbody></table>
+<p>The cart code is identical; only these host mechanisms differ, hidden behind the
+shim + bridge.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>7. RetroArch (later)</h2>
+<p>The libretro core has <strong>no general socket API</strong>, so standard client–server
+Colyseus is not reachable from inside the core. Options to research as a
+<strong>separate phase</strong> (not blocking web/Godot):</p>
+<ol>
+<li><strong>libretro netpacket interface</strong>
+(<code>RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE</code>). The frontend moves packets
+between peers for netplay. This is <strong>P2P / lockstep-flavored</strong>, not
+client-server — it could carry a custom rollback protocol but does <strong>not</strong>
+map onto Colyseus rooms. Best fit for deterministic head-to-head, not a live
+authoritative MMO-style room.</li>
+<li><strong>Frontend-assisted socket bridge</strong> — a non-standard environment callback /
+custom RetroArch build that proxies a WebSocket to the core. Powerful but
+forks the frontend; portability cost is high.</li>
+<li><strong>Async / turn-based via HTTP</strong> — if a future core gains an HTTP fetch hook
+(frontend-mediated), turn-based or lobby features work even without realtime
+sockets.</li>
+</ol>
+<p>Recommendation: treat RetroArch multiplayer as a <strong>research spike</strong> after web +
+Godot ship, most likely landing as <strong>netpacket-based rollback for 1v1/local-style
+carts</strong>, with realtime authoritative rooms staying web/Godot only. Document the
+decision; don&#39;t block the main line.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>8. Security &amp; ops considerations</h2>
+<ul>
+<li><strong>Authoritative state</strong>: clients send intents, never trusted positions; the
+server validates and owns state. Even the Phase-1 generic room enforces
+rate-limits and value bounds.</li>
+<li><strong>Secrets</strong>: OAuth client secrets + JWT signing keys live <strong>only</strong> in
+<code>nova64-auth</code>, never in a cart or the bundle.</li>
+<li><strong>PKCE</strong> for all OAuth; <strong>short-lived</strong> session JWTs + refresh rotation.</li>
+<li><strong>SIWE</strong> nonce is single-use and server-issued; verify domain + expiry.</li>
+<li><strong>Transport</strong>: <code>wss://</code> only in production; CORS/origin allow-list on auth.</li>
+<li><strong>Abuse</strong>: room join rate limits, per-IP caps, message size/throughput caps.</li>
+<li><strong>Privacy</strong>: store the minimum profile; let players play as guests where the
+cart allows.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>9. Decisions (Phase 0)</h2>
+<p><strong>Locked (2026-06-21):</strong></p>
+<ul>
+<li><strong>Hosting:</strong> self-host locally via Docker for dev (<code>ws://localhost:2567</code>).</li>
+<li><strong>Auth issuer:</strong> <strong>Supabase Auth</strong> for social/OAuth/JWT (self-hostable, issues
+a standard JWT that Colyseus <code>onAuth</code> verifies directly — no separate
+session-minting service needed for OAuth). Wallet/SIWE is a thin custom step
+that mints a Supabase-compatible session. <code>nova64.auth</code> keeps Supabase behind
+the provider interface so it stays swappable.</li>
+<li><strong>First social provider:</strong> <strong>Google</strong> (via Supabase).</li>
+<li><strong>Wallet scope:</strong> EVM-only first (SIWE), Solana later behind the same seam.</li>
+<li><strong>Repo layout:</strong> monorepo (<code>/server</code>).</li>
+<li><strong>v1 room model:</strong> generic <code>StateRoom</code> (presence + position + relay).</li>
+</ul>
+<p>Still open (revisit before public deploy): production hosting, refresh-token
+rotation specifics, account-linking across providers.</p>
+<h3>Original option analysis</h3>
+<ol>
+<li><strong>Server hosting</strong>: self-host (Docker on a VPS) vs <strong>Colyseus Cloud</strong>.
+<em>Recommendation: self-host a single small instance for dev; revisit for prod.</em></li>
+<li><strong>Auth issuer</strong>: roll our own <code>nova64-auth</code> (full control, more work) vs a
+managed broker (Auth0 / Clerk / Supabase Auth / Logto) that already does
+social + JWT, with us adding wallet. <em>Recommendation: managed broker for
+social/OAuth to move fast; our own thin service only for the wallet/SIWE
+flow + session minting. Logto/Supabase are self-hostable + support custom
+flows.</em></li>
+<li><strong>First social provider</strong> to wire end-to-end (Discord and Google are easiest
+for games). <em>Recommendation: Discord.</em></li>
+<li><strong>Wallet scope</strong>: EVM-only at first (SIWE) vs EVM+Solana. <em>Recommendation:
+EVM first, Solana behind the same provider seam later.</em></li>
+<li><strong>Repo layout</strong>: server in this monorepo (<code>/server</code>, <code>/auth</code>) vs a separate
+repo. <em>Recommendation: monorepo for now.</em></li>
+<li><strong>Room model for v1</strong>: confirm the generic <code>StateRoom</code> (presence + position +
+relay) is enough for the first demo.</li>
+</ol>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>10. Phased roadmap</h2>
+<p>Each phase ends with a runnable demo + verification.</p>
+<h3>Phase 0 — Foundations &amp; decisions</h3>
+<ul>
+<li>Resolve §9 decisions. Stand up an empty <code>nova64-server</code> (Colyseus) + a
+<code>nova64-auth</code> stub. Pick hosting. Define the session-JWT shape.</li>
+<li><strong>Deliverable:</strong> empty server boots locally; a <code>wss</code> echo room; this doc&#39;s
+decisions filled in.</li>
+</ul>
+<h3>Phase 1 — <code>nova64.net</code> on web + minimal auth</h3>
+<ul>
+<li><code>runtime/api-net.js</code>: colyseus.js facade (connect/join/state/messages/leave),
+<code>nova64.net.isSupported()</code>, web <code>WebSocket</code> transport.</li>
+<li><code>nova64-server</code>: generic <code>StateRoom</code> (players MapSchema + relay) with
+<code>onAuth</code> verifying the session JWT (guest allowed in dev).</li>
+<li><code>nova64-auth</code>: <strong>one</strong> social provider end-to-end (per §9.3) → session JWT;
+<code>runtime/api-auth.js</code> with <code>signIn/signOut/identity/token/onChange</code> + the
+provider registry + <code>registerProvider</code>.</li>
+<li><strong>Demo:</strong> <code>examples/multiplayer-lobby</code> — sign in, join a room, see other
+players&#39; cursors/avatars move in realtime (web). </li>
+<li><strong>Verify:</strong> two browser tabs sync; bad/no token is rejected per config.</li>
+</ul>
+<h3>Phase 2 — <code>nova64.net</code> on Godot ✅ DONE (2026-06-22)</h3>
+<p><strong>Net shipped; Godot OAuth deferred to Phase 3.</strong> The &quot;colyseus.js in QuickJS&quot;
+plan was abandoned (no WebSocket/XHR/Buffer in Godot&#39;s QuickJS). Final shape —
+the official <strong>native Colyseus Godot SDK</strong> drives the socket; the cart&#39;s
+<code>nova64.net</code> calls are bridged to it:</p>
+<pre><code>cart JS → nova64.net (shim, nova64-compat.js)
+        → engine.call(&quot;net.*&quot;)  →  Nova64Host::_forward_net (C++)
+        → NovaNet.call_net (GDScript)  →  Colyseus.Client / Room (native SDK)
+</code></pre>
+<ul>
+<li><strong>C++</strong> ([gdextension/src/bridge.cpp]): <code>set_net_delegate()</code> + <code>_forward_net</code>
+route every <code>net.*</code> to the GDScript delegate (SDK is GDScript-only).</li>
+<li><strong>NovaNet</strong> ([godot_project/scripts/nova_net.gd]): owns the client; a frame-
+drained event queue (<code>net.poll</code>); player add/change/remove derived by diffing
+<code>get_state().players</code> — the <strong>same</strong> version-agnostic approach as
+[runtime/api-net.js]. Honors a <code>NOVA64_NET_URL</code> / <code>-- ws://…</code> override
+because native Godot sockets can&#39;t use WSL&#39;s localhost forwarding.</li>
+<li><strong>Shim</strong> ([godot_project/shim/nova64-compat.js]): <code>nova64.net</code> mirroring the
+web API; <code>__nova64_netPump</code> (in <code>__nova64_preUpdate</code>) resolves join promises +
+fires room callbacks.</li>
+</ul>
+<p><strong>Stack alignment (required):</strong> the Godot SDK speaks colyseus <strong>0.17</strong>, so the
+server moved 0.15→0.17 (ESM-only) and web moved colyseus.js 0.15→<strong>0.16.22</strong>
+(its latest; no 0.17 client exists). 0.17 returns a <em>flat</em> seat reservation that
+the 0.16 client can&#39;t parse, so <code>api-net.js</code> re-nests it (<code>patchSeatReservation</code>).</p>
+<ul>
+<li><strong>Verified (headless, Godot 4.5):</strong> the unchanged <code>multiplayer-lobby</code> cart
+joins <code>ws://&lt;wsl-ip&gt;:2567</code> and sees a Node <code>web-bot</code> player appear with
+<code>{id,name,x,y,data}</code> — cross-play web ↔ Godot confirmed. Server tests (sync/
+facade/auth/lobby) pass against 0.17. Commits: <code>2402504</code>, <code>34d8b24</code>.</li>
+</ul>
+<p><strong>Recipe for local Godot multiplayer:</strong> server <code>cd server &amp;&amp; pnpm start</code>; deps
+install on ext4 + symlink (pnpm EACCES on /mnt/c — see [server/.npmrc]); run
+Godot with <code>-- ws://&lt;wsl-ip&gt;:2567 multiplayer-lobby</code> (native sockets need the
+real WSL IP, not localhost). Colyseus plugin enabled in <code>project.godot</code>.</p>
+<p><strong>Still TODO (Phase 2 tail):</strong> Godot OAuth (<code>OS.shell_open</code> + loopback
+<code>TCPServer</code> → token; <code>user://</code> storage) + a Godot <code>nova64.auth</code> shim — deferred
+to land with Phase 3 providers.</p>
+<h3>Phase 3 — Wallet + provider extensibility</h3>
+<ul>
+<li>✅ <code>wallet</code> provider (web): built-in EVM <strong>SIWE</strong> (EIP-4361). The server exposes
+<code>POST /auth/wallet/nonce</code> + <code>POST /auth/wallet/verify</code> (<code>server/src/wallet/</code>),
+verifies the signature with ethers, and mints an HS256 session JWT
+(<code>id = wallet:0x…</code>, <code>provider: &quot;wallet&quot;</code>) that the <code>onAuth</code> gate accepts. Client
+flow: <code>nova64.auth.signIn(&#39;wallet&#39;)</code> (deps injectable → tested in
+<code>server/test/siwe.test.mjs</code> end-to-end + <code>auth.test.mjs</code> client unit). Rate-limit
+exempts the <code>voice</code> relay, not auth (auth is HTTP).</li>
+<li>✅ <code>registerProvider</code> extensibility (custom-provider unit test in <code>auth.test.mjs</code>).</li>
+<li>Remaining: Godot wallet via WalletConnect (QR); RS256 + refresh tokens (currently
+HS256, 15-min expiry); more social presets on the <code>oauth</code> base.</li>
+<li><strong>Demo:</strong> wallet sign-in joins the metaverse as <code>wallet:0x…</code>.</li>
+</ul>
+<h3>Phase 4 — Hardening &amp; authoritative rooms</h3>
+<ul>
+<li>Reconnection + resume tokens, interpolation helper, server-side movement/hit
+validation, rate limiting, basic anti-cheat, metrics.</li>
+<li>Optional: typed room templates (e.g. <code>arena</code>, <code>race</code>) with real server rules.</li>
+<li><strong>Demo:</strong> a small authoritative game cart (e.g. tag / air-hockey).</li>
+</ul>
+<h3>Phase 5 — RetroArch research spike</h3>
+<ul>
+<li>Prototype the libretro <strong>netpacket</strong> path (§7) for a deterministic 1v1 cart;
+document feasibility + the decision on realtime vs turn-based for the core.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>11. Proposed repo layout</h2>
+<pre><code>server/                 # Colyseus (nova64-server)
+  src/rooms/StateRoom.ts
+  src/auth/verify.ts     # session-JWT verification (onAuth)
+auth/                    # nova64-auth (or config for a managed broker)
+  src/oauth/…            # code exchange + JWT minting
+  src/wallet/siwe.ts     # nonce + verify
+runtime/api-net.js       # nova64.net facade (colyseus.js + transport seam)
+runtime/api-auth.js      # nova64.auth registry + providers
+nova64-godot/gdextension/src/bridge.cpp   # net.* (WebSocketPeer), auth helpers
+examples/multiplayer-lobby/               # the cross-backend demo cart
+docs/MULTIPLAYER_AND_AUTH_DESIGN.md        # this doc
+</code></pre>
+<hr>
+<p>To <strong>start</strong>: answer the Phase 0 decisions in §9 (especially hosting + auth
+issuer + first social provider), and I&#39;ll build Phase 1 (web <code>nova64.net</code> + the
+generic <code>StateRoom</code> + one-provider <code>nova64.auth</code> + the lobby demo).</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 API Improvement Roadmap - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 API Improvement Roadmap</h1>
+            <p class="subtitle">A prioritized list of bugs, gaps, and enhancements to make the Nova64 API easier for cart authors to use.</p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🔴 Bugs — Broken Right Now</h2>
+<h3>1. <code>createCylinder()</code> produces a box</h3>
+<p><strong>File:</strong> <code>runtime/api-3d.js</code>
+<code>createCylinder()</code> calls <code>gpu.createCylinderGeometry()</code> which does not exist on <code>GpuThreeJS</code>. It silently falls back to <code>createBoxGeometry</code>, so every cylinder is a box.
+<strong>Fix:</strong> Add <code>createCylinderGeometry(rt, rb, h, segs)</code> to <code>gpu-threejs.js</code> using <code>THREE.CylinderGeometry</code>.</p>
+<h3>2. Game-studio code uses wrong skybox API names</h3>
+<p><strong>File:</strong> <code>src/main.js</code> lines 318–319
+The <code>EXECUTE_CODE</code> message handler passes <code>skyApi.createSkybox</code>, <code>skyApi.updateSkybox</code>, and <code>skyApi.removeSkybox</code> — none of which exist. The actual names are <code>createSpaceSkybox</code>, <code>animateSkybox</code>, and <code>clearSkybox</code>. Skybox is silently broken in the game-studio execution path.
+<strong>Fix:</strong> Update those three references to the correct names.</p>
+<h3>3. <code>galaxySpiral</code> option is accepted but does nothing</h3>
+<p><strong>File:</strong> <code>runtime/api-skybox.js</code>
+<code>createSpaceSkybox({ galaxySpiral: true })</code> destructures the option but never uses it in the geometry.
+<strong>Fix:</strong> Either implement a spiral star-field variant or remove the option entirely to avoid confusion.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🟡 Missing Features — Hard to Use Without</h2>
+<h3>4. Skybox rotation speed is hardcoded</h3>
+<p><strong>File:</strong> <code>runtime/api-skybox.js</code>
+<code>animateSkybox(dt)</code> always rotates at <code>dt * 0.01</code>. There is no way for a cart to slow it down, speed it up, pause it, or reverse it.
+<strong>Add:</strong></p>
+<pre><code class="language-js">setSkyboxSpeed(multiplier); // e.g. 0 = frozen, 2.0 = double speed, -1 = reverse
+</code></pre>
+<h3>5. Cart authors must manually call <code>animateSkybox(dt)</code> every frame</h3>
+<p><strong>File:</strong> <code>runtime/api-skybox.js</code>
+Forgetting to call it in <code>update()</code> is the most common skybox mistake. The engine already has a frame loop — skybox animation should be opt-in automatic.
+<strong>Add:</strong></p>
+<pre><code class="language-js">enableSkyboxAutoAnimate((speed = 1.0)); // engine calls animateSkybox internally
+disableSkyboxAutoAnimate();
+</code></pre>
+<h3>6. Only one skybox type (procedural space)</h3>
+<p><strong>File:</strong> <code>runtime/api-skybox.js</code>
+There is no way to create a daytime sky, sunset, cave, or interior environment. Only the star-field + nebula preset exists.
+<strong>Add:</strong></p>
+<pre><code class="language-js">createGradientSkybox(topColor, bottomColor, horizonColor?)
+// e.g. createGradientSkybox(0x1a6aa8, 0xf4a460)  → sunset
+
+createSolidSkybox(color)
+// e.g. createSolidSkybox(0x000000)  → cave / indoor
+
+createImageSkybox([px, nx, py, ny, pz, nz])
+// cube-face textures for full photorealistic environments
+</code></pre>
+<h3>7. <code>removeMesh</code> vs <code>destroyMesh</code> mismatch</h3>
+<p><strong>Files:</strong> <code>runtime/api-3d.js</code>, <code>CLAUDE.md</code>, demos
+<code>CLAUDE.md</code> and several demos reference <code>removeMesh()</code> but the exposed function is <code>destroyMesh()</code>. This causes silent no-ops when cart authors follow the documentation.
+<strong>Fix:</strong> Add <code>removeMesh</code> as an alias for <code>destroyMesh</code>, or rename throughout and update docs.</p>
+<h3>8. Missing 3D primitives</h3>
+<p>Useful shapes absent from the API:</p>
+<ul>
+<li><code>createCone(radius, height, color, position, opts)</code> — projectiles, trees, hat shapes</li>
+<li><code>createCapsule(radius, height, color, position, opts)</code> — humanoid character bodies</li>
+</ul>
+<h3>13. Reusable hero-cart loader as a public API ✅ LANDED (<code>nova64.loader</code>)</h3>
+<p><strong>Where it exists today:</strong> the home screen at <code>http://localhost:3000/</code> shows a hero cart loader (boot animation + asset progress) that&#39;s currently hand-wired in the homepage shell.
+<strong>Why it matters:</strong> every cart that loads GLBs, textures, or audio has to either ship its own loader UI or pop into gameplay with a half-loaded scene (see <code>examples/indie-odyssey</code> combat enemy GLBs racing the autoplay timer). A first-class loader is a portable solution.
+<strong>Proposed shape:</strong></p>
+<pre><code class="language-js">nova64.loader.show({ title: &#39;INDIE ODYSSEY&#39;, subtitle: &#39;Loading shardgrid…&#39; });
+nova64.loader.track([&#39;models/dataImp.glb&#39;, &#39;images/spritesheet/dataImp.png&#39;]);
+nova64.loader.onReady(() =&gt; startGame());
+nova64.loader.hide();
+</code></pre>
+<p>Engine handles the visual + progress wiring; cart just tells it what to wait on.
+<strong>Effort:</strong> Medium — needs progress hooks into <code>scene.loadModel</code> / <code>loadTexture</code> / image preload paths, plus a default themable overlay.</p>
+<h3>14. Story-mode helper with slides ✅ LANDED (<code>nova64.story</code>)</h3>
+<p><strong>Where it exists today:</strong> <code>examples/indie-odyssey/code.js</code> has a multi-slide intro with image + text + transitions (<code>drawStory</code>, <code>drawStoryFrameImage</code>, <code>drawStoryTransitionFrame</code>, <code>storyFrameCanvas</code>, <code>storyPixelCanvas</code>). It&#39;s ~300 lines of cart-local code.
+<strong>Why it matters:</strong> every narrative game wants intro / cutscene / chapter-break slides with pixel transitions. Re-implementing this each time is wasteful and discourages story sequences.
+<strong>Proposed shape:</strong></p>
+<pre><code class="language-js">nova64.story.play([
+  { image: &#39;assets/intro_01.png&#39;, text: &#39;The shardgrid awakens…&#39; },
+  { image: &#39;assets/intro_02.png&#39;, text: &#39;A new operator boots up.&#39; },
+  { image: &#39;assets/intro_03.png&#39;, text: &#39;Welcome to the network.&#39; },
+], {
+  onAdvance: () =&gt; beep(),
+  onFinish: () =&gt; setScreen(&#39;game&#39;),
+  transition: &#39;pixel-melt&#39;, // or &#39;fade&#39;, &#39;crt-cut&#39;, etc.
+});
+</code></pre>
+<p>Engine owns the slide canvas, transition timing, &quot;Press Enter to continue&quot; prompt, image preload, and pixel-grid effect — same patterns indie-odyssey already has, but shared.
+<strong>Effort:</strong> Medium — port indie-odyssey&#39;s helpers up into <code>runtime/api-story.js</code> (new file) and expose as <code>nova64.story</code>.</p>
+<h3>15. MP4 / video playback support ✅ LANDED (<code>nova64.video</code>)</h3>
+<blockquote>
+<p><strong>Now cross-backend.</strong> Web, Godot, and RetroArch all play real video from one
+<code>nova64.video.playFullscreen</code> call (RetroArch decodes MPEG1 in-core via
+<code>pl_mpeg</code>, with MP2 audio mixing). See <a href="VIDEO_GUIDE.html">VIDEO_GUIDE.md</a> and
+<a href="https://github.com/seacloud9/nova64/blob/main/examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>. Item #17
+below (RetroArch/Godot hosts) is now landed, not a stub.</p>
+</blockquote>
+<p><strong>Why it matters:</strong> cutscenes, animated logos, in-world TV screens, FMV-style sequences. There&#39;s currently no engine-supported path — carts would have to manually create a <code>&lt;video&gt;</code> element, manage z-index against the WebGL canvas, and worry about the same <code>canvas { background: #000 }</code> CSS trap that bit indie-odyssey combat overlays.
+<strong>Proposed shape:</strong></p>
+<pre><code class="language-js">// Full-screen video (cutscene / intro)
+nova64.video.play(&#39;assets/intro.mp4&#39;, { onFinish: () =&gt; setScreen(&#39;game&#39;) });
+
+// In-world video texture (TV screen, billboard, monitor mesh)
+const tex = nova64.video.loadTexture(&#39;assets/news_loop.mp4&#39;, { loop: true });
+nova64.scene.setMeshTexture(tvMeshId, tex);
+</code></pre>
+<p>Both paths use the same underlying <code>HTMLVideoElement</code> — the engine wires it into the framebuffer overlay or as a <code>THREE.VideoTexture</code> depending on call site. Background must be set to <code>transparent</code> (see lesson from indie-odyssey skybox session).
+<strong>Effort:</strong> Medium-High — <code>THREE.VideoTexture</code> for in-world is straightforward; full-screen cutscene needs to slot into the cart framebuffer overlay z-stack and handle autoplay-policy unlocks (audio requires user gesture in some browsers).</p>
+<p><strong>Landed status:</strong> <code>runtime/api-video.js</code> ships <code>loadTexture(url, opts)</code> and
+<code>playFullscreen(url, opts)</code>. The texture handle exposes
+<code>applyToMesh(meshId)</code> which wires <code>THREE.VideoTexture</code> into the mesh&#39;s
+<code>material.map</code> on Three.js, and <code>BABYLON.VideoTexture</code> into
+<code>material.diffuseTexture</code> / <code>albedoTexture</code> on Babylon.js. RetroArch and
+Godot hosts fall through to a graceful no-op stub (see item #17 below for
+the follow-up).</p>
+<h3>16. Grid-driven level/dungeon builder ✅ LANDED (<code>nova64.level</code>)</h3>
+<p><strong>Why it matters:</strong> every dungeon-crawler, top-down RPG, or grid puzzle
+cart re-implements the same pattern — a 2D grid + a tile spec map + a
+list of &quot;special&quot; locations that gets a placeholder mesh, an optional
+GLB model, and an optional point light. Indie Odyssey&#39;s <code>buildLevel</code>
+was ~150 lines of this; future carts shouldn&#39;t have to write it again.</p>
+<p><strong>Landed shape:</strong></p>
+<pre><code class="language-js">const level = nova64.level.fromGrid({
+  grid: [[1,1,1,1,1], [1,0,0,0,1], [1,0,0,0,1], [1,0,0,0,1], [1,1,1,1,1]],
+  tileSize: 1,
+  origin: [0, 0, 0],
+  tiles: {
+    1: { type: &#39;wall&#39;, color: 0x10051c, height: 2, emissive: 0x00aaff, emissiveIntensity: 0.3 },
+    0: { type: &#39;open&#39;, floorColor: 0x07010d, ceilingColor: 0x1f4f9a },
+  },
+  specials: [
+    { x: 2, z: 2, type: &#39;portal&#39;, color: 0xff00cc, model: &#39;portal.glb&#39;,
+      light: { color: 0xff00cc, intensity: 1.2 } },
+  ],
+});
+
+level.isWall(x, z);     // grid lookup
+level.cellToWorld(x, z); // → { x, y, z }
+level.specialAt(x, z);  // → spec or null
+level.destroy();         // cleanup all meshes + lights at once
+</code></pre>
+<p>Tile types beyond <code>wall</code>/<code>open</code> can supply a <code>spawn(p, x, z, tile)</code>
+function for custom geometry. The returned handle owns the mesh ids so
+cart cleanup is a one-liner.</p>
+<h3>17. Video on RetroArch + Godot hosts (follow-up to #15) ✅ LANDED</h3>
+<p>Both native hosts now play <strong>real fullscreen video</strong>, not a stub — full guide in
+<a href="VIDEO_GUIDE.html">VIDEO_GUIDE.md</a>, demo in
+<a href="https://github.com/seacloud9/nova64/blob/main/examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>.</p>
+<ul>
+<li><strong>RetroArch</strong>: the libretro core decodes MPEG1 (<code>.mpg</code>) in-core via the
+vendored single-header <a href="https://github.com/seacloud9/nova64/blob/main/retroarch/pl_mpeg.h"><code>retroarch/pl_mpeg.h</code></a>
+(<code>__novaVideoOpen/Advance/Blit/Close</code>). Decoded frames blit into the 2D
+framebuffer — shown directly in software mode, composited over 3D in GLES.
+MP2 audio is mixed into the core&#39;s audio output (gated on <code>plm_probe</code>).</li>
+<li><strong>Godot</strong>: the gdextension bridge drives a native <code>VideoStreamPlayer</code>
+(<code>video.playFullscreen/stop/poll</code>), playing Theora <code>.ogv</code>.</li>
+</ul>
+<p><code>nova64.video.loadTexture</code> (in-world &quot;TV&quot; texture) now works on <strong>all three
+backends</strong> — web (<code>VideoTexture</code>), RetroArch (MPEG1 → GLES texture, re-uploaded
+each frame), and Godot (offscreen <code>VideoStreamPlayer</code> → <code>get_video_texture()</code>
+bound to the mesh material). Bind it with <code>applyToMesh(meshId)</code>. Demo:
+<a href="https://github.com/seacloud9/nova64/blob/main/examples/tv-demo/code.js"><code>examples/tv-demo</code></a>. Generate per-backend assets
+with <a href="https://github.com/seacloud9/nova64/blob/main/scripts/transcode-video.py"><code>scripts/transcode-video.py</code></a>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🟢 Quality-of-Life Improvements</h2>
+<h3>9. <code>printCentered</code> is not discoverable</h3>
+<p><strong>File:</strong> <code>runtime/api-2d.js</code>
+<code>printCentered(text, y, color)</code> exists and works well, but many demos re-implement text centering manually because <code>print()</code> dominates examples. The function should be demonstrated in at least one prominent demo.</p>
+<h3>10. <code>createPointLight</code> signature unclear</h3>
+<p><strong>File:</strong> <code>runtime/api-3d.js</code>
+<code>createPointLight</code> exists but its signature (does it take intensity? color? range?) is not documented and not obvious from usage in demos. Add clear JSDoc and a usage example.</p>
+<h3>11. <code>print()</code> has no size parameter — requires <code>setFont()</code> call first</h3>
+<p>Cart authors wanting larger HUD text must call <code>setFont(&#39;large&#39;)</code> before <code>print()</code> and reset it after. A convenience overload <code>print(text, x, y, color, size?)</code> would reduce boilerplate.</p>
+<h3>12. No built-in crosshair / reticle helper</h3>
+<p>Several FPS and space-shooter demos manually draw a crosshair using <code>line()</code> or <code>rect()</code>. A simple <code>drawCrosshair(x, y, size, color, style?)</code> in <code>api-2d.js</code> would reduce copy-paste code.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Summary Priority Order</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Priority</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>createCylinder()</code> broken</td>
+<td>🔴 Bug</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Game-studio skybox API names wrong</td>
+<td>🔴 Bug</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>galaxySpiral</code> no-op</td>
+<td>🔴 Bug</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Skybox speed control</td>
+<td>🟡 Missing</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Auto-animate skybox</td>
+<td>🟡 Missing</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>6</td>
+<td>More skybox types</td>
+<td>🟡 Missing</td>
+<td>High</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>removeMesh</code> alias</td>
+<td>🟡 Missing</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Cone + Capsule primitives</td>
+<td>🟡 Missing</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Hero-cart loader API (<code>nova64.loader</code>)</td>
+<td>✅ Landed</td>
+<td>—</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Story-mode helper (<code>nova64.story</code>)</td>
+<td>✅ Landed</td>
+<td>—</td>
+</tr>
+<tr>
+<td>15</td>
+<td>MP4 / video playback (<code>nova64.video</code>)</td>
+<td>✅ Landed</td>
+<td>—</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Grid-driven level (<code>nova64.level</code>)</td>
+<td>✅ Landed</td>
+<td>—</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Video on RetroArch + Godot hosts</td>
+<td>✅ Landed</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Improve <code>printCentered</code> discoverability</td>
+<td>🟢 QoL</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Document <code>createPointLight</code> signature</td>
+<td>🟢 QoL</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>print()</code> size shorthand</td>
+<td>🟢 QoL</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>drawCrosshair()</code> helper</td>
+<td>🟢 QoL</td>
+<td>Low</td>
+</tr>
+</tbody></table>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

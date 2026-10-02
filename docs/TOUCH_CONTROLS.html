@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch Controls - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Touch Controls</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p>NOVA64 shows an on-screen gamepad on phones and tablets. It appears automatically
+on touch devices, needs no changes to a cart, and is driven by a single global
+configuration flag.</p>
+<p>Implementation: <a href="https://github.com/seacloud9/nova64/blob/main/runtime/touch-controls.js"><code>runtime/touch-controls.js</code></a>.
+Tests: <a href="https://github.com/seacloud9/nova64/blob/main/tests/playwright/touch-controls.spec.js"><code>tests/playwright/touch-controls.spec.js</code></a>
+(<code>pnpm test:touch</code>).</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>The configuration option</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td><code>NOVA64_TOUCH_CONTROLS</code></td>
+</tr>
+<tr>
+<td><strong>Location</strong></td>
+<td>A global, read off <code>globalThis</code> (i.e. <code>window</code>)</td>
+</tr>
+<tr>
+<td><strong>Default</strong></td>
+<td><code>&#39;auto&#39;</code> — on for touch devices, off everywhere else</td>
+</tr>
+<tr>
+<td><strong>Accepted values</strong></td>
+<td><code>&#39;auto&#39;</code>, <code>true</code>, <code>false</code></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&#39;auto&#39;</code></td>
+<td>Show on devices with a coarse pointer <strong>and</strong> touch support. This is the default, and applies when the flag is left undefined.</td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td>Always show, on every device — useful for testing the overlay on a desktop.</td>
+</tr>
+<tr>
+<td><code>false</code></td>
+<td>Never create the controls at all.</td>
+</tr>
+</tbody></table>
+<h3>Enabling</h3>
+<p>Set the flag <strong>before</strong> the runtime boots, in an inline script above the module
+script that loads NOVA64:</p>
+<pre><code class="language-html">&lt;script&gt;
+  // Force the on-screen gamepad on, even on desktop.
+  window.NOVA64_TOUCH_CONTROLS = true;
+&lt;/script&gt;
+&lt;script type=&quot;module&quot; src=&quot;./assets/main.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>Or turn it on later, at runtime:</p>
+<pre><code class="language-js">nova64.touch.setTouchControlsEnabled(true);
+</code></pre>
+<h3>Disabling</h3>
+<pre><code class="language-html">&lt;script&gt;
+  // Opt out everywhere — nothing is mounted, on any device.
+  window.NOVA64_TOUCH_CONTROLS = false;
+&lt;/script&gt;
+&lt;script type=&quot;module&quot; src=&quot;./assets/main.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<pre><code class="language-js">// ...or at runtime. This removes the overlay and releases any held keys.
+nova64.touch.setTouchControlsEnabled(false);
+</code></pre>
+<p>Leaving the flag unset is the same as <code>&#39;auto&#39;</code>, so most applications need no
+configuration at all.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>How automatic device detection works</h2>
+<p>With <code>&#39;auto&#39;</code>, the overlay mounts when <strong>both</strong> of these are true:</p>
+<pre><code class="language-js">window.matchMedia(&#39;(pointer: coarse)&#39;).matches; // primary pointer is a finger
+navigator.maxTouchPoints &gt; 0; // the device reports touch points
+</code></pre>
+<p>Requiring both is what separates the cases that matter:</p>
+<ul>
+<li><strong>Phones and tablets</strong> — coarse pointer, touch points. Controls appear.</li>
+<li><strong>iPadOS</strong> — reports a desktop user-agent, but still answers both checks, so it
+is correctly treated as a tablet.</li>
+<li><strong>A desktop with a touchscreen</strong> — the <em>primary</em> pointer is a mouse, so the
+pointer is <code>fine</code>. A mouse user never gets a gamepad pasted over their game,
+even though the hardware can accept touch.</li>
+</ul>
+<p>Detection runs once at boot. To check it yourself:</p>
+<pre><code class="language-js">nova64.touch.isTouchDevice(); // raw device capability
+nova64.touch.shouldEnableTouchControls(); // capability combined with the flag
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>The visibility toggle</h2>
+<p>A pill button labelled <strong>HIDE ✦</strong> / <strong>SHOW ✦</strong> sits at the top-right, inside the
+safe area.</p>
+<ul>
+<li>Tapping it hides the d-pad and action buttons. <strong>The toggle itself stays on
+screen</strong>, relabelled <strong>SHOW ✦</strong>, so the controls are always recoverable.</li>
+<li>Hiding <strong>releases every key the overlay is currently holding</strong>. A direction
+held when the pad disappeared would otherwise stay down forever.</li>
+<li>The choice is saved to <code>localStorage</code> under <code>nova64.touchControls.visible</code>, so
+it survives a reload. Blocked storage (private mode) falls back to visible.</li>
+<li>It reports state to assistive tech via <code>aria-pressed</code>.</li>
+</ul>
+<p>Programmatic equivalents:</p>
+<pre><code class="language-js">const tc = nova64.touch.getTouchControls(); // null when not mounted
+tc.show();
+tc.hide();
+tc.toggle(); // returns the new visibility
+tc.isVisible();
+tc.destroy(); // remove entirely
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Keyboard mappings</h2>
+<p>Every control calls <code>input.setKeyState(code, down)</code> — <strong>the same function the
+real keyboard listeners call</strong>. A touch press is therefore indistinguishable
+from a key press to cart code: <code>key()</code> reports it held, <code>keyp()</code> sees the edge,
+and several controls can be held at once because key state is a map, not a
+single value. Carts need no touch-specific code.</p>
+<h3>Directional pad</h3>
+<p>Each direction sends <strong>both</strong> the arrow key and its WASD equivalent, because
+carts read whichever they prefer — <code>wad-demo</code> tests <code>key(&#39;KeyW&#39;) || key(&#39;ArrowUp&#39;)</code>,
+<code>minecraft-demo</code> reads WASD only, and the virtual gamepad maps buttons 0–3 to the
+arrows. Carts OR these together, so nothing is double-counted.</p>
+<table>
+<thead>
+<tr>
+<th>Direction</th>
+<th>Keys sent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Up</td>
+<td><code>ArrowUp</code> + <code>KeyW</code></td>
+</tr>
+<tr>
+<td>Down</td>
+<td><code>ArrowDown</code> + <code>KeyS</code></td>
+</tr>
+<tr>
+<td>Left</td>
+<td><code>ArrowLeft</code> + <code>KeyA</code></td>
+</tr>
+<tr>
+<td>Right</td>
+<td><code>ArrowRight</code> + <code>KeyD</code></td>
+</tr>
+</tbody></table>
+<p>The pad is a single element rather than four buttons, hit-tested by angle from
+its centre:</p>
+<ul>
+<li>A thumb between two arms activates <strong>both</strong>, so diagonals work like a real
+d-pad (up-left sends <code>ArrowUp</code> + <code>ArrowLeft</code> and their WASD pairs).</li>
+<li>A <strong>dead zone</strong> in the middle means a thumb resting at centre presses nothing.</li>
+<li>Sliding across the pad swaps direction cleanly — the old direction is released
+as the new one engages, so nothing sticks.</li>
+</ul>
+<h3>Action buttons</h3>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Keys sent</th>
+<th>Typical use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A</strong></td>
+<td><code>Space</code> + <code>KeyZ</code></td>
+<td>Primary — fire / confirm</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td><code>KeyX</code></td>
+<td>Secondary</td>
+</tr>
+<tr>
+<td><strong>RUN</strong></td>
+<td><code>ShiftLeft</code></td>
+<td>Sprint / modifier</td>
+</tr>
+<tr>
+<td><strong>START</strong></td>
+<td><code>Enter</code></td>
+<td>Start / pause</td>
+</tr>
+</tbody></table>
+<p>These follow the <code>KEYMAP</code> in <a href="../runtime/input.js"><code>runtime/input.js</code></a>, so they
+line up with the virtual gamepad indices carts read through <code>btn()</code>.</p>
+<p>To change the layout, edit <code>DIRECTION_KEYS</code> and <code>ACTION_BUTTONS</code> at the top of
+<code>runtime/touch-controls.js</code> — both are plain data.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Layout and behaviour</h2>
+<p><strong>Ergonomics.</strong> Directions bottom-left, actions bottom-right, both within thumb
+reach. On tablets (≥820px, coarse pointer) the clusters pull in from the extreme
+corners to stay in a comfortable arc.</p>
+<p><strong>Orientation and safe areas.</strong> Positions are offset by <code>env(safe-area-inset-*)</code>
+on every edge, so notches, rounded corners and the home indicator are respected.
+Short landscape viewports (≤520px tall) shrink the controls and hug the bottom
+corners, keeping the centre of the screen clear.</p>
+<p><strong>Touch targets.</strong> Sized in <code>vmin</code> and <code>clamp()</code>ed so they scale with the screen
+without becoming unusable: the pad is 132–200px across and action buttons are
+62–92px (54–74px for the small pair) — comfortably past the 44px minimum.</p>
+<p><strong>Visual feedback.</strong> A pressed control fills with the NOVA64 accent blue, brightens
+its border, and scales down slightly. The overlay is semi-transparent with a
+backdrop blur so gameplay stays visible underneath. <code>prefers-reduced-motion</code> drops
+the transitions.</p>
+<p><strong>No accidental gestures.</strong> The overlay sets <code>touch-action: none</code>, <code>user-select: none</code>
+and <code>-webkit-touch-callout: none</code>, and every handler calls <code>preventDefault()</code>, so
+dragging on the controls cannot scroll, pinch-zoom, select text, or raise the iOS
+callout menu. Pointer capture keeps a finger that slides off a button bound to it
+— and a capture failure is caught, never blocking the press.</p>
+<p><strong>Nothing gets stuck.</strong> Keys are reference-counted and released on pointer up,
+pointer cancel, window blur, tab hide, and when the controls are hidden or
+destroyed.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>API reference</h2>
+<p>Exposed as <code>nova64.touch.*</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>isTouchDevice()</code></td>
+<td>Does this device have a coarse pointer and touch?</td>
+</tr>
+<tr>
+<td><code>shouldEnableTouchControls()</code></td>
+<td>Device capability combined with the config flag.</td>
+</tr>
+<tr>
+<td><code>initTouchControls(opts?)</code></td>
+<td>Mount if the flag and device agree. Idempotent; called at boot.</td>
+</tr>
+<tr>
+<td><code>setTouchControlsEnabled(bool)</code></td>
+<td>Turn on/off at runtime and update the flag.</td>
+</tr>
+<tr>
+<td><code>getTouchControls()</code></td>
+<td>The live handle, or <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>createTouchControls(opts?)</code></td>
+<td>Mount unconditionally, ignoring the flag.</td>
+</tr>
+</tbody></table>
+<p>The live overlay is also at <code>globalThis.__nova64TouchControls</code>.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

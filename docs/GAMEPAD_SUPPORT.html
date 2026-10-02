@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Gamepad Support Documentation - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Gamepad Support Documentation</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Overview</h2>
+<p>Nova64 now has full support for video game controllers (gamepads) with automatic detection and mapping to the standard button layout.</p>
+        </section>
+
+        <section class="md">
+<h2>Features</h2>
+<p>✅ <strong>Automatic Detection</strong>: Gamepads are automatically detected when connected<br>✅ <strong>Standard Mapping</strong>: Uses the standard gamepad button layout (Xbox/PlayStation compatible)<br>✅ <strong>Analog Sticks</strong>: Full support for both left and right analog sticks with deadzone<br>✅ <strong>Button States</strong>: Both held (btn) and pressed (btnp) states supported<br>✅ <strong>Dual Input</strong>: Keyboard and gamepad work simultaneously - use either or both!</p>
+        </section>
+
+        <section class="md">
+<h2>Button Mapping</h2>
+<h3>D-Pad and Face Buttons</h3>
+<pre><code>btn(0)  - D-pad Up    / Arrow Up
+btn(1)  - D-pad Left  / Arrow Left
+btn(2)  - D-pad Right / Arrow Right
+btn(3)  - D-pad Down  / Arrow Down
+btn(4)  - X button    / Z key
+btn(5)  - Y button    / X key
+btn(6)  - LB button   / C key
+btn(7)  - RB button   / V key
+btn(8)  - LT button   / A key
+btn(9)  - RT button   / S key
+btn(12) - Start       / Enter
+btn(13) - Select      / Space
+</code></pre>
+<h3>Analog Sticks</h3>
+<p>Access analog stick values directly:</p>
+<pre><code class="language-javascript">// Left analog stick
+const leftX = leftStickX(); // -1.0 to 1.0 (left to right)
+const leftY = leftStickY(); // -1.0 to 1.0 (up to down)
+
+// Right analog stick
+const rightX = rightStickX(); // -1.0 to 1.0 (left to right)
+const rightY = rightStickY(); // -1.0 to 1.0 (up to down)
+
+// Or use the gamepadAxis function
+const lx = gamepadAxis(&#39;leftX&#39;);
+const ly = gamepadAxis(&#39;leftY&#39;);
+const rx = gamepadAxis(&#39;rightX&#39;);
+const ry = gamepadAxis(&#39;rightY&#39;);
+</code></pre>
+<p><strong>Note</strong>: A deadzone of 0.15 is applied automatically to prevent stick drift.</p>
+        </section>
+
+        <section class="md">
+<h2>API Functions</h2>
+<h3>Button Functions</h3>
+<pre><code class="language-javascript">// Check if button is currently held down
+if (btn(0)) {
+  // D-pad up is being held (keyboard or gamepad)
+}
+
+// Check if button was just pressed this frame
+if (btnp(4)) {
+  // X button was just pressed (not held)
+  shoot();
+}
+</code></pre>
+<h3>Analog Stick Functions</h3>
+<pre><code class="language-javascript">// Left stick for movement
+export function update(dt) {
+  const moveX = leftStickX();
+  const moveY = leftStickY();
+
+  if (Math.abs(moveX) &gt; 0 || Math.abs(moveY) &gt; 0) {
+    player.x += moveX * speed * dt;
+    player.y += moveY * speed * dt;
+  }
+}
+
+// Right stick for camera control
+export function update(dt) {
+  const camX = rightStickX();
+  const camY = rightStickY();
+
+  camera.rotation += camX * sensitivity * dt;
+  camera.pitch += camY * sensitivity * dt;
+}
+</code></pre>
+<h3>Detection</h3>
+<pre><code class="language-javascript">// Check if a gamepad is connected
+if (gamepadConnected()) {
+  print(&#39;Gamepad Ready!&#39;, 10, 10, rgba8(0, 255, 0, 255));
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Usage Examples</h2>
+<h3>Basic Movement</h3>
+<pre><code class="language-javascript">export function update(dt) {
+  // Movement with D-pad or left stick
+  if (btn(0) || leftStickY() &lt; -0.3) {
+    player.y -= speed * dt; // Move up
+  }
+  if (btn(3) || leftStickY() &gt; 0.3) {
+    player.y += speed * dt; // Move down
+  }
+  if (btn(1) || leftStickX() &lt; -0.3) {
+    player.x -= speed * dt; // Move left
+  }
+  if (btn(2) || leftStickX() &gt; 0.3) {
+    player.x += speed * dt; // Move right
+  }
+
+  // Action buttons
+  if (btnp(4)) {
+    jump();
+  }
+  if (btnp(5)) {
+    attack();
+  }
+}
+</code></pre>
+<h3>Racing Game Controls</h3>
+<pre><code class="language-javascript">export function update(dt) {
+  // Use left stick for steering
+  const steer = leftStickX();
+  car.angle += steer * turnSpeed * dt;
+
+  // RT for accelerate, LT for brake
+  if (btn(9)) {
+    // RT
+    car.speed += acceleration * dt;
+  }
+  if (btn(8)) {
+    // LT
+    car.speed -= braking * dt;
+  }
+
+  // A button for boost
+  if (btnp(4)) {
+    activateBoost();
+  }
+}
+</code></pre>
+<h3>Menu Navigation</h3>
+<pre><code class="language-javascript">let menuIndex = 0;
+const menuItems = [&#39;Start Game&#39;, &#39;Options&#39;, &#39;Quit&#39;];
+
+export function update(dt) {
+  // Navigate menu with D-pad or left stick
+  if (btnp(3) || leftStickY() &gt; 0.7) {
+    menuIndex = (menuIndex + 1) % menuItems.length;
+  }
+  if (btnp(0) || leftStickY() &lt; -0.7) {
+    menuIndex = (menuIndex - 1 + menuItems.length) % menuItems.length;
+  }
+
+  // Select with A button or Start
+  if (btnp(4) || btnp(12)) {
+    selectMenuItem(menuIndex);
+  }
+}
+</code></pre>
+<h3>Camera Control</h3>
+<pre><code class="language-javascript">export function update(dt) {
+  // Left stick for player movement
+  const moveX = leftStickX();
+  const moveZ = leftStickY();
+
+  player.x += moveX * speed * dt;
+  player.z += moveZ * speed * dt;
+
+  // Right stick for camera rotation
+  const camX = rightStickX();
+  const camY = rightStickY();
+
+  camera.yaw += camX * sensitivity * dt;
+  camera.pitch += camY * sensitivity * dt;
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Best Practices</h2>
+<h3>1. Support Both Input Methods</h3>
+<p>Always support both keyboard and gamepad for maximum accessibility:</p>
+<pre><code class="language-javascript">// Good - supports both
+const leftPressed = btn(1) || leftStickX() &lt; -0.3;
+const rightPressed = btn(2) || leftStickX() &gt; 0.3;
+</code></pre>
+<h3>2. Use btnp() for Actions</h3>
+<p>Use <code>btnp()</code> for discrete actions like jumping, shooting, or menu selection:</p>
+<pre><code class="language-javascript">if (btnp(4)) {
+  jump(); // Only triggers once per press
+}
+</code></pre>
+<p>Use <code>btn()</code> for continuous actions like movement or aiming:</p>
+<pre><code class="language-javascript">if (btn(9)) {
+  accelerate(); // Continuously accelerates while held
+}
+</code></pre>
+<h3>3. Tune Your Deadzones</h3>
+<p>The default deadzone is 0.15. For analog movement, you may want to apply additional thresholds:</p>
+<pre><code class="language-javascript">const moveX = leftStickX();
+const moveY = leftStickY();
+
+// Apply custom threshold
+const threshold = 0.2;
+if (Math.abs(moveX) &lt; threshold) moveX = 0;
+if (Math.abs(moveY) &lt; threshold) moveY = 0;
+</code></pre>
+<h3>4. Show Gamepad Prompts</h3>
+<p>Display appropriate button prompts based on input method:</p>
+<pre><code class="language-javascript">export function draw() {
+  if (gamepadConnected()) {
+    print(&#39;Press A to Jump&#39;, 10, 10, rgba8(255, 255, 255, 255));
+  } else {
+    print(&#39;Press Z to Jump&#39;, 10, 10, rgba8(255, 255, 255, 255));
+  }
+}
+</code></pre>
+<h3>5. Test With Multiple Controllers</h3>
+<p>Different gamepads may have slightly different button mappings. Test with:</p>
+<ul>
+<li>Xbox controllers</li>
+<li>PlayStation controllers</li>
+<li>Generic USB gamepads</li>
+<li>Switch Pro controllers</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Troubleshooting</h2>
+<h3>Gamepad Not Detected</h3>
+<ol>
+<li>Make sure the gamepad is connected before loading the game</li>
+<li>Try pressing a button to wake up the gamepad</li>
+<li>Check browser console for any errors</li>
+<li>Some browsers require HTTPS for gamepad API</li>
+</ol>
+<h3>Buttons Not Working</h3>
+<ol>
+<li>Verify button mapping with <code>console.log(btn(0), btn(1), btn(2))</code></li>
+<li>Check if gamepadConnected() returns true</li>
+<li>Try a different gamepad or browser</li>
+</ol>
+<h3>Stick Drift</h3>
+<p>If you experience stick drift:</p>
+<ol>
+<li>The default deadzone is 0.15</li>
+<li>Increase it in your game code with custom thresholds</li>
+<li>Consider calibrating the physical controller</li>
+</ol>
+        </section>
+
+        <section class="md">
+<h2>Migration Guide</h2>
+<h3>Existing Games</h3>
+<p>To add gamepad support to existing games:</p>
+<ol>
+<li><p><strong>No changes needed!</strong> All existing <code>btn()</code> and <code>btnp()</code> calls now work with gamepads automatically</p>
+</li>
+<li><p><strong>Optional</strong>: Add analog stick support for smoother movement:</p>
+</li>
+</ol>
+<pre><code class="language-javascript">// Before (keyboard only)
+if (btn(1)) player.x -= speed * dt;
+if (btn(2)) player.x += speed * dt;
+
+// After (keyboard + analog stick)
+const moveX = leftStickX();
+if (btn(1) || moveX &lt; -0.3) player.x -= speed * dt;
+if (btn(2) || moveX &gt; 0.3) player.x += speed * dt;
+
+// Even better (smooth analog movement)
+player.x += leftStickX() * speed * dt;
+</code></pre>
+<ol start="3">
+<li><strong>Optional</strong>: Show gamepad indicator:</li>
+</ol>
+<pre><code class="language-javascript">if (gamepadConnected()) {
+  print(&#39;🎮&#39;, 600, 10, rgba8(0, 255, 0, 255));
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Technical Details</h2>
+<ul>
+<li><strong>Polling</strong>: Gamepad state is polled automatically every frame</li>
+<li><strong>Latency</strong>: Sub-frame latency for responsive controls</li>
+<li><strong>Compatibility</strong>: Works with the standard Gamepad API (Chrome, Firefox, Edge, Safari)</li>
+<li><strong>Multiple Gamepads</strong>: Currently uses first connected gamepad (index 0)</li>
+<li><strong>Deadzone</strong>: 0.15 applied to all analog axes</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Future Enhancements</h2>
+<p>Planned features:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Rumble/vibration support</li>
+<li><input disabled="" type="checkbox"> Multiple gamepad support (local multiplayer)</li>
+<li><input disabled="" type="checkbox"> Button remapping</li>
+<li><input disabled="" type="checkbox"> Configurable deadzones</li>
+<li><input disabled="" type="checkbox"> Analog button pressure (triggers)</li>
+<li><input disabled="" type="checkbox"> Motion controls (gyro/accelerometer)</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Conclusion</h2>
+<p>Gamepad support in Nova64 makes your games more accessible and enjoyable. Players can use whatever input method they prefer, and analog sticks provide smoother, more precise control for 3D games.</p>
+<p>For questions or issues, please refer to the Nova64 documentation or submit an issue on GitHub.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

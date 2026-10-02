@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Nova64 Ultimate 3D Fantasy Console API - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>🎮 Nova64 Ultimate 3D Fantasy Console API</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>🌟 <strong>Revolutionary 3D Graphics System</strong></h2>
+<p>Nova64 delivers <strong>spectacular Nintendo 64/PlayStation-style 3D graphics</strong> with modern performance, featuring advanced materials, cinematic lighting, and 100% test coverage (35/35 tests passing).</p>
+<h3>🚀 <strong>What&#39;s New in v0.2.5</strong></h3>
+<ul>
+<li><strong>New Primitives</strong>: <code>createCone</code>, <code>createCapsule</code>, <code>createTorus</code> — expands the primitive library to 7 shapes</li>
+<li><strong>PBR Material Control</strong>: <code>setPBRProperties(meshId, {metalness, roughness, envMapIntensity})</code> — tune materials at runtime</li>
+<li><strong>Image Skybox + IBL</strong>: <code>createImageSkybox([6 urls])</code> — cube-map backgrounds with image-based lighting</li>
+<li><strong>Gradient &amp; Solid Skyboxes</strong>: <code>createGradientSkybox(top, bottom)</code>, <code>createSolidSkybox(color)</code></li>
+<li><strong>Skybox Animation API</strong>: <code>setSkyboxSpeed()</code>, <code>enableSkyboxAutoAnimate()</code>, <code>disableSkyboxAutoAnimate()</code></li>
+<li><strong><code>removeMesh</code> Alias</strong>: <code>removeMesh()</code> is now identical to <code>destroyMesh()</code> — both work</li>
+<li><strong>Cylinder Fixed</strong>: <code>createCylinder()</code> now correctly produces a cylinder, not a box</li>
+</ul>
+<h3>✨ <strong>Key Features</strong></h3>
+<ul>
+<li><strong>🚀 Three.js Integration</strong>: Hardware-accelerated 3D rendering with WebGL2</li>
+<li><strong>🎨 Advanced Materials</strong>: Holographic, metallic, emissive, and animated surfaces</li>
+<li><strong>💡 Cinematic Lighting</strong>: Multi-layered ambient, directional, and point lighting</li>
+<li><strong>🌫️ Atmospheric Effects</strong>: Dynamic fog, volumetric lighting, particle systems</li>
+<li><strong>📐 High-Quality Shadows</strong>: 4K shadow maps with soft shadow filtering</li>
+<li><strong>🎪 Post-Processing</strong>: ACES tone mapping, bloom effects, motion blur</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>🏗️ <strong>Progressive Enhancement Architecture</strong></h2>
+<p>Nova64&#39;s intelligent renderer system ensures maximum compatibility:</p>
+<ol>
+<li><strong>🎯 Three.js</strong> (Ultimate) - Complete 3D fantasy console with advanced effects</li>
+<li><strong>⚡ WebGL2</strong> (Enhanced) - High-performance 2D with shader effects and tone mapping</li>
+<li><strong>🖼️ Canvas2D</strong> (Compatible) - Universal 2D fallback for any device</li>
+</ol>
+<p><strong>🔧 Renderer Control</strong>: Use control panel dropdown or <code>localStorage.setItem(&#39;nova64-render-mode&#39;, &#39;threejs&#39;)</code></p>
+        </section>
+
+        <section class="md">
+<h2>🎯 <strong>Complete 3D API Reference</strong> (35+ Functions)</h2>
+<h3>🎨 <strong>Advanced Object Creation</strong></h3>
+<h4><code>createCube(size, color, position, options?)</code> / <code>createCube(width, height, depth, color, position, options?)</code> ⭐</h4>
+<p>Creates a cube or rectangular box mesh.</p>
+<ul>
+<li><code>size</code> (number): Cube side length (default: 1)</li>
+<li><code>width</code>, <code>height</code>, <code>depth</code> (number): Box dimensions when using the rectangular signature</li>
+<li><code>color</code> (hex): Colour, e.g. <code>0xff4488</code></li>
+<li><code>position</code> (array): <code>[x, y, z]</code> world position (default: <code>[0, 0, 0]</code>)</li>
+<li><code>options</code> (object): Material options — see Material Options table</li>
+<li><strong>Returns</strong>: mesh ID (number)</li>
+</ul>
+<pre><code class="language-javascript">// Basic cube
+const box = createCube(2, 0xff4488, [0, 1, 0]);
+
+// Rectangular box
+const wall = createCube(8, 3, 0.5, 0x666688, [0, 1.5, -4]);
+
+// Holographic cube
+const holoCube = createCube(1.5, 0x00ff88, [3, 1, -3], {
+  material: &#39;holographic&#39;,
+  emissive: 0x004400,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+</code></pre>
+<h4><code>createSphere(radius, color, position, options?)</code> ⭐</h4>
+<p>Creates a sphere mesh.</p>
+<ul>
+<li><code>radius</code> (number): Sphere radius (default: 1)</li>
+<li><code>color</code> (hex): Colour</li>
+<li><code>position</code> (array): <code>[x, y, z]</code></li>
+<li><code>options</code> (object): Material options; also accepts <code>segments</code> (default: 8)</li>
+<li><strong>Returns</strong>: mesh ID (number)</li>
+</ul>
+<pre><code class="language-javascript">// Metallic planet
+const planet = createSphere(2, 0x4488ff, [0, 2, -8], {
+  material: &#39;metallic&#39;,
+  metalness: 0.9,
+  roughness: 0.1,
+});
+
+// Low-poly N64 orb
+const orb = createSphere(0.8, 0xffff00, [-4, 1, -5], {
+  material: &#39;emissive&#39;,
+  segments: 8,
+});
+</code></pre>
+<h4><code>createPlane(width, height, color, position, options?)</code> ⭐</h4>
+<p>Creates a flat plane — ground, walls, ceilings.</p>
+<ul>
+<li><code>width, height</code> (numbers): Plane dimensions</li>
+<li><code>color</code> (hex): Colour</li>
+<li><code>position</code> (array): <code>[x, y, z]</code></li>
+<li><code>options</code> (object): Material options</li>
+<li><strong>Returns</strong>: mesh ID (number)</li>
+</ul>
+<pre><code class="language-javascript">// Ground plane
+const ground = createPlane(100, 100, 0x228b22, [0, 0, 0]);
+
+// Holographic wall
+const wall = createPlane(8, 6, 0x00ffff, [5, 3, -10], {
+  material: &#39;holographic&#39;,
+  transparent: true,
+  opacity: 0.7,
+});
+</code></pre>
+<h4><code>loadModel(url, position, scale)</code> (async)</h4>
+<p>Loads GLTF/GLB 3D models with automatic N64-style material conversion.</p>
+<ul>
+<li><code>url</code> (string): Path to .gltf or .glb file</li>
+<li><code>position</code> (array): [x, y, z] position (default: [0, 0, 0])</li>
+<li><code>scale</code> (number): Uniform scale factor (default: 1)</li>
+<li>Returns: Promise resolving to mesh ID</li>
+</ul>
+<pre><code class="language-js">const spaceship = await loadModel(&#39;/assets/ship.glb&#39;, [0, 0, 0], 0.5);
+</code></pre>
+<h3>Object Manipulation</h3>
+<h4><code>setPosition(meshId, x, y, z)</code></h4>
+<p>Sets absolute position of a 3D object.</p>
+<pre><code class="language-js">setPosition(cube, 5, 2, -3);
+</code></pre>
+<h4><code>setRotation(meshId, x, y, z)</code></h4>
+<p>Sets absolute rotation in radians.</p>
+<pre><code class="language-js">setRotation(cube, 0, Math.PI / 4, 0); // 45° Y rotation
+</code></pre>
+<h4><code>setScale(meshId, x, y, z)</code> or <code>setScale(meshId, uniform)</code></h4>
+<p>Sets object scale. Use single number for uniform scaling.</p>
+<pre><code class="language-js">setScale(cube, 2); // Double size uniformly
+setScale(cube, 1, 2, 1); // Stretch vertically only
+</code></pre>
+<h4><code>rotateMesh(meshId, x, y, z)</code></h4>
+<p>Rotates by the specified amounts (additive).</p>
+<pre><code class="language-js">// Spin cube each frame
+rotateMesh(cube, 0, dt, 0);
+</code></pre>
+<h4><code>moveMesh(meshId, x, y, z)</code></h4>
+<p>Moves by the specified offset (additive).</p>
+<pre><code class="language-js">moveMesh(cube, 0, Math.sin(time) * dt, 0); // Bob up and down
+</code></pre>
+<h4><code>destroyMesh(meshId)</code></h4>
+<p>Removes object from scene and frees memory.</p>
+<pre><code class="language-js">destroyMesh(cube);
+</code></pre>
+<h3>Camera Controls</h3>
+<h4><code>setCameraPosition(x, y, z)</code></h4>
+<p>Sets camera position in world space.</p>
+<pre><code class="language-js">setCameraPosition(0, 5, 10); // Behind and above origin
+</code></pre>
+<h4><code>setCameraTarget(x, y, z)</code></h4>
+<p>Sets what the camera looks at.</p>
+<pre><code class="language-js">setCameraTarget(0, 0, 0); // Look at origin
+</code></pre>
+<h4><code>setCameraFOV(degrees)</code></h4>
+<p>Sets field of view angle.</p>
+<pre><code class="language-js">setCameraFOV(75); // Wide angle view
+</code></pre>
+<h3>Scene Effects</h3>
+<h4><code>setFog(color, near, far)</code></h4>
+<p>Adds atmospheric fog for depth perception.</p>
+<ul>
+<li><code>color</code> (hex): Fog color as 0xRRGGBB</li>
+<li><code>near</code> (number): Distance where fog starts</li>
+<li><code>far</code> (number): Distance where fog is fully opaque</li>
+</ul>
+<pre><code class="language-js">setFog(0x003366, 10, 50); // Blue distance fog
+</code></pre>
+<h4><code>setLightDirection(x, y, z)</code></h4>
+<p>Sets the main directional light direction.</p>
+<pre><code class="language-js">setLightDirection(1, 1, 0.5); // Light from upper-right
+</code></pre>
+<h4><code>enablePixelation(factor)</code></h4>
+<p>Applies N64-style pixelation effect.</p>
+<ul>
+<li><code>factor</code> (number): Pixelation intensity (1 = none, 2+ = pixelated)</li>
+</ul>
+<pre><code class="language-js">enablePixelation(2); // Double-pixel rendering
+</code></pre>
+<h4><code>enableDithering(enabled)</code></h4>
+<p>Toggles color dithering for authentic retro look.</p>
+<pre><code class="language-js">enableDithering(true);
+</code></pre>
+<h3>Advanced Features</h3>
+<h4><code>raycastFromCamera(x, y)</code></h4>
+<p>Cast a ray from camera through screen coordinates for object picking.</p>
+<ul>
+<li>Returns: <code>{ meshId, point, distance }</code> or <code>null</code></li>
+</ul>
+<pre><code class="language-js">const hit = raycastFromCamera(mouseX, mouseY);
+if (hit) {
+  console.log(`Clicked object ${hit.meshId} at distance ${hit.distance}`);
+}
+</code></pre>
+<h4><code>get3DStats()</code></h4>
+<p>Returns rendering performance statistics.</p>
+<pre><code class="language-js">const stats = get3DStats();
+console.log(`Triangles: ${stats.render.triangles}, Calls: ${stats.render.calls}`);
+</code></pre>
+<h4>Direct Three.js Access</h4>
+<p>For advanced users who need full Three.js control:</p>
+<pre><code class="language-js">const scene = getScene();
+const camera = getCamera();
+const renderer = getRenderer();
+const mesh = getMesh(meshId);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>N64-Style Best Practices</h2>
+<h3>Geometry</h3>
+<ul>
+<li>Keep polygon counts low (&lt; 1000 tri per object)</li>
+<li>Use <code>segments</code> parameter on spheres (6-12 recommended)</li>
+<li>Prefer simple, angular shapes over smooth curves</li>
+</ul>
+<h3>Materials</h3>
+<ul>
+<li>Use flat, saturated colors</li>
+<li>Avoid complex textures</li>
+<li>Embrace vertex lighting over per-pixel</li>
+</ul>
+<h3>Performance</h3>
+<ul>
+<li>Batch similar objects when possible</li>
+<li>Use fog to hide distant detail</li>
+<li>Keep scene complexity moderate (&lt; 50 active objects)</li>
+</ul>
+<h3>Aesthetic</h3>
+<ul>
+<li>Use pixelation factor 1.5-2.0 for authentic feel</li>
+<li>Enable dithering for color banding</li>
+<li>Limit color palette for true retro look</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Example Cart Structure</h2>
+<pre><code class="language-js">let objects = [];
+let time = 0;
+
+export async function init() {
+  // Setup scene
+  setCameraPosition(0, 5, 10);
+  setFog(0x001122, 10, 30);
+  enablePixelation(1.5);
+
+  // Create objects
+  objects.push(createCube(1, 0xff0000, [0, 0, 0]));
+
+  // Load models if needed
+  const model = await loadModel(&#39;/assets/ship.glb&#39;);
+  objects.push(model);
+}
+
+export function update(dt) {
+  time += dt;
+
+  // Animate objects
+  objects.forEach((obj, i) =&gt; {
+    rotateMesh(obj, 0, dt, 0);
+  });
+
+  // Move camera
+  const camX = Math.cos(time * 0.5) * 10;
+  const camZ = Math.sin(time * 0.5) * 10;
+  setCameraPosition(camX, 5, camZ);
+  setCameraTarget(0, 0, 0);
+}
+
+export function draw() {
+  cls(); // Clear 2D overlay
+  // 3D renders automatically
+
+  // Add 2D HUD elements
+  print(&#39;3D Scene Active&#39;, 8, 8, rgba8(255, 255, 255, 255));
+  print(`Objects: ${objects.length}`, 8, 24, rgba8(200, 200, 200, 255));
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Migration from 2D</h2>
+<p>Existing 2D carts continue to work unchanged. To add 3D elements:</p>
+<ol>
+<li>Initialize 3D scene in <code>init()</code></li>
+<li>Create/animate 3D objects in <code>update()</code></li>
+<li>Use <code>draw()</code> for 2D overlay elements</li>
+<li>3D rendering happens automatically between <code>update()</code> and <code>draw()</code></li>
+</ol>
+<p>The 2D framebuffer becomes a transparent overlay rendered on top of the 3D scene, perfect for HUD elements, text, and UI.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

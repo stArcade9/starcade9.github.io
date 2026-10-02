@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godot Host Parity - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Godot Host Parity</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p>Nova64 carts run unchanged on two hosts: the web runtime (<code>runtime/</code>, Three.js or
+Babylon) and the native Godot 4.x host (GDExtension + QuickJS). This document is
+about keeping the two honest — what the cart-facing shim is, the semantics that
+are easy to get backwards, and the two commands that catch a divergence.</p>
+<p>For the C++ command surface see
+<a href="GODOT_HOST_CONTRACT.html">GODOT_HOST_CONTRACT.md</a>. For the overall plan and
+milestones see <a href="https://github.com/seacloud9/nova64/blob/main/GODOT.md"><code>../GODOT.md</code></a>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>The shim is a second copy of the runtime</h2>
+<p><code>nova64-godot/godot_project/shim/nova64-compat.js</code> re-implements the cart-facing
+<code>nova64.*</code> API on top of the Godot bridge. It is <strong>hand-maintained</strong>: nothing
+imports <code>runtime/</code>, and no build step copies anything across. A change to
+<code>runtime/</code> that is not re-ported into the shim makes the same cart behave
+differently — or crash — under Godot, silently.</p>
+<p>Two consequences worth internalising:</p>
+<ul>
+<li><strong>The shim answers unknown members with truthy no-op stubs.</strong> A function that
+was never ported still passes <code>typeof x === &#39;function&#39;</code>, still returns
+something, and still does nothing. Never probe the shim for a capability;
+probe its <em>behaviour</em>.</li>
+<li><strong>A divergence usually looks like a rendering bug, not a missing API.</strong> The
+cart runs, draws something plausible, and is simply wrong — a level too dark,
+a wall in the wrong place, a player who cannot move.</li>
+</ul>
+<pre><code>runtime/wad.js            ──┐
+runtime/backends/threejs/ ──┼── web host (Three.js / Babylon)
+runtime/input.js           ─┘
+
+shim/nova64-compat.js     ──┬── Godot host (GDExtension + QuickJS)
+gdextension/src/           ─┘
+         ▲
+         └─ hand-ported. `pnpm test:godot:parity` is the only thing holding
+            these two columns together.
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Three semantics that are easy to invert</h2>
+<p>These are not style preferences — each one shipped as a real defect and each is
+now pinned by the parity suite.</p>
+<h3>1. Directional lights take a POSITION, not a direction of travel</h3>
+<p><code>setDirectionalLight(v, …)</code> and <code>setLightDirection(x, y, z)</code> store <code>v</code> as a
+<code>THREE.DirectionalLight</code>&#39;s <strong>position</strong> and aim it at the origin
+(<code>runtime/backends/threejs/camera.js</code>). The light therefore travels along <code>-v</code>.</p>
+<p>A backend that reads the vector as a direction of travel inverts every light in
+the scene. Outdoors this only looks brighter; indoors it is catastrophic,
+because the light now strikes the <em>outside</em> of every wall and interiors go
+black. This is exactly what made <code>examples/wad-demo</code>&#39;s DOOM levels render almost
+unlit on the Godot host.</p>
+<p>The parity suite pins it by recovering the light&#39;s travel direction back out of
+the Euler angles the shim sends to Godot.</p>
+<h3>2. <code>createMaterial(kind, …)</code> names a Three.js material class</h3>
+<p><code>kind</code> is not a hint — it selects a shading model:</p>
+<table>
+<thead>
+<tr>
+<th><code>kind</code></th>
+<th>Three.js class</th>
+<th>Shading</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&#39;basic&#39;</code></td>
+<td><code>MeshBasicMaterial</code></td>
+<td>Unshaded — ignores lights</td>
+</tr>
+<tr>
+<td><code>&#39;phong&#39;</code>, <code>&#39;lambert&#39;</code></td>
+<td><code>MeshPhong/Lambert</code></td>
+<td>Plain diffuse, non-PBR</td>
+</tr>
+<tr>
+<td><code>&#39;standard&#39;</code>, <code>&#39;physical&#39;</code></td>
+<td><code>MeshStandardMaterial</code></td>
+<td>PBR</td>
+</tr>
+</tbody></table>
+<p>Running all of them through PBR defaults (metallic 0.05 / roughness 0.6) renders
+the non-PBR kinds far too dark — in the shim it put <code>wad-demo</code> at roughly a
+quarter of the web&#39;s brightness. In the Godot host <code>&#39;basic&#39;</code> maps to unshaded and
+<code>&#39;phong&#39;</code>/<code>&#39;lambert&#39;</code> to metallic 0 / roughness 1; an explicit
+<code>metallic</code>/<code>roughness</code> in the options always wins.</p>
+<p>Changing these defaults is only safe because <code>&#39;phong&#39;</code>/<code>&#39;basic&#39;</code> are rare
+(<code>wad-demo</code>, <code>fps-demo-3d</code>, <code>particles-demo</code>) while <code>&#39;standard&#39;</code>/<code>&#39;emissive&#39;</code> —
+used by nearly every other cart — are deliberately left untouched. The parity
+suite asserts that untouched-ness, so a future &quot;tidy up the material defaults&quot;
+change cannot quietly repaint the whole cart library.</p>
+<h3>3. WAD collision comes from the segment collider, never <code>colSegs</code></h3>
+<p><code>convertWADMap()</code> returns a collider built from the exact linedef segments, plus
+<code>getFloorHeight(x, z)</code> / <code>getCeilingHeight(x, z)</code> sector lookups. Carts must:</p>
+<ul>
+<li>take collision from <code>.collider</code> (or <code>.explorerCollider</code>);</li>
+<li>read floor height <strong>every frame</strong>, so stairs, ledges and pits work;</li>
+<li>call <code>buildReachability(collider, playerStart)</code> before requiring the player to
+reach anything, because doors, switches and teleporters are not simulated and
+parts of a real map are genuinely unreachable.</li>
+</ul>
+<p>The legacy <code>colSegs</code> point cloud is kept for back-compat only. Used for
+collision it inflates every wall to ~3.6 units thick, which seals a standard
+64-unit DOOM doorway (3.2 units at this scale) shut — on E1M1 that left 1 of 53
+enemies reachable.</p>
+<p>The shim carries its own copy of this geometry, lifted verbatim from
+<code>runtime/wad.js</code> so the two hosts cannot disagree about level shape.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>The two commands</h2>
+<h3><code>pnpm test:godot:parity</code> — the gate</h3>
+<pre><code class="language-bash">pnpm test:godot:parity     # or just `pnpm test`, which includes it
+</code></pre>
+<p><code>tests/test-godot-shim-parity.js</code> converts real FreeDoom maps through <strong>both</strong>
+implementations and requires identical walls, collider, floor heights and
+reachability, plus the light and material mappings above. It needs no Godot
+install — it exercises the shim as plain JavaScript.</p>
+<p>It runs inside <code>pnpm test</code>, the blocking gate <code>ci-preflight</code> mirrors, so shim
+drift fails CI rather than surfacing as a visual oddity weeks later.</p>
+<p><strong>When it fails:</strong> re-port the behaviour into the shim. Do not relax the test —
+its whole value is that it is stricter than eyeballing a screenshot. It was
+verified as a real gate while the fixes landed: 15/19 against the original shim,
+17/19 with only the light fix, 19/19 with all three.</p>
+<h3><code>pnpm visual:check</code> — the spot-check</h3>
+<pre><code class="language-bash">pnpm visual:check                  # both hosts, every mirrored cart
+pnpm visual:check --cart=wad-demo  # one cart (repeatable)
+pnpm visual:check --web-only       # skip Godot
+pnpm visual:check --godot-only     # skip the browser
+pnpm visual:check --list           # print the cart list and exit
+</code></pre>
+<p>Screenshots every mirrored cart on both hosts and writes a side-by-side contact
+sheet to <code>tmp/visual-check/index.html</code> (untracked), with <code>report.json</code> alongside.</p>
+<p><strong>It is not a pass/fail gate.</strong> The two hosts do not render identically —
+<code>01-cube</code> sits at roughly 55% different and is perfectly fine. The diff column
+points your eye at what changed; it does not assert equality.</p>
+<p>What it <em>does</em> guarantee is that every shot is of a cart that actually started.
+Each frame is checked for tonal spread and palette variety, which catches a dead
+canvas — but a map-select menu screenshots perfectly happily, so carts that need
+a keypress to begin declare a start condition in <code>START_OVERRIDES</code> and are
+reported <code>NOT-STARTED</code> (exit 1) if it is never satisfied. Only <code>wad-demo</code> needs
+one today; the failure message says how to add more.</p>
+<p>Compare with <code>pnpm godot:visual</code>, which captures browser/Godot/diff PNGs for
+mirrored carts and <em>can</em> fail on a threshold
+(<code>pnpm test:godot:visual</code>) — use that for tracked parity regressions, and
+<code>visual:check</code> when you want to see what a change did everywhere at once.</p>
+<h3>Picking the engine binary</h3>
+<p>Both tools resolve Godot through the shared <code>scripts/lib/godot-binary.mjs</code>, in
+this order:</p>
+<ol>
+<li><code>--godot=/path/to/godot</code></li>
+<li><code>$GODOT</code></li>
+<li>a known install path (4.5 preferred — <code>project.godot</code> declares
+<code>config/features &quot;4.5&quot;</code> — then 4.4.1)</li>
+<li>whatever <code>godot</code> is on <code>PATH</code></li>
+</ol>
+<p>Known installs deliberately beat <code>PATH</code>, because a <code>godot</code> on <code>PATH</code> is
+frequently older than the version this project targets. When nothing resolves,
+the resolver fails loudly listing every path it tried rather than running the
+wrong engine.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Non-regression rule for shared-adapter changes</h2>
+<p>The voxel path (compact columns → C++ greedy mesher → split opaque/transparent
+atlas surfaces) is the most fragile shared seam in the Godot host. Any shared
+adapter, atlas, sampler, or fog/frustum change made to improve WAD rendering
+<strong>must not degrade voxel rendering</strong>. Before landing one, run:</p>
+<pre><code class="language-bash">pnpm godot:visual minecraft-demo
+</code></pre>
+<p>plus a <code>voxel-creative</code> / <code>voxel-terrain</code> smoke, and confirm no parity drift.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Known remaining divergences</h2>
+<p>Behavioural gaps (no DOM, no <code>fetch</code>, pointer-lock differences) are listed in
+<a href="GODOT_HOST_CONTRACT.html#known-divergences-from-browser-backends">GODOT_HOST_CONTRACT.md § Known Divergences</a>.
+Rendering gaps are tracked in <a href="https://github.com/seacloud9/nova64/blob/main/ROADMAP.md"><code>../ROADMAP.md</code></a> Phase 3 → <em>WAD
+Sub-Roadmap</em>.</p>
+<p>One measured gap worth recording here: after the three fixes above, mean scene
+luminance on E1M1 rose from 6.6 to 21.7 (+229%), reaching 0.79× the web
+reference. The remaining ~20% is a broader Three.js/Godot lighting-model
+difference, not a shim defect.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Related documents</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="GODOT_HOST_CONTRACT.html">GODOT_HOST_CONTRACT.md</a></td>
+<td>The C++ bridge command surface and capability matrix</td>
+</tr>
+<tr>
+<td><a href="https://github.com/seacloud9/nova64/blob/main/GODOT.md"><code>../GODOT.md</code></a></td>
+<td>Strategy, tooling, milestones G0–G6</td>
+</tr>
+<tr>
+<td><a href="https://github.com/seacloud9/nova64/blob/main/nova64-godot/README.md"><code>../nova64-godot/README.md</code></a></td>
+<td>Directory layout, submodules, build quick start</td>
+</tr>
+<tr>
+<td><a href="GODOT_VOXEL_PLAN.html">GODOT_VOXEL_PLAN.md</a></td>
+<td>Voxel rendering sub-plan</td>
+</tr>
+<tr>
+<td><a href="GODOT_PLAYTEST_AND_TRAILER_WORKFLOW.html">GODOT_PLAYTEST_AND_TRAILER_WORKFLOW.md</a></td>
+<td>Recording and editing native gameplay footage</td>
+</tr>
+<tr>
+<td><a href="https://github.com/seacloud9/nova64/blob/main/AGENTS.md"><code>../AGENTS.md</code></a></td>
+<td>The same parity rules, as agent instructions</td>
+</tr>
+</tbody></table>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

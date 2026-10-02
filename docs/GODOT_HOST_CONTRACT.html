@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Godot Host Contract - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Godot Host Contract</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p><strong>Adapter contract version:</strong> <code>1.0.0</code><br><strong>Godot adapter version:</strong> <code>0.5.0</code><br><strong>Status: Active — Phase 3 in-progress polish</strong></p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Purpose</h2>
+<p>This document is the authoritative reference for the Nova64 Godot host bridge.
+It covers:</p>
+<ul>
+<li>the <code>call_bridge(method, payload) → Dictionary</code> entry point</li>
+<li>every supported command, its payload shape, and its return value</li>
+<li>the capabilities descriptor</li>
+<li>the input poll format</li>
+<li>handle lifecycle rules</li>
+<li>known gaps vs the Three.js and Babylon browsers backends</li>
+<li>cart lifecycle wiring</li>
+</ul>
+<p>For the general adapter surface that all backends must satisfy see
+<code>docs/ADAPTER_CONTRACT.md</code>. For backend structure and ownership rules see
+<code>docs/BACKEND_RUNTIME.md</code>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Architecture Overview</h2>
+<pre><code>JS (QuickJS)   →   engine.call(method, payload)
+                         ↓
+               nova64-godot/gdextension/src/bridge.cpp
+               Nova64Host::call_bridge(method, payload)
+                         ↓
+               GDScript node tree + Godot rendering APIs
+</code></pre>
+<p>Nova64 JS runs inside QuickJS embedded in a Godot GDExtension node
+(<code>Nova64Host</code>). All rendering, input, audio, and asset work crosses the
+bridge via <code>engine.call(method, payload)</code>. No direct Godot API calls
+exist in cart code or the JS shim.</p>
+<p>The shim at <code>nova64-godot/godot_project/shim/nova64-compat.js</code> translates
+cart-facing Nova64 API calls (<code>createCube</code>, <code>setCameraPosition</code>, etc.) into
+<code>call_bridge</code> method+payload pairs. Cart code never calls <code>engine.call</code>
+directly.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Bridge Entry Point</h2>
+<pre><code>Nova64Host::call_bridge(method: String, payload: Dictionary) → Dictionary
+</code></pre>
+<ul>
+<li><strong><code>method</code></strong> — dot-separated namespace and command, e.g. <code>&quot;material.create&quot;</code>.</li>
+<li><strong><code>payload</code></strong> — zero or more named parameters.</li>
+<li><strong>return</strong> — a Dictionary; always includes <code>{ &quot;error&quot;: ..., &quot;message&quot;: ... }</code> on failure.</li>
+</ul>
+<p>Unknown methods return <code>{ &quot;error&quot;: &quot;unsupported_method&quot; }</code>.</p>
+<p>Batched dispatch is available via <code>engine.flush(commands)</code> where <code>commands</code>
+is an Array of <code>[method, payload]</code> pairs or <code>{m, p}</code> objects. Returns an
+Array of result Dictionaries in the same order.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Capabilities Descriptor</h2>
+<p><code>host.getCapabilities</code> (or <code>engine.init</code>) returns a Dictionary:</p>
+<pre><code class="language-json">{
+  &quot;backend&quot;: &quot;godot&quot;,
+  &quot;contractVersion&quot;: &quot;1.0.0&quot;,
+  &quot;adapterVersion&quot;: &quot;0.5.0&quot;,
+  &quot;features&quot;: [ ... ]
+}
+</code></pre>
+<p>The <code>features</code> array lists every method string that <code>call_bridge</code> will
+handle without returning <code>unsupported_method</code>. Cart and runtime code should
+use this array for feature detection rather than hard-coding backend checks.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Handle Lifecycle</h2>
+<ul>
+<li>Every <code>*.create</code> command returns <code>{ &quot;handle&quot;: &lt;integer&gt; }</code>.</li>
+<li>Handles are opaque 32-bit unsigned integers managed by <code>HandleTable</code>.</li>
+<li>Handle kinds: <code>MATERIAL</code>, <code>GEOMETRY</code>, <code>MESH_INSTANCE</code>, <code>CAMERA</code>, <code>LIGHT</code>,
+<code>TEXTURE</code>, <code>AUDIO</code>, <code>MULTI_MESH</code>, <code>PARTICLES</code>.</li>
+<li>Passing a handle of the wrong kind to a command returns
+<code>{ &quot;error&quot;: &quot;invalid_*_handle&quot; }</code>.</li>
+<li>Destroy commands free the backing Godot node and resource. Using a
+destroyed handle is a no-op (safe but silently ignored).</li>
+<li><code>transform.set</code> resolves handles of kinds <code>MESH_INSTANCE</code>, <code>CAMERA</code>,
+<code>LIGHT</code>, <code>MULTI_MESH</code>, and <code>PARTICLES</code> — all node-backed resource types.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Command Reference</h2>
+<h3>System</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Payload</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>host.getCapabilities</code></td>
+<td>—</td>
+<td><code>{ backend, contractVersion, adapterVersion, features[] }</code></td>
+</tr>
+<tr>
+<td><code>engine.init</code></td>
+<td>—</td>
+<td><code>{ capabilities: &lt;same as above&gt; }</code></td>
+</tr>
+<tr>
+<td><code>engine.flush</code></td>
+<td><code>commands: Array</code></td>
+<td><code>Array</code> of per-command results</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Material</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>material.create</code></td>
+<td><code>albedo</code> (r/g/b/a), <code>metallic</code>, <code>roughness</code>, <code>specular</code>, <code>emission</code>, <code>emissionEnergy</code>, <code>transparency</code> (<code>&#39;alpha&#39;</code>/<code>&#39;scissor&#39;</code>/<code>&#39;hash&#39;</code>/<code>&#39;depth_prepass&#39;</code>), <code>alphaCut</code>, <code>blend</code> (<code>&#39;add&#39;</code>/<code>&#39;sub&#39;</code>/<code>&#39;mul&#39;</code>), <code>unshaded</code>, <code>shadingMode</code> (<code>&#39;unshaded&#39;</code>/<code>&#39;per_vertex&#39;</code>/<code>&#39;per_pixel&#39;</code>), <code>diffuseMode</code> (<code>&#39;lambert_wrap&#39;</code>/<code>&#39;toon&#39;</code>/<code>&#39;burley&#39;</code>), <code>specularMode</code> (<code>&#39;toon&#39;</code>/<code>&#39;disabled&#39;</code>), <code>rim</code>, <code>rimTint</code>, <code>clearcoat</code>, <code>clearcoatRoughness</code>, <code>anisotropy</code>, <code>doubleSided</code>, <code>castShadow</code>, <code>receiveShadow</code>, <code>depthTest</code>, <code>depthWrite</code>, <code>textures</code> (object of slot→handle maps)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>material.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>material.emission</code></td>
+<td><code>handle</code>, <code>color</code> (r/g/b), <code>energy</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>material.blend.add</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p>Colors are passed as <code>{ r, g, b, a }</code> floats (0–1) or as a single <code>number</code>
+encoding <code>0xRRGGBB</code>.</p>
+<hr>
+<h3>Geometry</h3>
+<p>All geometry commands return <code>{ handle }</code>. Geometry handles are immutable
+after creation; rebuild to change shape.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>geometry.createBox</code></td>
+<td><code>w</code>, <code>h</code>, <code>d</code> (default 1)</td>
+</tr>
+<tr>
+<td><code>geometry.createSphere</code></td>
+<td><code>radius</code> (default 0.5), <code>rings</code>, <code>segments</code></td>
+</tr>
+<tr>
+<td><code>geometry.createPlane</code></td>
+<td><code>w</code>, <code>h</code> (default 1), <code>subdivide</code></td>
+</tr>
+<tr>
+<td><code>geometry.createCylinder</code></td>
+<td><code>radius</code> (default 0.5), <code>height</code> (default 1), <code>segments</code></td>
+</tr>
+<tr>
+<td><code>geometry.createCone</code></td>
+<td><code>radius</code> (default 0.5), <code>height</code> (default 1), <code>segments</code></td>
+</tr>
+<tr>
+<td><code>geometry.createTorus</code></td>
+<td><code>innerRadius</code>, <code>outerRadius</code>, <code>rings</code>, <code>segments</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Mesh</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mesh.create</code></td>
+<td><code>geometry</code> (handle), <code>material</code> (handle, optional)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>mesh.setMaterial</code></td>
+<td><code>mesh</code> (handle), <code>material</code> (handle)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>mesh.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>mesh.createInstanced</code></td>
+<td><code>geometry</code> (handle), <code>count</code>, <code>material</code> (handle)</td>
+<td><code>{ handle }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Transform</h3>
+<p><code>transform.set</code> applies to any node-backed handle (mesh, camera, light,
+instanced mesh, particles).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>transform.set</code></td>
+<td><code>handle</code>, <code>position</code> ({x,y,z}), <code>rotation</code> ({x,y,z} radians), <code>lookAt</code> ({x,y,z}), <code>scale</code> ({x,y,z}), <code>visible</code> (bool)</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p>If both <code>lookAt</code> and <code>rotation</code> are present, <code>lookAt</code> wins.</p>
+<hr>
+<h3>Camera</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>camera.create</code></td>
+<td><code>fov</code> (default 60), <code>near</code> (default 0.1), <code>far</code> (default 1000)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>camera.setActive</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>camera.setParams</code></td>
+<td><code>handle</code>, <code>fov</code>, <code>near</code>, <code>far</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Lights</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>light.createDirectional</code></td>
+<td><code>color</code> ({r,g,b}), <code>energy</code> (default 1.0), <code>shadow</code> (bool, default true)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>light.createPoint</code></td>
+<td><code>color</code> ({r,g,b}), <code>energy</code> (default 1.0), <code>range</code> (default 20), <code>shadow</code> (bool)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>light.createSpot</code></td>
+<td><code>color</code>, <code>energy</code>, <code>range</code>, <code>angle</code> (degrees), <code>shadow</code></td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>light.setColor</code></td>
+<td><code>handle</code>, <code>color</code> ({r,g,b})</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>light.setEnergy</code></td>
+<td><code>handle</code>, <code>energy</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>light.setSun</code></td>
+<td><code>energy</code>, <code>color</code>, <code>pitch</code> (degrees), <code>yaw</code> (degrees)</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p><code>light.setSun</code> creates or updates a shared <code>DirectionalLight3D</code> used for
+day/night cycles. It is separate from individually tracked light handles.</p>
+<hr>
+<h3>Environment</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>env.set</code></td>
+<td><code>fog</code> (bool), <code>fogColor</code> ({r,g,b}), <code>fogDensity</code>, <code>fogNear</code>, <code>fogFar</code>, <code>ambientColor</code> ({r,g,b}), <code>ambientEnergy</code>, <code>sky</code> (<code>&#39;procedural&#39;</code>/<code>&#39;none&#39;</code>), <code>skyColor</code> ({r,g,b}), <code>skyHorizonColor</code>, <code>glow</code> (bool), <code>glowIntensity</code>, <code>ssao</code> (bool), <code>tonemapper</code> (<code>&#39;linear&#39;</code>/<code>&#39;reinhardt&#39;</code>/<code>&#39;filmic&#39;</code>/<code>&#39;aces&#39;</code>)</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Input Poll</h3>
+<p><code>input.poll</code> takes no payload and returns a snapshot of current Godot input state.</p>
+<pre><code class="language-json">{
+  &quot;keys&quot;: [&quot;KeyA&quot;, &quot;Space&quot;],        // web-style key codes currently held
+  &quot;left&quot;: true,                      // Arrow/WASD convenience bools
+  &quot;right&quot;: false,
+  &quot;up&quot;: false,
+  &quot;down&quot;: false,
+  &quot;action&quot;: false,
+  &quot;buttons&quot;: [false, false, ...],    // 14-element gamepad button array
+  &quot;axis&quot;: { &quot;lx&quot;: 0.0, &quot;ly&quot;: 0.0, &quot;rx&quot;: 0.0, &quot;ry&quot;: 0.0, &quot;lt&quot;: 0.0, &quot;rt&quot;: 0.0 },
+  &quot;touches&quot;: [{ &quot;id&quot;: 0, &quot;x&quot;: 100, &quot;y&quot;: 280 }]  // active touches, 640x360 logical
+}
+</code></pre>
+<p><strong>Touches</strong> echo whatever the GDScript host last pushed via <code>set_touches</code>
+(<code>Nova64Host</code> can&#39;t enumerate active touches from the <code>Input</code> singleton, so the
+host captures <code>InputEventScreenTouch</code>/<code>Drag</code> and pushes the live set each frame).
+They surface to carts as <code>nova64.input.touches()</code> / <code>touchCount()</code>.</p>
+<p><strong>Key codes</strong> use web <code>KeyboardEvent.code</code> names (<code>&quot;KeyW&quot;</code>, <code>&quot;ArrowLeft&quot;</code>,
+<code>&quot;Space&quot;</code>, <code>&quot;Enter&quot;</code>, <code>&quot;ShiftLeft&quot;</code>, etc.). The full mapped set is defined
+in <code>bridge.cpp</code> at <code>_cmd_input_poll</code>.</p>
+<p><strong>Gamepad button array</strong> (<code>buttons[0..13]</code>) maps to the Nova64 gamepad layout:
+<code>0=ArrowLeft, 1=ArrowRight, 2=ArrowUp, 3=ArrowDown, 4=KeyZ, 5=KeyX, 6=KeyC, 7=KeyV, 8=KeyA, 9=KeyS, 10=KeyQ, 11=KeyW, 12=Enter, 13=Space</code>.</p>
+<p>Axes apply a shaped deadzone (0.18) and power curve (exponent 1.35).</p>
+<hr>
+<h3>Texture</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>texture.createFromImage</code></td>
+<td><code>data</code> (Array of RGBA bytes), <code>width</code>, <code>height</code>, <code>filter</code> (<code>&#39;nearest&#39;</code>/<code>&#39;linear&#39;</code>), <code>mipmap</code> (bool, default true), <code>srgb</code> (bool)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>texture.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Audio</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>audio.loadStream</code></td>
+<td><code>path</code> (Godot resource path), <code>loop</code> (bool)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>audio.play</code></td>
+<td><code>handle</code>, <code>volume</code> (0–1, default 1), <code>pitch</code> (default 1)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>audio.stop</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Instanced Mesh</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mesh.createInstanced</code></td>
+<td><code>geometry</code> (handle), <code>count</code> (max instances), <code>material</code> (handle)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>instance.setTransform</code></td>
+<td><code>handle</code>, <code>index</code>, <code>position</code>, <code>rotation</code>, <code>scale</code>, <code>color</code> ({r,g,b,a})</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Particles</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>particles.create</code></td>
+<td><code>count</code> (default 500), <code>lifetime</code> (seconds, default 1), <code>color</code> ({r,g,b,a}), <code>speed</code> (default 2), <code>spread</code> (degrees, default 45), <code>gravity</code> ({x,y,z}), <code>directionX/Y/Z</code>, <code>emitting</code> (bool, default true), <code>position</code> ({x,y,z}), <code>geometry</code> (handle, optional)</td>
+<td><code>{ handle }</code></td>
+</tr>
+<tr>
+<td><code>particles.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Model Loading</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>model.load</code></td>
+<td><code>path</code> (Godot resource path), <code>position</code> ({x,y,z}), <code>rotation</code> ({x,y,z}), <code>scale</code> ({x,y,z})</td>
+<td><code>{ handle, childHandles[] }</code></td>
+</tr>
+<tr>
+<td><code>vox.load</code></td>
+<td><code>path</code> (Godot resource path), <code>scale</code> (default 0.1), <code>position</code> ({x,y,z})</td>
+<td><code>{ handle }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Video (proposed — not yet implemented in the host)</h3>
+<p>This section defines the host-side commands <code>nova64.video</code> will use on
+Godot once the Godot adapter ships. The JS API is already stable in
+<code>runtime/api-video.js</code>; it currently falls through to a stub on Godot
+hosts. When the bridge below is in place, <code>videoApi(gpu)</code>&#39;s backend
+detector will recognise Godot and route real calls through.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>video.load</code></td>
+<td><code>path</code> (Godot resource path, must resolve to a <code>VideoStream</code>-compatible file, typically <code>.ogv</code> or <code>.webm</code>), <code>loop</code> (bool), <code>autoplay</code> (bool), <code>muted</code> (bool)</td>
+<td><code>{ handle, ready }</code></td>
+</tr>
+<tr>
+<td><code>video.applyToMesh</code></td>
+<td><code>videoHandle</code>, <code>meshHandle</code>, <code>slot</code> (<code>&#39;albedo&#39;</code> (default) / <code>&#39;emission&#39;</code>)</td>
+<td><code>{ ok }</code> — host binds a <code>VideoStreamPlayback</code>&#39;s texture as the mesh material&#39;s <code>albedo_texture</code> / <code>emission_texture</code></td>
+</tr>
+<tr>
+<td><code>video.play</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>video.pause</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>video.seek</code></td>
+<td><code>handle</code>, <code>time</code> (seconds)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>video.setVolume</code></td>
+<td><code>handle</code>, <code>volume</code> (0–1)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>video.playFullscreen</code></td>
+<td><code>path</code>, <code>loop</code> (bool), <code>muted</code> (bool), <code>skipKey</code> (string, default <code>&#39;ui_cancel&#39;</code>)</td>
+<td><code>{ handle }</code> — host spawns a fullscreen <code>VideoStreamPlayer</code> on the viewport; emits <code>video.finished</code> event when playback ends or skip-key is pressed</td>
+</tr>
+<tr>
+<td><code>video.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p><strong>Asset format</strong>: Godot&#39;s <code>VideoStream</code> core supports <code>.ogv</code> (Theora) out
+of the box and <code>.webm</code> (VP8/9) via the <code>webm</code> plugin. <code>.mp4</code> (H.264) is
+not natively supported in Godot 4 and would require a third-party
+plugin or transcoding to one of the above. The browser path uses <code>.mp4</code>
+freely, so carts that want cross-host compatibility should ship both an
+<code>.mp4</code> and a transcoded <code>.ogv</code> / <code>.webm</code> and let the engine pick by
+backend.</p>
+<p><strong>Events</strong>: the host MUST emit <code>video.finished</code> with payload
+<code>{ handle, skipped: bool }</code> when a fullscreen video ends or is skipped,
+so the <code>playFullscreen</code> promise resolves.</p>
+<h3>Voxel</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>voxel.uploadChunk</code></td>
+<td><code>cx</code>, <code>cz</code> (chunk coords), <code>columns</code> (Array of compact column records), <code>chunkSize</code>, <code>seaLevel</code>, <code>atlasUrl</code>, <code>atlasTileSize</code>, <code>atlasTilesPerRow</code>, <code>trees</code> (Array), <code>meshMin</code>/<code>meshMax</code> (mesh bounds override)</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p>The compact column record format is documented in <code>docs/GODOT_VOXEL_PLAN.md</code>.</p>
+<hr>
+<h3>WAD Loading</h3>
+<p>The WAD bridge exposes the WAD directory and raw lump data to JS for parsing
+by <code>runtime/wad.js</code>. The C++ side handles file I/O; JS handles all parsing.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>wad.load</code></td>
+<td><code>path</code> (Godot resource path, e.g. <code>res://assets/freedoom1.wad</code>)</td>
+<td><code>{ handle, tag, directory[], path, size }</code></td>
+</tr>
+<tr>
+<td><code>wad.readLump</code></td>
+<td><code>handle</code>, <code>filepos</code>, <code>size</code></td>
+<td><code>{ bytes: Array, size }</code></td>
+</tr>
+<tr>
+<td><code>wad.destroy</code></td>
+<td><code>handle</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p><code>wad.load</code> returns a <code>directory</code> array of <code>{ name, filepos, size }</code> objects
+for every lump. Carts call <code>wad.readLump</code> to fetch individual lump byte
+arrays, which are then decoded by <code>WADLoader</code> in JS.</p>
+<hr>
+<h3>Overlay (2D HUD)</h3>
+<p>Overlay commands draw on a <code>CanvasLayer</code> rendered above the 3D scene.
+Coordinates are in the cart&#39;s 640×360 virtual canvas space.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key payload fields</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>overlay.cls</code></td>
+<td><code>r</code>, <code>g</code>, <code>b</code>, <code>a</code> (clear color, default transparent)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.pset</code></td>
+<td><code>x</code>, <code>y</code>, <code>color</code> ({r,g,b,a})</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.rect</code></td>
+<td><code>x</code>, <code>y</code>, <code>w</code>, <code>h</code>, <code>color</code> ({r,g,b,a}), <code>fill</code> (bool, default true)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.line</code></td>
+<td><code>x1</code>, <code>y1</code>, <code>x2</code>, <code>y2</code>, <code>color</code>, <code>width</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.circle</code></td>
+<td><code>x</code>, <code>y</code>, <code>r</code>, <code>color</code>, <code>fill</code></td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.text</code></td>
+<td><code>x</code>, <code>y</code>, <code>text</code>, <code>color</code>, <code>size</code> (font size px)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.image</code></td>
+<td><code>texture</code>/<code>handle</code> (texture handle), <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code>, <code>color</code> ({r,g,b,a}, optional modulate)</td>
+<td><code>{ ok }</code></td>
+</tr>
+<tr>
+<td><code>overlay.batch</code></td>
+<td><code>ops: Array</code> of individual overlay command objects (each has <code>type</code> + fields above)</td>
+<td><code>{ ok }</code></td>
+</tr>
+</tbody></table>
+<p><code>overlay.batch</code> is the preferred path for HUD-heavy carts; it amortises
+the JS→C++ call overhead to a single round-trip per frame. Image ops use
+the compact array form <code>[&#39;image&#39;, textureHandle, x, y, w, h, color]</code>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Cart Lifecycle</h2>
+<p>Godot drives the cart lifecycle through <code>Nova64Host</code> node callbacks:</p>
+<ol>
+<li><code>load_cart(res_path)</code> — evaluates the cart ES module, caches <code>init</code>,
+<code>update</code>, <code>draw</code> exports. Returns <code>false</code> if the module has no
+recognisable lifecycle exports.</li>
+<li><code>cart_init()</code> — calls the cart&#39;s <code>init()</code> export once.</li>
+<li><code>cart_update(delta)</code> — calls <code>update(dt)</code> every <code>_process</code> frame.</li>
+<li><code>cart_draw()</code> — calls <code>draw()</code> every frame after <code>cart_update</code>.</li>
+</ol>
+<p>The host GDScript (<code>scripts/nova64_host.gd</code>) wires these to
+<code>Node._process(delta)</code>.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Capability Matrix</h2>
+<p>The table below summarises supported and unsupported features compared to
+the Three.js browser backend.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Three.js</th>
+<th>Babylon.js</th>
+<th>Godot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PBR materials</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Texture upload from pixel data</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Instanced meshes</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>GPU particles</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Directional / point / spot lights</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Shadows</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (default on)</td>
+</tr>
+<tr>
+<td>Fog</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>GLTF model loading</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>VOX model loading</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>WAD loading</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Voxel chunk meshing</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (native C++ greedy mesher)</td>
+</tr>
+<tr>
+<td>2D overlay (HUD + image blits)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Gamepad input</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Mouse look / pointer lock</td>
+<td>✅</td>
+<td>✅</td>
+<td>⚠️ partial (no browser pointer-lock API)</td>
+</tr>
+<tr>
+<td>Audio</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Post-processing (bloom, SSAO)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (via <code>env.set</code>)</td>
+</tr>
+<tr>
+<td>Video texture on mesh (<code>nova64.video</code>)</td>
+<td>✅</td>
+<td>✅</td>
+<td>🟡 contract defined, host impl pending</td>
+</tr>
+<tr>
+<td>Full-screen video playback</td>
+<td>✅</td>
+<td>✅</td>
+<td>🟡 contract defined, host impl pending</td>
+</tr>
+<tr>
+<td>TSL / custom shaders</td>
+<td>✅ Three-only</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>WebXR / VR / AR</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌ (Godot XR is separate and not yet bridged)</td>
+</tr>
+<tr>
+<td>canvas2D textures (HTMLCanvas)</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌ (no DOM; use <code>texture.createFromImage</code> instead)</td>
+</tr>
+<tr>
+<td>Drag-and-drop WAD file loading</td>
+<td>✅ (via drop event)</td>
+<td>✅</td>
+<td>❌ (use <code>nova64.wad.load(res://)</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Known Divergences from Browser Backends</h2>
+<p>The cart-facing shim is a hand-maintained second copy of <code>runtime/</code>, so it can also
+diverge by accident. The semantics that are easy to invert — directional-light
+orientation, <code>createMaterial(kind)</code> shading models, and WAD collision geometry — and
+the <code>pnpm test:godot:parity</code> gate that pins them are documented in
+<a href="GODOT_PARITY.html">GODOT_PARITY.md</a>.</p>
+<p>The deliberate divergences:</p>
+<ul>
+<li><strong>Pointer lock / mouse look</strong> — Godot captures the cursor via
+<code>Input.mouse_mode = MOUSE_MODE_CAPTURED</code>. The shim translates this but
+raw mouse delta comes from Godot <code>InputEventMouseMotion</code>, not browser
+<code>movementX/Y</code>. High-sensitivity mouse carts may need tuning.</li>
+<li><strong>HTMLCanvas API</strong> — Not available inside QuickJS. Carts that use
+<code>document.createElement(&#39;canvas&#39;)</code> for texture generation must detect
+Godot mode and use <code>nova64.draw</code> or <code>texture.createFromImage</code> instead.</li>
+<li><strong>DOM events</strong> — <code>window.addEventListener</code>, <code>document.addEventListener</code>,
+<code>fetch</code>, <code>XMLHttpRequest</code>, and similar browser APIs are not available.
+The shim guards the most common drag-and-drop and file-picker paths.</li>
+<li><strong>WAD sector light / COLORMAP</strong> — Godot WAD rendering uses a flat ambient
+term. COLORMAP-based sector darkening is not yet implemented (tracked in
+ROADMAP.md Phase 3 WAD sub-roadmap).</li>
+<li><strong>WAD animated flats</strong> — Animated floor/ceiling textures are not yet
+driven by the Godot WAD path.</li>
+<li><strong>Sprite billboard parity</strong> — Transparent pixel handling and per-frame
+rotation tables for WAD sprites need additional parity work.</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Error Response Shape</h2>
+<p>All failed commands return:</p>
+<pre><code class="language-json">{ &quot;error&quot;: &quot;&lt;error_code&gt;&quot;, &quot;message&quot;: &quot;&lt;human_readable&gt;&quot; }
+</code></pre>
+<p>Common error codes:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>unsupported_method</code></td>
+<td>Method not in the whitelist</td>
+</tr>
+<tr>
+<td><code>missing_&lt;field&gt;</code></td>
+<td>Required payload field absent</td>
+</tr>
+<tr>
+<td><code>invalid_&lt;kind&gt;_handle</code></td>
+<td>Handle does not resolve to expected type</td>
+</tr>
+<tr>
+<td><code>file_not_found</code></td>
+<td>Resource path not accessible</td>
+</tr>
+<tr>
+<td><code>wad_bad_magic</code></td>
+<td>File is not a valid IWAD/PWAD</td>
+</tr>
+<tr>
+<td><code>wad_lump_oob</code></td>
+<td><code>filepos + size</code> exceeds WAD buffer</td>
+</tr>
+</tbody></table>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Source References</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>nova64-godot/godot_project/shim/nova64-compat.js</code></td>
+<td>Cart-facing <code>nova64.*</code> API for the QuickJS host (hand-ported from <code>runtime/</code>)</td>
+</tr>
+<tr>
+<td><code>nova64-godot/gdextension/src/bridge.cpp</code></td>
+<td><code>call_bridge</code> dispatch and all <code>_cmd_*</code> implementations</td>
+</tr>
+<tr>
+<td><code>nova64-godot/gdextension/src/bridge.h</code></td>
+<td><code>Nova64Host</code> class declaration, lifecycle method signatures</td>
+</tr>
+<tr>
+<td><code>nova64-godot/gdextension/src/handles.cpp</code></td>
+<td><code>HandleTable</code> — allocates and type-checks all opaque handles</td>
+</tr>
+<tr>
+<td><code>nova64-godot/godot_project/shim/nova64-compat.js</code></td>
+<td>JS shim: translates cart API calls into <code>engine.call</code> pairs</td>
+</tr>
+<tr>
+<td><code>nova64-godot/godot_project/scripts/nova64_host.gd</code></td>
+<td>GDScript host wiring — cart load, process loop</td>
+</tr>
+<tr>
+<td><code>nova64-godot/godot_project/scripts/conformance_runner.gd</code></td>
+<td>Conformance harness that validates the contract surface</td>
+</tr>
+<tr>
+<td><code>tests/test-adapter-conformance.js</code></td>
+<td>Shared adapter conformance suite</td>
+</tr>
+</tbody></table>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

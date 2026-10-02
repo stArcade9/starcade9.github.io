@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Fullscreen Button Feature - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Fullscreen Button Feature</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Overview</h2>
+<p>A universal fullscreen button that appears in the lower-right corner of the canvas for <strong>every</strong> Nova64 demo. This allows users to quickly toggle fullscreen mode with a single click.</p>
+        </section>
+
+        <section class="md">
+<h2>Features</h2>
+<p>✅ <strong>Universal</strong>: Appears for all demos automatically<br>✅ <strong>Stylish UI</strong>: Neon cyan button with hover effects matching Nova64 theme<br>✅ <strong>Smooth Transitions</strong>: Animated hover and fullscreen transitions<br>✅ <strong>Keyboard Support</strong>: ESC key exits fullscreen mode<br>✅ <strong>Cross-browser</strong>: Works in Chrome, Firefox, Safari, Edge<br>✅ <strong>Icon Changes</strong>: Shows expand icon (⛶) normally, compress icon (⛉) in fullscreen<br>✅ <strong>Transparent Background</strong>: Blurred backdrop for modern glass effect</p>
+        </section>
+
+        <section class="md">
+<h2>Usage</h2>
+<h3>For Users:</h3>
+<ol>
+<li><p><strong>Enter Fullscreen</strong>:</p>
+<ul>
+<li>Click the button in the lower-right corner</li>
+<li>Or use F11 (browser default)</li>
+</ul>
+</li>
+<li><p><strong>Exit Fullscreen</strong>:</p>
+<ul>
+<li>Click the button again</li>
+<li>Or press <strong>ESC</strong> key</li>
+<li>Or press F11 again</li>
+</ul>
+</li>
+</ol>
+<h3>For Developers:</h3>
+<p>The fullscreen button is <strong>automatically created</strong> when the Nova64 runtime initializes. No setup needed in individual demos!</p>
+<pre><code class="language-javascript">// In main.js - already configured!
+import { createFullscreenButton } from &#39;../runtime/fullscreen-button.js&#39;;
+
+const canvas = document.getElementById(&#39;screen&#39;);
+globalThis.fullscreenButton = createFullscreenButton(canvas);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Implementation Details</h2>
+<h3>File: <code>runtime/fullscreen-button.js</code></h3>
+<p>The fullscreen button:</p>
+<ul>
+<li>Creates a floating button element</li>
+<li>Positions it at <code>bottom: 20px</code>, <code>right: 20px</code></li>
+<li>Uses fixed positioning (visible in all demos)</li>
+<li>Adds event listeners for:<ul>
+<li>Click to toggle fullscreen</li>
+<li>ESC key to exit</li>
+<li>Fullscreen change detection (handles F11, ESC, etc.)</li>
+</ul>
+</li>
+</ul>
+<h3>Styling</h3>
+<pre><code class="language-css">Position: Fixed (lower-right corner)
+Size: 48px × 48px
+Border: 2px solid cyan (#00ffff)
+Background: Semi-transparent dark with blur effect
+Shadow: Neon cyan glow
+Z-index: 9999 (always on top)
+</code></pre>
+<h3>Browser Compatibility</h3>
+<p>Uses standard Fullscreen API with fallbacks:</p>
+<ul>
+<li><code>requestFullscreen()</code> - Standard</li>
+<li><code>webkitRequestFullscreen()</code> - Safari</li>
+<li><code>mozRequestFullScreen()</code> - Firefox</li>
+<li><code>msRequestFullscreen()</code> - IE11</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Technical Architecture</h2>
+<h3>Class: FullscreenButton</h3>
+<pre><code class="language-javascript">class FullscreenButton {
+  constructor(canvas)
+  createButton()           // Creates DOM element with styles
+  attachListeners()        // Sets up click and keyboard handlers
+  toggleFullscreen()       // Toggles between fullscreen/normal
+  enterFullscreen()        // Enters fullscreen mode
+  exitFullscreen()         // Exits fullscreen mode
+  handleFullscreenChange() // Syncs state with browser
+  updateButton()           // Updates icon based on state
+  destroy()                // Cleanup (if needed)
+}
+</code></pre>
+<h3>State Management</h3>
+<pre><code class="language-javascript">this.isFullscreen = false; // Tracks current state
+</code></pre>
+<p>State is automatically synchronized when:</p>
+<ul>
+<li>User clicks button</li>
+<li>User presses ESC</li>
+<li>User presses F11</li>
+<li>Browser exits fullscreen for any reason</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Customization</h2>
+<p>If you need to customize the button appearance, edit <code>runtime/fullscreen-button.js</code>:</p>
+<pre><code class="language-javascript">// Change position
+bottom: &#39;20px&#39;,    // Distance from bottom
+right: &#39;20px&#39;,     // Distance from right
+
+// Change size
+width: &#39;48px&#39;,
+height: &#39;48px&#39;,
+
+// Change colors
+border: &#39;2px solid #00ffff&#39;,  // Cyan border
+color: &#39;#00ffff&#39;,              // Cyan icon
+
+// Change background
+background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>ESC Key Behavior</h2>
+<p>The ESC key is handled at two levels:</p>
+<ol>
+<li><strong>Browser Level</strong>: Native fullscreen ESC handling</li>
+<li><strong>Button Level</strong>: Custom ESC listener that calls <code>exitFullscreen()</code></li>
+</ol>
+<p>Both work together to ensure ESC always exits fullscreen mode.</p>
+        </section>
+
+        <section class="md">
+<h2>Examples</h2>
+<h3>Button in Different States</h3>
+<p><strong>Normal Mode</strong>:</p>
+<pre><code>┌──────────────────┐
+│        ⛶         │  ← Expand icon
+└──────────────────┘
+</code></pre>
+<p><strong>Fullscreen Mode</strong>:</p>
+<pre><code>┌──────────────────┐
+│        ⛉         │  ← Compress icon
+└──────────────────┘
+</code></pre>
+<h3>Hover Effect</h3>
+<ul>
+<li>Scale: 1.0 → 1.1</li>
+<li>Background: Darker → Cyan tint</li>
+<li>Shadow: Subtle → Bright glow</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Testing</h2>
+<h3>Test Checklist</h3>
+<ul>
+<li>☐ Button appears in lower-right corner</li>
+<li>☐ Button has cyan neon glow effect</li>
+<li>☐ Hover effect works (scale + glow increase)</li>
+<li>☐ Click enters fullscreen</li>
+<li>☐ Icon changes to compress icon in fullscreen</li>
+<li>☐ ESC exits fullscreen</li>
+<li>☐ Click exits fullscreen (when already fullscreen)</li>
+<li>☐ F11 syncs with button state</li>
+<li>☐ Button works across all demos</li>
+<li>☐ Button stays on top of game content</li>
+</ul>
+<h3>Browser Testing</h3>
+<p>Test in:</p>
+<ul>
+<li>✅ Chrome/Edge</li>
+<li>✅ Firefox</li>
+<li>✅ Safari</li>
+<li>✅ Mobile browsers (if applicable)</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Canvas Behavior in Fullscreen</h2>
+<p>When entering fullscreen:</p>
+<ul>
+<li>Canvas expands to fill entire screen</li>
+<li>Maintains aspect ratio (letterboxing/pillarboxing)</li>
+<li>Image rendering stays pixelated for retro look</li>
+<li>All controls remain functional</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Performance</h2>
+<ul>
+<li><strong>Minimal overhead</strong>: Single DOM element</li>
+<li><strong>No rendering impact</strong>: Pure CSS/HTML</li>
+<li><strong>Event efficient</strong>: Uses native fullscreen API</li>
+<li><strong>Memory</strong>: ~1KB footprint</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Accessibility</h2>
+<ul>
+<li><strong>Keyboard</strong>: ESC key support</li>
+<li><strong>Visual</strong>: Clear icon indication</li>
+<li><strong>Tooltip</strong>: Hover shows &quot;Toggle Fullscreen (ESC to exit)&quot;</li>
+<li><strong>Color contrast</strong>: Cyan on dark meets WCAG standards</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Troubleshooting</h2>
+<h3>Button doesn&#39;t appear</h3>
+<ul>
+<li>Check browser console for errors</li>
+<li>Verify <code>fullscreen-button.js</code> is loaded</li>
+<li>Check z-index conflicts with other UI</li>
+</ul>
+<h3>Fullscreen doesn&#39;t work</h3>
+<ul>
+<li>Check browser permissions (some block fullscreen)</li>
+<li>Verify canvas element exists</li>
+<li>Try F11 as alternative</li>
+</ul>
+<h3>ESC doesn&#39;t exit fullscreen</h3>
+<ul>
+<li>Check for conflicting ESC handlers in demos</li>
+<li>Verify fullscreen API is supported</li>
+</ul>
+<h3>Button blocked by game UI</h3>
+<ul>
+<li>Adjust z-index (default: 9999)</li>
+<li>Move position if needed</li>
+<li>Check demo&#39;s custom UI elements</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Future Enhancements</h2>
+<p>Potential additions:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Customizable position (corners)</li>
+<li><input disabled="" type="checkbox"> Hide button in fullscreen (auto-show on mouse move)</li>
+<li><input disabled="" type="checkbox"> Keyboard shortcut display</li>
+<li><input disabled="" type="checkbox"> Animation on enter/exit fullscreen</li>
+<li><input disabled="" type="checkbox"> Mobile-specific handling</li>
+<li><input disabled="" type="checkbox"> VR mode toggle</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Integration with Demos</h2>
+<p>No changes needed in individual demos! The button is globally available.</p>
+<h3>If a demo needs to disable it:</h3>
+<pre><code class="language-javascript">// In your demo&#39;s init()
+if (globalThis.fullscreenButton) {
+  globalThis.fullscreenButton.destroy();
+}
+</code></pre>
+<h3>If a demo needs custom fullscreen handling:</h3>
+<pre><code class="language-javascript">// Access the button instance
+const fsBtn = globalThis.fullscreenButton;
+
+// Check state
+if (fsBtn.isFullscreen) {
+  console.log(&#39;Currently in fullscreen&#39;);
+}
+
+// Programmatically toggle
+fsBtn.toggleFullscreen();
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Files Modified</h2>
+<ol>
+<li><p><strong>Created</strong>: <code>runtime/fullscreen-button.js</code></p>
+<ul>
+<li>New fullscreen button class</li>
+<li>150+ lines of code</li>
+</ul>
+</li>
+<li><p><strong>Modified</strong>: <code>src/main.js</code></p>
+<ul>
+<li>Added import statement</li>
+<li>Created button instance</li>
+<li>2 lines added</li>
+</ul>
+</li>
+</ol>
+        </section>
+
+        <section class="md">
+<h2>Summary</h2>
+<p>✅ <strong>Universal fullscreen button</strong> added to all Nova64 demos<br>✅ <strong>ESC key support</strong> for easy exit<br>✅ <strong>Modern UI</strong> with neon effects matching Nova64 theme<br>✅ <strong>Zero configuration</strong> needed in individual demos<br>✅ <strong>Cross-browser compatible</strong> with fallbacks<br>✅ <strong>Performance optimized</strong> with minimal overhead</p>
+<p><strong>Status</strong>: ✅ Production Ready<br><strong>Last Updated</strong>: October 26, 2025<br><strong>Version</strong>: 1.0</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

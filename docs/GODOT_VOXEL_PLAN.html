@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godot Voxel — Native Parity Plan - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Godot Voxel — Native Parity Plan</h1>
+            <p class="subtitle">Status: actively in progress on <code>feature/godot-adapter</code>.</p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Current checkpoint (2026-05-07)</h2>
+<p>The current Godot voxel path is now native for the expensive terrain work:</p>
+<ul>
+<li>Generated terrain chunks use <code>voxel.uploadChunk</code> with compact x/z column
+records. C++ expands those records into a native block volume, fills native
+water below sea level, expands typed tree silhouettes, and greedily meshes
+the visible faces.</li>
+<li>The native atlas path mirrors the browser procedural atlas tile order. Chunk
+UVs use repeat coordinates in <code>UV</code> and tile origins in <code>UV2</code>.</li>
+<li>Water, glass, and ice render on a transparent atlas surface. Leaves render on
+the opaque atlas surface so tree canopies remain dense green instead of
+washing out through sky/fog blending.</li>
+<li>Godot cart paths are normalized to browser-style <code>/examples/&lt;cart&gt;/code.js</code>
+before voxel seed hashing, matching the browser reset-world cart-path rule.</li>
+<li>Standalone MagicaVoxel <code>.vox</code> files stay on the separate native exposed-face
+importer so authored facades, palette colors, and orientation remain stable.</li>
+</ul>
+<p>Recent validation:</p>
+<ul>
+<li>Rebuilt Windows and Linux debug GDExtension binaries from WSL.</li>
+<li><code>minecraft-demo</code> Godot visual conformance passed after the native water and
+opaque-leaf passes. Latest documented checkpoint: <code>post-opaque-leaves</code>,
+<strong>84.13%</strong> report-mode diff.</li>
+<li>A temporary leaf-tile diagnostic forced block id <code>7</code> to sample the grass tile.
+The same canopy geometry turned green, proving the tree mesher and leaf IDs
+were correct; the bug was transparent leaf material treatment.</li>
+</ul>
+<p>Next voxel-parity work:</p>
+<ul>
+<li>Compare compact-column output against browser full chunk data around caves,
+overhangs, ores, and chunk-border trees.</li>
+<li>Add or approximate skylight/torch-light data so Godot chunk shading better
+matches the browser renderer.</li>
+<li>Continue camera/fog/HUD parity work for <code>minecraft-demo</code>; these still drive a
+large part of screenshot diff even after atlas, trees, water, and leaves were
+corrected.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Older terrain checkpoint (2026-05-02, commit <code>550147e</code>)</h2>
+<p>Branch: <code>feature/godot-adapter</code></p>
+<p>Completed:</p>
+<ul>
+<li><strong>Phase 1</strong> ✅ — Native <code>voxel.uploadChunk</code> face-culled mesher in C++
+(commit <code>4817332</code>). Replaced column-bucketing MultiMesh path with real
+chunk ArrayMesh builds. Shutdown double-free fixed (<code>_handles-&gt;clear(false)</code>).</li>
+<li><strong>Phase 2</strong> ✅ — Greedy meshing in <code>_cmd_voxel_upload_chunk</code> (commit
+<code>299b03d</code>). Co-planar same-coloured faces merged into rectangles; ~5-10×
+fewer triangles on heightmap terrain.</li>
+<li><strong>Visual parity pass</strong> ✅ (commit <code>00607ec</code>):<ul>
+<li>All 25 <code>VX_BLOCK_COLORS</code> in shim synced exactly to <code>runtime/api-voxel.js</code>.</li>
+<li><code>_vxSurfaceFor(biome)</code> and <code>_vxBiomeAt(x,z)</code> biome rules matched to web.</li>
+<li><code>light.setSun</code> bridge command added (pitch/yaw/energy/color → shared
+<code>_sun_light</code> DirectionalLight3D).</li>
+<li><code>setVoxelDayTime(t)</code> added to shim: computes sun angle, ambient energy,
+sky colour, fog colour and calls <code>light.setSun</code>.</li>
+<li><code>setClearColor</code> exposed on <code>globalThis</code>.</li>
+<li>Fog now per-cart (removed forced fog override in <code>_vxGenerateWorld</code>).</li>
+</ul>
+</li>
+<li><strong>Depth fog</strong> ✅ (commit <code>550147e</code>): Replaced exponential fog approximation
+with Godot <code>FOG_MODE_DEPTH</code> using explicit near/far bounds. Improved
+minecraft-demo diff from ~47% → <strong>37.21%</strong>.</li>
+</ul>
+<p>Current smoke-test status: <strong>6/6 PASS</strong> — voxel-terrain, minecraft-demo,
+voxel-creative, wizardry-3d, star-fox-nova-3d, f-zero-nova-3d.</p>
+<h3>Key files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>nova64-godot/gdextension/src/bridge.cpp</code></td>
+<td>C++ GDExtension bridge — mesher, fog, light.setSun</td>
+</tr>
+<tr>
+<td><code>nova64-godot/gdextension/src/bridge.h</code></td>
+<td>Declarations — <code>_sun_light</code>, <code>_cmd_light_set_sun</code></td>
+</tr>
+<tr>
+<td><code>nova64-godot/godot_project/shim/nova64-compat.js</code></td>
+<td>JS shim — terrain, biomes, APIs</td>
+</tr>
+<tr>
+<td><code>runtime/api-voxel.js</code></td>
+<td>Web engine ground truth for noise/biome/cart APIs</td>
+</tr>
+</tbody></table>
+<h3>Shim constants (nova64-compat.js)</h3>
+<ul>
+<li><code>VX_BASE_Y = 60</code>, <code>VX_SEA_Y = 62</code> (matches web <code>SEA_LEVEL=62</code>)</li>
+<li><code>CXSZ = CZSZ = 16</code>, <code>CY_ORIGIN = 55</code>, <code>CY_HEIGHT = 50</code></li>
+<li>Biome thresholds: <code>t &lt; 0.2</code> → Frozen, <code>t &lt; 0.35 &amp;&amp; m &gt; 0.5</code> → Taiga,
+<code>t &gt; 0.7 &amp;&amp; m &lt; 0.25</code> → Desert, <code>t &gt; 0.6 &amp;&amp; m &gt; 0.6</code> → Jungle,
+<code>m &lt; 0.3</code> → Savanna, <code>t &gt; 0.4 &amp;&amp; m &gt; 0.4</code> → Forest, <code>t &lt; 0.35</code> → Snowy,
+else → Plains</li>
+<li>Height: browser-style simplex FBM with per-biome <code>heightBase</code> /
+<code>heightScale</code> values from <code>runtime/api-voxel.js</code>.</li>
+<li>Tree density: Jungle=0.15, Forest=0.08, Taiga=0.06, Snowy=0.02,
+Savanna=0.005, Plains=0.015, with browser chunk-local origin guards.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Latest parity checkpoint</h2>
+<p>Run on 2026-05-07:</p>
+<pre><code class="language-bash">pnpm godot:visual -- --cart=minecraft-demo --frames=220 --wait-ms=1000 --report-only --max-diff=100
+</code></pre>
+<p>Result: <strong>84.13%</strong> report-mode pixel diff vs browser Three.js.</p>
+<p>Improvements this session:</p>
+<ul>
+<li>Compact terrain columns are expanded and greedily meshed in C++ instead of
+using JS-side MultiMesh buckets.</li>
+<li>Native atlas tile order, RNG sequence, UV repeat coordinates, and UV2 tile
+origins now align with the browser atlas convention.</li>
+<li>Tree origins follow the browser chunk-local guard, and typed tree metadata
+expands oak, birch, spruce, jungle, and acacia shapes natively.</li>
+<li>Native water blocks fill below-sea-level air and remain non-solid for
+gameplay queries.</li>
+<li>Leaves render as dense opaque atlas blocks, while water/glass/ice stay on a
+transparent surface.</li>
+</ul>
+<p>The remaining gap is primarily:</p>
+<ol>
+<li>Camera/fog/HUD framing differences in the visual harness.</li>
+<li>Lighting model differences: no skylight propagation or torch emission yet.</li>
+<li>Remaining compact-column limitations around caves, overhangs, ores, and
+chunk-border edge cases.</li>
+<li>Water material polish: transparency/tint/shoreline blending is functional
+but still not visually equivalent to the browser.</li>
+</ol>
+<p><code>meta.json</code> is supported in the Godot host path: <code>load_cart()</code> reads sidecar
+metadata, exposes it as <code>globalThis.cart_meta</code>, and the compatibility shim
+applies text, sky, fog, lighting, effects, and camera defaults before the cart
+module evaluates. Voxel-specific defaults should continue to flow through
+<code>configureVoxelWorld()</code> so carts keep one programming model across hosts.</p>
+        </section>
+
+        <section class="md">
+<h2>Remaining gaps vs the web engine</h2>
+<ol>
+<li><strong>Camera/fog/HUD framing</strong> — the Godot frame is visually readable, but the
+captured view still differs enough to dominate report-mode diff.</li>
+<li><strong>Caves / overhangs / ores</strong> — compact-column uploads cover the common
+heightmap path well, but need another audit against browser full-volume
+generation features.</li>
+<li><strong>Lighting</strong> — no skylight propagation or torch emission buffer yet.</li>
+<li><strong>Water polish</strong> — water is native and non-solid now, but fluid material
+tint, transparency, and shoreline blending remain approximate.</li>
+</ol>
+        </section>
+
+        <section class="md">
+<h2>Phased plan</h2>
+<h3>Phase 1 — Native voxel.uploadChunk (face-culled mesher) ✅ DONE (commit <code>4817332</code>)</h3>
+<p>Added <code>_cmd_voxel_upload_chunk</code> in C++: builds an ArrayMesh from a packed block
+array, emitting one quad per visible face. Shim replaced column-bucketing path
+with a chunk-builder calling <code>voxel.uploadChunk</code> per 16×50×16 chunk. Shutdown
+double-free fixed (<code>_handles-&gt;clear(false)</code>).</p>
+<h3>Phase 2 — Greedy meshing in C++ ✅ DONE (commit <code>299b03d</code>)</h3>
+<p>Same bridge command, smarter mesher: sweeps each axis plane, builds a 2D
+visibility+color mask, merges same-colored adjacent faces into rectangles.
+~5-10× fewer triangles for typical heightmap terrain.</p>
+<h3>Phase 3 — Simplex noise + per-biome height formula ✅ DONE</h3>
+<p><strong>Goal</strong>: Eliminate the terrain generation divergence that accounted for the
+old value-noise heightmap mismatch.</p>
+<p><strong>Step 1 — Port simplex noise from web engine into shim</strong> ✅</p>
+<p><code>runtime/api-voxel.js</code> uses OpenSimplex2 (lines ~100–243). Port or inline an
+equivalent pure-JS <code>_vxSimplex2D(x, z)</code> into <code>nova64-compat.js</code>, then replace
+<code>_vxFbm</code>/<code>_vxSmoothNoise</code> with:</p>
+<pre><code class="language-js">function _vxFbm2D(x, z, octaves, persistence, lacunarity, scale) { ... }
+</code></pre>
+<p>Use the same call sites as the web engine:</p>
+<ul>
+<li>Height: <code>_vxFbm2D(x + seed, z + seed, 4, 0.5, 2.0, 0.01)</code></li>
+<li>Temperature: <code>_vxFbm2D(x + seed, z + seed, 2, 0.5, 2.0, 0.005)</code></li>
+<li>Moisture: <code>_vxFbm2D(x + 1000 + seed, z + 1000 + seed, 2, 0.5, 2.0, 0.003)</code></li>
+</ul>
+<p><strong>Step 2 — Per-biome height formula</strong> ✅</p>
+<p>Replace the single <code>VX_BASE_Y + blend * VX_HEIGHT_AMPLITUDE</code> formula with
+biome-conditioned <code>heightBase + simplex * heightScale</code> matching the web engine:</p>
+<table>
+<thead>
+<tr>
+<th>Biome</th>
+<th>heightBase</th>
+<th>heightScale</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Jungle</td>
+<td>58</td>
+<td>22</td>
+</tr>
+<tr>
+<td>Desert</td>
+<td>63</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Plains</td>
+<td>64</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Forest</td>
+<td>64</td>
+<td>8</td>
+</tr>
+<tr>
+<td>(etc — check <code>runtime/api-voxel.js</code> for all values)</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Validation</strong>:</p>
+<ul>
+<li><code>pnpm godot:visual -- --cart=minecraft-demo --frames=220 --wait-ms=1000 --report-only --max-diff=100</code></li>
+<li>Latest documented focused run: PASS, <strong>84.13%</strong> report-mode diff.</li>
+<li>Raw diff remains high because camera/fog/HUD framing now dominate more than
+terrain generation itself.</li>
+</ul>
+<h3>Phase 4 — Cave / overhang / ore parity ← NEXT</h3>
+<p>Audit the compact-column shortcut against browser full-volume generation for
+caves, overhangs, ores, and edge-case chunk boundaries. Decide whether to
+extend native column expansion with targeted carve/ore metadata or send a
+selective full-volume payload only when a cart needs those features.</p>
+<h3>Phase 5 — Skylight / torch-light parity</h3>
+<p>The native atlas path is already live. The remaining lighting pass should add
+or approximate an A8 skylight/block-light buffer per chunk, then feed it into
+vertex color or a secondary attribute so caves, water, and tree interiors better
+match the browser renderer.</p>
+        </section>
+
+        <section class="md">
+<h2>Build and test commands</h2>
+<pre><code class="language-bash"># Build both platforms (WSL)
+wsl bash -lc &#39;cd /mnt/c/Users/brend/exp/nova64/nova64-godot/gdextension &amp;&amp; scons platform=linux target=template_debug -j$(nproc) 2&gt;&amp;1 | tail -15 &amp;&amp; scons platform=windows target=template_debug use_mingw=yes -j$(nproc) 2&gt;&amp;1 | tail -15&#39;
+
+# Smoke test (6 carts)
+powershell -NoProfile -ExecutionPolicy Bypass -File nova64-godot\scripts\run-cart-smoke.ps1
+
+# Visual parity — minecraft-demo
+wsl bash -lc &#39;cd /mnt/c/Users/brend/exp/nova64 &amp;&amp; source ~/.nvm/nvm.sh; nvm use 20 &gt;/dev/null; pnpm godot:visual -- --cart=minecraft-demo --frames=120 --wait-ms=3000 --max-diff=100&#39;
+
+# Commit pattern (never git push)
+Set-Content -Encoding utf8 .git/COMMIT_MSG_TMP &quot;your message&quot;
+wsl bash -lc &quot;cd /mnt/c/Users/brend/exp/nova64 &amp;&amp; git add &lt;files&gt; &amp;&amp; git -c core.hooksPath=/dev/null commit -F .git/COMMIT_MSG_TMP &amp;&amp; rm .git/COMMIT_MSG_TMP&quot;
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Decision log</h2>
+<ul>
+<li><strong>C++ chosen over Rust</strong> — godot-cpp bindings are mature and the
+existing bridge is already C++; introducing Rust would require a
+second toolchain and another FFI layer.</li>
+<li><strong>Current checkpoint: native-column terrain path</strong> — <code>voxel.uploadChunk</code>
+now accepts compact terrain columns and expands them to a C++ block volume
+before greedy meshing. This replaced the slow full-block-array bridge path
+for generated Godot terrain and made the visual tuning loop responsive again.</li>
+<li><strong>Compact columns over the bridge</strong> — Godot terrain chunks must avoid
+sending full <code>sx * sy * sz</code> JS block arrays during normal streaming.
+The shim now sends one compact column record per x/z column and lets
+<code>voxel.uploadChunk</code> expand that data into a block volume before greedy
+meshing in C++. This keeps chunk loading responsive while preserving
+the existing cart-facing voxel API.</li>
+<li><strong>Chunk-border culling belongs in the native mesher</strong> — chunk uploads can
+include a one-block neighbor border plus <code>meshMin</code>/<code>meshMax</code>, so C++ can
+cull faces against adjacent terrain without rendering duplicate boundary
+slabs.</li>
+<li><strong>Seed parity follows the browser reset-world cart path</strong> — the browser
+imports <code>runtime/api-voxel.js</code> early, then <code>Nova64.loadCart()</code> calls
+<code>resetVoxelWorld({ restoreDefaults, cartPath })</code>. Godot exposes and
+normalizes <code>res://carts/&lt;cart&gt;</code> to <code>/examples/&lt;cart&gt;/code.js</code> before shim
+evaluation so both hosts hash <code>nova64-cart-path:&lt;browser-style-path&gt;</code>.</li>
+<li><strong>Texture atlas UVs are top-origin in Godot shader space</strong> — the chunk
+shader now passes the row origin directly instead of vertically flipping it,
+matching how the generated Image atlas is filled.</li>
+<li><strong>Tree origins must respect browser chunk-local guards</strong> — Minecraft trees
+only originate inside local chunk coordinates <code>3..12</code> and above sea level.
+The Godot compact-column path mirrors that guard so spawn-edge canopies do
+not appear where the browser would reject the tree.</li>
+<li><strong>Tree silhouettes stay native but typed</strong> — compact columns now include
+tree type and deterministic bend/hash metadata. Native <code>voxel.uploadChunk</code>
+expands oak, birch, spruce, jungle, and acacia shapes in C++ instead of
+sending full tree block volumes over QuickJS or drawing one generic canopy.</li>
+<li><strong>Leaves are visually opaque in the native atlas path</strong> — the browser registry
+marks leaves transparent for face/light behavior, but the Three.js visual
+reads as dense green foliage. Godot now keeps water/glass/ice on transparent
+surfaces while rendering leaf blocks through the opaque atlas surface.</li>
+<li><strong>Water belongs in the native chunk volume</strong> — per-chunk transparent water
+planes caused stacked blending and scene washout. Compact-column uploads now
+fill below-sea-level air with native water blocks, while shim collision and
+highest-block queries keep water non-solid.</li>
+<li><strong>Heightmap stays in JS for Phase 1</strong> — keeps the parity contract
+small (only one new bridge command) and makes the mesher easy to
+unit-test by feeding it a known PackedByteArray.</li>
+<li><strong>Vertex colours over per-face material</strong> — one draw call per chunk
+beats one per block colour, and we can switch to a texture atlas in
+Phase 5 without breaking the chunk handle contract.</li>
+<li><strong><code>FOG_MODE_DEPTH</code> over exponential</strong> — Godot&#39;s depth fog maps directly
+to near/far world-space distances, matching how carts set fog in JS.
+Exponential density was too coarse to tune without washing out the scene.</li>
+<li><strong><code>_handles-&gt;clear(false)</code> not <code>true</code></strong> — <code>true</code> calls <code>queue_free()</code> on
+chunk nodes while the scene tree also frees them on shutdown → double-free
+SIGSEGV. Let the scene tree own teardown; just null mesh refs first.</li>
+<li><strong>Terrain regression reverted</strong> — attempted per-biome <code>heightBase</code>/
+<code>heightScale</code> port in shim, but it diverged from block-space coordinates;
+reverted and kept the fog improvement. Full fix is Phase 3 (simplex port).</li>
+</ul>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

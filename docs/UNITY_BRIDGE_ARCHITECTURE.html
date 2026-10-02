@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Bridge Architecture - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Unity Bridge Architecture</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Purpose</h2>
+<p>Nova64&#39;s Unity bridge exists to let Nova64-authored JavaScript game code drive native Unity behavior implemented in C#.</p>
+<p>The bridge is intentionally designed as a controlled host API, not as an arbitrary C# execution tunnel.</p>
+<p>That distinction is the core architectural decision.</p>
+        </section>
+
+        <section class="md">
+<h2>Product Direction</h2>
+<p>The target outcome is:</p>
+<ul>
+<li>Write game logic in Nova64 JavaScript.</li>
+<li>Execute rendering, input, audio, lifecycle, packaging, and platform integration natively in Unity C#.</li>
+<li>Ship to iOS and Android through Unity&#39;s native export pipeline.</li>
+</ul>
+<p>This is primarily a mobile-game strategy, not a general-purpose language bridge.</p>
+        </section>
+
+        <section class="md">
+<h2>Non-Goals</h2>
+<p>The bridge should not:</p>
+<ul>
+<li>expose arbitrary C# evaluation from JavaScript</li>
+<li>mirror the entire Unity object graph into JS</li>
+<li>allow unrestricted access to all Unity APIs</li>
+<li>depend on reflection-heavy or stringly typed ad hoc calls for normal gameplay</li>
+</ul>
+<p>If a project needs custom native behaviors, those should be explicitly registered as trusted extension points.</p>
+        </section>
+
+        <section class="md">
+<h2>Core Model</h2>
+<p>The recommended runtime model is:</p>
+<ol>
+<li>Nova64 JS owns high-level game logic.</li>
+<li>JS emits commands into a narrow bridge API.</li>
+<li>Unity C# owns native execution and platform-facing systems.</li>
+<li>Unity returns plain data or opaque handles.</li>
+</ol>
+<p>In practice, this means JS asks for operations like mesh creation, transform updates, input state, and audio playback, while Unity performs those operations natively.</p>
+        </section>
+
+        <section class="md">
+<h2>Why This Boundary Matters</h2>
+<p>For mobile games, the controlled-bridge approach is the right tradeoff because it improves:</p>
+<ul>
+<li>security: no arbitrary native code execution path from cart code</li>
+<li>performance: batched commands are cheaper than chatty JS-to-C# RPC</li>
+<li>determinism: gameplay-facing APIs stay explicit and testable</li>
+<li>portability: the same cart-facing API can target other hosts later</li>
+<li>tooling: Unity remains the authoritative owner of native systems</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Recommended Bridge Shape</h2>
+<p>The bridge should be:</p>
+<ul>
+<li>handle-based</li>
+<li>command-buffered</li>
+<li>whitelist-driven</li>
+<li>frame-oriented</li>
+<li>data-oriented</li>
+</ul>
+<h3>Handle-Based</h3>
+<p>Resources such as meshes, materials, textures, cameras, and audio sources should be represented as opaque IDs or handles when they cross the boundary.</p>
+<p>JS should not hold live Unity objects.</p>
+<h3>Command-Buffered</h3>
+<p>JS should enqueue commands during update work, and the host should flush and execute them in a predictable phase.</p>
+<p>This avoids excessive per-call overhead and keeps mobile frame times stable.</p>
+<h3>Whitelist-Driven</h3>
+<p>Only approved host methods should be callable. The bridge should expose a deliberate contract, not a raw scripting backdoor.</p>
+<h3>Frame-Oriented</h3>
+<p>Operations should align with a frame lifecycle such as:</p>
+<ol>
+<li>poll input</li>
+<li>run JS update</li>
+<li>flush command buffer</li>
+<li>execute native render/audio/physics work</li>
+</ol>
+<h3>Data-Oriented</h3>
+<p>Payloads should be plain JSON-like structures or binary payloads where needed. Avoid graph synchronization and runtime object proxying.</p>
+        </section>
+
+        <section class="md">
+<h2>Current Nova64 Seam</h2>
+<p>Nova64 already has a natural seam for this work in the engine adapter.</p>
+<p>Current implementation points:</p>
+<ul>
+<li><code>runtime/engine-adapter.js</code></li>
+<li><code>createUnityBridgeAdapter(bridge, options)</code></li>
+<li><code>installUnityBridge(bridge, options)</code></li>
+<li><code>resetEngineAdapter()</code></li>
+</ul>
+<p>Current host-oriented method names supported by the adapter:</p>
+<ul>
+<li><code>material.create</code></li>
+<li><code>texture.createData</code></li>
+<li><code>texture.createCanvas</code></li>
+<li><code>texture.clone</code></li>
+<li><code>texture.setRepeat</code></li>
+<li><code>texture.invalidate</code></li>
+<li><code>geometry.createPlane</code></li>
+<li><code>mesh.setMaterial</code></li>
+<li><code>camera.getPosition</code></li>
+</ul>
+<p>Current supported transport shapes:</p>
+<ul>
+<li><code>call(method, payload)</code></li>
+<li><code>invoke(method, payload)</code></li>
+<li><code>send(message)</code></li>
+<li><code>postMessage(message)</code></li>
+</ul>
+<p>This is a first slice, not the complete Unity runtime surface.</p>
+        </section>
+
+        <section class="md">
+<h2>Recommended Phases</h2>
+<h3>Phase 1: Native Host Backbone</h3>
+<p>Build the minimum Unity host that can:</p>
+<ul>
+<li>receive bridge commands</li>
+<li>allocate and track handles</li>
+<li>create materials and textures</li>
+<li>create a plane geometry or equivalent primitive path</li>
+<li>return camera position</li>
+<li>log and validate all incoming commands</li>
+</ul>
+<p>This phase proves transport, marshaling, and lifecycle.</p>
+<h3>Phase 2: Gameplay-Critical Surface</h3>
+<p>Add the APIs needed for real mobile games:</p>
+<ul>
+<li>transforms</li>
+<li>mesh creation primitives</li>
+<li>camera control</li>
+<li>input polling</li>
+<li>audio playback</li>
+<li>scene object visibility/state updates</li>
+</ul>
+<p>This phase should focus on the smallest feature set required to ship a simple game.</p>
+<h3>Phase 3: Asset and Content Pipeline</h3>
+<p>Add:</p>
+<ul>
+<li>prefab/asset loading</li>
+<li>animation hooks</li>
+<li>particles</li>
+<li>UI integration</li>
+<li>persistence</li>
+<li>mobile platform services if needed</li>
+</ul>
+<h3>Phase 4: Trusted Extension Points</h3>
+<p>If studio users need custom native behavior, expose explicit registered bridge endpoints in C#.</p>
+<p>Do not add arbitrary C# execution.</p>
+        </section>
+
+        <section class="md">
+<h2>Mobile-Specific Advice</h2>
+<p>For iOS and Android, this approach is viable and strong if the bridge stays disciplined.</p>
+<p>The main risks are:</p>
+<ul>
+<li>too many cross-boundary calls per frame</li>
+<li>GC churn from small transient messages</li>
+<li>broad API surface too early</li>
+<li>hard-to-debug runtime ownership between JS and Unity</li>
+</ul>
+<p>The mitigation is to keep the first versions small, measured, and batch-friendly.</p>
+        </section>
+
+        <section class="md">
+<h2>Decision Summary</h2>
+<p>Nova64 should treat Unity as a native host backend, not as a general C# execution target.</p>
+<p>That means:</p>
+<ul>
+<li>JS authors write Nova64 gameplay code.</li>
+<li>Unity executes native rendering and platform logic in C#.</li>
+<li>The bridge exposes a controlled, versioned host API.</li>
+<li>Custom native capabilities are added as explicit extension points.</li>
+</ul>
+<p>This is the architecture most likely to succeed for mobile game shipping.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

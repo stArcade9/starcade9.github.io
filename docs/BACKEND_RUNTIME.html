@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Runtime Structure - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Backend Runtime Structure</h1>
+            <p class="subtitle">Nova64 now treats <code>runtime/</code> as the stable public/runtime layer and moves renderer-specific implementation into backend folders.</p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Folder Layout</h2>
+<pre><code class="language-text">runtime/
+  api-3d.js
+  gpu-threejs.js
+  gpu-babylon.js
+  api-3d/
+  backends/
+    threejs/
+    babylon/
+  shared/
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Ownership</h2>
+<ul>
+<li><code>runtime/</code>
+Public entrypoints, stable cart-facing wrappers, and compatibility re-exports.</li>
+<li><code>runtime/backends/threejs/</code>
+Three.js-specific implementation modules used by <code>runtime/api-3d.js</code> and the public <code>runtime/gpu-threejs.js</code> wrapper.</li>
+<li><code>runtime/backends/babylon/</code>
+Babylon-specific implementation modules composed by the public <code>runtime/gpu-babylon.js</code> wrapper.</li>
+<li><code>runtime/shared/</code>
+Cross-backend contracts and helpers that should not belong to only one renderer.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Public Compatibility Rules</h2>
+<ul>
+<li>Keep flat globals stable: <code>createCube</code>, <code>setCameraPosition</code>, <code>createPointLight</code>, and similar functions must not change names.</li>
+<li>Keep <code>nova64.*</code> namespaces stable.</li>
+<li>Keep <code>runtime/api-3d/*</code> import paths working through re-export wrappers while backend internals live in <code>runtime/backends/threejs/*</code>.</li>
+<li>Keep <code>runtime/gpu-threejs.js</code> as the public Three.js entrypoint, even though the implementation now lives in <code>runtime/backends/threejs/gpu-threejs.js</code>.</li>
+<li>Keep <code>runtime/gpu-babylon.js</code> as the public Babylon entrypoint, even though the implementation now lives in <code>runtime/backends/babylon/gpu-babylon.js</code>.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Backend Surface Contract</h2>
+<p><code>runtime/shared/backend-surface.js</code> defines the shared backend surface used to keep Three.js and Babylon aligned.</p>
+<p>It currently separates:</p>
+<ul>
+<li>Required surface keys
+Functions that both backends must expose for cart/runtime parity.</li>
+<li>Capability-gated keys
+Functions that may be backend-specific or intentionally unsupported.</li>
+</ul>
+<p>This contract is used to:</p>
+<ul>
+<li>expose Babylon cart-facing APIs without a handwritten export list</li>
+<li>keep required camera/light/mesh/scene accessors synchronized</li>
+<li>make parity regressions visible in Playwright</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Capability Flags</h2>
+<p>Each backend exposes explicit capability flags:</p>
+<ul>
+<li><code>runtime/backends/threejs/capabilities.js</code></li>
+<li><code>runtime/backends/babylon/capabilities.js</code></li>
+</ul>
+<p>Use capability checks for behavior that is intentionally unsupported instead of silent no-ops. Current examples include Babylon particles, post-processing, and dithering behavior.</p>
+        </section>
+
+        <section class="md">
+<h2>Cart Reset Lifecycle</h2>
+<p>Nova64 now has a shared cart-reset pipeline so cart loads do not depend on scattered one-off cleanup calls.</p>
+<p>Primary pieces:</p>
+<ul>
+<li><code>runtime/cart-reset.js</code>
+Internal registry for named cart reset hooks.</li>
+<li><code>runtime/console.js</code>
+Calls the shared reset pipeline at the start of <code>Nova64.loadCart(...)</code>.</li>
+<li><code>src/main.js</code>
+Registers the default runtime reset hooks used by the browser console bootstrap.</li>
+</ul>
+<p>The default browser/runtime reset sequence now covers:</p>
+<ul>
+<li>input state</li>
+<li>UI buttons and panels</li>
+<li>screen manager registrations</li>
+<li><code>novaStore</code></li>
+<li>voxel world/config/material state</li>
+<li>scene and skybox cleanup</li>
+<li>camera reset</li>
+<li>fog reset</li>
+<li>manifest/env/i18n/data/assets reset</li>
+</ul>
+<p>Why this exists:</p>
+<ul>
+<li>dashboard cart switching should behave like a fresh cart start</li>
+<li>subsystems should not leak hidden state between carts</li>
+<li>new stateful runtime modules need one clear place to integrate cleanup</li>
+</ul>
+<p>Rule for future runtime work:</p>
+<ul>
+<li>if a module owns mutable global or long-lived cart state, register a cart reset hook for it instead of relying on ad hoc cleanup from carts or page reloads</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Tests That Guard This Split</h2>
+<ul>
+<li><code>tests/playwright/api-compatibility.spec.js</code>
+Required backend surface, camera access, point-light mutation, instancing, and unsupported-capability behavior.</li>
+<li><code>tests/playwright/wad-vox-regression.spec.js</code>
+Focused WAD, VOX, and Wizardry Babylon smoke coverage.</li>
+<li><code>tests/playwright/backend-parity.spec.js</code>
+Broader cross-backend cart parity coverage.</li>
+<li><code>tests/playwright/visual-regression.spec.js</code>
+Visual guardrails for skybox and PBR scenes where Babylon should stay close to Three.js without claiming pixel-perfect parity.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Public Backend Entry Points</h2>
+<ul>
+<li><code>runtime/gpu-threejs.js</code>
+Thin public wrapper over <code>runtime/backends/threejs/gpu-threejs.js</code>.</li>
+<li><code>runtime/gpu-babylon.js</code>
+Thin public wrapper over <code>runtime/backends/babylon/gpu-babylon.js</code>.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Babylon Notes</h2>
+<p>The Babylon backend implementation is grouped into focused modules. The main implementation areas are:</p>
+<ul>
+<li><code>bootstrap.js</code></li>
+<li><code>compat.js</code></li>
+<li><code>scene.js</code></li>
+<li><code>camera.js</code></li>
+<li><code>lights.js</code></li>
+<li><code>primitives.js</code></li>
+<li><code>transforms.js</code></li>
+<li><code>models.js</code></li>
+<li><code>instancing.js</code></li>
+<li><code>surface.js</code></li>
+</ul>
+<p>Current Babylon design rules:</p>
+<ul>
+<li><code>engine</code> must mean the Nova64 engine adapter, not the raw Babylon renderer.</li>
+<li><code>getRenderer()</code> returns the raw Babylon engine when direct renderer access is needed.</li>
+<li>Unsupported features should fail safely and advertise capability flags.</li>
+<li>Babylon WebXR support is routed through Babylon&#39;s native WebXR default experience in <code>runtime/xr.js</code>; do not use Three.js <code>renderer.xr</code> objects in Babylon mode.</li>
+<li>When WebXR VR is unavailable, Babylon mode should offer the Cardboard stereoscopic fallback instead of ending on an unavailable state.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Babylon Compatibility Layer</h2>
+<p><code>runtime/backends/babylon/compat.js</code> is the normalization layer for Babylon objects that need to satisfy long-standing Three-style cart expectations.</p>
+<p>It currently provides parity shims for:</p>
+<ul>
+<li>scene traversal and root inspection: <code>scene.traverse</code>, <code>scene.children</code></li>
+<li>scene graph object checks: <code>isObject3D</code>, <code>isMesh</code>, <code>isLight</code>, <code>type</code></li>
+<li>Babylon mesh visibility bridging: <code>mesh.visible</code></li>
+<li>material aliases: <code>material.color</code>, <code>material.map</code>, <code>material.transparent</code>, <code>material.opacity</code></li>
+<li>Babylon material render shims: <code>needAlphaBlendingForMesh</code>, <code>needAlphaTesting</code>, <code>needAlphaTestingForMesh</code>, <code>isReady</code>, <code>isReadyForSubMesh</code></li>
+<li>imported material light budget normalization: GLB/PBR materials opt into at least eight simultaneous lights so shader compilation stays stable in carts with combat or prop point lights</li>
+<li>color helpers: <code>color.set(...)</code>, <code>color.setHex(...)</code>, <code>color.getHex()</code>, <code>color.getHexString()</code></li>
+<li>texture helpers: <code>texture.repeat</code>, <code>texture.offset</code>, <code>texture.wrapS</code>, <code>texture.wrapT</code>, <code>texture.needsUpdate</code></li>
+<li>dirty/version tracking used by parity tests and cart utilities</li>
+</ul>
+<p>Design rules for this layer:</p>
+<ul>
+<li>Put backend-normalization logic here instead of scattering one-off Babylon checks through carts.</li>
+<li>Keep the shim focused on Nova64 cart/runtime expectations, not a full Three.js reimplementation.</li>
+<li>Wire compatibility at creation and assignment points so loaded models, generated meshes, lights, textures, and materials all opt in automatically.</li>
+<li>Back new compatibility assumptions with Playwright coverage before depending on them broadly.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Recent Babylon Rendering Work</h2>
+<p>Recent parity work focused on the places where carts were still clearly broken under Babylon:</p>
+<ul>
+<li><code>@babylonjs/core</code> is now pinned to the current latest 9.x line used by the backend parity work.</li>
+<li>Babylon <code>enableAR()</code> now creates a native Babylon WebXR AR entry point, while <code>enableVR()</code> creates a Babylon WebXR entry point when the browser supports it.</li>
+<li>Babylon VR now exposes a working Cardboard fallback when native WebXR is not available, using Babylon stereoscopic camera rig mode and device-orientation updates.</li>
+<li>MediaPipe camera-background helpers now avoid assigning Three.js <code>VideoTexture</code> objects into Babylon scenes; Babylon uses a DOM video layer and transparent scene clear color for AR-style passthrough.</li>
+<li><code>ar-hand-demo</code> now initializes its 3D scene even when webcam or MediaPipe hand tracking cannot start, so Babylon/headless smoke coverage does not fail on camera availability.</li>
+<li>WAD wall, floor, and sprite materials now use a safer Babylon texture/material path, including alpha and color-space handling for runtime-created textures.</li>
+<li>Babylon WAD rendering now leans on the compat layer for shared mesh/material/texture behavior instead of cart-local backend branching for every parity gap.</li>
+<li>Textured WAD walls use Babylon planes with per-mesh UV updates, while the Babylon wall/floor material tuning now avoids the earlier over-bright emissive look.</li>
+<li>Babylon engine-level material assignment now resolves mesh proxies as well as numeric mesh IDs, which keeps WAD wall/floor/sprite textures attached when carts call <code>engine.setMeshMaterial(meshProxy, material)</code>.</li>
+<li>Babylon vignette/post-processing setup now capability-checks pipeline properties and falls back when image-processing internals are unavailable, preventing WAD cart boot from aborting during environment load.</li>
+<li>Babylon native camera controls stay detached from the canvas so cart-owned camera movement remains deterministic across demos and tests.</li>
+<li>Three-style runtime calls like <code>material.color.set(0x336699)</code> and <code>texture.repeat.set(...)</code> now behave consistently on Babylon too.</li>
+<li><code>wizardry-3d</code> no longer depends on the old store polyfill behavior; plain-object game store initializers now work with real Zustand too.</li>
+<li>Procedural Babylon sky spheres now use the correct material path and ignore fog, which fixes the blown-out <code>hello-skybox</code> rendering.</li>
+<li>Image skyboxes now rebuild asynchronously in carts that clear the scene, and Babylon now splits environment-map usage from visible skybox usage instead of treating both as the same texture path.</li>
+<li>Babylon planes are created double-sided so rotated floor planes in carts like <code>pbr-showcase</code> and <code>wad-demo</code> render reliably.</li>
+<li>Babylon voxel carts now use a backend-native voxel path in <code>runtime/backends/babylon/voxel.js</code> for atlas textures, chunk meshes, and simple voxel entity boxes instead of trying to add raw Three.js meshes into a Babylon scene.</li>
+<li><code>runtime/api-voxel.js</code> now builds backend-neutral voxel mesh payloads and delegates chunk/entity creation to the active renderer, which fixes the Babylon <code>gpu.scene.add is not a function</code> crash path in carts like <code>minecraft-demo</code> and <code>voxel-creatures</code>.</li>
+<li>The default voxel world seed is now derived deterministically from the cart/demo identity instead of <code>Math.random()</code>, so Babylon and Three load the same terrain unless a cart explicitly requests a custom seed.</li>
+<li>Babylon voxel chunk materials now use a safer two-sided shader path, which fixes the large terrain-void/culling mismatch that was still visible in <code>minecraft-demo</code>.</li>
+<li>Babylon now also has guarded NOA probe and adapter seams in <code>runtime/backends/babylon/noa-prototype.js</code> and <code>runtime/backends/babylon/noa-adapter.js</code>; use them to investigate <code>noa-engine</code> incrementally without letting a Babylon-only engine bypass Nova64&#39;s shared voxel API. See <code>docs/BABYLON_NOA_PROTOTYPE.md</code> and <code>docs/BABYLON_NOA_INTEGRATION.md</code> for the current guardrails.</li>
+<li>The first <code>tsl-showcase</code> Galaxy scene now uses deterministic star placement, which makes Babylon-vs-Three visual comparisons measure renderer parity instead of per-load randomness.</li>
+<li>Babylon high-strength bloom requests now map to a wider/brighter Babylon post-processing setup so glowing TSL scenes stay closer to the Three.js UnrealBloom path while low-strength bloom scenes keep the conservative mapping.</li>
+<li><code>createCube(...)</code> now accepts rectangular width/height/depth/color signatures as well as the classic cube size/color signature in both backends, keeping scene prop dimensions stable in demos such as <code>particles-demo</code>.</li>
+<li><code>createSphere(...)</code> now accepts material options as the fourth argument as well as the explicit segments/options form, matching cart usage in glow-heavy demos such as the galaxy particle scene.</li>
+<li><code>createCylinder(...)</code> now accepts the cart-facing radius/height/color signatures and the older tapered radiusTop/radiusBottom/height signature in both backends, preventing Babylon from interpreting colors as giant cylinder heights.</li>
+<li><code>createPlane(...)</code> forwards material options through both backends, including opacity and transparency, so shared translucent scene props do not become opaque rectangles on Three.js.</li>
+<li>Babylon thin instances keep their source mesh render-visible, refresh matrix/color buffers during <code>finalizeInstances(...)</code>, and refresh bounds so the same instanced cart content remains visible under Babylon.</li>
+<li>Babylon particles now opt into mesh-level vertex colors/alpha, correct Babylon alpha modes, and HDR bloom so emissive particle carts such as <code>particles-demo</code> stay much closer to Three.js.</li>
+<li>3D particle emitters now accept <code>directionX</code>, <code>directionY</code>, and <code>directionZ</code> in both backends; the default remains upward, but carts such as the waterfall scene can emit downward water without relying on inverted gravity.</li>
+<li>Godot shim now exposes <code>engine.createDataTexture(pixels, w, h)</code> as a material-proxy entry point routing through <code>texture.createFromImage</code> in the bridge; cart code that calls <code>engine.createDataTexture</code> and then passes the handle to <code>engine.createMaterial({ map: tex })</code> works the same way as the Three.js and Babylon adapters.</li>
+<li>Godot <code>material.create</code> bridge command now accepts <code>uvOffset</code> (Vector3) alongside <code>uvScale</code>, enabling <code>setWallUVs</code> to pass WAD texture X/Y offsets through to <code>StandardMaterial3D::set_uv1_offset</code> so DOOM wall textures align precisely instead of being clamped to origin.</li>
+<li>Godot shim&#39;s <code>WADTextureManager._uploadDataTexture</code> now delegates to <code>engine.createDataTexture</code> internally, removing duplicated bridge-transport code.</li>
+<li>Godot shim now exposes <code>getCamera()</code> in <code>nova64.camera</code> returning <code>{ position: { x, y, z } }</code>, so billboard sprite code like <code>const cam = getCamera(); Math.atan2(cam.position.x - e.x, ...)</code> works without throwing on the Godot host.</li>
+<li>Godot <code>createPlane</code> already creates double-sided planes by default (matches the Babylon plane double-sided fix), so WAD floor/ceiling and sprite billboards render correctly from all viewing angles.</li>
+<li>Point lights now include a shared <code>setLightVisible(id, visible)</code> backend API, allowing carts to temporarily hide scene-local lights during alternate scene states such as Indie Odyssey combat without destroying and recreating them.</li>
+<li>Babylon imported GLB materials now receive the compat-layer render-method shims and a minimum simultaneous-light budget, preventing PBR shader compile failures when carts mix default lights with several controlled point lights.</li>
+<li>Babylon bloom now accepts the same object-form options as the Three.js effects API and pairs low-strength bloom with a restrained <code>GlowLayer</code>, so emissive cart geometry such as Indie Odyssey&#39;s neon grid reads as glow instead of flat colour.</li>
+<li>Babylon material creation now honors <code>emissiveIntensity</code> for PBR and Standard materials; carts can tune backend parity without replacing materials or branching into raw Babylon APIs.</li>
+</ul>
+<p>Current visual status:</p>
+<ul>
+<li><code>hello-skybox</code> is back in close visual range with Three.js and covered by Playwright visual regression.</li>
+<li><code>pbr-showcase</code> is much closer than the earlier broken Babylon output, but it still does not match Three.js perfectly because Babylon does not yet have full PMREM and post-processing parity in Nova64.</li>
+<li><code>tsl-showcase</code> scene 1, Galaxy Spiral, has a focused visual regression check and currently stays below the intentionally loose shader/parity threshold after the deterministic star-field and Babylon bloom tuning work.</li>
+<li><code>wad-demo</code> now has focused Babylon visual guardrails and is back down in the low-single-digit diff range in the gameplay-frame regression check on a clean server.</li>
+<li>Babylon voxel carts now boot and render chunk/entity content without Three-only scene errors, but voxel visual parity still needs follow-up work around custom material parity, chunk shading, and screenshot-level similarity against Three.js.</li>
+<li><code>minecraft-demo</code> now has deterministic terrain and a focused voxel visual regression guardrail, with the Babylon gameplay-frame diff back down into the low-to-mid teens instead of the earlier broken ~35%+ range caused by seed drift and chunk-face culling.</li>
+<li>The visual regression threshold for <code>pbr-showcase</code> is intentionally looser than simple skybox scenes so it can still catch major regressions without pretending the two backends are identical today.</li>
+<li><code>particles-demo</code> now has a focused visual regression pass again after the cylinder signature fix and Babylon particle bloom/material tuning; the demo is still not pixel-identical, but the fire scene should no longer show the old center-pillar artifact.</li>
+<li><code>particles-demo</code> also has a waterfall-specific visual regression check, and <code>instancing-demo</code> now uses deterministic scene layouts plus its own visual parity guardrail.</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Focused Validation</h2>
+<p>These are the most useful narrow checks for the current Babylon parity surface:</p>
+<ul>
+<li><code>pnpm test:babylon:api</code></li>
+<li><code>pnpm exec playwright test tests/playwright/api-compatibility.spec.js --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/wad-vox-regression.spec.js --grep &quot;wad-demo&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/wad-vox-regression.spec.js --grep &quot;Voxel Regression&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/backend-parity.spec.js --grep &#39;Minecraft Demo|Voxel Terrain|Voxel Creative|Voxel Creatures&#39; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/visual-regression.spec.js --grep &quot;minecraft-demo should stay reasonably similar&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/visual-regression.spec.js --grep &quot;wad-demo gameplay frame&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/visual-regression.spec.js --grep &quot;tsl-showcase galaxy&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/visual-regression.spec.js --grep &quot;particles-demo&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/xr-ar-babylon.spec.js --reporter=line</code></li>
+</ul>
+<p>Use the WAD-specific visual and regression slices first when touching Babylon WAD rendering, UVs, materials, lights, or compatibility shims. Use the voxel-focused regression and backend-parity slices first when touching <code>runtime/api-voxel.js</code> or <code>runtime/backends/babylon/voxel.js</code>.
+Use the XR/AR slice first when touching <code>runtime/xr.js</code>, <code>runtime/mediapipe.js</code>, or demos that call WebXR/MediaPipe APIs.
+Use the TSL Galaxy slice first when touching Babylon post-processing, procedural shader materials, particle glow, or the <code>tsl-showcase</code> cart.</p>
+        </section>
+
+        <section class="md">
+<h2>Remaining Babylon Work</h2>
+<p>Remaining Babylon parity work is tracked in <a href="https://github.com/seacloud9/nova64/blob/main/BACKLOG.md"><code>../BACKLOG.md</code></a>.
+Keep this document focused on backend architecture, runtime contracts, and
+validation guidance rather than a second backlog.</p>
+        </section>
+
+        <section class="md">
+<h2>Extending The Runtime</h2>
+<p>When adding a new cart-facing 3D API:</p>
+<ol>
+<li>Add the function to the appropriate backend module(s).</li>
+<li>Update <code>runtime/shared/backend-surface.js</code> if it is required or capability-gated.</li>
+<li>Expose it through the public wrapper layer.</li>
+<li>Add or update parity coverage in Playwright.</li>
+</ol>
+<p>When behavior is backend-specific:</p>
+<ol>
+<li>Add an explicit capability flag.</li>
+<li>Fail safely instead of throwing in normal cart usage.</li>
+<li>Cover the limitation with a focused regression or compatibility test.</li>
+</ol>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

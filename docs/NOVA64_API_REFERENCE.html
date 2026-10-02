@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 NOVA64 API REFERENCE - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>🎮 NOVA64 API REFERENCE</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p><strong>Version:</strong> 0.4.9<br>
+<strong>Date:</strong> March 20, 2026<br><strong>Resolution:</strong> 640×360 pixels<br><strong>Target:</strong> Nintendo 64 / PlayStation aesthetic</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>📚 Table of Contents</h2>
+<ol>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#core-2d-api">Core 2D API</a></li>
+<li><a href="#color-system">Color System</a></li>
+<li><a href="#input-system">Input System</a></li>
+<li><a href="#3d-graphics-api">3D Graphics API</a></li>
+<li><a href="#visual-effects-api">Visual Effects API</a></li>
+<li><a href="#voxel-engine-api">Voxel Engine API</a></li>
+<li><a href="#ui-system">UI System</a></li>
+<li><a href="#audio-system">Audio System</a></li>
+<li><a href="#utility-functions">Utility Functions</a></li>
+</ol>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🚀 Getting Started</h2>
+<h3>Basic Game Structure</h3>
+<p>Every Nova64 game follows this pattern:</p>
+<pre><code class="language-javascript">// Initialization - runs once
+export function init() {
+  // Setup game state, load assets, initialize objects
+  console.log(&#39;🎮 Game initialized!&#39;);
+}
+
+// Update - runs every frame (~60 FPS)
+export function update(dt) {
+  // dt = delta time in seconds (typically 0.016)
+  // Handle input, update physics, game logic
+}
+
+// Draw - runs every frame after update
+export function draw() {
+  // Render 2D graphics, UI, text
+  // 3D graphics are auto-rendered by GPU
+}
+</code></pre>
+<h3>Screen Resolution</h3>
+<ul>
+<li><strong>Internal:</strong> 640×360 pixels (16:9 aspect ratio)</li>
+<li><strong>Scaling:</strong> Automatically scales to fit browser window</li>
+<li><strong>Retro Look:</strong> Pixel-perfect rendering with optional CRT effects</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🎨 Core 2D API</h2>
+<h3>Drawing Functions</h3>
+<h4><code>cls(color?)</code></h4>
+<p>Clear the screen with a color.</p>
+<pre><code class="language-javascript">cls(); // Clear to black
+cls(rgba8(0, 0, 0, 255)); // Clear to black
+cls(rgba8(20, 40, 80, 255)); // Clear to dark blue
+</code></pre>
+<h4><code>pset(x, y, color)</code></h4>
+<p>Set a single pixel.</p>
+<pre><code class="language-javascript">pset(100, 100, rgba8(255, 0, 0, 255)); // Red pixel at (100, 100)
+</code></pre>
+<h4><code>line(x0, y0, x1, y1, color)</code></h4>
+<p>Draw a line between two points.</p>
+<pre><code class="language-javascript">line(0, 0, 640, 360, rgba8(255, 255, 255, 255)); // Diagonal white line
+</code></pre>
+<h4><code>rect(x, y, width, height, color, fill?)</code></h4>
+<p>Draw a rectangle.</p>
+<pre><code class="language-javascript">rect(50, 50, 100, 80, rgba8(0, 255, 0, 255)); // Green outline
+rect(50, 50, 100, 80, rgba8(0, 255, 0, 255), true); // Green filled
+</code></pre>
+<h4><code>rectfill(x, y, width, height, color)</code></h4>
+<p>Draw a filled rectangle (alias for <code>rect(..., true)</code>).</p>
+<pre><code class="language-javascript">rectfill(10, 10, 200, 100, rgba8(255, 128, 0, 255)); // Orange rectangle
+</code></pre>
+<h4><code>circle(x, y, radius, color, fill?)</code></h4>
+<p>Draw a circle.</p>
+<pre><code class="language-javascript">circle(320, 180, 50, rgba8(255, 0, 255, 255)); // Magenta outline
+circle(320, 180, 50, rgba8(255, 0, 255, 255), true); // Magenta filled
+</code></pre>
+<h4><code>print(text, x, y, color?, scale?)</code></h4>
+<p>Draw text using built-in bitmap font.</p>
+<pre><code class="language-javascript">print(&#39;HELLO WORLD&#39;, 10, 10); // White text
+print(&#39;SCORE: 1000&#39;, 10, 20, rgba8(255, 255, 0, 255)); // Yellow text
+print(&#39;BIG&#39;, 100, 100, rgba8(255, 255, 255, 255), 2); // 2x scale (future)
+</code></pre>
+<p><strong>Built-in Font Characters:</strong></p>
+<pre><code>ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789
+!@#$%^&amp;*()_+-=[]{}|;:&#39;&quot;,.&lt;&gt;?/\~`
+</code></pre>
+<h3>Camera Functions</h3>
+<h4><code>setCamera(x, y)</code></h4>
+<p>Set camera offset for scrolling.</p>
+<pre><code class="language-javascript">setCamera(playerX - 320, playerY - 180); // Center camera on player
+</code></pre>
+<h4><code>getCamera()</code></h4>
+<p>Get current camera position.</p>
+<pre><code class="language-javascript">const cam = getCamera();
+console.log(`Camera at ${cam.x}, ${cam.y}`);
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🌈 Color System</h2>
+<h3><code>rgba8(r, g, b, a?)</code></h3>
+<p>Create a color from 8-bit RGBA values (0-255).</p>
+<pre><code class="language-javascript">const red = rgba8(255, 0, 0, 255); // Opaque red
+const green = rgba8(0, 255, 0, 255); // Opaque green
+const blue = rgba8(0, 0, 255, 255); // Opaque blue
+const cyan = rgba8(0, 255, 255, 255); // Cyan
+const yellow = rgba8(255, 255, 0, 255); // Yellow
+const white = rgba8(255, 255, 255, 255); // White
+const trans = rgba8(255, 0, 0, 128); // 50% transparent red
+</code></pre>
+<h3>Common Colors</h3>
+<pre><code class="language-javascript">const COLORS = {
+  black: rgba8(0, 0, 0, 255),
+  white: rgba8(255, 255, 255, 255),
+  red: rgba8(255, 0, 0, 255),
+  green: rgba8(0, 255, 0, 255),
+  blue: rgba8(0, 0, 255, 255),
+  cyan: rgba8(0, 255, 255, 255),
+  magenta: rgba8(255, 0, 255, 255),
+  yellow: rgba8(255, 255, 0, 255),
+  orange: rgba8(255, 128, 0, 255),
+  purple: rgba8(128, 0, 255, 255),
+  gray: rgba8(128, 128, 128, 255),
+};
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🎮 Input System</h2>
+<h3>Keyboard Input</h3>
+<h4><code>btn(i)</code> - Check if button is held down</h4>
+<p>Maps button numbers to keys:</p>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Keyboard</th>
+<th>Gamepad</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>← Arrow Left</td>
+<td>D-pad Left</td>
+</tr>
+<tr>
+<td>1</td>
+<td>→ Arrow Right</td>
+<td>D-pad Right</td>
+</tr>
+<tr>
+<td>2</td>
+<td>↑ Arrow Up</td>
+<td>D-pad Up</td>
+</tr>
+<tr>
+<td>3</td>
+<td>↓ Arrow Down</td>
+<td>D-pad Down</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Z</td>
+<td>A/Cross</td>
+</tr>
+<tr>
+<td>5</td>
+<td>X</td>
+<td>B/Circle</td>
+</tr>
+<tr>
+<td>6</td>
+<td>C</td>
+<td>X/Square</td>
+</tr>
+<tr>
+<td>7</td>
+<td>V</td>
+<td>Y/Triangle</td>
+</tr>
+<tr>
+<td>8</td>
+<td>A</td>
+<td>L Trigger</td>
+</tr>
+<tr>
+<td>9</td>
+<td>S</td>
+<td>R Trigger</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Enter</td>
+<td>Start</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Space</td>
+<td>Select</td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript">if (btn(0)) {
+  // Left arrow held
+  playerX -= 5;
+}
+if (btn(4)) {
+  // Z key held
+  shoot();
+}
+</code></pre>
+<h4><code>btnp(i)</code> - Check if button was just pressed (single frame)</h4>
+<pre><code class="language-javascript">if (btnp(13)) {
+  // Space just pressed
+  jump();
+}
+</code></pre>
+<h4><code>isKeyDown(keyCode)</code> - Direct key checking (held)</h4>
+<pre><code class="language-javascript">if (isKeyDown(&#39;ArrowLeft&#39;)) playerX -= 2;
+if (isKeyDown(&#39;ArrowRight&#39;)) playerX += 2;
+if (isKeyDown(&#39;a&#39;) || isKeyDown(&#39;A&#39;)) shootLeft();
+if (isKeyDown(&#39;Space&#39;)) boost();
+</code></pre>
+<h4><code>isKeyPressed(keyCode)</code> - Direct key checking (just pressed)</h4>
+<pre><code class="language-javascript">if (isKeyPressed(&#39;Enter&#39;)) startGame();
+if (isKeyPressed(&#39;Space&#39;)) jump();
+if (isKeyPressed(&#39;r&#39;) || isKeyPressed(&#39;R&#39;)) restart();
+</code></pre>
+<p><strong>Key Code Examples:</strong></p>
+<ul>
+<li>Arrow keys: <code>&#39;ArrowLeft&#39;</code>, <code>&#39;ArrowRight&#39;</code>, <code>&#39;ArrowUp&#39;</code>, <code>&#39;ArrowDown&#39;</code></li>
+<li>Letters: <code>&#39;a&#39;</code>, <code>&#39;A&#39;</code>, <code>&#39;KeyA&#39;</code> (all work)</li>
+<li>Special: <code>&#39;Space&#39;</code>, <code>&#39;Enter&#39;</code>, <code>&#39;Shift&#39;</code>, <code>&#39;Escape&#39;</code></li>
+</ul>
+<h3>Mouse Input</h3>
+<h4><code>mouseX()</code> / <code>mouseY()</code></h4>
+<p>Get mouse position (scaled to 640×360).</p>
+<pre><code class="language-javascript">const mx = mouseX();
+const my = mouseY();
+print(`Mouse: ${mx}, ${my}`, 10, 10);
+</code></pre>
+<h4><code>mouseDown()</code> / <code>mousePressed()</code></h4>
+<p>Check mouse button state.</p>
+<pre><code class="language-javascript">if (mouseDown()) {
+  // Mouse button held
+  dragObject(mouseX(), mouseY());
+}
+
+if (mousePressed()) {
+  // Mouse just clicked
+  clickButton(mouseX(), mouseY());
+}
+</code></pre>
+<h3>Gamepad Input</h3>
+<h4><code>gamepadConnected()</code></h4>
+<p>Check if a gamepad is connected.</p>
+<pre><code class="language-javascript">if (gamepadConnected()) {
+  print(&#39;🎮 GAMEPAD READY&#39;, 10, 10);
+}
+</code></pre>
+<h4>Analog Stick Functions</h4>
+<pre><code class="language-javascript">// Left stick
+const lx = leftStickX(); // -1.0 to 1.0
+const ly = leftStickY(); // -1.0 to 1.0
+
+// Right stick
+const rx = rightStickX(); // -1.0 to 1.0
+const ry = rightStickY(); // -1.0 to 1.0
+
+// Deadzone: 0.15 (automatically applied)
+</code></pre>
+<p><strong>Example: Smooth analog movement</strong></p>
+<pre><code class="language-javascript">function update(dt) {
+  const moveSpeed = 100; // pixels per second
+
+  // Analog stick movement
+  if (gamepadConnected()) {
+    playerX += leftStickX() * moveSpeed * dt;
+    playerY += leftStickY() * moveSpeed * dt;
+  }
+
+  // Keyboard fallback
+  if (btn(0)) playerX -= moveSpeed * dt; // Left
+  if (btn(1)) playerX += moveSpeed * dt; // Right
+  if (btn(2)) playerY -= moveSpeed * dt; // Up
+  if (btn(3)) playerY += moveSpeed * dt; // Down
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🎲 3D Graphics API</h2>
+<p>Nova64 uses Three.js for 3D rendering with a simplified API.</p>
+<h3>Camera Functions</h3>
+<h4><code>setCameraPosition(x, y, z)</code></h4>
+<p>Set camera position in 3D space.</p>
+<pre><code class="language-javascript">setCameraPosition(0, 10, 20); // Behind and above origin
+</code></pre>
+<h4><code>setCameraTarget(x, y, z)</code></h4>
+<p>Set what the camera looks at.</p>
+<pre><code class="language-javascript">setCameraTarget(0, 0, 0); // Look at origin
+</code></pre>
+<h4><code>setCameraLookAt(x, y, z)</code></h4>
+<p>Set camera direction vector (for FPS controls).</p>
+<pre><code class="language-javascript">setCameraLookAt(player.x, player.y, player.z);
+</code></pre>
+<h4><code>setCameraFOV(degrees)</code></h4>
+<p>Set field of view (30-120, default 75).</p>
+<pre><code class="language-javascript">setCameraFOV(90); // Wider view for FPS games
+</code></pre>
+<h3>Lighting</h3>
+<h4><code>setAmbientLight(hexColor)</code></h4>
+<p>Set global ambient lighting.</p>
+<pre><code class="language-javascript">setAmbientLight(0x404040); // Gray ambient
+setAmbientLight(0x1a1a2a); // Dark blue ambient
+</code></pre>
+<h4><code>setLightDirection(x, y, z)</code></h4>
+<p>Set the main directional light direction vector.</p>
+<pre><code class="language-javascript">setLightDirection(-0.5, -1, -0.3); // From top-left
+setLightDirection(1, 1, 0.5); // From upper-right
+</code></pre>
+<h4><code>setLightColor(hexColor, intensity?)</code></h4>
+<p>Configure directional light colour and intensity.</p>
+<pre><code class="language-javascript">setLightColor(0xffffff, 1.0); // White light, full intensity
+setLightColor(0xffd4a0, 0.8); // Warm sunset light
+</code></pre>
+<h4><code>createPointLight(hexColor, intensity, [x, y, z], distance?)</code></h4>
+<p>Add a point light at a world-space position.</p>
+<pre><code class="language-javascript">const lamp = createPointLight(0xff8800, 2.0, [5, 3, 0], 20);
+</code></pre>
+<h3>Fog</h3>
+<h4><code>setFog(hexColor, near, far)</code></h4>
+<p>Add distance fog for atmosphere.</p>
+<pre><code class="language-javascript">setFog(0x000020, 30, 150); // Dark blue fog
+</code></pre>
+<h3>3D Objects</h3>
+<h4><code>createCube(size, color, position, options?)</code> / <code>createCube(width, height, depth, color, position, options?)</code></h4>
+<p>Create a cube or rectangular box mesh.</p>
+<pre><code class="language-javascript">const cube = createCube(2, 0xff0000, [0, 0, 0]); // Red 2x2x2 cube
+const box = createCube(4, 2, 1, 0x00ff00, [5, 1, 0], {
+  flatShading: true,
+});
+</code></pre>
+<h4><code>createAdvancedCube(size, materialOptions, position)</code></h4>
+<p>Create cube with emissive materials (for bloom).</p>
+<pre><code class="language-javascript">const neonCube = createAdvancedCube(
+  1,
+  {
+    color: 0x00ffff, // Cyan base
+    emissive: 0x00ffff, // Cyan glow
+    emissiveIntensity: 0.8, // Glow strength (0-2+)
+    flatShading: true, // Retro look
+  },
+  [0, 1, 0]
+);
+</code></pre>
+<h4><code>createSphere(radius, color, position, options?)</code> / <code>createSphere(radius, color, position, segments?, options?)</code></h4>
+<p>Create a sphere.</p>
+<pre><code class="language-javascript">const sphere = createSphere(1, 0xff00ff, [0, 2, 0], 8); // Low-poly
+const glowSphere = createSphere(1, 0xffff00, [3, 1, 0], {
+  emissive: 0xffff00,
+  emissiveIntensity: 1.0,
+});
+</code></pre>
+<h4><code>createPlane(width, depth, color, position)</code></h4>
+<p>Create a flat plane.</p>
+<pre><code class="language-javascript">const floor = createPlane(100, 100, 0x008800, [0, 0, 0]);
+</code></pre>
+<h3>Mesh Manipulation</h3>
+<h4><code>setPosition(meshId, x, y, z)</code> or <code>setPosition(meshId, [x, y, z])</code></h4>
+<p>Move a mesh.</p>
+<pre><code class="language-javascript">setPosition(cube, playerX, playerY, playerZ);
+setPosition(sphere, [10, 5, 3]);
+</code></pre>
+<h4><code>setRotation(meshId, x, y, z)</code> or <code>setRotation(meshId, [x, y, z])</code></h4>
+<p>Rotate a mesh (radians).</p>
+<pre><code class="language-javascript">setRotation(cube, 0, Math.PI / 4, 0); // Rotate 45° around Y
+setRotation(box, [angle, 0, 0]);
+</code></pre>
+<h4><code>setScale(meshId, x, y, z)</code> or <code>setScale(meshId, [x, y, z])</code></h4>
+<p>Scale a mesh.</p>
+<pre><code class="language-javascript">setScale(cube, 2, 1, 2); // Wide and deep
+setScale(sphere, [0.5, 0.5, 0.5]); // Half size
+</code></pre>
+<h4><code>destroyMesh(meshId)</code></h4>
+<p>Remove a mesh from the scene.</p>
+<pre><code class="language-javascript">destroyMesh(cube);
+</code></pre>
+<h3>Skybox</h3>
+<h4><code>createSpaceSkybox(options?)</code></h4>
+<p>Procedural starfield and nebulae — the default Nova64 space look.</p>
+<pre><code class="language-javascript">createSpaceSkybox(); // Default stars + nebulae
+createSpaceSkybox({ starCount: 2000, nebulaCount: 4 });
+</code></pre>
+<h4><code>createGradientSkybox(topColor, bottomColor)</code></h4>
+<p>Two-colour gradient sky — great for outdoor scenes and sunsets.</p>
+<pre><code class="language-javascript">createGradientSkybox(0x0077ff, 0x004488); // Blue sky
+createGradientSkybox(0xff6a00, 0x1a0033); // Sunset
+</code></pre>
+<h4><code>createSolidSkybox(color)</code></h4>
+<p>Flat solid colour sky — good for caves or indoor scenes.</p>
+<pre><code class="language-javascript">createSolidSkybox(0x000000); // Pure black
+</code></pre>
+<h4><code>createImageSkybox([px, nx, py, ny, pz, nz])</code></h4>
+<p>Cube-map skybox from 6 image URLs. Also enables image-based lighting (IBL).</p>
+<pre><code class="language-javascript">createImageSkybox([
+  &#39;/assets/sky_px.jpg&#39;,
+  &#39;/assets/sky_nx.jpg&#39;,
+  &#39;/assets/sky_py.jpg&#39;,
+  &#39;/assets/sky_ny.jpg&#39;,
+  &#39;/assets/sky_pz.jpg&#39;,
+  &#39;/assets/sky_nz.jpg&#39;,
+]);
+</code></pre>
+<h4><code>clearSkybox()</code></h4>
+<p>Remove the current skybox.</p>
+<pre><code class="language-javascript">clearSkybox();
+</code></pre>
+<h4><code>enableSkyboxAutoAnimate(speed?)</code> / <code>disableSkyboxAutoAnimate()</code></h4>
+<p>Auto-rotate the skybox every frame.</p>
+<pre><code class="language-javascript">enableSkyboxAutoAnimate(0.5); // Slow drift
+disableSkyboxAutoAnimate();
+</code></pre>
+<h4><code>animateSkybox(dt)</code></h4>
+<p>Manually advance skybox animation by delta-time (call in <code>update</code>).</p>
+<pre><code class="language-javascript">export function update(dt) {
+  animateSkybox(dt);
+}
+</code></pre>
+<h4><code>setSkyboxSpeed(multiplier)</code></h4>
+<p>Scale the auto-animation speed.</p>
+<pre><code class="language-javascript">setSkyboxSpeed(2.0); // Double speed
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>✨ Visual Effects API</h2>
+<h3>Post-Processing</h3>
+<h4><code>enableBloom(strength?, radius?, threshold?)</code></h4>
+<p>Add bloom glow effect.</p>
+<pre><code class="language-javascript">enableBloom(); // Default settings
+enableBloom(1.2, 0.6, 0.3); // Balanced neon glow
+enableBloom(2.0, 0.8, 0.2); // Strong dramatic glow
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>strength</code> (0.5-3.0): Glow intensity. <strong>Optimal: 1.0-1.5</strong></li>
+<li><code>radius</code> (0.0-1.0): Glow spread. <strong>Optimal: 0.6-0.8</strong></li>
+<li><code>threshold</code> (0.0-1.0): Brightness cutoff. <strong>Optimal: 0.2-0.4</strong></li>
+</ul>
+<h4><code>disableBloom()</code></h4>
+<p>Turn off bloom effect.</p>
+<pre><code class="language-javascript">disableBloom();
+</code></pre>
+<h4><code>setBloomStrength(value)</code></h4>
+<p>Adjust bloom strength at runtime.</p>
+<pre><code class="language-javascript">setBloomStrength(1.5); // Increase intensity
+</code></pre>
+<h4><code>enableFXAA()</code></h4>
+<p>Enable anti-aliasing (smooths edges).</p>
+<pre><code class="language-javascript">enableFXAA(); // Usually paired with bloom
+</code></pre>
+<h4><code>disableFXAA()</code></h4>
+<p>Disable anti-aliasing.</p>
+<pre><code class="language-javascript">disableFXAA();
+</code></pre>
+<h3>Optimal Bloom Settings Guide</h3>
+<table>
+<thead>
+<tr>
+<th>Use Case</th>
+<th>Strength</th>
+<th>Radius</th>
+<th>Threshold</th>
+<th>Emissive</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subtle glow</td>
+<td>0.5-0.8</td>
+<td>0.4-0.5</td>
+<td>0.4-0.5</td>
+<td>0.3-0.5</td>
+</tr>
+<tr>
+<td>Neon/Tron</td>
+<td>1.0-1.5</td>
+<td>0.6-0.8</td>
+<td>0.2-0.3</td>
+<td>0.6-0.8</td>
+</tr>
+<tr>
+<td>Dramatic</td>
+<td>1.5-2.0</td>
+<td>0.8-1.0</td>
+<td>0.1-0.2</td>
+<td>0.8-1.2</td>
+</tr>
+<tr>
+<td>Extreme</td>
+<td>2.0+</td>
+<td>1.0</td>
+<td>0.1</td>
+<td>1.0+</td>
+</tr>
+</tbody></table>
+<p><strong>Warning:</strong> Too much bloom causes white-out! Keep strength ≤ 1.5 for most scenes.</p>
+<h3>Example: Neon Scene</h3>
+<pre><code class="language-javascript">export function init() {
+  // Enable balanced bloom for neon aesthetic
+  enableBloom(1.2, 0.6, 0.3);
+  enableFXAA();
+
+  // Dark environment
+  setAmbientLight(0x1a1a2a);
+  setFog(0x000020, 30, 150);
+
+  // Glowing objects
+  const neonCube = createAdvancedCube(
+    1,
+    {
+      color: 0x00ffff,
+      emissive: 0x00ffff,
+      emissiveIntensity: 0.8, // Sweet spot for visibility
+    },
+    [0, 1, 0]
+  );
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🧱 Voxel Engine API</h2>
+<p>Build Minecraft-style block worlds.</p>
+<h3>World Management</h3>
+<h4><code>updateVoxelWorld(playerX, playerZ)</code></h4>
+<p>Load/unload chunks around player.</p>
+<pre><code class="language-javascript">updateVoxelWorld(player.x, player.z); // Call when player moves
+</code></pre>
+<h3>Block Types</h3>
+<pre><code class="language-javascript">BLOCK_TYPES = {
+  AIR: 0,
+  GRASS: 1,
+  DIRT: 2,
+  STONE: 3,
+  SAND: 4,
+  WATER: 5, // Transparent
+  WOOD: 6,
+  LEAVES: 7,
+  COBBLESTONE: 8,
+  PLANKS: 9,
+  GLASS: 10, // Transparent
+  BRICK: 11,
+  SNOW: 12,
+  ICE: 13,
+  BEDROCK: 14,
+};
+</code></pre>
+<h3>Block Interaction</h3>
+<h4><code>getVoxelBlock(x, y, z)</code></h4>
+<p>Get block type at position.</p>
+<pre><code class="language-javascript">const block = getVoxelBlock(10, 35, 10);
+if (block === BLOCK_TYPES.STONE) {
+  console.log(&#39;Found stone!&#39;);
+}
+</code></pre>
+<h4><code>setVoxelBlock(x, y, z, blockType)</code></h4>
+<p>Place or remove a block.</p>
+<pre><code class="language-javascript">setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE); // Place stone
+setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR); // Remove block
+</code></pre>
+<h4><code>raycastVoxelBlock(origin, direction, maxDistance)</code></h4>
+<p>Find block player is looking at.</p>
+<pre><code class="language-javascript">const result = raycastVoxelBlock(
+  [player.x, player.y + 1.6, player.z], // Eye position
+  lookDirection, // [dx, dy, dz]
+  10 // Max reach
+);
+
+if (result.hit) {
+  const [x, y, z] = result.position;
+  console.log(`Looking at block at ${x}, ${y}, ${z}`);
+}
+</code></pre>
+<h3>Physics</h3>
+<h4><code>checkVoxelCollision(position, size)</code></h4>
+<p>Check if position collides with solid blocks.</p>
+<pre><code class="language-javascript">const colliding = checkVoxelCollision(
+  [player.x, player.y, player.z],
+  0.3 // Collision radius
+);
+
+if (colliding) {
+  console.log(&#39;Hit a block!&#39;);
+}
+</code></pre>
+<h3>Structures</h3>
+<h4><code>placeVoxelTree(x, y, z)</code></h4>
+<p>Generate a tree.</p>
+<pre><code class="language-javascript">placeVoxelTree(20, 35, 20); // Trunk + leaves
+</code></pre>
+<h3>Example: Basic Voxel Game</h3>
+<pre><code class="language-javascript">let player = { x: 0, y: 50, z: 0, vy: 0 };
+
+export function init() {
+  updateVoxelWorld(0, 0); // Initial world gen
+  setCameraFOV(95); // Wide FOV for voxels
+}
+
+export function update(dt) {
+  // Movement
+  const speed = 10;
+  if (btn(0)) player.x -= speed * dt;
+  if (btn(1)) player.x += speed * dt;
+  if (btn(2)) player.z -= speed * dt;
+  if (btn(3)) player.z += speed * dt;
+
+  // Gravity
+  player.vy -= 20 * dt;
+  player.y += player.vy * dt;
+
+  // Ground collision
+  const onGround = checkVoxelCollision([player.x, player.y, player.z], 0.3);
+  if (onGround &amp;&amp; player.vy &lt; 0) {
+    player.vy = 0;
+  }
+
+  // Jump
+  if (btnp(13) &amp;&amp; onGround) {
+    player.vy = 10;
+  }
+
+  // Update world
+  updateVoxelWorld(player.x, player.z);
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🖼️ UI System</h2>
+<h3>Buttons</h3>
+<h4><code>createButton(x, y, width, height, text, callback, options?)</code></h4>
+<p>Create an interactive button.</p>
+<pre><code class="language-javascript">const startBtn = createButton(
+  200,
+  150,
+  240,
+  60,
+  &#39;START GAME&#39;,
+  () =&gt; {
+    gameState = &#39;playing&#39;;
+  },
+  {
+    normalColor: rgba8(0, 128, 255, 255),
+    hoverColor: rgba8(50, 150, 255, 255),
+    pressedColor: rgba8(0, 100, 200, 255),
+  }
+);
+</code></pre>
+<h4><code>updateAllButtons()</code></h4>
+<p>Check for button clicks (call in <code>update()</code>).</p>
+<pre><code class="language-javascript">export function update(dt) {
+  const clicked = updateAllButtons();
+  if (clicked) {
+    console.log(&#39;A button was clicked!&#39;);
+  }
+}
+</code></pre>
+<h4><code>drawAllButtons()</code></h4>
+<p>Render all buttons (call in <code>draw()</code>).</p>
+<pre><code class="language-javascript">export function draw() {
+  drawAllButtons();
+}
+</code></pre>
+<h4><code>clearButtons()</code></h4>
+<p>Remove all buttons.</p>
+<pre><code class="language-javascript">clearButtons(); // Clear menu when starting game
+</code></pre>
+<h3>Panels</h3>
+<h4><code>createPanel(x, y, width, height, options?)</code></h4>
+<p>Create a styled panel background.</p>
+<pre><code class="language-javascript">const panel = createPanel(50, 50, 300, 200, {
+  bgColor: rgba8(20, 20, 40, 200), // Semi-transparent dark blue
+  borderColor: rgba8(0, 255, 255, 255), // Cyan border
+  borderWidth: 3,
+  shadow: true,
+  gradient: true,
+  gradientColor: rgba8(40, 40, 80, 200),
+});
+</code></pre>
+<h4><code>drawPanel(panel)</code></h4>
+<p>Draw a panel.</p>
+<pre><code class="language-javascript">drawPanel(panel);
+</code></pre>
+<h3>Pre-defined UI Colors</h3>
+<pre><code class="language-javascript">const uiColors = {
+  primary: rgba8(0, 128, 255, 255), // Blue
+  secondary: rgba8(128, 128, 128, 255), // Gray
+  success: rgba8(0, 255, 0, 255), // Green
+  warning: rgba8(255, 255, 0, 255), // Yellow
+  danger: rgba8(255, 0, 0, 255), // Red
+  light: rgba8(220, 220, 220, 255), // Light gray
+  dark: rgba8(40, 40, 40, 255), // Dark gray
+};
+</code></pre>
+<h3>Text Helpers</h3>
+<h4><code>setFont(size)</code></h4>
+<p>Change font size (future feature).</p>
+<pre><code class="language-javascript">setFont(&#39;normal&#39;); // 8px (default)
+setFont(&#39;large&#39;); // 16px
+setFont(&#39;huge&#39;); // 24px
+</code></pre>
+<h4><code>setTextAlign(align)</code></h4>
+<p>Set text alignment.</p>
+<pre><code class="language-javascript">setTextAlign(&#39;left&#39;); // Default
+setTextAlign(&#39;center&#39;); // Centered
+setTextAlign(&#39;right&#39;); // Right-aligned
+</code></pre>
+<h4><code>drawText(text, x, y, color, align?)</code></h4>
+<p>Draw text with alignment.</p>
+<pre><code class="language-javascript">drawText(&#39;GAME OVER&#39;, 320, 180, rgba8(255, 0, 0, 255), 1); // Centered
+</code></pre>
+<h4><code>drawTextShadow(text, x, y, color, shadowColor, shadowOffset, align?)</code></h4>
+<p>Draw text with shadow.</p>
+<pre><code class="language-javascript">drawTextShadow(
+  &#39;TITLE&#39;,
+  320,
+  50,
+  rgba8(255, 255, 255, 255), // White text
+  rgba8(0, 0, 0, 255), // Black shadow
+  4,
+  1 // Offset, alignment
+);
+</code></pre>
+<h4><code>drawTextOutline(text, x, y, color, outlineColor, thickness, align?)</code></h4>
+<p>Draw text with outline.</p>
+<pre><code class="language-javascript">drawTextOutline(
+  &#39;SCORE: 1000&#39;,
+  320,
+  20,
+  rgba8(255, 255, 0, 255), // Yellow text
+  rgba8(0, 0, 0, 255), // Black outline
+  2,
+  1 // Thickness, alignment
+);
+</code></pre>
+<h3>Gradient Rectangle</h3>
+<h4><code>drawGradientRect(x, y, width, height, colorTop, colorBottom, vertical?)</code></h4>
+<p>Draw a gradient-filled rectangle.</p>
+<pre><code class="language-javascript">// Vertical gradient
+drawGradientRect(
+  0,
+  0,
+  640,
+  360,
+  rgba8(0, 50, 100, 255), // Top: dark blue
+  rgba8(0, 0, 20, 255), // Bottom: darker
+  true
+);
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🔊 Audio System</h2>
+<h3>Music</h3>
+<h4><code>playMusic(trackName, options?)</code></h4>
+<p>Play background music.</p>
+<pre><code class="language-javascript">playMusic(&#39;theme&#39;, { loop: true, volume: 0.7 });
+</code></pre>
+<h4><code>stopMusic()</code></h4>
+<p>Stop current music.</p>
+<pre><code class="language-javascript">stopMusic();
+</code></pre>
+<h3>Sound Effects</h3>
+<h4><code>playSound(soundName, options?)</code></h4>
+<p>Play a sound effect.</p>
+<pre><code class="language-javascript">playSound(&#39;jump&#39;, { volume: 0.5 });
+playSound(&#39;explosion&#39;, { volume: 1.0, pitch: 1.2 });
+</code></pre>
+<h4><code>stopSound(soundName)</code></h4>
+<p>Stop a specific sound.</p>
+<pre><code class="language-javascript">stopSound(&#39;laser&#39;);
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🛠️ Utility Functions</h2>
+<h3>Math Helpers</h3>
+<pre><code class="language-javascript">// Clamp value between min and max
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Linear interpolation
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+// Distance between two points
+function dist(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Random integer between min and max (inclusive)
+function rnd(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Random float between min and max
+function rndFloat(min, max) {
+  return Math.random() * (max - min) + min;
+}
+</code></pre>
+<h3>Timing</h3>
+<h4><code>getDeltaTime()</code></h4>
+<p>Get frame delta time (seconds).</p>
+<pre><code class="language-javascript">const dt = getDeltaTime(); // ~0.016 for 60 FPS
+</code></pre>
+<h4><code>getFPS()</code></h4>
+<p>Get current frames per second.</p>
+<pre><code class="language-javascript">const fps = getFPS();
+print(`FPS: ${Math.round(fps)}`, 10, 10);
+</code></pre>
+<h3>Storage</h3>
+<h4><code>save(key, value)</code></h4>
+<p>Save data to browser storage.</p>
+<pre><code class="language-javascript">save(&#39;highScore&#39;, 10000);
+save(&#39;playerName&#39;, &#39;ACE&#39;);
+</code></pre>
+<h4><code>load(key, defaultValue?)</code></h4>
+<p>Load data from storage.</p>
+<pre><code class="language-javascript">const score = load(&#39;highScore&#39;, 0);
+const name = load(&#39;playerName&#39;, &#39;PLAYER&#39;);
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>📝 Complete Example Game</h2>
+<pre><code class="language-javascript">// Simple platformer demonstrating multiple APIs
+
+let player = {
+  x: 100,
+  y: 100,
+  vx: 0,
+  vy: 0,
+  width: 16,
+  height: 16,
+  onGround: false,
+};
+
+let gameState = &#39;menu&#39;;
+let score = 0;
+
+export function init() {
+  console.log(&#39;🎮 Platformer initialized!&#39;);
+
+  // Create menu button
+  createButton(
+    200,
+    200,
+    240,
+    60,
+    &#39;START GAME&#39;,
+    () =&gt; {
+      gameState = &#39;playing&#39;;
+    },
+    {
+      normalColor: rgba8(0, 128, 255, 255),
+      hoverColor: rgba8(50, 150, 255, 255),
+    }
+  );
+}
+
+export function update(dt) {
+  if (gameState === &#39;menu&#39;) {
+    updateAllButtons();
+    return;
+  }
+
+  // Horizontal movement
+  const moveSpeed = 200;
+  if (btn(0))
+    player.vx = -moveSpeed; // Left
+  else if (btn(1))
+    player.vx = moveSpeed; // Right
+  else player.vx *= 0.8; // Friction
+
+  // Jump
+  if (btnp(13) &amp;&amp; player.onGround) {
+    player.vy = -400; // Jump velocity
+  }
+
+  // Gravity
+  player.vy += 1000 * dt;
+
+  // Apply velocity
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+
+  // Ground collision (simple)
+  if (player.y &gt; 300) {
+    player.y = 300;
+    player.vy = 0;
+    player.onGround = true;
+  } else {
+    player.onGround = false;
+  }
+
+  // Wrap screen
+  if (player.x &lt; 0) player.x = 640;
+  if (player.x &gt; 640) player.x = 0;
+
+  // Camera follows player
+  setCamera(player.x - 320, 0);
+
+  // Score increases over time
+  score += Math.floor(dt * 10);
+}
+
+export function draw() {
+  // Clear to sky blue
+  cls(rgba8(100, 150, 255, 255));
+
+  if (gameState === &#39;menu&#39;) {
+    // Menu screen
+    drawTextShadow(&#39;PLATFORMER&#39;, 320, 100, rgba8(255, 255, 255, 255), rgba8(0, 0, 0, 255), 4, 1);
+    drawAllButtons();
+    return;
+  }
+
+  // Draw ground
+  rectfill(0, 316, 640, 44, rgba8(50, 150, 50, 255));
+
+  // Draw player
+  rectfill(
+    player.x - player.width / 2,
+    player.y - player.height,
+    player.width,
+    player.height,
+    rgba8(255, 0, 0, 255)
+  );
+
+  // Draw HUD (no camera offset)
+  setCamera(0, 0);
+  print(`SCORE: ${score}`, 10, 10, rgba8(255, 255, 255, 255));
+  print(`FPS: ${Math.round(getFPS())}`, 10, 25, rgba8(255, 255, 0, 255));
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🎯 Best Practices</h2>
+<h3>Performance</h3>
+<ol>
+<li><strong>Use <code>rectfill()</code> instead of filled <code>rect()</code></strong> - More explicit</li>
+<li><strong>Minimize <code>pset()</code> calls</strong> - Draw shapes instead of individual pixels</li>
+<li><strong>Clear buttons when not needed</strong> - Call <code>clearButtons()</code> on state changes</li>
+<li><strong>Use camera for scrolling</strong> - Don&#39;t offset every draw call manually</li>
+<li><strong>Keep bloom moderate</strong> - Strength 1.0-1.5, emissive 0.6-0.8</li>
+<li><strong>Update voxel world sparingly</strong> - Only when player moves significantly</li>
+</ol>
+<h3>Code Organization</h3>
+<pre><code class="language-javascript">// Good: Separate concerns
+const GAME_STATES = {
+  MENU: &#39;menu&#39;,
+  PLAYING: &#39;playing&#39;,
+  PAUSED: &#39;paused&#39;,
+  GAMEOVER: &#39;gameover&#39;,
+};
+
+let gameState = GAME_STATES.MENU;
+
+function updateMenu(dt) {
+  /* ... */
+}
+function updatePlaying(dt) {
+  /* ... */
+}
+function updateGameOver(dt) {
+  /* ... */
+}
+
+export function update(dt) {
+  switch (gameState) {
+    case GAME_STATES.MENU:
+      updateMenu(dt);
+      break;
+    case GAME_STATES.PLAYING:
+      updatePlaying(dt);
+      break;
+    case GAME_STATES.GAMEOVER:
+      updateGameOver(dt);
+      break;
+  }
+}
+</code></pre>
+<h3>Input Handling</h3>
+<pre><code class="language-javascript">// Good: Support multiple input methods
+function update(dt) {
+  let moving = false;
+
+  // Keyboard
+  if (btn(0)) {
+    player.x -= speed * dt;
+    moving = true;
+  }
+  if (btn(1)) {
+    player.x += speed * dt;
+    moving = true;
+  }
+
+  // Gamepad analog
+  if (gamepadConnected()) {
+    const stickX = leftStickX();
+    if (Math.abs(stickX) &gt; 0.1) {
+      player.x += stickX * speed * dt;
+      moving = true;
+    }
+  }
+
+  // Apply friction when not moving
+  if (!moving) {
+    player.vx *= 0.9;
+  }
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🐛 Common Issues</h2>
+<h3>&quot;Function is not defined&quot;</h3>
+<p><strong>Problem:</strong> Calling API function that doesn&#39;t exist.<br><strong>Solution:</strong> Check spelling, ensure function is exposed by runtime.</p>
+<pre><code class="language-javascript">// Wrong
+addCube(1, 0xff0000, [0, 0, 0]); // ❌ No such function
+
+// Right
+createCube(1, 0xff0000, [0, 0, 0]); // ✅ Correct name
+</code></pre>
+<h3>White screen / Everything too bright</h3>
+<p><strong>Problem:</strong> Bloom settings too high.<br><strong>Solution:</strong> Reduce bloom strength and emissive intensities.</p>
+<pre><code class="language-javascript">// Wrong - causes white-out
+enableBloom(5.0, 1.0, 0.05); // ❌ Too extreme
+
+// Right - balanced glow
+enableBloom(1.2, 0.6, 0.3); // ✅ Visible details
+</code></pre>
+<h3>3D scene not visible</h3>
+<p><strong>Problem:</strong> Drawing <code>cls()</code> in <code>draw()</code> clears GPU-rendered scene.<br><strong>Solution:</strong> Remove <code>cls()</code> from <code>draw()</code> - 3D is auto-rendered.</p>
+<pre><code class="language-javascript">// Wrong
+export function draw() {
+  cls(); // ❌ Clears 3D scene!
+  print(&#39;HUD&#39;, 10, 10);
+}
+
+// Right
+export function draw() {
+  // ✅ 3D scene renders first automatically
+  print(&#39;HUD&#39;, 10, 10); // 2D overlay on top
+}
+</code></pre>
+<h3>Button not responding</h3>
+<p><strong>Problem:</strong> Not calling <code>updateAllButtons()</code> or button callback not firing.<br><strong>Solution:</strong> Call update function, check keyboard support with <code>isKeyDown()</code>.</p>
+<pre><code class="language-javascript">export function update(dt) {
+  updateAllButtons(); // ✅ Required!
+
+  // Keyboard fallback
+  if (isKeyDown(&#39;Space&#39;) || isKeyDown(&#39;Enter&#39;)) {
+    startGame();
+  }
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>📚 Additional Resources</h2>
+<ul>
+<li><strong>EFFECTS_API_GUIDE.md</strong> - Detailed effects documentation</li>
+<li><strong>VOXEL_ENGINE_GUIDE.md</strong> - Complete voxel system guide</li>
+<li><strong>START_SCREEN_GUIDE.md</strong> - Creating start screens</li>
+<li><strong>GAMEPAD_SUPPORT.md</strong> - Controller mapping details</li>
+<li><strong>Examples folder</strong> - 20+ working game demos</li>
+</ul>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>🎨 Example Games Included</h2>
+<ol>
+<li><strong>hello-3d</strong> - Basic 3D shapes</li>
+<li><strong>demoscene</strong> - Visual effects showcase (5 scenes)</li>
+<li><strong>tron-racer-3d</strong> - Light cycle racing with bloom</li>
+<li><strong>cyberpunk-city-3d</strong> - Flying city explorer</li>
+<li><strong>minecraft-demo</strong> - Voxel world builder</li>
+<li><strong>f-zero-nova-3d</strong> - Futuristic racing</li>
+<li><strong>star-fox-nova-3d</strong> - Space combat</li>
+<li><strong>shooter-demo-3d</strong> - Space shooter</li>
+<li><strong>3d-advanced</strong> - Epic space battle</li>
+<li><strong>knight-platformer</strong> - Side-scrolling action</li>
+</ol>
+<hr>
+<p><strong>Built with ❤️ by the Nova64 team</strong><br><strong>Target Platform:</strong> Nintendo 64 / PlayStation aesthetic<br><strong>Resolution:</strong> 640×360 @ 60 FPS<br><strong>Powered by:</strong> Three.js + Custom Runtime</p>
+<p>🎮 <strong>Happy Game Development!</strong> 🎮</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

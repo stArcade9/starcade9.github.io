@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylon.js NOA Engine Integration - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Babylon.js NOA Engine Integration</h1>
+            <p class="subtitle">This document describes the experimental <code>noa-engine</code> adapter for Nova64&#39;s Babylon.js voxel backend.</p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Overview</h2>
+<p>Nova64 includes an optional, guarded integration with <code>noa-engine</code>, an experimental voxel game engine built on Babylon.js. The adapter is opt-in and must not replace Nova64&#39;s shared voxel API: existing carts should continue to call the normal voxel functions whether NOA is active or unavailable.</p>
+        </section>
+
+        <section class="md">
+<h2>Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                        Cart (game code)                         │
+│              uses nova64.voxel API (api-voxel.js)               │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      runtime/api-voxel.js                       │
+│            Shared voxel API - backend agnostic                  │
+│   (terrain gen, physics, entities, lighting, persistence)       │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                ┌───────────────┼───────────────┐
+                ▼               ▼               ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│   Three.js GPU   │  │  Babylon.js GPU  │  │  Babylon.js GPU  │
+│   (gpu-three.js) │  │  (voxel.js)      │  │  + NOA Adapter   │
+│                  │  │                  │  │  (noa-adapter.js)│
+└──────────────────┘  └──────────────────┘  └──────────────────┘
+        │                       │                    │
+        ▼                       ▼                    ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│   Three.js       │  │   Babylon.js     │  │   noa-engine     │
+│   WebGL Renderer │  │   WebGL Engine   │  │   (optional)     │
+└──────────────────┘  └──────────────────┘  └──────────────────┘
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Dependency</h2>
+<p><code>noa-engine</code> is an optional dependency pinned to the latest published <code>0.33.x</code> line. In the Nova64 repo, install through the normal WSL workflow:</p>
+<pre><code class="language-bash">pnpm install
+</code></pre>
+<p>If a package manager skips optional dependencies, the adapter reports a graceful inactive status and Babylon continues to use Nova64&#39;s built-in voxel renderer.</p>
+        </section>
+
+        <section class="md">
+<h2>Usage</h2>
+<h3>Checking NOA Availability</h3>
+<pre><code class="language-javascript">// Check if NOA adapter is available (Babylon.js backend only)
+const status = getVoxelNoaAdapterStatus();
+console.log(status);
+// { initialized: false, active: false, version: &#39;0.1.0&#39;, ... }
+</code></pre>
+<h3>Enabling NOA Adapter</h3>
+<pre><code class="language-javascript">// Enable NOA adapter (async; Babylon.js backend only)
+const result = await enableVoxelNoaAdapter({
+  debug: false,
+  chunkSize: 16,
+  renderDistance: 4,
+});
+
+if (result.active) {
+  console.log(&#39;NOA adapter is now active!&#39;);
+  console.log(&#39;Features:&#39;, result.features);
+  // { physics: true, entities: true, terrain: true, meshing: true }
+}
+</code></pre>
+<h3>Checking NOA Status</h3>
+<pre><code class="language-javascript">// Check if NOA is currently active
+if (isVoxelNoaActive()) {
+  console.log(&#39;Using NOA-enhanced voxel backend&#39;);
+} else {
+  console.log(&#39;Using standard voxel backend&#39;);
+}
+</code></pre>
+<h3>Disabling NOA Adapter</h3>
+<pre><code class="language-javascript">// Disable NOA and return to standard backend
+disableVoxelNoaAdapter();
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Backwards Compatibility</h2>
+<p>Existing cart-facing voxel APIs must keep working whether NOA is active or not:</p>
+<ul>
+<li><code>updateVoxelWorld(x, z)</code> - Load/unload chunks around position</li>
+<li><code>getVoxelBlock(x, y, z)</code> - Get block type at position</li>
+<li><code>setVoxelBlock(x, y, z, blockId)</code> - Set block at position</li>
+<li><code>raycastVoxelBlock(origin, direction, distance)</code> - Raycast for block selection</li>
+<li><code>moveVoxelEntity(pos, velocity, size, dt)</code> - Physics with collision detection</li>
+<li><code>spawnVoxelEntity(type, pos, opts)</code> - Spawn entities</li>
+<li><code>configureVoxelWorld(opts)</code> - Configure world settings</li>
+<li>... and all other voxel API functions</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>NOA-Specific Features</h2>
+<p>When NOA is active, backend-level diagnostics can access additional NOA state:</p>
+<pre><code class="language-javascript">// These only work when isVoxelNoaActive() returns true
+const engine = gpu.noaEngine; // advanced backend diagnostics only
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Configuration Options</h2>
+<p>When enabling the NOA adapter:</p>
+<pre><code class="language-javascript">await enableVoxelNoaAdapter({
+  // Debug mode - shows FPS, chunk boundaries, etc.
+  debug: false,
+
+  // Chunk size (must match Nova64&#39;s CHUNK_SIZE)
+  chunkSize: 16,
+
+  // Render distance in chunks
+  renderDistance: 4,
+
+  // Advanced NOA configuration (optional)
+  noaConfig: {
+    playerHeight: 1.8,
+    playerWidth: 0.6,
+    tickRate: 30,
+    // ... see noa-engine docs for full options
+  },
+});
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>URL Parameters</h2>
+<p>You can enable NOA probing via URL parameters:</p>
+<pre><code>?noaVoxel=probe     Enable NOA feature detection
+?noaVoxel=true      Enable NOA adapter if available
+?noaVoxel=false     Disable NOA adapter
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>LocalStorage</h2>
+<p>NOA preference can also be stored:</p>
+<pre><code class="language-javascript">localStorage.setItem(&#39;nova64:noaVoxel&#39;, &#39;probe&#39;);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>runtime/api-voxel.js</code></td>
+<td>Cart-facing voxel API (shared between backends)</td>
+</tr>
+<tr>
+<td><code>runtime/backends/babylon/voxel.js</code></td>
+<td>Standard Babylon.js voxel backend</td>
+</tr>
+<tr>
+<td><code>runtime/backends/babylon/noa-adapter.js</code></td>
+<td>NOA engine adapter for Babylon.js</td>
+</tr>
+<tr>
+<td><code>runtime/backends/babylon/noa-prototype.js</code></td>
+<td>NOA feature detection and probing</td>
+</tr>
+</tbody></table>
+        </section>
+
+        <section class="md">
+<h2>Testing</h2>
+<p>Run the voxel examples to test NOA integration:</p>
+<pre><code class="language-bash"># Test minecraft-demo with Babylon.js backend
+pnpm dev
+# Navigate to: http://localhost:5173/babylon_console.html?demo=minecraft-demo
+
+# Test with NOA probing enabled
+# Navigate to: http://localhost:5173/babylon_console.html?demo=minecraft-demo&amp;noaVoxel=probe
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Troubleshooting</h2>
+<h3>&quot;NOA adapter not available&quot;</h3>
+<ul>
+<li>Ensure you&#39;re using the Babylon.js backend (<code>babylon_console.html</code>)</li>
+<li>Check that optional dependencies were installed with <code>pnpm install</code></li>
+</ul>
+<h3>&quot;noa-engine does not export Engine class&quot;</h3>
+<ul>
+<li>Ensure you have a compatible version of noa-engine (&gt;=0.33.0)</li>
+<li>Try updating: <code>pnpm update noa-engine</code></li>
+</ul>
+<h3>Performance issues</h3>
+<ul>
+<li>NOA adapter is experimental; if you experience performance issues, disable it:<pre><code class="language-javascript">disableVoxelNoaAdapter();
+</code></pre>
+</li>
+<li>The standard Babylon.js voxel backend is highly optimized and recommended for production</li>
+</ul>
+<h3>Babylon peer dependency warning</h3>
+<p><code>noa-engine@0.33.0</code> currently declares an older Babylon peer range than Nova64 uses. Treat pnpm&#39;s peer warning as part of the experiment, keep the adapter opt-in, and validate Babylon voxel carts before expanding NOA ownership.</p>
+        </section>
+
+        <section class="md">
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/fenomas/noa">noa-engine GitHub</a></li>
+<li><a href="https://fenomas.github.io/noa/API/">noa-engine API Documentation</a></li>
+<li><a href="https://github.com/fenomas/noa-examples">noa-examples</a></li>
+<li><a href="https://doc.babylonjs.com/">Babylon.js Documentation</a></li>
+</ul>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

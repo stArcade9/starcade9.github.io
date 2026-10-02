@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Adapter Contract - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Adapter Contract</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p><strong>Version: 1.0.0</strong>
+<strong>Status: Active</strong></p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Purpose</h2>
+<p>This document is the canonical definition of the Nova64 engine adapter surface.</p>
+<p>Any renderer or host backend that wants to work with Nova64 game carts must implement every method listed in this contract and must return a valid capabilities object from <code>getCapabilities()</code>.</p>
+<p>The contract is intentionally narrow. It covers the minimum operations that the Nova64 runtime and cart API require. Backend-specific features (e.g., Three.js post-processing, Unity coroutines, Babylon.js physics) live outside this contract and are exposed only if the backend declares them through its capabilities.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Versioning</h2>
+<p>The contract version is a semver string exported as <code>ADAPTER_CONTRACT_VERSION</code> from <code>runtime/engine-adapter.js</code>.</p>
+<ul>
+<li><strong>Patch bumps</strong> — clarifications, documentation changes, no implementation impact</li>
+<li><strong>Minor bumps</strong> — new optional methods added to the surface (backwards compatible)</li>
+<li><strong>Major bumps</strong> — existing method signatures change, breaking changes; requires migration</li>
+</ul>
+<p>Adapters must declare the contract version they implement in their <code>getCapabilities()</code> return value via the <code>contractVersion</code> field.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Required Methods</h2>
+<p>Every conforming adapter must implement all of the following. The conformance test suite at <code>tests/test-adapter-conformance.js</code> validates each entry.</p>
+<h3>Material Methods</h3>
+<h4><code>createMaterial(type, opts) → opaque handle</code></h4>
+<p>Create a material.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td><code>&#39;basic&#39; | &#39;phong&#39; | &#39;standard&#39;</code></td>
+<td>Material model</td>
+</tr>
+<tr>
+<td><code>opts.color</code></td>
+<td><code>number | { r, g, b }</code></td>
+<td>Base color</td>
+</tr>
+<tr>
+<td><code>opts.map</code></td>
+<td>texture handle</td>
+<td>Optional texture map</td>
+</tr>
+<tr>
+<td><code>opts.transparent</code></td>
+<td><code>boolean</code></td>
+<td>Enable alpha blending</td>
+</tr>
+<tr>
+<td><code>opts.alphaTest</code></td>
+<td><code>number</code> (0–1)</td>
+<td>Alpha test cutoff</td>
+</tr>
+<tr>
+<td><code>opts.side</code></td>
+<td><code>&#39;front&#39; | &#39;back&#39; | &#39;double&#39;</code></td>
+<td>Face culling</td>
+</tr>
+<tr>
+<td><code>opts.roughness</code></td>
+<td><code>number</code></td>
+<td>Roughness (standard only)</td>
+</tr>
+<tr>
+<td><code>opts.metalness</code></td>
+<td><code>number</code></td>
+<td>Metalness (standard only)</td>
+</tr>
+<tr>
+<td><code>opts.emissive</code></td>
+<td><code>number</code></td>
+<td>Emissive color (standard only)</td>
+</tr>
+<tr>
+<td><code>opts.flatShading</code></td>
+<td><code>boolean</code></td>
+<td>Flat shading (standard only)</td>
+</tr>
+</tbody></table>
+<p>Returns an opaque material handle. The handle type is backend-specific. Cart code must not inspect its internals.</p>
+<hr>
+<h3>Texture Methods</h3>
+<h4><code>createDataTexture(data, width, height, opts) → opaque handle</code></h4>
+<p>Create a texture from a raw pixel buffer.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data</code></td>
+<td><code>Uint8Array | Uint8ClampedArray</code></td>
+<td>RGBA pixel data</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td><code>number</code></td>
+<td>Texture width in pixels</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td><code>number</code></td>
+<td>Texture height in pixels</td>
+</tr>
+<tr>
+<td><code>opts.format</code></td>
+<td><code>&#39;rgba&#39;</code></td>
+<td>Pixel format (default: <code>&#39;rgba&#39;</code>)</td>
+</tr>
+<tr>
+<td><code>opts.filter</code></td>
+<td><code>&#39;nearest&#39; | &#39;linear&#39;</code></td>
+<td>Sampling filter</td>
+</tr>
+<tr>
+<td><code>opts.wrap</code></td>
+<td><code>&#39;repeat&#39; | &#39;clamp&#39;</code></td>
+<td>UV wrapping mode</td>
+</tr>
+<tr>
+<td><code>opts.generateMipmaps</code></td>
+<td><code>boolean</code></td>
+<td>Mipmap generation (default: <code>true</code>)</td>
+</tr>
+</tbody></table>
+<h4><code>createCanvasTexture(canvas, opts) → opaque handle</code></h4>
+<p>Create a texture from an HTMLCanvasElement.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>canvas</code></td>
+<td><code>HTMLCanvasElement</code></td>
+<td>Source canvas</td>
+</tr>
+<tr>
+<td><code>opts.filter</code></td>
+<td><code>&#39;nearest&#39; | &#39;linear&#39;</code></td>
+<td>Sampling filter</td>
+</tr>
+<tr>
+<td><code>opts.wrap</code></td>
+<td><code>&#39;repeat&#39; | &#39;clamp&#39;</code></td>
+<td>UV wrapping mode</td>
+</tr>
+</tbody></table>
+<h4><code>cloneTexture(textureHandle) → opaque handle</code></h4>
+<p>Clone an existing texture handle.</p>
+<h4><code>setTextureRepeat(textureHandle, x, y) → void</code></h4>
+<p>Set UV repeat on a texture.</p>
+<h4><code>invalidateTexture(textureHandle) → void</code></h4>
+<p>Mark a texture as dirty so the backend re-uploads it on the next frame.</p>
+<hr>
+<h3>Geometry Methods</h3>
+<h4><code>createPlaneGeometry(width, height, segX, segY) → opaque handle</code></h4>
+<p>Create a flat plane geometry.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>width</code></td>
+<td><code>number</code></td>
+<td>required</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td><code>number</code></td>
+<td>required</td>
+</tr>
+<tr>
+<td><code>segX</code></td>
+<td><code>number</code></td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>segY</code></td>
+<td><code>number</code></td>
+<td><code>1</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Mesh Methods</h3>
+<h4><code>setMeshMaterial(meshId, materialHandle) → void</code></h4>
+<p>Assign a material to a mesh by ID.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>meshId</code></td>
+<td><code>number | string</code></td>
+<td>Mesh identifier</td>
+</tr>
+<tr>
+<td><code>materialHandle</code></td>
+<td>opaque handle</td>
+<td>Handle returned by <code>createMaterial</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Color Methods</h3>
+<h4><code>createColor(r, g, b) → opaque handle</code></h4>
+<p>Create a color value. <code>r</code>, <code>g</code>, <code>b</code> are floats in the range 0–1.</p>
+<p>The returned value may be a <code>THREE.Color</code>, a <code>{ r, g, b }</code> plain object, or any opaque handle depending on the backend.</p>
+<hr>
+<h3>Camera Methods</h3>
+<h4><code>getCameraPosition() → { x: number, y: number, z: number }</code></h4>
+<p>Return the current camera world position.</p>
+<p>The returned object must have finite numeric <code>x</code>, <code>y</code>, <code>z</code> fields. Backends that have not positioned a camera yet must return <code>{ x: 0, y: 0, z: 0 }</code>.</p>
+<hr>
+<h3>Capability Methods</h3>
+<h4><code>getCapabilities() → Capabilities</code></h4>
+<p>Return a frozen capabilities object describing this backend.</p>
+<p>The returned object must conform to the following shape:</p>
+<pre><code class="language-typescript">interface Capabilities {
+  backend: string; // Backend identifier: &#39;threejs&#39;, &#39;unity&#39;, &#39;babylon&#39;, &#39;godot&#39;, …
+  contractVersion: string; // Must equal ADAPTER_CONTRACT_VERSION
+  adapterVersion: string; // Backend-specific semver
+  features: readonly string[]; // Feature identifiers declared by this backend
+  supports(feature: string): boolean; // Returns true iff feature is in the features list
+}
+</code></pre>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Feature Identifiers</h2>
+<p>Standard feature strings that adapters should use when declaring capabilities. Custom backend-specific features are allowed but must be namespaced with the backend name, e.g. <code>&#39;threejs:bloom&#39;</code> or <code>&#39;unity:prefab-loading&#39;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Feature string</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>material:basic</code></td>
+<td><code>MeshBasicMaterial</code> or equivalent</td>
+</tr>
+<tr>
+<td><code>material:phong</code></td>
+<td><code>MeshPhongMaterial</code> or equivalent</td>
+</tr>
+<tr>
+<td><code>material:standard</code></td>
+<td><code>MeshStandardMaterial</code> (PBR) or equivalent</td>
+</tr>
+<tr>
+<td><code>texture:data</code></td>
+<td>Raw pixel buffer texture creation</td>
+</tr>
+<tr>
+<td><code>texture:canvas</code></td>
+<td>HTMLCanvasElement-backed texture</td>
+</tr>
+<tr>
+<td><code>texture:repeat</code></td>
+<td>UV repeat support</td>
+</tr>
+<tr>
+<td><code>geometry:plane</code></td>
+<td>Plane geometry primitive</td>
+</tr>
+<tr>
+<td><code>camera:read</code></td>
+<td>Camera position read-back</td>
+</tr>
+<tr>
+<td><code>camera:write</code></td>
+<td>Camera position/target/fov write</td>
+</tr>
+<tr>
+<td><code>lights:ambient</code></td>
+<td>Ambient light control</td>
+</tr>
+<tr>
+<td><code>lights:point</code></td>
+<td>Point light creation</td>
+</tr>
+<tr>
+<td><code>lights:directional</code></td>
+<td>Directional light control</td>
+</tr>
+<tr>
+<td><code>shadows</code></td>
+<td>Shadow map support</td>
+</tr>
+<tr>
+<td><code>instancing</code></td>
+<td>Instanced mesh rendering</td>
+</tr>
+<tr>
+<td><code>audio:sfx</code></td>
+<td>Sound effect playback</td>
+</tr>
+<tr>
+<td><code>physics:aabb</code></td>
+<td>AABB collision and gravity</td>
+</tr>
+<tr>
+<td><code>input:keyboard</code></td>
+<td>Keyboard polling</td>
+</tr>
+<tr>
+<td><code>input:gamepad</code></td>
+<td>Gamepad polling</td>
+</tr>
+<tr>
+<td><code>asset:gltf</code></td>
+<td>GLTF/GLB model loading</td>
+</tr>
+<tr>
+<td><code>asset:texture-atlas</code></td>
+<td>Texture atlas loading</td>
+</tr>
+</tbody></table>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Command-Buffer Transport</h2>
+<p>For host bridges (Unity, Godot) where one-call-per-operation is expensive, Nova64 provides <code>createCommandBufferAdapter(innerAdapter, opts)</code>.</p>
+<p>This wrapper buffers every mutating call into an in-memory queue. The host polling loop calls <code>adapter.flush()</code> once per frame to drain the queue to the inner adapter.</p>
+<p>Read-through calls (<code>getCameraPosition</code>, <code>getCapabilities</code>) bypass the buffer entirely.</p>
+<pre><code class="language-javascript">import { createCommandBufferAdapter, createUnityBridgeAdapter } from &#39;nova64/runtime&#39;;
+
+const bridge = globalThis.__NOVA64_UNITY_BRIDGE__;
+const unityAdapter = createUnityBridgeAdapter(bridge);
+const buffered = createCommandBufferAdapter(unityAdapter, { maxQueueSize: 512 });
+
+// Boot Nova64 with the buffered transport
+setEngineAdapter(buffered);
+
+// In your Unity JS-to-C# host update loop:
+function onFrameEnd() {
+  buffered.flush(); // drains all buffered commands to the Unity bridge in one batch
+}
+</code></pre>
+<h3>API</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>flush()</code></td>
+<td>Drain all queued commands to the inner adapter in registration order</td>
+</tr>
+<tr>
+<td><code>pendingCount()</code></td>
+<td>Return the number of commands currently in the buffer</td>
+</tr>
+<tr>
+<td><code>discardPending()</code></td>
+<td>Drop all queued commands without executing them</td>
+</tr>
+</tbody></table>
+<h3>Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>autoFlush</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>Execute each call immediately without buffering</td>
+</tr>
+<tr>
+<td><code>maxQueueSize</code></td>
+<td><code>number</code></td>
+<td><code>512</code></td>
+<td>Log a warning when the queue exceeds this length</td>
+</tr>
+</tbody></table>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Conformance Tests</h2>
+<p>Every adapter must pass <code>runAdapterConformanceTests(adapter, runner, { name })</code> from <code>tests/test-adapter-conformance.js</code> before being merged.</p>
+<p>The conformance suite validates:</p>
+<ul>
+<li>All required methods are present and callable</li>
+<li><code>getCapabilities()</code> returns a valid, versioned capabilities object</li>
+<li><code>getCameraPosition()</code> returns a <code>{ x, y, z }</code> with finite numbers</li>
+<li><code>createMaterial</code>, <code>createPlaneGeometry</code>, <code>createColor</code> do not throw</li>
+</ul>
+<p>New backends should also add their own extended test file for backend-specific behavior.</p>
+<hr>
+        </section>
+
+        <section class="md">
+<h2>Future Contract Extensions (planned)</h2>
+<p>These capabilities are tracked but not yet in the contract. They will be added in a future minor bump.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>camera:write</code> (setCameraPosition, setCameraTarget, setCameraFOV)</td>
+<td>Phase 1.1</td>
+</tr>
+<tr>
+<td><code>lights:ambient</code>, <code>lights:point</code>, <code>lights:directional</code></td>
+<td>Phase 1.1</td>
+</tr>
+<tr>
+<td><code>mesh:create</code> (createMesh, removeMesh)</td>
+<td>Phase 1.1</td>
+</tr>
+<tr>
+<td><code>transforms</code> (setPosition, setScale, rotateMesh)</td>
+<td>Phase 1.1</td>
+</tr>
+<tr>
+<td><code>asset:gltf</code></td>
+<td>Phase 3 (Unity)</td>
+</tr>
+<tr>
+<td><code>audio:sfx</code></td>
+<td>Phase 1.1</td>
+</tr>
+<tr>
+<td><code>input:keyboard</code>, <code>input:gamepad</code></td>
+<td>Phase 1.1</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Maintained alongside <code>runtime/engine-adapter.js</code>. Update this document whenever <code>ADAPTER_CONTRACT_VERSION</code> changes.</em></p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

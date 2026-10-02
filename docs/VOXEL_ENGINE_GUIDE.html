@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 Voxel Engine API Guide - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 Voxel Engine API Guide</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<h2>Overview</h2>
+<p>The Nova64 Voxel Engine enables Minecraft-style block-based games with infinite procedurally generated worlds. It features:</p>
+<ul>
+<li><strong>Chunk-based world management</strong> - Efficient memory usage with 16×128×16 chunks</li>
+<li><strong>Simplex noise</strong> - Seeded 2D + 3D simplex noise with fractal Brownian motion (fBm)</li>
+<li><strong>True 3D caves</strong> - Winding tunnel networks carved with 3D noise</li>
+<li><strong>Per-vertex ambient occlusion</strong> - Smooth corner shadows without lightmaps</li>
+<li><strong>DDA voxel raycasting</strong> - Pixel-perfect block targeting (Amanatides &amp; Woo)</li>
+<li><strong>Block registry</strong> - Extensible block definitions with solid/transparent/fluid/light properties</li>
+<li><strong>36 built-in block types</strong> - Including ores, torches, lava, glowstone, slabs, stairs, fences, flowers</li>
+<li><strong>Configurable world generation</strong> - Carts can supply custom terrain generators</li>
+<li><strong>Transparent block rendering</strong> - Separate pass for water, glass, ice, leaves</li>
+<li><strong>Biome system</strong> - 8 biomes based on temperature/moisture noise</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Quick Start</h2>
+<pre><code class="language-javascript">export function init() {
+  // Setup lighting
+  setAmbientLight(0x666666);
+  setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
+
+  // Generate world around player
+  updateVoxelWorld(playerX, playerZ);
+
+  // Add some trees
+  placeVoxelTree(10, 35, 10);
+}
+
+export function update(dt) {
+  // Update chunks as player moves
+  updateVoxelWorld(playerX, playerZ);
+
+  // Get block at position
+  const block = getVoxelBlock(x, y, z);
+
+  // Place or remove blocks
+  if (isKeyPressed(&#39;Space&#39;)) {
+    setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
+  }
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Block Types</h2>
+<h3>Available Blocks</h3>
+<pre><code class="language-javascript">BLOCK_TYPES.AIR; // 0 - Empty space
+BLOCK_TYPES.GRASS; // 1 - Green grass block
+BLOCK_TYPES.DIRT; // 2 - Brown dirt
+BLOCK_TYPES.STONE; // 3 - Gray stone
+BLOCK_TYPES.SAND; // 4 - Yellow sand
+BLOCK_TYPES.WATER; // 5 - Blue water (transparent, fluid)
+BLOCK_TYPES.WOOD; // 6 - Dark brown wood log
+BLOCK_TYPES.LEAVES; // 7 - Green tree leaves (transparent)
+BLOCK_TYPES.COBBLESTONE; // 8 - Gray cobblestone
+BLOCK_TYPES.PLANKS; // 9 - Wooden planks
+BLOCK_TYPES.GLASS; // 10 - Light blue glass (transparent)
+BLOCK_TYPES.BRICK; // 11 - Red brick
+BLOCK_TYPES.SNOW; // 12 - White snow
+BLOCK_TYPES.ICE; // 13 - Light blue ice (transparent)
+BLOCK_TYPES.BEDROCK; // 14 - Dark gray bedrock (bottom layer)
+BLOCK_TYPES.COAL_ORE; // 15 - Coal ore (any depth)
+BLOCK_TYPES.IRON_ORE; // 16 - Iron ore (below y=64)
+BLOCK_TYPES.GOLD_ORE; // 17 - Gold ore (below y=32)
+BLOCK_TYPES.DIAMOND_ORE; // 18 - Diamond ore (below y=16)
+BLOCK_TYPES.GRAVEL; // 19 - Gravel pockets
+BLOCK_TYPES.CLAY; // 20 - Clay (near water)
+BLOCK_TYPES.TORCH; // 21 - Torch (light emitter, non-solid)
+BLOCK_TYPES.GLOWSTONE; // 22 - Glowstone (max light emitter)
+BLOCK_TYPES.LAVA; // 23 - Lava (fluid, light emitter)
+BLOCK_TYPES.OBSIDIAN; // 24 - Obsidian
+BLOCK_TYPES.MOSSY_COBBLESTONE; // 25 - Mossy cobblestone
+
+// Shape blocks (non-cube geometry)
+BLOCK_TYPES.STONE_SLAB; // 26 - Half-height stone slab (bottom)
+BLOCK_TYPES.STONE_SLAB_TOP; // 27 - Half-height stone slab (top)
+BLOCK_TYPES.PLANK_SLAB; // 28 - Half-height plank slab (bottom)
+BLOCK_TYPES.STONE_STAIR; // 29 - Stone staircase
+BLOCK_TYPES.PLANK_STAIR; // 30 - Plank staircase
+BLOCK_TYPES.FENCE; // 31 - Thin fence post
+BLOCK_TYPES.FLOWER; // 32 - Flower (cross shape, non-solid)
+BLOCK_TYPES.TALL_GRASS; // 33 - Tall grass (cross shape, non-solid)
+BLOCK_TYPES.BRICK_SLAB; // 34 - Half-height brick slab (bottom)
+BLOCK_TYPES.BRICK_STAIR; // 35 - Brick staircase
+</code></pre>
+<h3>Custom Block Registration</h3>
+<pre><code class="language-javascript">// Register a custom block type for your cart
+registerVoxelBlock(100, {
+  name: &#39;crystal&#39;,
+  color: 0xff00ff,
+  solid: true,
+  transparent: true,
+  lightEmit: 10,
+  lightBlock: 0,
+  shape: &#39;slab_bottom&#39;, // Optional: &#39;cube&#39; (default), &#39;slab_bottom&#39;, &#39;slab_top&#39;, &#39;stair&#39;, &#39;fence&#39;, &#39;cross&#39;
+  boundingBox: [0, 0, 0, 1, 0.5, 1], // Optional: custom [minX,minY,minZ, maxX,maxY,maxZ]
+});
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>World Management</h2>
+<h3>updateVoxelWorld(playerX, playerZ)</h3>
+<p>Updates visible chunks around the player position. Call this in your <code>update()</code> function when the player moves significantly.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playerX</code> - Player&#39;s X world coordinate</li>
+<li><code>playerZ</code> - Player&#39;s Z world coordinate</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">export function update(dt) {
+  // Update every few frames to reduce overhead
+  if (Math.random() &lt; 0.1) {
+    updateVoxelWorld(player.pos[0], player.pos[2]);
+  }
+}
+</code></pre>
+<p><strong>Performance:</strong> Automatically loads chunks within render distance (4 chunks = 64 blocks) and unloads distant chunks to manage memory.</p>
+<h3>getVoxelHighestBlock(x, z)</h3>
+<p>Returns the Y coordinate of the highest non-air, non-water block at the given (x, z) position. Useful for spawning players above terrain.</p>
+<pre><code class="language-javascript">const groundY = getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z));
+player.y = groundY + 2;
+</code></pre>
+<h3>getVoxelBiome(x, z)</h3>
+<p>Returns the biome name at the given world position. Biomes include: &quot;Frozen Tundra&quot;, &quot;Taiga&quot;, &quot;Desert&quot;, &quot;Jungle&quot;, &quot;Savanna&quot;, &quot;Forest&quot;, &quot;Snowy Hills&quot;, &quot;Plains&quot;.</p>
+<pre><code class="language-javascript">const biome = getVoxelBiome(player.x, player.z);
+print(`Biome: ${biome}`, 10, 10, 0xffffff);
+</code></pre>
+<h3>configureVoxelWorld(options)</h3>
+<p>Configure world generation parameters. Call before generating any chunks.</p>
+<pre><code class="language-javascript">configureVoxelWorld({
+  seed: 42, // World seed (deterministic generation)
+  chunkHeight: 128, // Vertical chunk size (default: 128)
+  renderDistance: 6, // Chunks in each direction (default: 4)
+  seaLevel: 62, // Water level (default: 62)
+  generateTerrain: (chunk, ctx) =&gt; {
+    // Custom terrain generator — ctx provides BLOCK_TYPES, noise, CHUNK_SIZE, etc.
+    for (let x = 0; x &lt; ctx.CHUNK_SIZE; x++) {
+      for (let z = 0; z &lt; ctx.CHUNK_SIZE; z++) {
+        const height = Math.floor(
+          ctx.noise.fbm2D(
+            chunk.chunkX * ctx.CHUNK_SIZE + x,
+            chunk.chunkZ * ctx.CHUNK_SIZE + z,
+            4,
+            0.5,
+            2.0,
+            0.01
+          ) *
+            20 +
+            64
+        );
+        for (let y = 0; y &lt; height; y++) {
+          chunk.setBlock(x, y, z, ctx.BLOCK_TYPES.STONE);
+        }
+        chunk.setBlock(x, height - 1, z, ctx.BLOCK_TYPES.GRASS);
+      }
+    }
+  },
+});
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Noise Functions</h2>
+<h3>simplexNoise2D(x, z, octaves, persistence, lacunarity, scale)</h3>
+<p>Multi-octave 2D fractal noise. Returns values in range 0..1.</p>
+<pre><code class="language-javascript">const height = simplexNoise2D(worldX, worldZ, 4, 0.5, 2.0, 0.01) * 30 + 60;
+</code></pre>
+<h3>simplexNoise3D(x, y, z, octaves, persistence, lacunarity, scale)</h3>
+<p>Multi-octave 3D fractal noise. Returns values in range 0..1. Use for caves, ore veins, etc.</p>
+<pre><code class="language-javascript">const density = simplexNoise3D(x, y, z, 3, 0.5, 2.0, 0.04);
+if (density &gt; 0.7) {
+  // Spawn ore here
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Block Manipulation</h2>
+<h3>getVoxelBlock(x, y, z)</h3>
+<p>Returns the block type at the specified world coordinates.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>x</code> - World X coordinate</li>
+<li><code>y</code> - World Y coordinate (0-127)</li>
+<li><code>z</code> - World Z coordinate</li>
+</ul>
+<p><strong>Returns:</strong> Block type constant (0-14) or <code>BLOCK_TYPES.AIR</code> if out of bounds</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">const blockUnderPlayer = getVoxelBlock(
+  Math.floor(playerX),
+  Math.floor(playerY) - 1,
+  Math.floor(playerZ)
+);
+
+if (blockUnderPlayer === BLOCK_TYPES.WATER) {
+  console.log(&#39;Player is standing on water!&#39;);
+}
+</code></pre>
+<h3>setVoxelBlock(x, y, z, blockType)</h3>
+<p>Places or removes a block at the specified world coordinates. Automatically updates chunk meshes.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>x</code> - World X coordinate</li>
+<li><code>y</code> - World Y coordinate (0-127)</li>
+<li><code>z</code> - World Z coordinate</li>
+<li><code>blockType</code> - Block type constant (use <code>BLOCK_TYPES.AIR</code> to remove)</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">// Break block (set to air)
+setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR);
+
+// Place stone block
+setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE);
+
+// Build a wall
+for (let y = 0; y &lt; 5; y++) {
+  setVoxelBlock(20, 30 + y, 20, BLOCK_TYPES.BRICK);
+}
+</code></pre>
+<p><strong>Performance:</strong> Efficiently updates only affected chunks. Adjacent chunks are automatically marked dirty if the block is on a boundary.</p>
+        </section>
+
+        <section class="md">
+<h2>Raycasting</h2>
+<h3>raycastVoxelBlock(origin, direction, maxDistance)</h3>
+<p>Casts a ray from a point in a direction to find the first solid block hit. Perfect for mining/building mechanics.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>origin</code> - Starting point <code>[x, y, z]</code></li>
+<li><code>direction</code> - Ray direction <code>[dx, dy, dz]</code> (should be normalized)</li>
+<li><code>maxDistance</code> - Maximum ray distance (default: 10)</li>
+</ul>
+<p><strong>Returns:</strong> Object with:</p>
+<pre><code class="language-javascript">{
+  hit: true,              // Whether a block was hit
+  position: [x, y, z],    // Block coordinates
+  normal: [nx, ny, nz],   // Face normal of the hit surface
+  adjacent: [x, y, z],    // Block position adjacent to hit face (for placing)
+  blockType: 3,           // Type of block hit
+  distance: 5.2           // Distance to block
+}
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">// Camera/player looking direction
+const lookDir = [
+  -Math.sin(yaw) * Math.cos(pitch),
+  Math.sin(pitch),
+  -Math.cos(yaw) * Math.cos(pitch),
+];
+
+const result = raycastVoxelBlock(
+  [playerX, playerY + eyeHeight, playerZ],
+  lookDir,
+  10 // 10 block reach
+);
+
+if (result.hit) {
+  // Break block
+  if (isKeyPressed(&#39;KeyF&#39;)) {
+    setVoxelBlock(result.position[0], result.position[1], result.position[2], BLOCK_TYPES.AIR);
+  }
+
+  // Place block on adjacent face
+  if (isKeyPressed(&#39;KeyE&#39;)) {
+    setVoxelBlock(
+      result.adjacent[0],
+      result.adjacent[1],
+      result.adjacent[2],
+      BLOCK_TYPES.COBBLESTONE
+    );
+  }
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Collision Detection</h2>
+<h3>checkVoxelCollision(position, size)</h3>
+<p>Checks if an axis-aligned bounding box collides with any solid blocks.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>position</code> - Center position <code>[x, y, z]</code></li>
+<li><code>size</code> - Half-size of bounding box (radius)</li>
+</ul>
+<p><strong>Returns:</strong> <code>true</code> if colliding with solid block, <code>false</code> otherwise</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">const playerSize = 0.3; // 0.6 block width
+const playerHeight = 1.8; // 1.8 blocks tall
+
+// Check if player&#39;s feet are on solid ground
+const onGround = checkVoxelCollision([player.pos[0], player.pos[1], player.pos[2]], playerSize);
+
+// Check head collision
+const hitCeiling = checkVoxelCollision(
+  [player.pos[0], player.pos[1] + playerHeight, player.pos[2]],
+  playerSize
+);
+
+// Simple physics
+if (onGround &amp;&amp; player.vel[1] &lt;= 0) {
+  player.vel[1] = 0;
+  player.canJump = true;
+}
+
+if (hitCeiling &amp;&amp; player.vel[1] &gt; 0) {
+  player.vel[1] = 0;
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Structure Generation</h2>
+<h3>placeVoxelTree(x, y, z)</h3>
+<p>Generates a tree structure at the specified coordinates. Trees consist of wood trunk with leaf canopy.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>x</code> - World X coordinate for tree base</li>
+<li><code>y</code> - World Y coordinate for ground level</li>
+<li><code>z</code> - World Z coordinate for tree base</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-javascript">export function init() {
+  // Generate initial world
+  updateVoxelWorld(0, 0);
+
+  // Add trees to landscape
+  placeVoxelTree(10, 35, 10);
+  placeVoxelTree(20, 33, 15);
+  placeVoxelTree(-5, 36, 8);
+
+  // Cluster of trees
+  for (let i = 0; i &lt; 10; i++) {
+    const x = Math.random() * 100 - 50;
+    const z = Math.random() * 100 - 50;
+    const y = getGroundHeight(x, z);
+    placeVoxelTree(x, y, z);
+  }
+}
+</code></pre>
+<p><strong>Tree Structure:</strong></p>
+<ul>
+<li>Trunk: 4-6 blocks tall of <code>BLOCK_TYPES.WOOD</code></li>
+<li>Leaves: Spherical canopy of <code>BLOCK_TYPES.LEAVES</code></li>
+<li>Automatic variation in size</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>Complete Minecraft-Style Game Example</h2>
+<pre><code class="language-javascript">const player = {
+  pos: [8, 40, 8],
+  vel: [0, 0, 0],
+  rot: [0, 0], // yaw, pitch
+  onGround: false,
+  selectedBlock: BLOCK_TYPES.GRASS,
+};
+
+let mouseLocked = false;
+
+export function init() {
+  // Setup world
+  setAmbientLight(0x666666);
+  setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
+  setFog(0x87ceeb, 80, 200);
+
+  // Generate terrain
+  updateVoxelWorld(player.pos[0], player.pos[2]);
+
+  // Add trees
+  for (let i = 0; i &lt; 20; i++) {
+    const x = Math.random() * 200 - 100;
+    const z = Math.random() * 200 - 100;
+    placeVoxelTree(x, 35, z);
+  }
+
+  // Pointer lock for mouse control
+  const canvas = document.getElementById(&#39;screen&#39;);
+  canvas.addEventListener(&#39;click&#39;, () =&gt; {
+    if (!mouseLocked) {
+      canvas.requestPointerLock();
+    }
+  });
+
+  document.addEventListener(&#39;pointerlockchange&#39;, () =&gt; {
+    mouseLocked = document.pointerLockElement === canvas;
+  });
+
+  canvas.addEventListener(&#39;mousemove&#39;, e =&gt; {
+    if (mouseLocked) {
+      player.rot[0] -= e.movementX * 0.002;
+      player.rot[1] -= e.movementY * 0.002;
+      player.rot[1] = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.rot[1]));
+    }
+  });
+}
+
+export function update(dt) {
+  if (!mouseLocked) return;
+
+  // Movement
+  const forward = [-Math.sin(player.rot[0]), 0, -Math.cos(player.rot[0])];
+  const right = [-Math.sin(player.rot[0] + Math.PI / 2), 0, -Math.cos(player.rot[0] + Math.PI / 2)];
+
+  const speed = 4.0;
+  if (isKeyDown(&#39;KeyW&#39;)) {
+    player.vel[0] += forward[0] * speed * dt;
+    player.vel[2] += forward[2] * speed * dt;
+  }
+  if (isKeyDown(&#39;KeyS&#39;)) {
+    player.vel[0] -= forward[0] * speed * dt;
+    player.vel[2] -= forward[2] * speed * dt;
+  }
+  if (isKeyDown(&#39;KeyA&#39;)) {
+    player.vel[0] += right[0] * speed * dt;
+    player.vel[2] += right[2] * speed * dt;
+  }
+  if (isKeyDown(&#39;KeyD&#39;)) {
+    player.vel[0] -= right[0] * speed * dt;
+    player.vel[2] -= right[2] * speed * dt;
+  }
+
+  // Jump
+  if (isKeyPressed(&#39;Space&#39;) &amp;&amp; player.onGround) {
+    player.vel[1] = 8.0;
+  }
+
+  // Gravity
+  player.vel[1] -= 20.0 * dt;
+
+  // Apply velocity
+  player.pos[0] += player.vel[0] * dt;
+  player.pos[1] += player.vel[1] * dt;
+  player.pos[2] += player.vel[2] * dt;
+
+  // Collision
+  const collision = checkVoxelCollision(player.pos, 0.3);
+  if (collision &amp;&amp; player.vel[1] &lt;= 0) {
+    player.pos[1] = Math.floor(player.pos[1]) + 1;
+    player.vel[1] = 0;
+    player.onGround = true;
+  } else {
+    player.onGround = false;
+  }
+
+  // Damping
+  player.vel[0] *= 0.8;
+  player.vel[2] *= 0.8;
+
+  // Camera
+  setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
+  const lookDir = [
+    -Math.sin(player.rot[0]) * Math.cos(player.rot[1]),
+    Math.sin(player.rot[1]),
+    -Math.cos(player.rot[0]) * Math.cos(player.rot[1]),
+  ];
+  setCameraLookAt(lookDir);
+
+  // Block interaction
+  const rayOrigin = [player.pos[0], player.pos[1] + 1.6, player.pos[2]];
+  const result = raycastVoxelBlock(rayOrigin, lookDir, 10);
+
+  if (result.hit) {
+    const [x, y, z] = result.position;
+
+    // Break block
+    if (isMousePressed(0)) {
+      setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+    }
+
+    // Place block
+    if (isMousePressed(2)) {
+      const placeX = x - Math.sign(lookDir[0]);
+      const placeY = y - Math.sign(lookDir[1]);
+      const placeZ = z - Math.sign(lookDir[2]);
+      setVoxelBlock(placeX, placeY, placeZ, player.selectedBlock);
+    }
+  }
+
+  // Update world chunks
+  if (Math.random() &lt; 0.1) {
+    updateVoxelWorld(player.pos[0], player.pos[2]);
+  }
+
+  // Block selection
+  for (let i = 1; i &lt;= 9; i++) {
+    if (isKeyPressed(i.toString())) {
+      player.selectedBlock = i;
+    }
+  }
+}
+
+export function draw() {
+  cls();
+
+  // Draw crosshair
+  if (mouseLocked) {
+    const cx = 320,
+      cy = 180,
+      size = 8;
+    rectfill(cx - size, cy - 1, cx + size, cy + 1, rgba8(1, 1, 1, 1));
+    rectfill(cx - 1, cy - size, cx + 1, cy + size, rgba8(1, 1, 1, 1));
+  }
+
+  // HUD
+  print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
+  print(
+    `Pos: ${Math.floor(player.pos[0])}, ${Math.floor(player.pos[1])}, ${Math.floor(player.pos[2])}`,
+    4,
+    12,
+    rgba8(1, 1, 1, 1)
+  );
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Terrain Generation</h2>
+<p>The voxel engine uses <strong>Perlin noise</strong> for realistic terrain with:</p>
+<h3>Features:</h3>
+<ul>
+<li><strong>Height variation</strong> - Hills and valleys (20-52 blocks high)</li>
+<li><strong>Biomes</strong> - Grass, sand, snow based on temperature/moisture</li>
+<li><strong>Cave systems</strong> - Underground tunnels and caverns</li>
+<li><strong>Water level</strong> - Ocean at Y=30</li>
+<li><strong>Bedrock layer</strong> - Indestructible bottom (Y=0)</li>
+</ul>
+<h3>Biome Selection:</h3>
+<pre><code class="language-javascript">Temperature &gt; 0.7 → Snow biome
+Moisture &lt; 0.3 → Desert (sand)
+Default → Grass/dirt
+</code></pre>
+<h3>Layer Structure:</h3>
+<pre><code>Y=0     → Bedrock (indestructible)
+Y=1-30  → Stone
+Y=31-33 → Dirt
+Y=34    → Surface (grass/sand/snow)
+Y=35-64 → Air (or water below Y=30)
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Performance Tips</h2>
+<h3>Chunk Management</h3>
+<ul>
+<li><strong>Render distance</strong>: 4 chunks (64 blocks) - adjustable in code</li>
+<li><strong>Chunk size</strong>: 16x64x16 blocks per chunk</li>
+<li><strong>Auto-unloading</strong>: Distant chunks automatically removed from memory</li>
+</ul>
+<h3>Optimization Techniques Used:</h3>
+<ol>
+<li><strong>Greedy meshing</strong> - Combines adjacent faces to reduce vertices</li>
+<li><strong>Face culling</strong> - Hidden faces not rendered</li>
+<li><strong>Chunk dirty flags</strong> - Only rebuild when blocks change</li>
+<li><strong>BufferGeometry</strong> - GPU-optimized mesh storage</li>
+<li><strong>Flat shading</strong> - Fast lighting calculation</li>
+<li><strong>Ambient occlusion</strong> - Per-face brightness variation</li>
+</ol>
+<h3>Best Practices:</h3>
+<pre><code class="language-javascript">// ✅ Good - Update chunks occasionally
+if (frameCount % 10 === 0) {
+  updateVoxelWorld(playerX, playerZ);
+}
+
+// ❌ Bad - Don&#39;t update every frame
+export function update(dt) {
+  updateVoxelWorld(playerX, playerZ); // Too expensive!
+}
+
+// ✅ Good - Batch block changes
+for (let i = 0; i &lt; 100; i++) {
+  setVoxelBlock(x + i, y, z, BLOCK_TYPES.STONE);
+}
+// Chunks updated once after loop
+
+// ✅ Good - Check collision efficiently
+const onGround = checkVoxelCollision(playerFeetPos, 0.3);
+
+// ❌ Bad - Don&#39;t check every nearby block manually
+for (let x = -5; x &lt; 5; x++) {
+  for (let z = -5; z &lt; 5; z++) {
+    if (getVoxelBlock(px + x, py, pz + z) !== BLOCK_TYPES.AIR) {
+      // This is way too slow!
+    }
+  }
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Common Patterns</h2>
+<h3>Finding Ground Height</h3>
+<pre><code class="language-javascript">function getGroundHeight(x, z) {
+  for (let y = 63; y &gt;= 0; y--) {
+    const block = getVoxelBlock(x, y, z);
+    if (block !== BLOCK_TYPES.AIR &amp;&amp; block !== BLOCK_TYPES.WATER) {
+      return y + 1;
+    }
+  }
+  return 0;
+}
+</code></pre>
+<h3>Building Structures</h3>
+<pre><code class="language-javascript">// House
+function buildHouse(x, y, z) {
+  // Floor
+  for (let dx = 0; dx &lt; 8; dx++) {
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
+    }
+  }
+
+  // Walls
+  for (let dy = 1; dy &lt; 5; dy++) {
+    for (let dx = 0; dx &lt; 8; dx++) {
+      setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
+      setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
+    }
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
+    }
+  }
+
+  // Roof
+  for (let dx = 0; dx &lt; 8; dx++) {
+    for (let dz = 0; dz &lt; 8; dz++) {
+      setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
+    }
+  }
+
+  // Door
+  setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
+  setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
+}
+</code></pre>
+<h3>Mining System</h3>
+<pre><code class="language-javascript">let mining = false;
+let miningProgress = 0;
+let miningBlock = null;
+
+function updateMining(dt) {
+  const result = raycastVoxelBlock(eyePos, lookDir, 10);
+
+  if (result.hit &amp;&amp; isMouseDown(0)) {
+    // Same block
+    if (
+      miningBlock &amp;&amp;
+      miningBlock[0] === result.position[0] &amp;&amp;
+      miningBlock[1] === result.position[1] &amp;&amp;
+      miningBlock[2] === result.position[2]
+    ) {
+      miningProgress += dt;
+
+      // Break after 1 second
+      if (miningProgress &gt;= 1.0) {
+        const [x, y, z] = miningBlock;
+        setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+        miningProgress = 0;
+        miningBlock = null;
+      }
+    } else {
+      // New block
+      miningBlock = result.position;
+      miningProgress = 0;
+    }
+  } else {
+    miningProgress = 0;
+    miningBlock = null;
+  }
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Custom Block Shapes</h2>
+<p>Blocks can have non-cube shapes. Non-cube shapes skip greedy mesh merging and emit custom geometry.</p>
+<h3>Available Shapes</h3>
+<table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>Geometry</th>
+<th>Bounding Box</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>cube</code></td>
+<td>Full block (default)</td>
+<td>[0,0,0, 1,1,1]</td>
+</tr>
+<tr>
+<td><code>slab_bottom</code></td>
+<td>Half-height box, bottom</td>
+<td>[0,0,0, 1,0.5,1]</td>
+</tr>
+<tr>
+<td><code>slab_top</code></td>
+<td>Half-height box, top</td>
+<td>[0,0.5,0, 1,1,1]</td>
+</tr>
+<tr>
+<td><code>stair</code></td>
+<td>Bottom slab + back upper half</td>
+<td>[0,0,0, 1,1,1]</td>
+</tr>
+<tr>
+<td><code>fence</code></td>
+<td>Thin centered post</td>
+<td>[0.375,0,0.375, 0.625,1,0.625]</td>
+</tr>
+<tr>
+<td><code>cross</code></td>
+<td>Two diagonal X-quads</td>
+<td>[0.15,0,0.15, 0.85,1,0.85]</td>
+</tr>
+</tbody></table>
+<h3>Shape Query Functions</h3>
+<pre><code class="language-javascript">getVoxelBlockShape(BLOCK_TYPES.STONE_SLAB); // &#39;slab_bottom&#39;
+getVoxelBlockBoundingBox(BLOCK_TYPES.FENCE); // [0.375,0,0.375, 0.625,1,0.625]
+isVoxelBlockFullCube(BLOCK_TYPES.STONE); // true
+isVoxelBlockFullCube(BLOCK_TYPES.STONE_SLAB); // false
+</code></pre>
+<p>Non-cube blocks don&#39;t occlude neighboring cube faces. Collision uses shape-specific bounding boxes.</p>
+        </section>
+
+        <section class="md">
+<h2>Lighting System</h2>
+<p>BFS flood-fill light propagation with sky light (downward) and block light (torches, glowstone, lava). Smooth per-vertex interpolation combined with ambient occlusion.</p>
+<pre><code class="language-javascript">// Get light level (0-15) at a position
+const light = getVoxelLightLevel(x, y, z);
+
+// Day/night cycle (0.0 to 1.0)
+let time = 0;
+export function update(dt) {
+  time = (time + dt * 0.01) % 1;
+  setVoxelDayTime(time);
+}
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Fluid Simulation</h2>
+<p>Water spreads 7 blocks horizontally with BFS flow. Lava spreads 3 blocks. Fluids retract when source is removed.</p>
+<pre><code class="language-javascript">// Place a water source
+setVoxelFluidSource(10, 70, 10, BLOCK_TYPES.WATER);
+
+// Place a lava source
+setVoxelFluidSource(20, 70, 20, BLOCK_TYPES.LAVA);
+
+// Remove a fluid source (flowing blocks retract)
+removeVoxelFluidSource(10, 70, 10);
+
+// Check fluid level (0=full, 7=thinnest, -1=no fluid)
+const level = getVoxelFluidLevel(10, 69, 10);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Entity System</h2>
+<p>Spawn entities with physics, AI, health, and spatial hashing for efficient radius queries.</p>
+<pre><code class="language-javascript">// Spawn a zombie
+const zombie = spawnVoxelEntity(&#39;zombie&#39;, [10, 65, 10], {
+  health: 20,
+  size: [0.6, 1.8, 0.6],
+  mesh: createCube(1, 0x00ff00, [0, 0, 0]),
+  onUpdate: (entity, dt) =&gt; {
+    // AI logic — chase player, patrol, etc.
+  },
+});
+
+// Damage / heal entities
+damageVoxelEntity(zombie.id, 5);
+healVoxelEntity(zombie.id, 3);
+
+// Spatial queries
+const nearby = getVoxelEntitiesInRadius([px, py, pz], 16);
+const allZombies = getVoxelEntitiesByType(&#39;zombie&#39;);
+const total = getVoxelEntityCount();
+
+// Tick all entities (call in update)
+updateVoxelEntities(dt);
+
+// Cleanup
+removeVoxelEntity(zombie.id);
+cleanupVoxelEntities(); // Remove all
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>ECS Components &amp; Archetypes</h2>
+<p>Attach arbitrary components to entities for flexible game logic.</p>
+<pre><code class="language-javascript">// Attach components
+setVoxelEntityComponent(id, &#39;inventory&#39;, { slots: 10, items: [] });
+setVoxelEntityComponent(id, &#39;hostile&#39;, { aggroRange: 16 });
+
+// Query/check components
+const inv = getVoxelEntityComponent(id, &#39;inventory&#39;);
+if (hasVoxelEntityComponent(id, &#39;hostile&#39;)) {
+  /* ... */
+}
+removeVoxelEntityComponent(id, &#39;hostile&#39;);
+
+// Query all entities with specific components
+const enemies = queryVoxelEntities([&#39;hostile&#39;, &#39;ai&#39;]);
+const nearbyEnemies = queryVoxelEntities([&#39;hostile&#39;], e =&gt; dist(e.position, player.pos) &lt; 32);
+
+// Define reusable archetypes
+createVoxelEntityArchetype(&#39;skeleton&#39;, {
+  health: 15,
+  hostile: { damage: 2 },
+  ai: { type: &#39;wander&#39; },
+});
+const skel = spawnVoxelEntityFromArchetype(&#39;skeleton&#39;, [20, 65, 20]);
+
+// Built-in archetypes: &#39;mob&#39;, &#39;item&#39;, &#39;projectile&#39;, &#39;npc&#39;, &#39;vehicle&#39;
+</code></pre>
+<h3>A* Pathfinding</h3>
+<pre><code class="language-javascript">const path = findVoxelPath([0, 65, 0], [30, 68, 30], {
+  maxSteps: 1000,
+  entityHeight: 2,
+});
+// Returns array of [x,y,z] waypoints, or null if no path found
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Schematics &amp; Import/Export</h2>
+<p>Export and import regions or entire worlds. Regions use RLE compression.</p>
+<pre><code class="language-javascript">// Export a 10×10×10 building
+const schematic = exportVoxelRegion(0, 60, 0, 9, 69, 9);
+
+// Paste it somewhere else
+importVoxelRegion(schematic, 100, 60, 100);
+
+// Paste without overwriting existing blocks
+importVoxelRegion(schematic, 200, 60, 200, { skipAir: true });
+
+// Export/import entire worlds as JSON
+const worldData = exportVoxelWorldJSON();
+importVoxelWorldJSON(worldData);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>World Persistence</h2>
+<p>Save and load worlds via IndexedDB.</p>
+<pre><code class="language-javascript">// Save current world
+await saveVoxelWorld(&#39;my-world&#39;);
+
+// Load a saved world
+await loadVoxelWorld(&#39;my-world&#39;);
+
+// List all saved worlds
+const worlds = await listVoxelWorlds(); // [&#39;my-world&#39;, &#39;test-world&#39;]
+
+// Delete a saved world
+await deleteVoxelWorld(&#39;old-world&#39;);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Texture Atlas</h2>
+<pre><code class="language-javascript">// Enable/disable procedural textures (27 pixel-art tiles)
+enableVoxelTextures(true);
+
+// Load a custom texture atlas
+loadVoxelTextureAtlas(&#39;atlas.png&#39;, mapping);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Swept AABB Physics (moveVoxelEntity)</h2>
+<p>Full physics integration with per-axis collision, auto-step, water drag, and ground detection.</p>
+<pre><code class="language-javascript">const result = moveVoxelEntity(
+  player.pos, // [x, y, z]
+  player.vel, // [vx, vy, vz]
+  [0.6, 1.8, 0.6], // collision box [w, h, d]
+  dt
+);
+player.pos = result.position;
+player.vel = result.velocity;
+player.grounded = result.grounded;
+// Also: result.hitCeiling, result.onIce, result.jumped
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Force-Loading Chunks</h2>
+<pre><code class="language-javascript">// Synchronously load all chunks in render distance (use in init)
+forceLoadVoxelChunks(playerX, playerZ);
+</code></pre>
+        </section>
+
+        <section class="md">
+<h2>Troubleshooting</h2>
+<h3>Blocks Not Appearing</h3>
+<ul>
+<li>Call <code>updateVoxelWorld()</code> after placing blocks</li>
+<li>Check if coordinates are within valid range (Y: 0-127)</li>
+<li>Verify chunks are loading (check console logs)</li>
+</ul>
+<h3>Performance Issues</h3>
+<ul>
+<li>Reduce render distance in code (change <code>RENDER_DISTANCE</code>)</li>
+<li>Update chunks less frequently</li>
+<li>Limit block placement/breaking rate</li>
+</ul>
+<h3>Collision Not Working</h3>
+<ul>
+<li>Ensure player size matches collision box</li>
+<li>Check Y coordinate (height above ground)</li>
+<li>Verify blocks are solid (not AIR or WATER)</li>
+</ul>
+<h3>Raycasting Missing Blocks</h3>
+<ul>
+<li>Increase ray step precision (reduce step size)</li>
+<li>Check max distance parameter</li>
+<li>Ensure camera position is correct</li>
+</ul>
+        </section>
+
+        <section class="md">
+<h2>API Reference Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>configureVoxelWorld(opts)</code></td>
+<td>Configure world gen params</td>
+</tr>
+<tr>
+<td><code>updateVoxelWorld(x, z)</code></td>
+<td>Load/unload chunks around player</td>
+</tr>
+<tr>
+<td><code>forceLoadVoxelChunks(x, z)</code></td>
+<td>Sync-load all chunks in range</td>
+</tr>
+<tr>
+<td><code>resetVoxelWorld()</code></td>
+<td>Clear all chunks and entities</td>
+</tr>
+<tr>
+<td><code>getVoxelConfig()</code></td>
+<td>Get current world config</td>
+</tr>
+<tr>
+<td><code>getVoxelBlock(x, y, z)</code></td>
+<td>Get block type at position</td>
+</tr>
+<tr>
+<td><code>setVoxelBlock(x, y, z, type)</code></td>
+<td>Place/remove block</td>
+</tr>
+<tr>
+<td><code>getVoxelHighestBlock(x, z)</code></td>
+<td>Highest solid block Y</td>
+</tr>
+<tr>
+<td><code>getVoxelBiome(x, z)</code></td>
+<td>Biome name at position</td>
+</tr>
+<tr>
+<td><code>registerVoxelBlock(id, opts)</code></td>
+<td>Register custom block</td>
+</tr>
+<tr>
+<td><code>getVoxelBlockShape(id)</code></td>
+<td>Get block shape string</td>
+</tr>
+<tr>
+<td><code>getVoxelBlockBoundingBox(id)</code></td>
+<td>Get block collision box</td>
+</tr>
+<tr>
+<td><code>isVoxelBlockFullCube(id)</code></td>
+<td>Check if block is full cube</td>
+</tr>
+<tr>
+<td><code>raycastVoxelBlock(o, d, max)</code></td>
+<td>DDA voxel raycasting</td>
+</tr>
+<tr>
+<td><code>checkVoxelCollision(pos, size)</code></td>
+<td>AABB collision check</td>
+</tr>
+<tr>
+<td><code>checkVoxelFluid(pos, size)</code></td>
+<td>Check if in fluid</td>
+</tr>
+<tr>
+<td><code>moveVoxelEntity(pos, vel, size, dt)</code></td>
+<td>Swept AABB physics</td>
+</tr>
+<tr>
+<td><code>getVoxelLightLevel(x, y, z)</code></td>
+<td>Light level 0–15</td>
+</tr>
+<tr>
+<td><code>setVoxelDayTime(t)</code></td>
+<td>Day/night cycle (0–1)</td>
+</tr>
+<tr>
+<td><code>setVoxelFluidSource(x, y, z, type)</code></td>
+<td>Place fluid source</td>
+</tr>
+<tr>
+<td><code>removeVoxelFluidSource(x, y, z)</code></td>
+<td>Remove fluid source</td>
+</tr>
+<tr>
+<td><code>getVoxelFluidLevel(x, y, z)</code></td>
+<td>Fluid level at position</td>
+</tr>
+<tr>
+<td><code>spawnVoxelEntity(type, pos, opts)</code></td>
+<td>Spawn entity</td>
+</tr>
+<tr>
+<td><code>removeVoxelEntity(id)</code></td>
+<td>Remove entity</td>
+</tr>
+<tr>
+<td><code>getVoxelEntity(id)</code></td>
+<td>Get entity by ID</td>
+</tr>
+<tr>
+<td><code>damageVoxelEntity(id, amt)</code></td>
+<td>Damage entity</td>
+</tr>
+<tr>
+<td><code>healVoxelEntity(id, amt)</code></td>
+<td>Heal entity</td>
+</tr>
+<tr>
+<td><code>updateVoxelEntities(dt)</code></td>
+<td>Tick all entities</td>
+</tr>
+<tr>
+<td><code>getVoxelEntitiesInRadius(pos, r)</code></td>
+<td>Spatial query</td>
+</tr>
+<tr>
+<td><code>getVoxelEntitiesByType(type)</code></td>
+<td>Query by type</td>
+</tr>
+<tr>
+<td><code>getVoxelEntityCount()</code></td>
+<td>Total entity count</td>
+</tr>
+<tr>
+<td><code>cleanupVoxelEntities()</code></td>
+<td>Remove all entities</td>
+</tr>
+<tr>
+<td><code>setVoxelEntityComponent(id, name, data)</code></td>
+<td>Attach ECS component</td>
+</tr>
+<tr>
+<td><code>getVoxelEntityComponent(id, name)</code></td>
+<td>Get ECS component</td>
+</tr>
+<tr>
+<td><code>hasVoxelEntityComponent(id, name)</code></td>
+<td>Check component</td>
+</tr>
+<tr>
+<td><code>removeVoxelEntityComponent(id, name)</code></td>
+<td>Remove component</td>
+</tr>
+<tr>
+<td><code>queryVoxelEntities(comps, fn)</code></td>
+<td>Query by components</td>
+</tr>
+<tr>
+<td><code>createVoxelEntityArchetype(name, comps)</code></td>
+<td>Define archetype</td>
+</tr>
+<tr>
+<td><code>spawnVoxelEntityFromArchetype(name, pos)</code></td>
+<td>Spawn from archetype</td>
+</tr>
+<tr>
+<td><code>findVoxelPath(start, end, opts)</code></td>
+<td>A* pathfinding</td>
+</tr>
+<tr>
+<td><code>exportVoxelRegion(...)</code></td>
+<td>Export region schematic</td>
+</tr>
+<tr>
+<td><code>importVoxelRegion(data, x, y, z)</code></td>
+<td>Import schematic</td>
+</tr>
+<tr>
+<td><code>exportVoxelWorldJSON()</code></td>
+<td>Export world as JSON</td>
+</tr>
+<tr>
+<td><code>importVoxelWorldJSON(json)</code></td>
+<td>Import world from JSON</td>
+</tr>
+<tr>
+<td><code>saveVoxelWorld(name)</code></td>
+<td>Save to IndexedDB</td>
+</tr>
+<tr>
+<td><code>loadVoxelWorld(name)</code></td>
+<td>Load from IndexedDB</td>
+</tr>
+<tr>
+<td><code>listVoxelWorlds()</code></td>
+<td>List saved worlds</td>
+</tr>
+<tr>
+<td><code>deleteVoxelWorld(name)</code></td>
+<td>Delete saved world</td>
+</tr>
+<tr>
+<td><code>enableVoxelTextures(on)</code></td>
+<td>Toggle texture atlas</td>
+</tr>
+<tr>
+<td><code>loadVoxelTextureAtlas(url)</code></td>
+<td>Load custom atlas</td>
+</tr>
+<tr>
+<td><code>simplexNoise2D(x,z,...)</code></td>
+<td>2D fractal noise</td>
+</tr>
+<tr>
+<td><code>simplexNoise3D(x,y,z,...)</code></td>
+<td>3D fractal noise</td>
+</tr>
+<tr>
+<td><code>placeVoxelTree(x, y, z)</code></td>
+<td>Generate tree</td>
+</tr>
+<tr>
+<td><code>BLOCK_TYPES.*</code></td>
+<td>36 block type constants</td>
+</tr>
+</tbody></table>
+<hr>
+<p><strong>Ready to build your Minecraft clone!</strong> Check out the complete example in <code>examples/minecraft-demo/</code> for a fully playable game with all features implemented.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>
