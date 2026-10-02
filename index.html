@@ -26,6 +26,15 @@
 <meta name="twitter:title" content="Nova64 — JavaScript 3D Fantasy Console">
 <meta name="twitter:description" content="A browser-native fantasy console for low-poly, voxel and glitch 3D games. Code in JavaScript, ship portable carts.">
 <meta name="twitter:image" content="https://nova64.io/public/assets/cart-thumbs/f-zero-nova-3d.png">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -57,6 +66,12 @@
   body{ margin:0; background:#0a0b10; color:#ece7db; font-family:'Archivo',system-ui,sans-serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden; }
   ::selection{ background:#22e0c8; color:#0a0b10; }
   a{ color:inherit; }
+  .maigexr-link{ text-transform:none; white-space:nowrap; text-decoration:none; color:rgba(236,231,219,0.72); }
+  .maigexr-link:hover, .maigexr-link:focus-visible{ color:#22e0c8; }
+  .maigexr-link:focus-visible{ outline:2px solid #22e0c8; outline-offset:4px; }
+  @media (max-width:759px){
+    footer{ padding-bottom:80px; }
+  }
   /* Clip decorative overflow without creating a scroll container for sticky. */
   .site-shell{ overflow:clip; }
   .site-header{
@@ -65,7 +80,7 @@
     -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
     border-bottom:1px solid rgba(236,231,219,0.14);
   }
-  @media (min-width:1040px){
+  @media (min-width:1240px){
     .site-header{
       background:#0a0b10;
       -webkit-backdrop-filter:none; backdrop-filter:none;
@@ -162,7 +177,7 @@
       </a>
 
       <!-- Full nav, wide viewports only. Below navBreakpoint it is replaced by the
-           hamburger + drop panel further down, so the ten items never wrap into
+           hamburger + drop panel further down, so the links never wrap into
            the logo or squeeze the Buy CTA off the row. -->
       <sc-if value="{{ navExpanded }}" hint-placeholder-val="{{ true }}">
         <nav aria-label="Primary" style="display:flex; align-items:center; gap:20px; font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;">
@@ -173,6 +188,7 @@
           <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
             <a href="{{ n.href }}" style="text-decoration:none; white-space:nowrap; color:rgba(236,231,219,0.72);" style-hover="color:#22e0c8 !important;">{{ n.label }}</a>
           </sc-for>
+          <a class="maigexr-link" href="https://maigexr.seacloud9.studio/" target="_blank" rel="noopener noreferrer" aria-label="m{ai}geXR (opens in a new tab)">m{ai}geXR</a>
         </nav>
       </sc-if>
 
@@ -204,6 +220,7 @@
         <sc-for list="{{ navApps }}" as="n" hint-placeholder-count="3">
           <a href="{{ n.href }}" onClick="{{ n.close }}" style="display:block; padding:13px 2px; font-size:13px; text-decoration:none; color:rgba(236,231,219,0.82); border-bottom:1px solid rgba(236,231,219,0.08);" style-hover="color:#22e0c8 !important;">{{ n.label }}</a>
         </sc-for>
+        <a class="maigexr-link" href="https://maigexr.seacloud9.studio/" target="_blank" rel="noopener noreferrer" aria-label="m{ai}geXR (opens in a new tab)" onClick="{{ closeMenu }}" style="display:block; padding:13px 2px; font-size:13px; border-bottom:1px solid rgba(236,231,219,0.08);">m{ai}geXR</a>
       </nav>
     </sc-if>
   </header>
@@ -704,10 +721,11 @@
           </span>
           <span>© {{ year }} · FANTASY CONSOLE</span>
         </div>
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; column-gap:20px; row-gap:12px; flex-wrap:wrap;">
           <a href="https://nova64.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#22e0c8 !important;">nova64.io</a>
           <a href="/docs" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#22e0c8 !important;">docs</a>
           <a href="https://www.starcade9.io/" target="_blank" rel="noopener" style="text-decoration:none; color:rgba(236,231,219,0.5);" style-hover="color:#a35bff !important;">starcade9.io</a>
+          <a class="maigexr-link" href="https://maigexr.seacloud9.studio/" target="_blank" rel="noopener noreferrer" aria-label="m{ai}geXR (opens in a new tab)">m{ai}geXR</a>
           <span>デザイナーズリパブリック</span>
         </div>
         <div style="display:flex; width:100%; justify-content:flex-end;">
@@ -736,10 +754,10 @@
 //  BUY / CHECKOUT LINK  —  single source of truth. Update this one line to
 //  change every "Buy" button on the page.
 // ============================================================================
-// Width at which the ten-item nav stops fitting beside the logo and the Buy CTA
+// Width at which the full nav stops fitting beside the logo and the Buy CTA
 // and collapses into the hamburger. Sits above iPad landscape (1024) so tablets
 // get the drop panel rather than a cramped, wrapping row.
-const NAV_BREAKPOINT = 1040;
+const NAV_BREAKPOINT = 1240;
 
 const CHECKOUT_URL = 'https://www.patreon.com/login?ru=https%3A%2F%2Fwww.patreon.com%2Fcheckout%2Fstarcade9%3Fpvid%3D5157631';
 
@@ -1046,15 +1064,6 @@ class Component extends DCLogic {
       year: new Date().getFullYear() };
   }
 }
-</script>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-B3RDWLFWVF');
 </script>
 </body>
 </html>
