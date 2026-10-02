@@ -27,7 +27,7 @@ function _setupPointer() {
   canvas.addEventListener(
     'mousemove',
     e => {
-      const r = nova64.draw.rect();
+      const r = rect();
       mouseX = (e.clientX - r.left) * scaleX();
       mouseY = (e.clientY - r.top) * scaleY();
     },
@@ -37,7 +37,7 @@ function _setupPointer() {
   canvas.addEventListener(
     'touchmove',
     e => {
-      const r = nova64.draw.rect();
+      const r = rect();
       const t = e.touches[0];
       mouseX = (t.clientX - r.left) * scaleX();
       mouseY = (t.clientY - r.top) * scaleY();
@@ -47,11 +47,11 @@ function _setupPointer() {
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
   _setupPointer();
 
-  trailEmitter = nova64.fx.createEmitter2D({
+  trailEmitter = createEmitter2D({
     blendMode: 'add',
     x: mouseX,
     y: mouseY,
@@ -71,7 +71,7 @@ export function init() {
     colors: [0xffffff, 0xaaddff, 0x44aaff, 0x6644ff],
   });
 
-  sparkEmitter = nova64.fx.createEmitter2D({
+  sparkEmitter = createEmitter2D({
     blendMode: 'add',
     x: mouseX,
     y: mouseY,
@@ -116,8 +116,8 @@ export function update(dt) {
     burst(sparkEmitter, (8 + 0) | (Math.random() * 12));
   }
 
-  nova64.fx.updateEmitter2D(trailEmitter, dt);
-  nova64.fx.updateEmitter2D(sparkEmitter, dt);
+  updateEmitter2D(trailEmitter, dt);
+  updateEmitter2D(sparkEmitter, dt);
 
   // Idle drift — use tween to gently move target
   if (spd < 2) {
@@ -128,19 +128,19 @@ export function update(dt) {
 
 export function draw() {
   // Dark fade-trail for motion blur effect
-  nova64.draw.cls(0x050510);
+  cls(0x050510);
 
   // Grid
-  for (let x = 0; x < W; x += 40) nova64.draw.line(x, 0, x, H, 0x0d1a2a);
-  for (let y = 0; y < H; y += 40) nova64.draw.line(0, y, W, y, 0x0d1a2a);
+  for (let x = 0; x < W; x += 40) line(x, 0, x, H, 0x0d1a2a);
+  for (let y = 0; y < H; y += 40) line(0, y, W, y, 0x0d1a2a);
 
-  nova64.fx.drawEmitter2D(trailEmitter);
-  nova64.fx.drawEmitter2D(sparkEmitter);
+  drawEmitter2D(trailEmitter);
+  drawEmitter2D(sparkEmitter);
 
   // Crosshair at pointer
-  nova64.draw.line(mouseX - 8, mouseY, mouseX + 8, mouseY, 0xffffff44);
-  nova64.draw.line(mouseX, mouseY - 8, mouseX, mouseY + 8, 0xffffff44);
+  line(mouseX - 8, mouseY, mouseX + 8, mouseY, 0xffffff44);
+  line(mouseX, mouseY - 8, mouseX, mouseY + 8, 0xffffff44);
 
-  nova64.draw.print('PARTICLE TRAIL', 4, 4, 0xffffff);
-  nova64.draw.print('Move your mouse! createEmitter2D • BM.ADD', 4, H - 12, 0x778899);
+  print('PARTICLE TRAIL', 4, 4, 0xffffff);
+  print('Move your mouse! createEmitter2D • BM.ADD', 4, H - 12, 0x778899);
 }

@@ -39,113 +39,109 @@ let volume = 0.5;
 let spawnCD;
 
 export function init() {
-  nova64.camera.setCameraPosition(0, 6, 10);
-  nova64.camera.setCameraTarget(0, 0, 0);
-  nova64.light.setAmbientLight(0x334466, 1.2);
-  nova64.light.setFog(0x050510, 15, 40);
+  setCameraPosition(0, 6, 10);
+  setCameraTarget(0, 0, 0);
+  setAmbientLight(0x334466, 1.2);
+  setFog(0x050510, 15, 40);
 
-  ground = nova64.scene.createPlane(40, 40, 0x111133, [0, 0, 0]);
-  nova64.scene.rotateMesh(ground, -Math.PI / 2, 0, 0);
+  ground = createPlane(40, 40, 0x111133, [0, 0, 0]);
+  rotateMesh(ground, -Math.PI / 2, 0, 0);
 
-  playerMesh = nova64.scene.createCube(0.6, 0xffffff, [0, 1, 0], {
-    material: 'emissive',
-    emissive: 0xffffff,
-  });
-  if (typeof setVolume === 'function') nova64.audio.setVolume(volume);
+  playerMesh = createCube(0.6, 0xffffff, [0, 1, 0], { material: 'emissive', emissive: 0xffffff });
+  if (typeof setVolume === 'function') setVolume(volume);
 
   // Initialize cooldowns for sound triggers
   const cdDefs = {};
   PRESETS.forEach(p => {
     cdDefs[p.key] = 0.15;
   });
-  sfxCDs = nova64.util.createCooldownSet(cdDefs);
-  spawnCD = nova64.util.createCooldown(0.5);
+  sfxCDs = createCooldownSet(cdDefs);
+  spawnCD = createCooldown(0.5);
 }
 
 export function update(dt) {
   const speed = 5;
 
   // WASD movement
-  if (nova64.input.key('KeyW')) player.z -= speed * dt;
-  if (nova64.input.key('KeyS')) player.z += speed * dt;
-  if (nova64.input.key('KeyA')) player.x -= speed * dt;
-  if (nova64.input.key('KeyD')) player.x += speed * dt;
+  if (key('KeyW')) player.z -= speed * dt;
+  if (key('KeyS')) player.z += speed * dt;
+  if (key('KeyA')) player.x -= speed * dt;
+  if (key('KeyD')) player.x += speed * dt;
 
   // Clamp to arena
   player.x = Math.max(-18, Math.min(18, player.x));
   player.z = Math.max(-18, Math.min(18, player.z));
 
-  nova64.scene.setPosition(playerMesh, player.x, player.y, player.z);
-  nova64.camera.setCameraPosition(player.x, player.y + 5, player.z + 8);
-  nova64.camera.setCameraTarget(player.x, player.y, player.z);
+  setPosition(playerMesh, player.x, player.y, player.z);
+  setCameraPosition(player.x, player.y + 5, player.z + 8);
+  setCameraTarget(player.x, player.y, player.z);
 
   // Volume: Q/E
-  if (nova64.input.keyp('KeyQ')) {
+  if (keyp('KeyQ')) {
     volume = Math.max(0, volume - 0.1);
-    if (typeof setVolume === 'function') nova64.audio.setVolume(volume);
+    if (typeof setVolume === 'function') setVolume(volume);
   }
-  if (nova64.input.keyp('KeyE')) {
+  if (keyp('KeyE')) {
     volume = Math.min(1, volume + 0.1);
-    if (typeof setVolume === 'function') nova64.audio.setVolume(volume);
+    if (typeof setVolume === 'function') setVolume(volume);
   }
 
   // Sound trigger keys 1-5
-  nova64.util.updateCooldowns(sfxCDs, dt);
+  updateCooldowns(sfxCDs, dt);
   PRESETS.forEach(({ key: k, opts }) => {
-    if (nova64.input.keyp(k) && nova64.util.useCooldown(sfxCDs[k])) {
-      if (typeof sfx === 'function') nova64.audio.sfx(opts);
+    if (keyp(k) && useCooldown(sfxCDs[k])) {
+      if (typeof sfx === 'function') sfx(opts);
     }
   });
 
   // B key: spawn emitter at player position
-  nova64.util.updateCooldown(spawnCD, dt);
-  if (nova64.input.keyp('KeyB') && emitters.length < 5 && nova64.util.useCooldown(spawnCD)) {
+  updateCooldown(spawnCD, dt);
+  if (keyp('KeyB') && emitters.length < 5 && useCooldown(spawnCD)) {
     const color = EMITTER_COLORS[emitters.length % EMITTER_COLORS.length];
-    const mesh = nova64.scene.createSphere(0.5, color, [player.x, 1.5, player.z], 12, {
+    const mesh = createSphere(0.5, color, [player.x, 1.5, player.z], 12, {
       material: 'holographic',
       emissive: color,
       emissiveIntensity: 0.6,
     });
     emitters.push({ mesh, x: player.x, z: player.z, color, pulse: Math.random() * Math.PI * 2 });
-    if (typeof sfx === 'function')
-      nova64.audio.sfx({ wave: 'sine', freq: 660, dur: 0.2, sweep: 220 });
+    if (typeof sfx === 'function') sfx({ wave: 'sine', freq: 660, dur: 0.2, sweep: 220 });
   }
 
   // Animate emitter pulse and trigger proximity sfx
   emitters.forEach(e => {
     e.pulse += dt * 2;
     const s = 1 + Math.sin(e.pulse) * 0.15;
-    nova64.scene.setScale(e.mesh, s, s, s);
+    setScale(e.mesh, s, s, s);
 
     // Proximity sound: if player steps close, play a soft tone
     const dist = Math.hypot(player.x - e.x, player.z - e.z);
     if (dist < 1.5 && typeof sfx === 'function') {
-      nova64.audio.sfx({ wave: 'sine', freq: 880, dur: 0.05 });
+      sfx({ wave: 'sine', freq: 880, dur: 0.05 });
     }
   });
 }
 
 export function draw() {
   // Header bar
-  nova64.draw.rect(0, 0, 320, 18, nova64.draw.rgba8(10, 10, 40, 255), true);
-  nova64.draw.printCentered('AUDIO LAB', 4, 0xffffff);
+  rect(0, 0, 320, 18, rgba8(10, 10, 40, 255), true);
+  printCentered('AUDIO LAB', 4, 0xffffff);
 
   // Preset strip
-  nova64.draw.print('SFX:', 4, 22, 0xaaaaff);
+  print('SFX:', 4, 22, 0xaaaaff);
   PRESETS.forEach(({ label }, i) => {
-    nova64.draw.print(label, 4 + i * 62, 30, 0x88aadd);
+    print(label, 4 + i * 62, 30, 0x88aadd);
   });
 
   // Volume bar
-  nova64.draw.print('VOL', 4, 42, 0xaaaaff);
+  print('VOL', 4, 42, 0xaaaaff);
   const volW = Math.round(volume * 80);
-  nova64.draw.rect(26, 42, 80, 7, nova64.draw.rgba8(30, 30, 60, 200), true);
-  nova64.draw.rect(26, 42, volW, 7, nova64.draw.rgba8(80, 200, 100, 255), true);
-  nova64.draw.rect(26, 42, 80, 7, nova64.draw.rgba8(80, 100, 180, 180), false);
-  nova64.draw.print('Q/E to adjust', 112, 43, 0x555577);
+  rect(26, 42, 80, 7, rgba8(30, 30, 60, 200), true);
+  rect(26, 42, volW, 7, rgba8(80, 200, 100, 255), true);
+  rect(26, 42, 80, 7, rgba8(80, 100, 180, 180), false);
+  print('Q/E to adjust', 112, 43, 0x555577);
 
   // Emitter count
-  nova64.draw.print(`Emitters: ${emitters.length}/5  (B to spawn)`, 4, 54, 0xdddddd);
+  print(`Emitters: ${emitters.length}/5  (B to spawn)`, 4, 54, 0xdddddd);
 
   // Emitter list with color dots
   emitters.forEach((e, i) => {
@@ -153,11 +149,11 @@ export function draw() {
     const r = (e.color >> 16) & 0xff;
     const g = (e.color >> 8) & 0xff;
     const b = e.color & 0xff;
-    nova64.draw.rect(4, 64 + i * 10, 6, 6, nova64.draw.rgba8(r, g, b, 255), true);
-    nova64.draw.print(`Emitter ${i + 1}  dist: ${dist}m`, 14, 65 + i * 10, 0xaaaacc);
+    rect(4, 64 + i * 10, 6, 6, rgba8(r, g, b, 255), true);
+    print(`Emitter ${i + 1}  dist: ${dist}m`, 14, 65 + i * 10, 0xaaaacc);
   });
 
   // Controls footer
-  nova64.draw.rect(0, 170, 320, 10, nova64.draw.rgba8(10, 10, 40, 255), true);
-  nova64.draw.print('WASD: move  1-5: SFX  B: spawn emitter  Q/E: volume', 2, 172, 0x444466);
+  rect(0, 170, 320, 10, rgba8(10, 10, 40, 255), true);
+  print('WASD: move  1-5: SFX  B: spawn emitter  Q/E: volume', 2, 172, 0x444466);
 }

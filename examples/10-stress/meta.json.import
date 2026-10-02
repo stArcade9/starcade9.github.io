@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cv0lvkowv7tlw"
+path="res://.godot/imported/meta.json-219a74c78596e1ac25a49bf682e232b7.res"
+
+[deps]
+
+source_file="res://carts/10-stress/meta.json"
+dest_files=["res://.godot/imported/meta.json-219a74c78596e1ac25a49bf682e232b7.res"]
+
+[params]
+

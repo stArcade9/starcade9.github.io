@@ -208,14 +208,35 @@ export function createBabylonEffectsApi(self) {
   }
 
   // === BLOOM ===
-  function enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6) {
+  function normalizeBloomArgs(strengthOrOptions = 1.0, radius = 0.5, threshold = 0.6) {
+    if (strengthOrOptions && typeof strengthOrOptions === 'object') {
+      return {
+        strength: Number(strengthOrOptions.strength ?? 1.0) || 1.0,
+        radius: Number(strengthOrOptions.radius ?? radius) || radius,
+        threshold: Number(strengthOrOptions.threshold ?? threshold) || threshold,
+      };
+    }
+    return {
+      strength: Number(strengthOrOptions) || 1.0,
+      radius: Number(radius) || 0.5,
+      threshold: Number(threshold) || 0.6,
+    };
+  }
+
+  function enableBloom(strengthOrOptions = 1.0, radius = 0.5, threshold = 0.6) {
+    const {
+      strength,
+      radius: bloomRadius,
+      threshold: bloomThreshold,
+    } = normalizeBloomArgs(strengthOrOptions, radius, threshold);
     const p = initPipeline();
     const needsLargeGlow = strength >= 1.0;
     p.bloomEnabled = true;
-    p.bloomWeight = needsLargeGlow ? strength * 5.0 : strength;
-    p.bloomKernel = Math.max(16, Math.round(radius * (needsLargeGlow ? 768 : 128)));
-    p.bloomThreshold = needsLargeGlow ? Math.max(0, threshold * 0.3) : threshold;
+    p.bloomWeight = needsLargeGlow ? strength * 5.0 : strength * 2.8;
+    p.bloomKernel = Math.max(32, Math.round(bloomRadius * (needsLargeGlow ? 768 : 384)));
+    p.bloomThreshold = needsLargeGlow ? Math.max(0, bloomThreshold * 0.3) : bloomThreshold * 0.55;
     p.bloomScale = needsLargeGlow ? 0.25 : 0.5;
+    enableGlow(Math.max(0.18, strength * 0.8), Math.max(24, Math.round(bloomRadius * 96)));
     return true;
   }
 
@@ -227,7 +248,7 @@ export function createBabylonEffectsApi(self) {
 
   function setBloomStrength(strength) {
     if (pipeline) {
-      pipeline.bloomWeight = strength >= 1 ? strength * 5.0 : strength;
+      pipeline.bloomWeight = strength >= 1 ? strength * 5.0 : strength * 2.8;
     }
   }
 

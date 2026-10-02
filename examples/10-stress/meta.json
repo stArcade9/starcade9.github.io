@@ -1,0 +1,7 @@
+{
+  "name": "Stress",
+  "description": "G3 conformance — handle table allocation/destruction stress (256 materials).",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "test"
+}

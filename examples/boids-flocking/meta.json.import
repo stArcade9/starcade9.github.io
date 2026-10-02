@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://ba4i3bge605m5"
+path="res://.godot/imported/meta.json-49e861edcba84960f4a40641cfc828ff.res"
+
+[deps]
+
+source_file="res://carts/boids-flocking/meta.json"
+dest_files=["res://.godot/imported/meta.json-49e861edcba84960f4a40641cfc828ff.res"]
+
+[params]
+

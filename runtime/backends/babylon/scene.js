@@ -6,6 +6,7 @@ import { Color4, Scene, Vector3 } from '@babylonjs/core';
 import { BABYLON_BACKEND_CAPABILITIES, warnUnsupportedBabylonFeature } from './capabilities.js';
 import { setupDefaultLights } from './bootstrap.js';
 import { hexToColor3 } from './common.js';
+import { applyBabylonMaterialCompatibility } from './compat.js';
 
 function logRenderDebug(self) {
   console.log('[GpuBabylon:DEBUG]', {
@@ -76,6 +77,7 @@ export function createBabylonSceneApi(self) {
 
     endFrame() {
       self._debugFrameCount++;
+      patchSceneMaterials(self.scene);
       self.scene.render();
       if (
         self._debugEnabled &&
@@ -103,6 +105,7 @@ export function createBabylonSceneApi(self) {
     },
 
     render() {
+      patchSceneMaterials(self.scene);
       self.scene.render();
     },
 
@@ -225,4 +228,21 @@ export function createBabylonSceneApi(self) {
       return scaling > 0 ? 1 / scaling : 1;
     },
   };
+}
+
+function patchSceneMaterials(scene) {
+  for (const material of scene.materials ?? []) {
+    patchMaterial(material);
+  }
+  for (const mesh of scene.meshes ?? []) {
+    patchMaterial(mesh.material);
+  }
+}
+
+function patchMaterial(material) {
+  if (!material) return;
+  applyBabylonMaterialCompatibility(material);
+  for (const subMaterial of material?.subMaterials ?? []) {
+    applyBabylonMaterialCompatibility(subMaterial);
+  }
 }

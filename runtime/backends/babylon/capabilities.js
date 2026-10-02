@@ -18,7 +18,7 @@ export const BABYLON_BACKEND_CAPABILITIES = Object.freeze({
   dithering: false,
   animatedMeshes: false,
   pixelRatioRead: true,
-  loadModel: false,
+  loadModel: true,
   loadTexture: false,
   playAnimation: false,
   pbrMaps: false,

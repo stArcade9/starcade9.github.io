@@ -22,4 +22,5 @@ export const THREEJS_BACKEND_CAPABILITIES = Object.freeze({
   loadTexture: true,
   playAnimation: true,
   pbrMaps: true,
+  meshOptions: true,
 });

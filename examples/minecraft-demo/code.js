@@ -99,14 +99,14 @@ const BLOCK_COLORS = {
 const HOTBAR_BLOCKS = [1, 3, 9, 6, 11, 21, 22, 8, 4];
 
 const BIOME_COLORS = {
-  'Frozen Tundra': nova64.draw.rgba8(200, 220, 255),
-  Taiga: nova64.draw.rgba8(100, 180, 140),
-  Desert: nova64.draw.rgba8(255, 220, 130),
-  Jungle: nova64.draw.rgba8(80, 220, 80),
-  Savanna: nova64.draw.rgba8(220, 180, 100),
-  Forest: nova64.draw.rgba8(100, 200, 100),
-  'Snowy Hills': nova64.draw.rgba8(220, 230, 255),
-  Plains: nova64.draw.rgba8(150, 220, 150),
+  'Frozen Tundra': rgba8(200, 220, 255),
+  Taiga: rgba8(100, 180, 140),
+  Desert: rgba8(255, 220, 130),
+  Jungle: rgba8(80, 220, 80),
+  Savanna: rgba8(220, 180, 100),
+  Forest: rgba8(100, 200, 100),
+  'Snowy Hills': rgba8(220, 230, 255),
+  Plains: rgba8(150, 220, 150),
 };
 
 function hashText(text) {
@@ -208,10 +208,10 @@ function spawnMobs(cx, cz) {
     const distance = 12 + rng() * 18;
     const mx = cx + Math.cos(angle) * distance;
     const mz = cz + Math.sin(angle) * distance;
-    const my = nova64.voxel.getVoxelHighestBlock(Math.floor(mx), Math.floor(mz)) + 1;
+    const my = getVoxelHighestBlock(Math.floor(mx), Math.floor(mz)) + 1;
     if (my < 5) continue;
 
-    nova64.voxel.spawnVoxelEntity(def.type, [mx, my, mz], {
+    spawnVoxelEntity(def.type, [mx, my, mz], {
       color: def.color,
       size: def.size,
       health: def.health,
@@ -266,11 +266,11 @@ export function init() {
   if (typeof window !== 'undefined') {
     window.VOXEL_MATERIAL = null;
   }
-  nova64.camera.setCameraPosition(0, 80, 0);
+  setCameraPosition(0, 80, 0);
 
   // Configure world for good performance: smaller render distance = fewer chunks
   if (typeof configureVoxelWorld === 'function') {
-    nova64.voxel.configureVoxelWorld({
+    configureVoxelWorld({
       renderDistance: 3, // 49 chunks instead of default 81
       maxMeshRebuildsPerFrame: 3,
       enableLOD: true,
@@ -279,16 +279,16 @@ export function init() {
 
   // Fog end must match render distance (3 chunks × 16 = 48 blocks)
   const skyColor = getSkyColorForTime(FIXED_DAY_TIME);
-  nova64.light.setFog(skyColor, 25, 50);
+  setFog(skyColor, 25, 50);
   globalThis.setClearColor?.(skyColor);
   if (typeof setVoxelDayTime === 'function') {
     lastDayTime = FIXED_DAY_TIME;
-    nova64.voxel.setVoxelDayTime(FIXED_DAY_TIME);
+    setVoxelDayTime(FIXED_DAY_TIME);
   }
 
   // Enable procedural texture atlas
   if (typeof enableVoxelTextures === 'function') {
-    nova64.voxel.enableVoxelTextures(true);
+    enableVoxelTextures(true);
   }
 }
 
@@ -301,13 +301,13 @@ export function update(dt = 1 / 60) {
     return;
   } else if (loadState === 2) {
     if (typeof forceLoadVoxelChunks === 'function') {
-      nova64.voxel.forceLoadVoxelChunks(0, 0);
+      forceLoadVoxelChunks(0, 0);
     } else if (typeof updateVoxelWorld === 'function') {
-      nova64.voxel.updateVoxelWorld(0, 0);
+      updateVoxelWorld(0, 0);
     }
     // Use the new getVoxelHighestBlock API
     if (typeof getVoxelHighestBlock === 'function') {
-      player.y = nova64.voxel.getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z)) + 2;
+      player.y = getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z)) + 2;
     } else {
       player.y = 80;
     }
@@ -325,7 +325,7 @@ export function update(dt = 1 / 60) {
 
   // Detect current biome (throttled — no need every frame)
   if (typeof getVoxelBiome === 'function' && frameCount % 30 === 0) {
-    currentBiome = nova64.voxel.getVoxelBiome(player.x, player.z);
+    currentBiome = getVoxelBiome(player.x, player.z);
   }
 
   handleInput();
@@ -335,12 +335,12 @@ export function update(dt = 1 / 60) {
 
   // Update chunks every few frames — budget-limited internally but still has overhead
   if (typeof updateVoxelWorld === 'function' && frameCount % 5 === 0) {
-    nova64.voxel.updateVoxelWorld(player.x, player.z);
+    updateVoxelWorld(player.x, player.z);
   }
 
   // Update entities (physics + AI)
   if (typeof updateVoxelEntities === 'function') {
-    nova64.voxel.updateVoxelEntities(1 / 60, [player.x, player.y, player.z]);
+    updateVoxelEntities(1 / 60, [player.x, player.y, player.z]);
   }
 
   // Periodically spawn mobs if count is low
@@ -349,42 +349,42 @@ export function update(dt = 1 / 60) {
     const nextSpawnDelay = ambientMobsActivated
       ? PERIODIC_MOB_SPAWN_INTERVAL_SECONDS
       : INITIAL_MOB_SPAWN_DELAY_SECONDS;
-    if (mobSpawnTimer >= nextSpawnDelay && nova64.voxel.getVoxelEntityCount() < 12) {
+    if (mobSpawnTimer >= nextSpawnDelay && getVoxelEntityCount() < 12) {
       spawnMobs(player.x, player.z);
       mobSpawnTimer = 0;
       ambientMobsActivated = true;
     }
     // Cleanup dead entities
     if (frameCount % 120 === 0 && typeof cleanupVoxelEntities === 'function') {
-      nova64.voxel.cleanupVoxelEntities();
+      cleanupVoxelEntities();
     }
   }
 }
 
 function handleInput() {
-  if (nova64.input.key('ArrowLeft')) player.yaw -= 0.05;
-  if (nova64.input.key('ArrowRight')) player.yaw += 0.05;
-  if (nova64.input.key('ArrowUp') && player.pitch < Math.PI / 2) player.pitch += 0.05;
-  if (nova64.input.key('ArrowDown') && player.pitch > -Math.PI / 2) player.pitch -= 0.05;
+  if (key('ArrowLeft')) player.yaw -= 0.05;
+  if (key('ArrowRight')) player.yaw += 0.05;
+  if (key('ArrowUp') && player.pitch < Math.PI / 2) player.pitch += 0.05;
+  if (key('ArrowDown') && player.pitch > -Math.PI / 2) player.pitch -= 0.05;
 
   let dx = 0,
     dz = 0;
   const cosY = Math.cos(player.yaw);
   const sinY = Math.sin(player.yaw);
 
-  if (nova64.input.key('KeyW')) {
+  if (key('KeyW')) {
     dx -= sinY;
     dz -= cosY;
   }
-  if (nova64.input.key('KeyS')) {
+  if (key('KeyS')) {
     dx += sinY;
     dz += cosY;
   }
-  if (nova64.input.key('KeyA')) {
+  if (key('KeyA')) {
     dx -= cosY;
     dz += sinY;
   }
-  if (nova64.input.key('KeyD')) {
+  if (key('KeyD')) {
     dx += cosY;
     dz -= sinY;
   }
@@ -398,46 +398,46 @@ function handleInput() {
     player.vz = 0;
   }
 
-  if (nova64.input.key('Space') && player.onGround) {
+  if (key('Space') && player.onGround) {
     player.vy = player.jump;
     player.onGround = false;
   }
 
   // Number keys for block selection
   for (let i = 0; i < HOTBAR_BLOCKS.length && i < 9; i++) {
-    if (nova64.input.keyp(`Digit${i + 1}`)) {
+    if (keyp(`Digit${i + 1}`)) {
       selectedHotbarIdx = i;
       selectedBlock = HOTBAR_BLOCKS[i];
     }
   }
 
-  if (nova64.input.btnp(0)) {
+  if (btnp(0)) {
     selectedHotbarIdx = 0;
     selectedBlock = HOTBAR_BLOCKS[0];
   }
-  if (nova64.input.btnp(1)) {
+  if (btnp(1)) {
     selectedHotbarIdx = 1;
     selectedBlock = HOTBAR_BLOCKS[1];
   }
-  if (nova64.input.btnp(2)) {
+  if (btnp(2)) {
     selectedHotbarIdx = 2;
     selectedBlock = HOTBAR_BLOCKS[2];
   }
-  if (nova64.input.btnp(3)) {
+  if (btnp(3)) {
     selectedHotbarIdx = 3;
     selectedBlock = HOTBAR_BLOCKS[3];
   }
 
   // B key = respawn with new biome (random world + random position)
-  if (nova64.input.keyp('KeyB') && typeof resetVoxelWorld === 'function') {
-    nova64.voxel.resetVoxelWorld();
+  if (keyp('KeyB') && typeof resetVoxelWorld === 'function') {
+    resetVoxelWorld();
     respawnCount++;
     const rng = createDeterministicRng('respawn', respawnCount);
     player.x = (rng() - 0.5) * 400;
     player.z = (rng() - 0.5) * 400;
-    nova64.voxel.updateVoxelWorld(player.x, player.z);
+    updateVoxelWorld(player.x, player.z);
     if (typeof getVoxelHighestBlock === 'function') {
-      player.y = nova64.voxel.getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z)) + 2;
+      player.y = getVoxelHighestBlock(Math.floor(player.x), Math.floor(player.z)) + 2;
     } else {
       player.y = 80;
     }
@@ -452,9 +452,8 @@ function handleInput() {
   }
 
   // P key = save world
-  if (nova64.input.keyp('KeyP') && typeof saveVoxelWorld === 'function') {
-    nova64.voxel
-      .saveVoxelWorld('minecraft-demo')
+  if (keyp('KeyP') && typeof saveVoxelWorld === 'function') {
+    saveVoxelWorld('minecraft-demo')
       .then(() => {
         saveMessage = 'World Saved!';
         saveMessageTimer = 120;
@@ -466,14 +465,13 @@ function handleInput() {
   }
 
   // L key = load world
-  if (nova64.input.keyp('KeyL') && typeof loadVoxelWorld === 'function') {
-    nova64.voxel
-      .loadVoxelWorld('minecraft-demo')
+  if (keyp('KeyL') && typeof loadVoxelWorld === 'function') {
+    loadVoxelWorld('minecraft-demo')
       .then(loaded => {
         if (loaded) {
           saveMessage = 'World Loaded!';
           saveMessageTimer = 120;
-          nova64.voxel.updateVoxelWorld(player.x, player.z);
+          updateVoxelWorld(player.x, player.z);
         } else {
           saveMessage = 'No Save Found';
           saveMessageTimer = 120;
@@ -486,9 +484,9 @@ function handleInput() {
   }
 
   // T key = toggle textures
-  if (nova64.input.keyp('KeyT') && typeof enableVoxelTextures === 'function') {
+  if (keyp('KeyT') && typeof enableVoxelTextures === 'function') {
     texturesEnabled = !texturesEnabled;
-    nova64.voxel.enableVoxelTextures(texturesEnabled);
+    enableVoxelTextures(texturesEnabled);
     saveMessage = texturesEnabled ? 'Textures ON' : 'Textures OFF';
     saveMessageTimer = 90;
   }
@@ -499,7 +497,7 @@ function updatePhysics() {
 
   // Use the new swept AABB physics if available
   if (typeof moveVoxelEntity === 'function') {
-    const result = nova64.voxel.moveVoxelEntity(
+    const result = moveVoxelEntity(
       [player.x, player.y, player.z],
       [player.vx, player.vy, player.vz],
       [0.6, 1.8, 0.6],
@@ -514,7 +512,7 @@ function updatePhysics() {
     player.onGround = result.grounded;
 
     // Water buoyancy
-    if (result.inWater && nova64.input.key('Space')) {
+    if (result.inWater && key('Space')) {
       player.vy = 0.12;
     }
   } else {
@@ -568,18 +566,18 @@ function updatePhysics() {
 
 function checkCollision(x, y, z) {
   if (typeof checkVoxelCollision === 'function') {
-    return nova64.voxel.checkVoxelCollision([x, y, z], player.size);
+    return checkVoxelCollision([x, y, z], player.size);
   }
-  const block = nova64.voxel.getVoxelBlock(Math.floor(x), Math.floor(y), Math.floor(z));
+  const block = getVoxelBlock(Math.floor(x), Math.floor(y), Math.floor(z));
   return block !== 0 && block !== undefined;
 }
 
 function updateCamera() {
-  nova64.camera.setCameraPosition(player.x, player.y + 0.8, player.z);
+  setCameraPosition(player.x, player.y + 0.8, player.z);
   const targetX = player.x - Math.sin(player.yaw) * Math.cos(player.pitch);
   const targetY = player.y + 0.8 + Math.sin(player.pitch);
   const targetZ = player.z - Math.cos(player.yaw) * Math.cos(player.pitch);
-  nova64.camera.setCameraTarget(targetX, targetY, targetZ);
+  setCameraTarget(targetX, targetY, targetZ);
 }
 
 function handleBlockInteraction() {
@@ -588,25 +586,16 @@ function handleBlockInteraction() {
     const dy = Math.sin(player.pitch);
     const dz = -Math.cos(player.yaw) * Math.cos(player.pitch);
 
-    const result = nova64.voxel.raycastVoxelBlock(
-      [player.x, player.y + 0.8, player.z],
-      [dx, dy, dz],
-      6
-    );
+    const result = raycastVoxelBlock([player.x, player.y + 0.8, player.z], [dx, dy, dz], 6);
 
     if (result && result.hit) {
-      if (nova64.input.keyp('KeyF') || nova64.input.keyp('KeyQ')) {
+      if (keyp('KeyF') || keyp('KeyQ')) {
         // Break block
-        nova64.voxel.setVoxelBlock(result.position[0], result.position[1], result.position[2], 0);
+        setVoxelBlock(result.position[0], result.position[1], result.position[2], 0);
       }
-      if (nova64.input.keyp('KeyE') || nova64.input.keyp('KeyR')) {
+      if (keyp('KeyE') || keyp('KeyR')) {
         // Place block on adjacent face
-        nova64.voxel.setVoxelBlock(
-          result.adjacent[0],
-          result.adjacent[1],
-          result.adjacent[2],
-          selectedBlock
-        );
+        setVoxelBlock(result.adjacent[0], result.adjacent[1], result.adjacent[2], selectedBlock);
       }
     }
   }
@@ -614,65 +603,60 @@ function handleBlockInteraction() {
 
 export function draw() {
   if (!isLoaded) {
-    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(10, 10, 20, 255));
-    nova64.draw.print('NOVA64 MINECRAFT EDITION', 20, 40, nova64.draw.rgba8(255, 255, 255, 255));
-    nova64.draw.print('GENERATING WORLD...', 20, 60, nova64.draw.rgba8(255, 255, 255, 255));
+    rectfill(0, 0, 640, 360, rgba8(10, 10, 20, 255));
+    print('NOVA64 MINECRAFT EDITION', 20, 40, rgba8(255, 255, 255, 255));
+    print('GENERATING WORLD...', 20, 60, rgba8(255, 255, 255, 255));
     return;
   }
 
   // Title bar
-  nova64.draw.rect(0, 0, 640, 16, nova64.draw.rgba8(0, 0, 0, 150), true);
-  nova64.draw.print('MINECRAFT ULTIMATE 64', 5, 4, 0xffdd88);
+  rect(0, 0, 640, 16, rgba8(0, 0, 0, 150), true);
+  print('MINECRAFT ULTIMATE 64', 5, 4, 0xffdd88);
   const pos = `${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}`;
-  nova64.draw.print(pos, 560, 4, nova64.draw.rgba8(200, 200, 200, 200));
+  print(pos, 560, 4, rgba8(200, 200, 200, 200));
 
   // Biome indicator
-  const biomeCol = BIOME_COLORS[currentBiome] || nova64.draw.rgba8(200, 200, 200);
-  nova64.draw.print(currentBiome, 220, 4, biomeCol);
+  const biomeCol = BIOME_COLORS[currentBiome] || rgba8(200, 200, 200);
+  print(currentBiome, 220, 4, biomeCol);
 
   // Crosshair
   const cx = 320,
     cy = 180;
-  nova64.draw.rect(cx - 1, cy - 8, 2, 16, nova64.draw.rgba8(255, 255, 255, 200), true);
-  nova64.draw.rect(cx - 8, cy - 1, 16, 2, nova64.draw.rgba8(255, 255, 255, 200), true);
+  rect(cx - 1, cy - 8, 2, 16, rgba8(255, 255, 255, 200), true);
+  rect(cx - 8, cy - 1, 16, 2, rgba8(255, 255, 255, 200), true);
 
   // Hotbar
   const hbY = 340;
   const hbW = HOTBAR_BLOCKS.length * 32 + 8;
   const hbX = (640 - hbW) / 2;
-  nova64.draw.rect(hbX, hbY, hbW, 20, nova64.draw.rgba8(0, 0, 0, 180), true);
-  nova64.draw.rect(hbX, hbY, hbW, 20, nova64.draw.rgba8(100, 100, 100, 150), false);
+  rect(hbX, hbY, hbW, 20, rgba8(0, 0, 0, 180), true);
+  rect(hbX, hbY, hbW, 20, rgba8(100, 100, 100, 150), false);
   for (let i = 0; i < HOTBAR_BLOCKS.length; i++) {
     const bx = hbX + 4 + i * 32;
     const bid = HOTBAR_BLOCKS[i];
     const col = BLOCK_COLORS[bid] || 0xffffff;
     if (bid === selectedBlock) {
-      nova64.draw.rect(bx - 1, hbY - 1, 30, 22, nova64.draw.rgba8(255, 255, 255, 255), false);
+      rect(bx - 1, hbY - 1, 30, 22, rgba8(255, 255, 255, 255), false);
     }
-    nova64.draw.rect(bx + 2, hbY + 2, 24, 16, col, true);
-    nova64.draw.print(`${i + 1}`, bx + 10, hbY + 4, nova64.draw.rgba8(255, 255, 255, 220));
+    rect(bx + 2, hbY + 2, 24, 16, col, true);
+    print(`${i + 1}`, bx + 10, hbY + 4, rgba8(255, 255, 255, 220));
   }
   // Block name below hotbar
   const bname = BLOCK_NAMES[selectedBlock] || 'UNKNOWN';
-  nova64.draw.print(
-    bname,
-    (640 - bname.length * 8) / 2,
-    hbY - 14,
-    nova64.draw.rgba8(255, 255, 255, 200)
-  );
+  print(bname, (640 - bname.length * 8) / 2, hbY - 14, rgba8(255, 255, 255, 200));
 
   // Controls hint
-  nova64.draw.print(
+  print(
     'WASD=Move Space=Jump F=Break E=Place 1-9=Block P=Save L=Load T=Textures',
     20,
     20,
-    nova64.draw.rgba8(255, 255, 255, 200)
+    rgba8(255, 255, 255, 200)
   );
 
   // Entity count
   if (typeof getVoxelEntityCount === 'function') {
-    const ec = nova64.voxel.getVoxelEntityCount();
-    if (ec > 0) nova64.draw.print(`Mobs: ${ec}`, 430, 4, nova64.draw.rgba8(180, 255, 180));
+    const ec = getVoxelEntityCount();
+    if (ec > 0) print(`Mobs: ${ec}`, 430, 4, rgba8(180, 255, 180));
   }
 
   // Save/load message
@@ -680,6 +664,6 @@ export function draw() {
     saveMessageTimer--;
     const alpha = Math.min(255, saveMessageTimer * 4);
     const msgX = (640 - saveMessage.length * 8) / 2;
-    nova64.draw.print(saveMessage, msgX, 160, nova64.draw.rgba8(255, 255, 100, alpha));
+    print(saveMessage, msgX, 160, rgba8(255, 255, 100, alpha));
   }
 }

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://csl8ofs7e5l5b"
+path="res://.godot/imported/meta.json-f8f6434ab5095af136dd80b91ebeb627.res"
+
+[deps]
+
+source_file="res://carts/wizardry-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-f8f6434ab5095af136dd80b91ebeb627.res"]
+
+[params]
+

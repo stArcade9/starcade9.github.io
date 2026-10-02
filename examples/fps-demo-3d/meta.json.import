@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cilf24ox1kafb"
+path="res://.godot/imported/meta.json-9ed3dccbb6366b5c85c93b281db9f7b8.res"
+
+[deps]
+
+source_file="res://carts/fps-demo-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-9ed3dccbb6366b5c85c93b281db9f7b8.res"]
+
+[params]
+

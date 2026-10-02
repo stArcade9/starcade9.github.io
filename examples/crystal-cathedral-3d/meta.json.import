@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c50aaw8spn775"
+path="res://.godot/imported/meta.json-1e19e8e173057c2d24f68d6c23283a3e.res"
+
+[deps]
+
+source_file="res://carts/crystal-cathedral-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-1e19e8e173057c2d24f68d6c23283a3e.res"]
+
+[params]
+

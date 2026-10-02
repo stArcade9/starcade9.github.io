@@ -181,20 +181,20 @@ const handlers = {
 };
 
 export function init() {
-  uiFull = nova64.ui.parseCanvasUI(SHOWCASE_XML);
-  uiNoModal = nova64.ui.parseCanvasUI(NO_MODAL_XML);
+  uiFull = parseCanvasUI(SHOWCASE_XML);
+  uiNoModal = parseCanvasUI(NO_MODAL_XML);
 
   // Minimal 3D: just a dark clear
-  nova64.light.setFog(0x0a0a18, 20, 60);
-  nova64.light.setAmbientLight(0x111122, 0.4);
-  nova64.camera.setCameraPosition(0, 0, 10);
-  nova64.camera.setCameraTarget(0, 0, 0);
+  setFog(0x0a0a18, 20, 60);
+  setAmbientLight(0x111122, 0.4);
+  setCameraPosition(0, 0, 10);
+  setCameraTarget(0, 0, 0);
 }
 
 export function update(dt) {
   t += dt;
   const ui = showModal ? uiFull : uiNoModal;
-  nova64.ui.updateCanvasUI(ui, dt);
+  updateCanvasUI(ui, dt);
 }
 
 export function draw() {
@@ -219,5 +219,5 @@ export function draw() {
   };
 
   const ui = showModal ? uiFull : uiNoModal;
-  nova64.ui.renderCanvasUI(ui, data, handlers);
+  renderCanvasUI(ui, data, handlers);
 }

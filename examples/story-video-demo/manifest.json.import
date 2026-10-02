@@ -1,0 +1,13 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bqnlahe3hahmx"
+valid=false
+
+[deps]
+
+source_file="res://carts/story-video-demo/manifest.json"
+
+[params]
+

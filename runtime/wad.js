@@ -185,6 +185,118 @@ function rasterSeg(out, x1, z1, x2, z2, r) {
   }
 }
 
+function pointNearSegment(px, pz, ax, az, bx, bz, epsilon) {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const lenSq = dx * dx + dz * dz;
+  if (lenSq < 1e-8) return Math.hypot(px - ax, pz - az) <= epsilon;
+  let t = ((px - ax) * dx + (pz - az) * dz) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + dx * t), pz - (az + dz * t)) <= epsilon;
+}
+
+function pointInEdges(px, pz, edges) {
+  let inside = false;
+  for (const edge of edges) {
+    if (pointNearSegment(px, pz, edge.x1, edge.z1, edge.x2, edge.z2, 0.02)) return true;
+    const crosses = edge.z1 > pz !== edge.z2 > pz;
+    if (!crosses) continue;
+    const xAtZ = edge.x1 + ((pz - edge.z1) * (edge.x2 - edge.x1)) / (edge.z2 - edge.z1);
+    if (px < xAtZ) inside = !inside;
+  }
+  return inside;
+}
+
+function buildSectorFloorData(vertexes, linedefs, sidedefs, sectors, cx, cy, scale, baseFloor) {
+  const sectorFloors = sectors.map((sector, index) => ({
+    index,
+    floorH: (sector.floorH - baseFloor) * scale,
+    bounds: null,
+    edges: [],
+  }));
+
+  const addEdge = (sideIndex, x1, z1, x2, z2) => {
+    const side = sidedefs[sideIndex];
+    const floor = side ? sectorFloors[side.sector] : null;
+    if (!floor) return;
+    floor.edges.push({ x1, z1, x2, z2 });
+    if (!floor.bounds) {
+      floor.bounds = {
+        minX: Math.min(x1, x2),
+        maxX: Math.max(x1, x2),
+        minZ: Math.min(z1, z2),
+        maxZ: Math.max(z1, z2),
+      };
+      return;
+    }
+    floor.bounds.minX = Math.min(floor.bounds.minX, x1, x2);
+    floor.bounds.maxX = Math.max(floor.bounds.maxX, x1, x2);
+    floor.bounds.minZ = Math.min(floor.bounds.minZ, z1, z2);
+    floor.bounds.maxZ = Math.max(floor.bounds.maxZ, z1, z2);
+  };
+
+  for (const line of linedefs) {
+    const va = vertexes[line.v1];
+    const vb = vertexes[line.v2];
+    if (!va || !vb) continue;
+    const x1 = (va.x - cx) * scale;
+    const z1 = (va.y - cy) * scale;
+    const x2 = (vb.x - cx) * scale;
+    const z2 = (vb.y - cy) * scale;
+    if (line.right >= 0) addEdge(line.right, x1, z1, x2, z2);
+    if (line.left >= 0) addEdge(line.left, x2, z2, x1, z1);
+  }
+
+  return sectorFloors;
+}
+
+function buildFloorHeightLookup(sectorFloors) {
+  const activeSectors = sectorFloors.filter(sector => sector.bounds && sector.edges.length > 0);
+  let minX = Infinity;
+  let minZ = Infinity;
+  for (const sector of activeSectors) {
+    minX = Math.min(minX, sector.bounds.minX);
+    minZ = Math.min(minZ, sector.bounds.minZ);
+  }
+
+  const cellSize = 8;
+  const grid = new Map();
+  for (const sector of activeSectors) {
+    const x0 = Math.floor((sector.bounds.minX - minX) / cellSize);
+    const x1 = Math.floor((sector.bounds.maxX - minX) / cellSize);
+    const z0 = Math.floor((sector.bounds.minZ - minZ) / cellSize);
+    const z1 = Math.floor((sector.bounds.maxZ - minZ) / cellSize);
+    for (let gz = z0; gz <= z1; gz++) {
+      for (let gx = x0; gx <= x1; gx++) {
+        const key = `${gx},${gz}`;
+        let bucket = grid.get(key);
+        if (!bucket) {
+          bucket = [];
+          grid.set(key, bucket);
+        }
+        bucket.push(sector);
+      }
+    }
+  }
+
+  return function getFloorHeight(x, z, fallback = 0) {
+    if (activeSectors.length === 0) return fallback;
+    const gx = Math.floor((x - minX) / cellSize);
+    const gz = Math.floor((z - minZ) / cellSize);
+    const candidates = grid.get(`${gx},${gz}`) || activeSectors;
+    let best = null;
+    for (const sector of candidates) {
+      const b = sector.bounds;
+      if (x < b.minX - 0.02 || x > b.maxX + 0.02 || z < b.minZ - 0.02 || z > b.maxZ + 0.02)
+        continue;
+      if (pointInEdges(x, z, sector.edges)) {
+        if (best == null || sector.floorH > best) best = sector.floorH;
+      }
+    }
+    return best == null ? fallback : best;
+  };
+}
+
 // ── WADLoader class ──
 
 class WADLoader {
@@ -557,15 +669,31 @@ function convertWADMap(map, scale) {
     }
   }
 
-  const sectorData = sectors.map(s => ({
+  const sectorFloors = buildSectorFloorData(
+    vertexes,
+    linedefs,
+    sidedefs,
+    sectors,
+    cx,
+    cy,
+    scale,
+    baseFloor
+  );
+  const getFloorHeight = buildFloorHeightLookup(sectorFloors);
+
+  const sectorData = sectors.map((s, index) => ({
     floorH: (s.floorH - baseFloor) * scale,
     ceilH: (s.ceilH - baseFloor) * scale,
     floorFlat: s.floorFlat,
     ceilFlat: s.ceilFlat,
     light: Math.max(0.25, s.light / 255),
+    bounds: sectorFloors[index]?.bounds || null,
   }));
+  playerStart.floorH = getFloorHeight(playerStart.x, playerStart.z, playerStart.floorH);
+  for (const e of enemies) e.floorH = getFloorHeight(e.x, e.z, 0);
+  for (const item of items) item.floorH = getFloorHeight(item.x, item.z, 0);
 
-  return { walls, colSegs, enemies, items, playerStart, sectors: sectorData };
+  return { walls, colSegs, enemies, items, playerStart, sectors: sectorData, getFloorHeight };
 }
 
 // ── WADTextureManager class ──

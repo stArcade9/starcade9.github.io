@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw-source pages and the import-map contract - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+
+        /* ── mobile: wide content scrolls or wraps instead of widening the page ── */
+        table { display: block; overflow-x: auto; max-width: 100%; }
+        :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        p, li, td, th, h1, h2, h3, h4 { overflow-wrap: break-word; }
+        section, .function, .note, .example, .param { max-width: 100%; }
+        .function-sig { overflow-x: auto; max-width: 100%; }
+        pre { overflow-x: auto; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+            .function { padding: 16px 14px; }
+        }
+
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="/docs" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Raw-source pages and the import-map contract</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p>There are two different ways a page in this repo boots the Nova64 runtime, and
+they have different rules. Mixing them up produces a blank screen and a single
+console error, which is how three separate outages started.</p>
+        </section>
+
+        <section class="md">
+<h2>The two boot paths</h2>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Loads</th>
+<th>Bundler transforms</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>console.html</code>, <code>hero-embed.html</code></td>
+<td><code>assets/main-*.js</code> (Vite build output)</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>demo-embed.html</code>, <code>player.html</code>, <code>babylon_console.html</code></td>
+<td><code>/src/main.js</code> (raw source)</td>
+<td><strong>no</strong></td>
+</tr>
+</tbody></table>
+<p>The second group hands <code>src/main.js</code> and everything under <code>runtime/</code> straight to
+the browser as ES modules. There is no build step, no bundler, and no dev server
+doing rewrites — the repo root is served as static files (<code>python3 -m http.server</code>
+locally, Vercel in production).</p>
+<p>That imposes two rules on <strong>all</strong> code reachable from <code>src/main.js</code>:</p>
+<h3>1. Every static bare specifier must be in each page&#39;s import map</h3>
+<p>A browser cannot resolve <code>import x from &#39;three&#39;</code> on its own. Each raw-source page
+carries a <code>&lt;script type=&quot;importmap&quot;&gt;</code> mapping bare names to esm.sh URLs. Anything
+statically reachable but unmapped fails resolution.</p>
+<p>The failure mode is the important part: <strong>module resolution happens before any
+code runs, for the entire graph at once.</strong> One unmapped specifier in one leaf
+module aborts everything — including code paths that never touch it.</p>
+<p>That is why <code>import { GpuBabylon }</code> at the top of <code>src/main.js</code> broke the <em>Three.js</em>
+renderer. The backend was selected 70 lines later, but the graph never got that far:</p>
+<pre><code>demo-embed.html → /src/main.js → runtime/gpu-babylon.js
+                → runtime/backends/babylon/bootstrap.js → &#39;@babylonjs/core&#39;  ✗
+</code></pre>
+<p><strong>Fix pattern:</strong> if a dependency is optional, make the import dynamic. <code>await import()</code>
+resolves at call time, so an unmapped specifier only fails if that path actually runs:</p>
+<pre><code class="language-js">if (_useBabylon) {
+  const { GpuBabylon } = await import(&#39;../runtime/gpu-babylon.js&#39;);
+}
+</code></pre>
+<p><code>runtime/api-net.js</code> (colyseus) and <code>runtime/store.js</code> (zustand) already follow this,
+and both additionally catch the failure and degrade — zustand falls back to a
+hand-rolled polyfill, net reports unsupported. Neither is in any import map, and
+neither needs to be.</p>
+<h3>2. No bundler-only syntax without a fallback</h3>
+<p><code>import.meta.glob</code> is a Vite build-time macro, not a runtime function. Raw in a
+browser it is <code>undefined</code> and calling it throws <code>(intermediate value).glob is not a function</code>. <code>import.meta.env</code> is merely <code>undefined</code>, which is why the existing
+<code>typeof import.meta !== &#39;undefined&#39; &amp;&amp; import.meta.env?.DEV</code> guards in
+<code>runtime/logger.js</code> and <code>runtime/debug-logger.js</code> are fine as they are.</p>
+<p><code>runtime/manifest.js</code> wraps its glob in <code>try</code>/<code>catch</code>. Vite still rewrites the call
+at build time, so bundled builds are unaffected; raw-source pages get an empty map.</p>
+<p>Note the second half of that fix. The sidecar-<code>meta.json</code> fetch was gated on
+<code>!basePath.startsWith(&#39;/examples/&#39;)</code> — deliberately, because a Vite build always
+has example metadata bundled, so a miss meant the file genuinely did not exist and
+fetching would only produce a 404. Without a build nothing is bundled, so guarding
+the glob alone would have left every example cart silently manifest-less. The gate
+is now <code>_hasBundledExampleMeta &amp;&amp; …</code>, preserving the original intent in both modes.</p>
+        </section>
+
+        <section class="md">
+<h2>The checker</h2>
+<pre><code class="language-bash">node tools/check-raw-source.mjs
+</code></pre>
+<p>Walks the static graph from <code>src/main.js</code> (77 files today), collects every bare
+specifier reachable <em>without</em> going through a dynamic <code>import()</code>, and checks each
+against all three raw-source pages&#39; import maps. Then flags bundler-only syntax
+that is not inside a <code>try</code>.</p>
+<p>Run it after touching <code>runtime/</code> or <code>src/main.js</code>. It is fast, has no dependencies,
+and would have caught two of the three outages before they shipped.</p>
+<p><strong>Known limits.</strong> It is a regex walker, not a parser: it will not follow a computed
+path, and the <code>try</code>-block check looks back four lines. It also cannot tell you that
+a mapped-but-eager dependency is a <em>performance</em> problem — a static
+<code>import &#39;@babylonjs/core&#39;</code> now resolves (the mappings exist so <code>?backend=babylon</code>
+works) and would be reported ok, while quietly pulling megabytes of Babylon onto
+every page. Keep optional backends dynamic regardless of what the checker says.</p>
+        </section>
+
+        <section class="md">
+<h2>Babylon on raw-source pages</h2>
+<p><code>babylon_console.html</code> and <code>?backend=babylon</code> need <code>@babylonjs/*</code> mapped, so
+<code>demo-embed.html</code> and <code>babylon_console.html</code> both declare it (pinned to 9.4.1, matching
+<code>docs/releases/v0.5.0.md</code>). <code>console.html</code> and <code>hero-embed.html</code> do not need it —
+their bundle already contains what it needs.</p>
+        </section>
+
+        <section class="md">
+<h2>player.html</h2>
+<p>Minimal standalone player for any cart under <code>examples/</code>.</p>
+<pre><code>player.html?demoscene=f-zero-nova-3d
+</code></pre>
+<ul>
+<li><code>?demoscene=</code> is canonical. <code>?demo=</code> and <code>?cart=</code> are accepted aliases so links
+copied out of <code>console.html</code> / <code>demo-embed.html</code> keep working. The value is
+validated against <code>[A-Za-z0-9._-]+</code> — no slashes, no traversal.</li>
+<li>The dropdown lists all 96 example folders, grouped Showcase / Games / Demos &amp; FX /
+Basics / Tests. A valid folder name that is not in the catalog is still accepted
+and shown as &quot;Unlisted&quot; — <code>src/main.js</code> falls back to <code>/examples/&lt;name&gt;/code.js</code>
+for any id missing from its <code>demoMap</code>.</li>
+<li>Nothing loads until the visitor clicks: the <code>&lt;script type=&quot;module&quot;&gt;</code> is injected
+on click, not at parse. The import map is in <code>&lt;head&gt;</code>, which is required — it must
+precede any module load.</li>
+<li><code>src/main.js</code> reads its options off <code>window.location.search</code> at module-eval time
+and the param it looks for is <code>?demo=</code>. The player sets that plus <code>clearColor</code>
+just before injecting, then restores the <code>?demoscene=</code> URL on the script&#39;s <code>load</code>
+event (which fires after evaluation), so the address bar keeps the shareable form.</li>
+<li><strong>No <code>?w=</code>/<code>?h=</code> is passed.</strong> Supplying them puts <code>main.js</code> into fixed-resolution
+mode; omitting them keeps the responsive <code>ResizeObserver</code> path so the cart fills
+the frame. <code>demo-embed.html</code> carries the same warning.</li>
+<li>Switching demos after boot navigates rather than hot-swapping. The runtime has no
+per-cart teardown hook, so a full reload is the only clean way to swap.</li>
+</ul>
+<h3>Why the second click</h3>
+<p>Reaching the player from alpha.html&#39;s &quot;Play demo&quot; costs two clicks — one there, one
+on the poster. That is deliberate: the new tab has no user gesture of its own, so
+auto-booting would leave the Web Audio context suspended and the cart would run
+silent. The poster click supplies the gesture.</p>
+        </section>
+
+        <section class="md">
+<h2>Adding a cart to the player</h2>
+<p>Drop it in <code>examples/&lt;id&gt;/code.js</code> and it is reachable at
+<code>player.html?demoscene=&lt;id&gt;</code> immediately, via the path fallback. To get it into
+the dropdown, add a row to the <code>DEMOS</code> array in <code>player.html</code>. A thumbnail at
+<code>public/assets/cart-thumbs/&lt;id&gt;.png</code> becomes the poster background; without one
+the poster falls back to a plain gradient (25 of 96 currently have no thumbnail).</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="/docs" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

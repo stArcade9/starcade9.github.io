@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://nrl613miqsy4"
+path="res://.godot/imported/meta.json-29b54af57e898c4c40e53b2a9cf12731.res"
+
+[deps]
+
+source_file="res://carts/physics-demo-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-29b54af57e898c4c40e53b2a9cf12731.res"]
+
+[params]
+

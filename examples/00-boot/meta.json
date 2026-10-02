@@ -1,0 +1,7 @@
+{
+  "name": "Boot",
+  "description": "G0 smoke test — verifies engine.init capability handshake.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "test"
+}

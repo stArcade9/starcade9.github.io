@@ -1,0 +1,9 @@
+{
+  "name": "indie-odyssey",
+  "description": "G6 cart port from examples/indie-odyssey — Echoes of the Shardgrid, a cross-backend dungeon crawler with GLB enemies and a story-mode intro.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "port",
+  "source": "examples/indie-odyssey",
+  "notes": "Godot port of the browser Indie Odyssey cart. Cart code uses nova64.* namespaced API throughout and runs against the QuickJS bridge unchanged.\n\n  Godot host notes:\n\n  - Story-mode slides use Godot texture handles plus the overlay image blitter when no DOM canvas is available, with framebuffer text/chrome on top.\n  - Combat sprites use the same native texture-overlay path when the browser combatSpriteCanvas is unavailable.\n  - Combat skybox plane uses globalThis.THREE.MeshBasicMaterial directly — guarded by a feature check, so it no-ops on Godot. nova64.light.createSolidSkybox is the cross-backend path and works.\n\n  Assets total ~26MB (GLBs + story images + sprite sheets). PACKAGED_ASSET_BASE = 'assets/' is the canonical layout — resolveAssetBase() in code.js falls through to it whenever globalThis.nova64.assets reports the bundled normal.jpg present."
+}

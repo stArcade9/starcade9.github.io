@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://y5t7xc2c10ks"
+path="res://.godot/imported/meta.json-874ff04843d35e7458a9fc7bf4b3d090.res"
+
+[deps]
+
+source_file="res://carts/space-harrier-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-874ff04843d35e7458a9fc7bf4b3d090.res"]
+
+[params]
+

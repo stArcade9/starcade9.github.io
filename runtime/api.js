@@ -65,6 +65,14 @@ export function stdApi(gpu) {
       typeof color === 'bigint' ? unpackRGBA64(color) : { r: 0, g: 0, b: 0, a: 65535 };
     fb.fill(r, g, b, a);
   }
+  // Transparent clear for 3D carts. `cls()` fills the 2D overlay opaque (correct
+  // for pure-2D carts), which would composite over and hide the rendered 3D
+  // scene. `cls3D()` wipes the overlay to fully transparent so the 3D world
+  // shows through and you can still draw a HUD on top. Equivalent to the
+  // `cls(rgba8(0, 0, 0, 0))` idiom, but explicit and self-documenting.
+  function cls3D() {
+    fb.fill(0, 0, 0, 0);
+  }
   function pset(x, y, color) {
     const { r, g, b, a } = _colorToRGBA16(color);
     fb.pset((x | 0) - camRef.x, (y | 0) - camRef.y, r, g, b, a);
@@ -202,6 +210,7 @@ export function stdApi(gpu) {
     exposeTo(target) {
       Object.assign(target, {
         cls,
+        cls3D,
         pset,
         line,
         rect,

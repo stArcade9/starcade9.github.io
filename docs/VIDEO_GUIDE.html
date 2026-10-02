@@ -212,6 +212,66 @@
             margin-top: 40px;
         }
     
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+
+        /* ── mobile: wide content scrolls or wraps instead of widening the page ── */
+        table { display: block; overflow-x: auto; max-width: 100%; }
+        :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        p, li, td, th, h1, h2, h3, h4 { overflow-wrap: break-word; }
+        section, .function, .note, .example, .param { max-width: 100%; }
+        .function-sig { overflow-x: auto; max-width: 100%; }
+        pre { overflow-x: auto; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+            .function { padding: 16px 14px; }
+        }
+
         /* ── converted markdown body ── */
         .md p { margin: 0 0 14px; }
         .md ul, .md ol { margin: 0 0 14px 22px; }
@@ -307,7 +367,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-link">← Back to Documentation Index</a>
+        <a href="/docs" class="back-link">← Back to Documentation Index</a>
 
         <header>
             <h1>Nova64 Video Guide</h1>
@@ -315,16 +375,13 @@
         </header>
 
         <section class="md">
-<p>Looking for gameplay capture, native Godot playtesting, or trailer authoring
-rather than the cart-facing <code>nova64.video</code> API? See
-<a href="GODOT_PLAYTEST_AND_TRAILER_WORKFLOW.html">Godot Playtest and Trailer Workflow</a>.</p>
 <p>Nova64 plays fullscreen video and in-world video textures from a <strong>single cart
 API</strong> — <code>nova64.video</code> — across all three backends. You write one
 <code>playFullscreen</code> call; each host decodes the format it understands.</p>
-<p>Worked example: <a href="https://github.com/seacloud9/nova64/blob/main/examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>
+<p>Worked example: <a href="../examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>
 — a slide story that ends with a fullscreen video outro, running on web, Godot,
 and RetroArch from the same <code>code.js</code>. There is also a smaller video texture demo
-in <a href="https://github.com/seacloud9/nova64/blob/main/examples/hello-helpers/code.js"><code>examples/hello-helpers</code></a>.</p>
+in <a href="../examples/hello-helpers/code.js"><code>examples/hello-helpers</code></a>.</p>
         </section>
 
         <section class="md">
@@ -394,7 +451,7 @@ export function draw() {
 }
 </code></pre>
 <p>Three things that bite people, all shown in
-<a href="https://github.com/seacloud9/nova64/blob/main/examples/story-video-demo/code.js"><code>examples/story-video-demo/code.js</code></a>:</p>
+<a href="../examples/story-video-demo/code.js"><code>examples/story-video-demo/code.js</code></a>:</p>
 <ol>
 <li><strong>Drive the ticks.</strong> Call <code>nova64.video._tick(dt)</code> in <code>update()</code> and
 <code>nova64.video._draw()</code> in <code>draw()</code>. The engine does not call them for you, so
@@ -452,7 +509,7 @@ call <code>.update(dt)</code> in your <code>update()</code> to advance it.</li>
 <code>get_video_texture()</code> onto the mesh material (decodes on its own; <code>.update()</code>
 is a no-op).</li>
 </ul>
-<p>Working example: <a href="https://github.com/seacloud9/nova64/blob/main/examples/tv-demo/code.js"><code>examples/tv-demo</code></a> — a 3D
+<p>Working example: <a href="../examples/tv-demo/code.js"><code>examples/tv-demo</code></a> — a 3D
 television with the video playing on its screen mesh.</p>
 <pre><code class="language-js">const tv = nova64.video.loadTexture(&#39;/assets/clip.mp4&#39;, { mpgUrl: &#39;assets/video/clip.mpg&#39; });
 tv.applyToMesh(screenMeshId);
@@ -460,7 +517,7 @@ tv.applyToMesh(screenMeshId);
 </code></pre>
 <p><code>nova64.video._tick(dt)</code> / <code>._draw()</code> — per-frame pump/paint for <strong>fullscreen</strong>
 video on native hosts (call from <code>update</code>/<code>draw</code>).</p>
-<p>The companion <a href="api-improvements.html"><code>nova64.story</code></a> helper (slide intros) follows
+<p>The companion <a href="/docs/api-improvements"><code>nova64.story</code></a> helper (slide intros) follows
 the identical <code>_tick</code>/<code>_draw</code> contract and is used together with video in the
 story-video-demo.</p>
         </section>
@@ -486,12 +543,12 @@ sets a constant frame rate); a variable-rate <code>.mpg</code> confuses the paci
 <code>__novaVideoOpen</code>) using the vendored single-header
 <a href="https://github.com/seacloud9/nova64/blob/main/retroarch/pl_mpeg.h"><code>retroarch/pl_mpeg.h</code></a>. The Godot path is in the
 gdextension bridge (<code>video.playFullscreen/stop/poll</code>); see
-<a href="GODOT_HOST_CONTRACT.html"><code>docs/GODOT_HOST_CONTRACT.md</code></a>. The web path is
-<a href="https://github.com/seacloud9/nova64/blob/main/runtime/api-video.js"><code>runtime/api-video.js</code></a>.</p>
+<a href="/docs/GODOT_HOST_CONTRACT"><code>docs/GODOT_HOST_CONTRACT.md</code></a>. The web path is
+<a href="../runtime/api-video.js"><code>runtime/api-video.js</code></a>.</p>
         </section>
 
         <footer>
-            <p>Nova64 Fantasy Console © 2025 | <a href="index.html" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <p>Nova64 Fantasy Console © 2025 | <a href="/docs" style="color: var(--accent-cyan);">Back to Documentation</a></p>
             <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
         </footer>
     </div>

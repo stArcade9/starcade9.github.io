@@ -1,0 +1,7 @@
+{
+  "name": "Instancing",
+  "description": "G2 — 1024 cube wave grid via MultiMesh + engine.flush batched dispatch.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "demo"
+}

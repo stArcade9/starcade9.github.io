@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cpjwtcvrey1sl"
+path="res://.godot/imported/meta.json-08071ae4c3c211d414c073abf59c2c4b.res"
+
+[deps]
+
+source_file="res://carts/test-font/meta.json"
+dest_files=["res://.godot/imported/meta.json-08071ae4c3c211d414c073abf59c2c4b.res"]
+
+[params]
+

@@ -143,11 +143,8 @@ export async function init() {
     roll: 0,
   };
 
-  shake = nova64.util.createShake({ decay: 3 });
-  cooldowns = nova64.util.createCooldownSet({
-    laser: CONFIG.LASER_COOLDOWN,
-    missile: CONFIG.MISSILE_COOLDOWN,
-  });
+  shake = createShake({ decay: 3 });
+  cooldowns = createCooldownSet({ laser: CONFIG.LASER_COOLDOWN, missile: CONFIG.MISSILE_COOLDOWN });
 
   // Clear arrays
   asteroids = [];
@@ -180,20 +177,14 @@ export async function init() {
   spawnWave(wave);
 
   // Setup lighting
-  nova64.light.setAmbientLight(0x333333);
-  nova64.light.setLightColor(0xffffff);
-  nova64.light.setLightDirection(0.5, -0.5, 0.5);
+  setAmbientLight(0x333333);
+  setLightColor(0xffffff);
+  setLightDirection(0.5, -0.5, 0.5);
 
   // Post-processing: cinematic space look
-  nova64.fx.enableBloom(0.8, 0.4, 0.45);
-  nova64.fx.enableFXAA();
-  nova64.fx.enableVignette(1.3, 0.9);
-
-  // Babylon flourish: GlowLayer makes emissive surfaces (lasers, engines,
-  // pickups, boss eyes) bloom volumetrically without bloom-threshold tuning.
-  // Returns false on Three.js — UnrealBloom already covers that path, so
-  // we intentionally don't escalate.
-  nova64.fx.enableGlow?.(0.9, 32);
+  enableBloom(0.8, 0.4, 0.45);
+  enableFXAA();
+  enableVignette(1.3, 0.9);
 
   // Setup camera
   updateCamera(0);
@@ -214,10 +205,10 @@ function createStarfield() {
       y: Math.sin(angle2) * distance,
       z: Math.sin(angle1) * Math.cos(angle2) * distance,
       brightness: 0.3 + Math.random() * 0.7,
-      mesh: nova64.scene.createSphere(0.3 + Math.random() * 0.5, 0xffffff, [0, 0, 0]),
+      mesh: createSphere(0.3 + Math.random() * 0.5, 0xffffff, [0, 0, 0]),
     };
 
-    nova64.scene.setPosition(star.mesh, star.x, star.y, star.z);
+    setPosition(star.mesh, star.x, star.y, star.z);
     stars.push(star);
   }
 }
@@ -254,7 +245,7 @@ function spawnAsteroid() {
     },
     size,
     health: Math.ceil(size / 2),
-    mesh: nova64.scene.createCube(size, 0x666666, [x, y, z]),
+    mesh: createCube(size, 0x666666, [x, y, z]),
   };
 
   asteroids.push(asteroid);
@@ -263,20 +254,20 @@ function spawnAsteroid() {
 function createCockpit() {
   // Create semi-transparent cockpit frame
   // Left frame
-  const leftFrame = nova64.scene.createCube(0.5, 0x333333, [-8, 0, -5]);
-  nova64.scene.setScale(leftFrame, 0.2, 8, 0.2);
+  const leftFrame = createCube(0.5, 0x333333, [-8, 0, -5]);
+  setScale(leftFrame, 0.2, 8, 0.2);
 
   // Right frame
-  const rightFrame = nova64.scene.createCube(0.5, 0x333333, [8, 0, -5]);
-  nova64.scene.setScale(rightFrame, 0.2, 8, 0.2);
+  const rightFrame = createCube(0.5, 0x333333, [8, 0, -5]);
+  setScale(rightFrame, 0.2, 8, 0.2);
 
   // Top frame
-  const topFrame = nova64.scene.createCube(0.5, 0x333333, [0, 6, -5]);
-  nova64.scene.setScale(topFrame, 16, 0.2, 0.2);
+  const topFrame = createCube(0.5, 0x333333, [0, 6, -5]);
+  setScale(topFrame, 16, 0.2, 0.2);
 
   // Bottom frame (with HUD console)
-  const bottomFrame = nova64.scene.createCube(0.5, 0x222222, [0, -5, -5]);
-  nova64.scene.setScale(bottomFrame, 16, 1.5, 0.2);
+  const bottomFrame = createCube(0.5, 0x222222, [0, -5, -5]);
+  setScale(bottomFrame, 16, 1.5, 0.2);
 
   cockpitMesh = { leftFrame, rightFrame, topFrame, bottomFrame };
 }
@@ -287,15 +278,15 @@ function createCrosshair() {
   const distance = 15;
 
   // Horizontal line
-  const horizontal = nova64.scene.createCube(size, 0x00ff00, [0, 0, -distance]);
-  nova64.scene.setScale(horizontal, 2, 0.05, 0.05);
+  const horizontal = createCube(size, 0x00ff00, [0, 0, -distance]);
+  setScale(horizontal, 2, 0.05, 0.05);
 
   // Vertical line
-  const vertical = nova64.scene.createCube(size, 0x00ff00, [0, 0, -distance]);
-  nova64.scene.setScale(vertical, 0.05, 2, 0.05);
+  const vertical = createCube(size, 0x00ff00, [0, 0, -distance]);
+  setScale(vertical, 0.05, 2, 0.05);
 
   // Center dot
-  const center = nova64.scene.createSphere(0.05, 0xff0000, [0, 0, -distance]);
+  const center = createSphere(0.05, 0xff0000, [0, 0, -distance]);
 
   crosshairMesh = { horizontal, vertical, center };
 }
@@ -360,11 +351,12 @@ function spawnEnemy(type) {
       break;
   }
 
-  const body = nova64.scene.createCube(size, color, [0, 0, 0], {
-    emissive: color,
-    emissiveIntensity: type === 'boss' ? 2.5 : 1.5,
+  const body = createCube(size, color, [0, 0, 0], {
+    material: 'emissive',
+    color,
+    intensity: type === 'boss' ? 2.5 : 1.5,
   });
-  nova64.scene.setScale(
+  setScale(
     body,
     type === 'boss' ? 1.5 : 1.5,
     type === 'boss' ? 0.6 : 0.5,
@@ -401,12 +393,7 @@ export function update() {
   const dt = 1 / 60;
 
   if (gameState === 'start') {
-    if (
-      nova64.input.isKeyDown('Enter') ||
-      nova64.input.isKeyDown('Space') ||
-      nova64.input.isKeyDown(' ') ||
-      nova64.input.btn(13)
-    ) {
+    if (isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
       gameState = 'playing';
     }
     return;
@@ -428,7 +415,7 @@ export function update() {
 
   if (gameState === 'paused') {
     // Check for unpause
-    if (nova64.input.isKeyPressed('Escape')) {
+    if (isKeyPressed('Escape')) {
       gameState = 'playing';
     }
     return;
@@ -459,7 +446,7 @@ export function update() {
   }
 
   // Cooldowns
-  nova64.util.updateCooldowns(cooldowns, dt);
+  updateCooldowns(cooldowns, dt);
 
   // Update pickups
   updatePickups(dt);
@@ -470,13 +457,13 @@ export function update() {
     waveClearTimer = 3.0;
     score += 1000 * wave;
     player.missiles = Math.min(player.missiles + 3, 20);
-    nova64.audio.sfx('powerup');
+    sfx('powerup');
   }
 
   // Check game over
   if (player.health <= 0) {
     gameState = 'gameover';
-    nova64.audio.sfx('death');
+    sfx('death');
   }
 }
 
@@ -490,18 +477,18 @@ function updateInput(dt) {
   // Mouse control for pitch/yaw (optional - for now keyboard)
 
   // Pitch (up/down) - W/S or Arrow Up/Down
-  if (nova64.input.isKeyDown('KeyW') || nova64.input.isKeyDown('ArrowUp')) {
+  if (isKeyDown('KeyW') || isKeyDown('ArrowUp')) {
     player.pitch -= turnSpeed;
   }
-  if (nova64.input.isKeyDown('KeyS') || nova64.input.isKeyDown('ArrowDown')) {
+  if (isKeyDown('KeyS') || isKeyDown('ArrowDown')) {
     player.pitch += turnSpeed;
   }
 
   // Yaw (left/right) - A/D or Arrow Left/Right
-  if (nova64.input.isKeyDown('KeyA') || nova64.input.isKeyDown('ArrowLeft')) {
+  if (isKeyDown('KeyA') || isKeyDown('ArrowLeft')) {
     player.yaw -= turnSpeed;
     player.roll = Math.max(-0.5, player.roll - dt * 2);
-  } else if (nova64.input.isKeyDown('KeyD') || nova64.input.isKeyDown('ArrowRight')) {
+  } else if (isKeyDown('KeyD') || isKeyDown('ArrowRight')) {
     player.yaw += turnSpeed;
     player.roll = Math.min(0.5, player.roll + dt * 2);
   } else {
@@ -510,48 +497,44 @@ function updateInput(dt) {
   }
 
   // Boost - Shift
-  player.boosting = nova64.input.isKeyDown('ShiftLeft') || nova64.input.isKeyDown('ShiftRight');
+  player.boosting = isKeyDown('ShiftLeft') || isKeyDown('ShiftRight');
 
   // Strafe - Q/E
   const strafeSpeed = CONFIG.SHIP_STRAFE_SPEED * dt;
-  if (nova64.input.isKeyDown('KeyQ')) {
+  if (isKeyDown('KeyQ')) {
     player.vel.x -= Math.cos(player.yaw + Math.PI / 2) * strafeSpeed;
     player.vel.z -= Math.sin(player.yaw + Math.PI / 2) * strafeSpeed;
   }
-  if (nova64.input.isKeyDown('KeyE')) {
+  if (isKeyDown('KeyE')) {
     player.vel.x += Math.cos(player.yaw + Math.PI / 2) * strafeSpeed;
     player.vel.z += Math.sin(player.yaw + Math.PI / 2) * strafeSpeed;
   }
 
   // Fire lasers - Space or Left Click
   if (
-    (nova64.input.isKeyDown('Space') || nova64.input.isKeyDown(' ')) &&
-    nova64.util.useCooldown(cooldowns.laser) &&
+    (isKeyDown('Space') || isKeyDown(' ')) &&
+    useCooldown(cooldowns.laser) &&
     player.energy >= 5
   ) {
     fireLasers();
     player.energy -= 5;
-    nova64.audio.sfx('laser');
+    sfx('laser');
   }
 
   // Fire missile - M or Right Click
-  if (
-    nova64.input.isKeyPressed('KeyM') &&
-    nova64.util.useCooldown(cooldowns.missile) &&
-    player.missiles > 0
-  ) {
+  if (isKeyPressed('KeyM') && useCooldown(cooldowns.missile) && player.missiles > 0) {
     fireMissile();
     player.missiles--;
-    nova64.audio.sfx('explosion');
+    sfx('explosion');
   }
 
   // Target lock - T
-  if (nova64.input.isKeyPressed('KeyT')) {
+  if (isKeyPressed('KeyT')) {
     lockTarget();
   }
 
   // Pause - Escape
-  if (nova64.input.isKeyPressed('Escape')) {
+  if (isKeyPressed('Escape')) {
     gameState = 'paused';
   }
 
@@ -629,13 +612,13 @@ function fireLasers() {
   );
 
   // Camera shake
-  nova64.util.triggerShake(shake, 0.1);
+  triggerShake(shake, 0.1);
 }
 
 function createLaser(x, y, z, dx, dy, dz, owner) {
   const color = owner === 'player' ? 0x00ff00 : 0xff0000;
-  const mesh = nova64.scene.createCube(0.3, color, [x, y, z]);
-  nova64.scene.setScale(mesh, 0.2, 0.2, 2);
+  const mesh = createCube(0.3, color, [x, y, z]);
+  setScale(mesh, 0.2, 0.2, 2);
 
   const projectile = {
     pos: { x, y, z },
@@ -660,8 +643,8 @@ function fireMissile() {
     z: -Math.cos(player.yaw) * Math.cos(player.pitch),
   };
 
-  const mesh = nova64.scene.createCube(0.5, 0xffff00, [player.pos.x, player.pos.y, player.pos.z]);
-  nova64.scene.setScale(mesh, 0.3, 0.3, 1.5);
+  const mesh = createCube(0.5, 0xffff00, [player.pos.x, player.pos.y, player.pos.z]);
+  setScale(mesh, 0.3, 0.3, 1.5);
 
   const missile = {
     pos: { ...player.pos },
@@ -794,7 +777,7 @@ function updateEnemies(dt) {
     enemy.pos.y += enemy.vel.y;
     enemy.pos.z += enemy.vel.z;
 
-    nova64.scene.setPosition(enemy.mesh, enemy.pos.x, enemy.pos.y, enemy.pos.z);
+    setPosition(enemy.mesh, enemy.pos.x, enemy.pos.y, enemy.pos.z);
 
     // Shoot at player - different fire rates per type
     enemy.shootCooldown -= dt;
@@ -849,10 +832,7 @@ function spawnPickup(x, y, z) {
     color = 0x00ff88;
   }
 
-  let mesh = nova64.scene.createSphere(1.5, color, [x, y, z], {
-    emissive: color,
-    emissiveIntensity: 3,
-  });
+  let mesh = createSphere(1.5, color, [x, y, z], { material: 'emissive', color, intensity: 3 });
   pickups.push({ pos: { x, y, z }, mesh, type, life: 15 });
 }
 
@@ -861,9 +841,9 @@ function updatePickups(dt) {
     let p = pickups[i];
     p.life -= dt;
     // Spin pickup
-    nova64.scene.setRotation(p.mesh, 0, gameTime * 2, 0);
+    setRotation(p.mesh, 0, gameTime * 2, 0);
     let py = p.pos.y + Math.sin(gameTime * 3 + i) * 0.5;
-    nova64.scene.setPosition(p.mesh, p.pos.x, py, p.pos.z);
+    setPosition(p.mesh, p.pos.x, py, p.pos.z);
 
     // Check player proximity
     let dist = Math.sqrt(
@@ -872,20 +852,20 @@ function updatePickups(dt) {
     if (dist < 8) {
       if (p.type === 'missile') {
         player.missiles = Math.min(player.missiles + 3, 20);
-        nova64.audio.sfx('coin');
+        sfx('coin');
       } else if (p.type === 'shield') {
         player.shields = Math.min(player.maxShields, player.shields + 30);
-        nova64.audio.sfx('powerup');
+        sfx('powerup');
       } else if (p.type === 'energy') {
         player.energy = Math.min(player.maxEnergy, player.energy + 40);
-        nova64.audio.sfx('powerup');
+        sfx('powerup');
       }
-      nova64.scene.destroyMesh(p.mesh);
+      destroyMesh(p.mesh);
       pickups.splice(i, 1);
       continue;
     }
     if (p.life <= 0) {
-      nova64.scene.destroyMesh(p.mesh);
+      destroyMesh(p.mesh);
       pickups.splice(i, 1);
     }
   }
@@ -919,12 +899,12 @@ function updateProjectiles(dt) {
     proj.pos.y += proj.vel.y * dt;
     proj.pos.z += proj.vel.z * dt;
 
-    nova64.scene.setPosition(proj.mesh, proj.pos.x, proj.pos.y, proj.pos.z);
+    setPosition(proj.mesh, proj.pos.x, proj.pos.y, proj.pos.z);
 
     // Lifetime
     proj.life -= dt;
     if (proj.life <= 0) {
-      nova64.scene.destroyMesh(proj.mesh);
+      destroyMesh(proj.mesh);
       projectiles.splice(i, 1);
       continue;
     }
@@ -944,16 +924,16 @@ function updateProjectiles(dt) {
         if (dist < enemy.size + 1) {
           enemy.health -= proj.damage;
           hit = true;
-          nova64.audio.sfx('hit');
+          sfx('hit');
 
           if (enemy.health <= 0) {
             let expSize = enemy.type === 'boss' ? 12 : enemy.type === 'bomber' ? 7 : 5;
             createExplosion(enemy.pos.x, enemy.pos.y, enemy.pos.z, expSize);
-            nova64.scene.destroyMesh(enemy.mesh);
+            destroyMesh(enemy.mesh);
             enemies.splice(ei, 1);
             score += enemy.score_val;
             kills++;
-            nova64.audio.sfx('explosion');
+            sfx('explosion');
             if (enemy.type === 'boss') bossAlive = false;
             // Drop pickup (40% chance, 80% for boss)
             if (Math.random() < (enemy.type === 'boss' ? 0.8 : 0.4)) {
@@ -983,8 +963,8 @@ function updateProjectiles(dt) {
           player.health -= proj.damage * 10;
         }
         hit = true;
-        nova64.util.triggerShake(shake, 0.3);
-        nova64.audio.sfx('hit');
+        triggerShake(shake, 0.3);
+        sfx('hit');
       }
     }
 
@@ -1002,7 +982,7 @@ function updateProjectiles(dt) {
 
         if (asteroid.health <= 0) {
           createExplosion(asteroid.pos.x, asteroid.pos.y, asteroid.pos.z, asteroid.size);
-          nova64.scene.destroyMesh(asteroid.mesh);
+          destroyMesh(asteroid.mesh);
           asteroids.splice(ai, 1);
           score += 10;
 
@@ -1013,7 +993,7 @@ function updateProjectiles(dt) {
     });
 
     if (hit) {
-      nova64.scene.destroyMesh(proj.mesh);
+      destroyMesh(proj.mesh);
       projectiles.splice(i, 1);
     }
   }
@@ -1044,13 +1024,8 @@ function updateAsteroids(dt) {
     }
 
     // Update mesh
-    nova64.scene.setPosition(asteroid.mesh, asteroid.pos.x, asteroid.pos.y, asteroid.pos.z);
-    nova64.scene.setRotation(
-      asteroid.mesh,
-      asteroid.rotation.x,
-      asteroid.rotation.y,
-      asteroid.rotation.z
-    );
+    setPosition(asteroid.mesh, asteroid.pos.x, asteroid.pos.y, asteroid.pos.z);
+    setRotation(asteroid.mesh, asteroid.rotation.x, asteroid.rotation.y, asteroid.rotation.z);
   });
 }
 
@@ -1067,7 +1042,7 @@ function createExplosion(x, y, z, size) {
         z: (Math.random() - 0.5) * 20,
       },
       life: 0.5 + Math.random() * 0.5,
-      mesh: nova64.scene.createSphere(0.3, 0xff6600, [x, y, z]),
+      mesh: createSphere(0.3, 0xff6600, [x, y, z]),
     };
     explosions.push(particle);
   }
@@ -1081,14 +1056,14 @@ function updateExplosions(dt) {
     exp.pos.y += exp.vel.y * dt;
     exp.pos.z += exp.vel.z * dt;
 
-    nova64.scene.setPosition(exp.mesh, exp.pos.x, exp.pos.y, exp.pos.z);
+    setPosition(exp.mesh, exp.pos.x, exp.pos.y, exp.pos.z);
 
     exp.life -= dt;
     const scale = exp.life;
-    nova64.scene.setScale(exp.mesh, scale, scale, scale);
+    setScale(exp.mesh, scale, scale, scale);
 
     if (exp.life <= 0) {
-      nova64.scene.destroyMesh(exp.mesh);
+      destroyMesh(exp.mesh);
       explosions.splice(i, 1);
     }
   }
@@ -1108,8 +1083,8 @@ function updateCamera(dt) {
   camera.roll = player.roll;
 
   // Camera shake
-  nova64.util.updateShake(shake, dt);
-  const [shakeX, shakeY] = nova64.util.getShakeOffset(shake);
+  updateShake(shake, dt);
+  const [shakeX, shakeY] = getShakeOffset(shake);
   camera.pos.x += shakeX;
   camera.pos.y += shakeY;
 
@@ -1121,8 +1096,8 @@ function updateCamera(dt) {
   };
 
   // Set camera
-  nova64.camera.setCameraPosition(camera.pos.x, camera.pos.y, camera.pos.z);
-  nova64.camera.setCameraTarget(
+  setCameraPosition(camera.pos.x, camera.pos.y, camera.pos.z);
+  setCameraTarget(
     camera.pos.x + forward.x * 100,
     camera.pos.y + forward.y * 100,
     camera.pos.z + forward.z * 100
@@ -1131,19 +1106,19 @@ function updateCamera(dt) {
   // Update cockpit elements to follow camera
   if (crosshairMesh) {
     const dist = 15;
-    nova64.scene.setPosition(
+    setPosition(
       crosshairMesh.horizontal,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
       camera.pos.z + forward.z * dist
     );
-    nova64.scene.setPosition(
+    setPosition(
       crosshairMesh.vertical,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
       camera.pos.z + forward.z * dist
     );
-    nova64.scene.setPosition(
+    setPosition(
       crosshairMesh.center,
       camera.pos.x + forward.x * dist,
       camera.pos.y + forward.y * dist,
@@ -1165,14 +1140,9 @@ export function draw() {
     drawHUD();
   } else if (gameState === 'waveclear') {
     drawHUD();
-    nova64.draw.rect(120, 100, 400, 60, nova64.draw.rgba8(0, 0, 0, 200), true);
-    nova64.draw.print(`WAVE ${wave} CLEAR!`, 230, 110, nova64.draw.rgba8(0, 255, 100, 255));
-    nova64.draw.print(
-      `+${1000 * wave} BONUS  +3 MISSILES`,
-      190,
-      135,
-      nova64.draw.rgba8(255, 200, 0, 255)
-    );
+    rect(120, 100, 400, 60, rgba8(0, 0, 0, 200), true);
+    print(`WAVE ${wave} CLEAR!`, 230, 110, rgba8(0, 255, 100, 255));
+    print(`+${1000 * wave} BONUS  +3 MISSILES`, 190, 135, rgba8(255, 200, 0, 255));
   } else if (gameState === 'paused') {
     drawHUD();
     drawPauseScreen();
@@ -1183,140 +1153,120 @@ export function draw() {
 
 function drawStartScreen() {
   // Background
-  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 0, 200), true);
+  rect(0, 0, 640, 360, rgba8(0, 0, 0, 200), true);
 
   // Title
-  nova64.draw.print('WING COMMANDER', 200, 80, nova64.draw.rgba8(255, 255, 0, 255));
-  nova64.draw.print('SPACE COMBAT', 220, 110, nova64.draw.rgba8(200, 200, 200, 255));
+  print('WING COMMANDER', 200, 80, rgba8(255, 255, 0, 255));
+  print('SPACE COMBAT', 220, 110, rgba8(200, 200, 200, 255));
 
   // Instructions
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  nova64.draw.print(
-    'PRESS SPACE / TAP TO START',
-    190,
-    160,
-    nova64.draw.rgba8(255, 255, 255, Math.floor(pulse * 255))
-  );
+  print('PRESS SPACE / TAP TO START', 190, 160, rgba8(255, 255, 255, Math.floor(pulse * 255)));
 
   // Controls
-  nova64.draw.rect(120, 200, 400, 140, nova64.draw.rgba8(20, 20, 40, 220), true);
-  nova64.draw.rect(120, 200, 400, 140, nova64.draw.rgba8(100, 100, 255, 180), false);
+  rect(120, 200, 400, 140, rgba8(20, 20, 40, 220), true);
+  rect(120, 200, 400, 140, rgba8(100, 100, 255, 180), false);
 
-  nova64.draw.print('CONTROLS:', 270, 215, nova64.draw.rgba8(255, 255, 100, 255));
+  print('CONTROLS:', 270, 215, rgba8(255, 255, 100, 255));
 
-  nova64.draw.print(
-    'W/S or Arrows = Pitch Up/Down',
-    140,
-    240,
-    nova64.draw.rgba8(200, 200, 200, 255)
-  );
-  nova64.draw.print(
-    'A/D or Arrows = Yaw Left/Right',
-    140,
-    260,
-    nova64.draw.rgba8(200, 200, 200, 255)
-  );
-  nova64.draw.print('Q/E = Strafe Left/Right', 140, 280, nova64.draw.rgba8(200, 200, 200, 255));
-  nova64.draw.print('SPACE = Fire Lasers', 140, 300, nova64.draw.rgba8(200, 200, 200, 255));
-  nova64.draw.print('M = Fire Missile', 140, 320, nova64.draw.rgba8(200, 200, 200, 255));
+  print('W/S or Arrows = Pitch Up/Down', 140, 240, rgba8(200, 200, 200, 255));
+  print('A/D or Arrows = Yaw Left/Right', 140, 260, rgba8(200, 200, 200, 255));
+  print('Q/E = Strafe Left/Right', 140, 280, rgba8(200, 200, 200, 255));
+  print('SPACE = Fire Lasers', 140, 300, rgba8(200, 200, 200, 255));
+  print('M = Fire Missile', 140, 320, rgba8(200, 200, 200, 255));
 
-  nova64.draw.print('SHIFT = Boost', 370, 260, nova64.draw.rgba8(200, 200, 200, 255));
-  nova64.draw.print('T = Target Lock', 370, 280, nova64.draw.rgba8(200, 200, 200, 255));
-  nova64.draw.print('ESC = Pause', 370, 300, nova64.draw.rgba8(200, 200, 200, 255));
+  print('SHIFT = Boost', 370, 260, rgba8(200, 200, 200, 255));
+  print('T = Target Lock', 370, 280, rgba8(200, 200, 200, 255));
+  print('ESC = Pause', 370, 300, rgba8(200, 200, 200, 255));
 }
 
 function drawHUD() {
   // Top HUD bar
-  nova64.draw.rect(0, 0, 640, 40, nova64.draw.rgba8(0, 0, 0, 180), true);
-  nova64.draw.rect(0, 0, 640, 1, nova64.draw.rgba8(0, 255, 255, 255), true);
+  rect(0, 0, 640, 40, rgba8(0, 0, 0, 180), true);
+  rect(0, 0, 640, 1, rgba8(0, 255, 255, 255), true);
 
   // Score and stats
-  nova64.draw.print(
-    `SCORE: ${score.toString().padStart(8, '0')}`,
-    10,
-    10,
-    nova64.draw.rgba8(0, 255, 255, 255)
-  );
-  nova64.draw.print(`KILLS: ${kills}`, 10, 25, nova64.draw.rgba8(255, 100, 100, 255));
+  print(`SCORE: ${score.toString().padStart(8, '0')}`, 10, 10, rgba8(0, 255, 255, 255));
+  print(`KILLS: ${kills}`, 10, 25, rgba8(255, 100, 100, 255));
 
-  nova64.draw.print(`WAVE: ${wave}`, 250, 10, nova64.draw.rgba8(255, 255, 0, 255));
-  nova64.draw.print(`ENEMIES: ${enemies.length}`, 250, 25, nova64.draw.rgba8(255, 100, 100, 255));
+  print(`WAVE: ${wave}`, 250, 10, rgba8(255, 255, 0, 255));
+  print(`ENEMIES: ${enemies.length}`, 250, 25, rgba8(255, 100, 100, 255));
 
   // Boss health bar
   if (bossAlive) {
     let boss = enemies.find(e => e.type === 'boss');
     if (boss) {
-      nova64.draw.print('BOSS', 220, 45, nova64.draw.rgba8(255, 204, 0, 255));
-      nova64.draw.rect(260, 43, 120, 10, nova64.draw.rgba8(50, 50, 0, 255), true);
-      nova64.draw.rect(
+      print('BOSS', 220, 45, rgba8(255, 204, 0, 255));
+      rect(260, 43, 120, 10, rgba8(50, 50, 0, 255), true);
+      rect(
         260,
         43,
         Math.floor((boss.health / boss.maxHealth) * 120),
         10,
-        nova64.draw.rgba8(255, 204, 0, 255),
+        rgba8(255, 204, 0, 255),
         true
       );
-      nova64.draw.rect(260, 43, 120, 10, nova64.draw.rgba8(255, 204, 0, 100), false);
+      rect(260, 43, 120, 10, rgba8(255, 204, 0, 100), false);
     }
   }
 
   // Health bar
-  nova64.draw.print('HULL:', 400, 10, nova64.draw.rgba8(255, 255, 255, 255));
-  nova64.draw.rect(445, 8, 100, 10, nova64.draw.rgba8(50, 0, 0, 255), true);
-  nova64.draw.rect(
+  print('HULL:', 400, 10, rgba8(255, 255, 255, 255));
+  rect(445, 8, 100, 10, rgba8(50, 0, 0, 255), true);
+  rect(
     445,
     8,
     Math.floor((player.health / player.maxHealth) * 100),
     10,
-    nova64.draw.rgba8(255, 0, 0, 255),
+    rgba8(255, 0, 0, 255),
     true
   );
-  nova64.draw.rect(445, 8, 100, 10, nova64.draw.rgba8(255, 0, 0, 100), false);
+  rect(445, 8, 100, 10, rgba8(255, 0, 0, 100), false);
 
   // Shield bar
-  nova64.draw.print('SHIELDS:', 400, 25, nova64.draw.rgba8(255, 255, 255, 255));
-  nova64.draw.rect(465, 23, 80, 10, nova64.draw.rgba8(0, 0, 50, 255), true);
-  nova64.draw.rect(
+  print('SHIELDS:', 400, 25, rgba8(255, 255, 255, 255));
+  rect(465, 23, 80, 10, rgba8(0, 0, 50, 255), true);
+  rect(
     465,
     23,
     Math.floor((player.shields / player.maxShields) * 80),
     10,
-    nova64.draw.rgba8(0, 100, 255, 255),
+    rgba8(0, 100, 255, 255),
     true
   );
-  nova64.draw.rect(465, 23, 80, 10, nova64.draw.rgba8(0, 100, 255, 100), false);
+  rect(465, 23, 80, 10, rgba8(0, 100, 255, 100), false);
 
   // Bottom HUD
-  nova64.draw.rect(0, 320, 640, 40, nova64.draw.rgba8(0, 0, 0, 180), true);
-  nova64.draw.rect(0, 359, 640, 1, nova64.draw.rgba8(0, 255, 255, 255), true);
+  rect(0, 320, 640, 40, rgba8(0, 0, 0, 180), true);
+  rect(0, 359, 640, 1, rgba8(0, 255, 255, 255), true);
 
   // Energy
-  nova64.draw.print('ENERGY:', 10, 330, nova64.draw.rgba8(255, 255, 255, 255));
-  nova64.draw.rect(70, 328, 100, 10, nova64.draw.rgba8(50, 50, 0, 255), true);
-  nova64.draw.rect(
+  print('ENERGY:', 10, 330, rgba8(255, 255, 255, 255));
+  rect(70, 328, 100, 10, rgba8(50, 50, 0, 255), true);
+  rect(
     70,
     328,
     Math.floor((player.energy / player.maxEnergy) * 100),
     10,
-    nova64.draw.rgba8(0, 255, 0, 255),
+    rgba8(0, 255, 0, 255),
     true
   );
 
   // Missiles
-  nova64.draw.print(`MISSILES: ${player.missiles}`, 10, 345, nova64.draw.rgba8(255, 255, 0, 255));
+  print(`MISSILES: ${player.missiles}`, 10, 345, rgba8(255, 255, 0, 255));
 
   // Speed indicator
   const speed = Math.sqrt(player.vel.x ** 2 + player.vel.y ** 2 + player.vel.z ** 2);
-  nova64.draw.print(`SPEED: ${Math.floor(speed)}`, 250, 330, nova64.draw.rgba8(200, 200, 200, 255));
+  print(`SPEED: ${Math.floor(speed)}`, 250, 330, rgba8(200, 200, 200, 255));
 
   // Target lock indicator
   if (player.targetLocked) {
-    nova64.draw.print('TARGET LOCKED', 250, 345, nova64.draw.rgba8(255, 0, 0, 255));
+    print('TARGET LOCKED', 250, 345, rgba8(255, 0, 0, 255));
   }
 
   // Boost indicator
   if (player.boosting) {
-    nova64.draw.print('BOOST', 450, 330, nova64.draw.rgba8(255, 100, 0, 255));
+    print('BOOST', 450, 330, rgba8(255, 100, 0, 255));
   }
 
   // Radar (simple)
@@ -1329,25 +1279,25 @@ function drawRadar() {
   const radarSize = 60;
 
   // Radar background
-  nova64.draw.rect(
+  rect(
     radarX - radarSize / 2,
     radarY - radarSize / 2,
     radarSize,
     radarSize,
-    nova64.draw.rgba8(0, 20, 0, 180),
+    rgba8(0, 20, 0, 180),
     true
   );
-  nova64.draw.rect(
+  rect(
     radarX - radarSize / 2,
     radarY - radarSize / 2,
     radarSize,
     radarSize,
-    nova64.draw.rgba8(0, 255, 0, 100),
+    rgba8(0, 255, 0, 100),
     false
   );
 
   // Center (player)
-  nova64.draw.rect(radarX - 2, radarY - 2, 4, 4, nova64.draw.rgba8(0, 255, 255, 255), true);
+  rect(radarX - 2, radarY - 2, 4, 4, rgba8(0, 255, 255, 255), true);
 
   // Enemies on radar
   enemies.forEach(enemy => {
@@ -1363,55 +1313,37 @@ function drawRadar() {
       let dotSize = enemy.type === 'boss' ? 4 : 2;
       const color =
         enemy === player.targetLocked
-          ? nova64.draw.rgba8(255, 0, 0, 255)
+          ? rgba8(255, 0, 0, 255)
           : enemy.type === 'boss'
-            ? nova64.draw.rgba8(255, 204, 0, 255)
+            ? rgba8(255, 204, 0, 255)
             : enemy.type === 'ace'
-              ? nova64.draw.rgba8(0, 204, 255, 255)
+              ? rgba8(0, 204, 255, 255)
               : enemy.type === 'bomber'
-                ? nova64.draw.rgba8(255, 136, 0, 255)
-                : nova64.draw.rgba8(255, 100, 100, 255);
-      nova64.draw.rect(
-        Math.floor(x) - dotSize / 2,
-        Math.floor(y) - dotSize / 2,
-        dotSize,
-        dotSize,
-        color,
-        true
-      );
+                ? rgba8(255, 136, 0, 255)
+                : rgba8(255, 100, 100, 255);
+      rect(Math.floor(x) - dotSize / 2, Math.floor(y) - dotSize / 2, dotSize, dotSize, color, true);
     }
   });
 }
 
 function drawPauseScreen() {
-  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 0, 150), true);
-  nova64.draw.print('PAUSED', 280, 160, nova64.draw.rgba8(255, 255, 255, 255));
-  nova64.draw.print('Press ESC to resume', 230, 190, nova64.draw.rgba8(200, 200, 200, 255));
+  rect(0, 0, 640, 360, rgba8(0, 0, 0, 150), true);
+  print('PAUSED', 280, 160, rgba8(255, 255, 255, 255));
+  print('Press ESC to resume', 230, 190, rgba8(200, 200, 200, 255));
 }
 
 function drawGameOver() {
-  nova64.draw.rect(0, 0, 640, 360, nova64.draw.rgba8(0, 0, 0, 200), true);
+  rect(0, 0, 640, 360, rgba8(0, 0, 0, 200), true);
 
-  nova64.draw.print('GAME OVER', 250, 120, nova64.draw.rgba8(255, 50, 50, 255));
-  nova64.draw.print(`FINAL SCORE: ${score}`, 240, 160, nova64.draw.rgba8(255, 255, 0, 255));
-  nova64.draw.print(`KILLS: ${kills}`, 280, 190, nova64.draw.rgba8(255, 100, 100, 255));
-  nova64.draw.print(`WAVE REACHED: ${wave}`, 250, 220, nova64.draw.rgba8(200, 200, 200, 255));
+  print('GAME OVER', 250, 120, rgba8(255, 50, 50, 255));
+  print(`FINAL SCORE: ${score}`, 240, 160, rgba8(255, 255, 0, 255));
+  print(`KILLS: ${kills}`, 280, 190, rgba8(255, 100, 100, 255));
+  print(`WAVE REACHED: ${wave}`, 250, 220, rgba8(200, 200, 200, 255));
 
   const pulse = Math.sin(gameTime * 3) * 0.5 + 0.5;
-  nova64.draw.print(
-    'Press SPACE / Tap to restart',
-    205,
-    270,
-    nova64.draw.rgba8(255, 255, 255, Math.floor(pulse * 255))
-  );
+  print('Press SPACE / Tap to restart', 205, 270, rgba8(255, 255, 255, Math.floor(pulse * 255)));
 
-  if (
-    nova64.input.isKeyDown('KeyR') ||
-    nova64.input.isKeyDown('Enter') ||
-    nova64.input.isKeyDown('Space') ||
-    nova64.input.isKeyDown(' ') ||
-    nova64.input.btn(13)
-  ) {
+  if (isKeyDown('KeyR') || isKeyDown('Enter') || isKeyDown('Space') || isKeyDown(' ') || btn(13)) {
     init();
   }
 }

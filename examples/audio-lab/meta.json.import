@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c8k8dufo8ew84"
+path="res://.godot/imported/meta.json-5ac8f147bc805da33fdffafdf8173924.res"
+
+[deps]
+
+source_file="res://carts/audio-lab/meta.json"
+dest_files=["res://.godot/imported/meta.json-5ac8f147bc805da33fdffafdf8173924.res"]
+
+[params]
+

@@ -1,0 +1,16 @@
+{
+  "name": "Hello Helpers",
+  "description": "Walkthrough of the four reusable cart helpers: nova64.loader, nova64.story, nova64.level, nova64.video.",
+  "author": "Nova64 Team",
+  "version": "1.0.0",
+  "category": "demo",
+  "text": {
+    "defaultLocale": "en",
+    "strings": {
+      "game.title": "HELLO HELPERS"
+    }
+  },
+  "defaults": {
+    "clearColor": "#080018"
+  }
+}

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bbqef3teqswui"
+path="res://.godot/imported/meta.json-a6ceaca79c65bf85a3ce1b4b1a9f1b10.res"
+
+[deps]
+
+source_file="res://carts/test-2d-overlay/meta.json"
+dest_files=["res://.godot/imported/meta.json-a6ceaca79c65bf85a3ce1b4b1a9f1b10.res"]
+
+[params]
+

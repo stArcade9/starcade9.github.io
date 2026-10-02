@@ -28,14 +28,14 @@ function _drawPlasma(t) {
       const r = Math.floor(((v + 4) / 8) * 180 + 30);
       const g = Math.floor(((Math.sin(v * 1.2 + 1) + 1) / 2) * 120 + 10);
       const b = Math.floor(((Math.cos(v * 0.8 - 0.5) + 1) / 2) * 200 + 55);
-      nova64.draw.rectfill(x, y, 2, 2, (r << 16) | (g << 8) | b);
+      rectfill(x, y, 2, 2, (r << 16) | (g << 8) | b);
     }
   }
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
 }
 
 export function update(dt) {
@@ -59,7 +59,7 @@ export function update(dt) {
 }
 
 export function draw() {
-  nova64.draw.cls(0x000000);
+  cls(0x000000);
 
   // 1. Draw plasma scene into framebuffer
   _drawPlasma(time);
@@ -70,7 +70,7 @@ export function draw() {
     applyFilter('glitch', { intensity: 0.15 + 0.25 * Math.sin(time * 20) });
     // Scanlines
     for (let y = 0; y < H; y += 2) {
-      nova64.draw.rectfill(0, y, W, 1, 0x00000040);
+      rectfill(0, y, W, 1, 0x00000040);
     }
     // Chromatic fringe
     applyFilter('chromaticAberration', { amount: 3 });
@@ -78,14 +78,14 @@ export function draw() {
     // VHS — desaturate + scanlines + noise
     applyFilter('colorMatrix', { matrix: CM.saturate(0.25) });
     for (let y = 0; y < H; y += 3) {
-      nova64.draw.rectfill(0, y, W, 1, 0x00000066);
+      rectfill(0, y, W, 1, 0x00000066);
     }
     // Noise dabs
     for (let i = 0; i < 120; i++) {
       const nx = (Math.random() * W) | 0;
       const ny = (Math.random() * H) | 0;
       const nv = Math.random() > 0.5 ? 0xffffff : 0x000000;
-      nova64.draw.pset(nx, ny, nv);
+      pset(nx, ny, nv);
     }
   } else if (mode === 3) {
     applyFilter('colorMatrix', { matrix: CM.saturate(4.0) });
@@ -97,12 +97,12 @@ export function draw() {
 
   // 3. HUD overlay
   const barH = 20;
-  nova64.draw.rectfill(0, 0, W, barH, 0x000000aa);
-  nova64.draw.rectfill(0, H - barH, W, barH, 0x000000aa);
+  rectfill(0, 0, W, barH, 0x000000aa);
+  rectfill(0, H - barH, W, barH, 0x000000aa);
 
-  nova64.draw.print('FILTER GLITCH', 4, 4, 0xffffff);
-  nova64.draw.print(`MODE: ${MODES[mode]}`, 4, 10, 0x44aaff);
-  nova64.draw.print('Auto-cycles every 3s', 4, H - barH + 4, 0x778899);
+  print('FILTER GLITCH', 4, 4, 0xffffff);
+  print(`MODE: ${MODES[mode]}`, 4, 10, 0x44aaff);
+  print('Auto-cycles every 3s', 4, H - barH + 4, 0x778899);
   const progress = Math.floor((modeTime / 3) * (W - 8));
-  nova64.draw.rectfill(4, H - 5, progress, 2, 0x44aaff);
+  rectfill(4, H - 5, progress, 2, 0x44aaff);
 }

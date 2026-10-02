@@ -1,7 +1,8 @@
 // runtime/backends/babylon/models.js
 // Babylon backend model loaders.
 
-import { MeshBuilder, TransformNode } from '@babylonjs/core';
+import { MeshBuilder, SceneLoader, TransformNode } from '@babylonjs/core';
+import '@babylonjs/loaders/glTF';
 
 import { normalizePosition } from './common.js';
 import {
@@ -12,6 +13,43 @@ import {
 
 export function createBabylonModelsApi(self) {
   return {
+    async loadModel(url, position = [0, 0, 0], scale = 1, materialOptions = {}) {
+      const { rootUrl, fileName } = splitModelUrl(url);
+      const result = await SceneLoader.ImportMeshAsync('', rootUrl, fileName, self.scene);
+      const root = new TransformNode(`nova64_model_${self._counter + 1}`, self.scene);
+      root.position.copyFrom(normalizePosition(position));
+      applyBabylonNodeCompatibility(root);
+
+      if (typeof scale === 'number') {
+        root.scaling.copyFromFloats(scale, scale, scale);
+      } else if (Array.isArray(scale) && scale.length >= 3) {
+        root.scaling.copyFromFloats(scale[0], scale[1], scale[2]);
+      }
+
+      for (const mesh of result.meshes ?? []) {
+        if (!mesh || mesh === root) continue;
+        applyBabylonMeshCompatibility(mesh);
+        if (!mesh.parent) mesh.parent = root;
+        mesh.receiveShadows = true;
+        mesh.castShadow = true;
+        if (materialOptions.n64 && mesh.material) {
+          mesh.material = applyModelMaterialCompatibility(
+            self.createN64Material({
+              color: materialOptions.color ?? 0xffffff,
+              ...materialOptions,
+            })
+          );
+        } else if (mesh.material) {
+          mesh.material = applyModelMaterialCompatibility(mesh.material);
+          mesh.material.backFaceCulling = false;
+        }
+      }
+
+      const id = ++self._counter;
+      self._meshes.set(id, root);
+      return id;
+    },
+
     async loadVoxModel(url, position = [0, 0, 0], scale = 1, options = {}) {
       const { VOXLoader } = await import('three/examples/jsm/loaders/VOXLoader.js');
       const response = await fetch(url);
@@ -95,5 +133,24 @@ export function createBabylonModelsApi(self) {
       self._meshes.set(id, applyBabylonNodeCompatibility(root));
       return id;
     },
+  };
+}
+
+function applyModelMaterialCompatibility(material) {
+  const compatible = applyBabylonMaterialCompatibility(material);
+  for (const subMaterial of compatible?.subMaterials ?? []) {
+    applyBabylonMaterialCompatibility(subMaterial);
+    if (subMaterial) subMaterial.backFaceCulling = false;
+  }
+  return compatible;
+}
+
+function splitModelUrl(url) {
+  const text = String(url);
+  const index = text.lastIndexOf('/');
+  if (index === -1) return { rootUrl: '', fileName: text };
+  return {
+    rootUrl: text.slice(0, index + 1),
+    fileName: text.slice(index + 1),
   };
 }

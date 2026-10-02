@@ -23,7 +23,7 @@ let hourClip;
 function _hand(angle, length, color) {
   const cos = Math.cos(angle - Math.PI / 2);
   const sin = Math.sin(angle - Math.PI / 2);
-  nova64.draw.line(CX - cos * 10, CY - sin * 10, CX + cos * length, CY + sin * length, color);
+  line(CX - cos * 10, CY - sin * 10, CX + cos * length, CY + sin * length, color);
 }
 
 function _makeDialFrames(count, drawFn) {
@@ -37,8 +37,8 @@ function _makeDialFrames(count, drawFn) {
 }
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
   CX = W / 2;
   CY = H / 2;
   // Build a 60-frame clip for seconds/minutes and 12-frame for hours,
@@ -52,17 +52,17 @@ export function init() {
   for (let i = 0; i < 12; i++) hrLabels[String(i)] = i;
 
   // Frames are placeholder strings (we draw the hands procedurally in draw())
-  secondClip = nova64.ui.createMovieClip(
+  secondClip = createMovieClip(
     Array.from({ length: 60 }, (_, i) => String(i)),
     1, // 1 fps — we advance manually
     { loop: false, autoPlay: false, labels: secLabels }
   );
-  minuteClip = nova64.ui.createMovieClip(
+  minuteClip = createMovieClip(
     Array.from({ length: 60 }, (_, i) => String(i)),
     1,
     { loop: false, autoPlay: false, labels: minLabels }
   );
-  hourClip = nova64.ui.createMovieClip(
+  hourClip = createMovieClip(
     Array.from({ length: 12 }, (_, i) => String(i)),
     1,
     { loop: false, autoPlay: false, labels: hrLabels }
@@ -81,13 +81,13 @@ export function update(dt) {
   const min = Math.floor(totalSec / 60) % 60;
   const hr = Math.floor(totalSec / 3600) % 12;
 
-  nova64.ui.gotoAndStop(secondClip, String(sec));
-  nova64.ui.gotoAndStop(minuteClip, String(min));
-  nova64.ui.gotoAndStop(hourClip, String(hr));
+  gotoAndStop(secondClip, String(sec));
+  gotoAndStop(minuteClip, String(min));
+  gotoAndStop(hourClip, String(hr));
 }
 
 export function draw() {
-  nova64.draw.cls(0x1a1a2e);
+  cls(0x1a1a2e);
 
   // Outer ring
   for (let d = 0; d < 360; d += 6) {
@@ -96,7 +96,7 @@ export function draw() {
     const r1 = RADIUS - (isMajor ? 14 : 7);
     const r2 = RADIUS;
     const col = isMajor ? 0xffffff : 0x445566;
-    nova64.draw.line(
+    line(
       CX + Math.cos(a) * r1,
       CY + Math.sin(a) * r1,
       CX + Math.cos(a) * r2,
@@ -106,8 +106,8 @@ export function draw() {
   }
 
   // Clock face circle
-  nova64.util.ellipse(CX, CY, RADIUS * 2, RADIUS * 2, 0x334455);
-  nova64.util.ellipse(CX, CY, RADIUS * 2 - 4, RADIUS * 2 - 4, 0x223344);
+  ellipse(CX, CY, RADIUS * 2, RADIUS * 2, 0x334455);
+  ellipse(CX, CY, RADIUS * 2 - 4, RADIUS * 2 - 4, 0x223344);
 
   // Derive exact angles from accumulated time for smooth sub-second interpolation
   const smoothSec = time % 60;
@@ -126,8 +126,8 @@ export function draw() {
   _hand(secAngle, RADIUS * 0.88, 0xff4444);
 
   // Center dot
-  nova64.util.ellipsefill(CX, CY, 8, 8, 0xff4444);
-  nova64.util.ellipsefill(CX, CY, 4, 4, 0xffffff);
+  ellipsefill(CX, CY, 8, 8, 0xff4444);
+  ellipsefill(CX, CY, 4, 4, 0xffffff);
 
   // MovieClip Frame labels as readout
   const secFrame = secondClip.frame;
@@ -137,10 +137,10 @@ export function draw() {
   const mm = String(minuteClip.frame).padStart(2, '0');
   const ss = String(secondClip.frame).padStart(2, '0');
 
-  nova64.draw.print('MOVIE CLOCK', 4, 4, 0xffffff);
-  nova64.draw.printCentered(`${hh}:${mm}:${ss}`, CX, CY + RADIUS + 14, 0xaaddff);
-  nova64.draw.print('createMovieClip • gotoAndStop • labels', 4, H - 12, 0x778899);
+  print('MOVIE CLOCK', 4, 4, 0xffffff);
+  printCentered(`${hh}:${mm}:${ss}`, CX, CY + RADIUS + 14, 0xaaddff);
+  print('createMovieClip • gotoAndStop • labels', 4, H - 12, 0x778899);
 }
 
 // Override built-in line/ellipse: proxy through the stage ctx when available
-// (standard api.js nova64.draw.line(), nova64.util.ellipsefill(), etc. already exist in the global scope)
+// (standard api.js line(), ellipsefill(), etc. already exist in the global scope)

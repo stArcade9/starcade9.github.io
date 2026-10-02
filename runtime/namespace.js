@@ -13,6 +13,7 @@ export const NAMESPACE_MAP = {
   draw: [
     // api.js (2D primitives)
     'cls',
+    'cls3D',
     'pset',
     'line',
     'rect',
@@ -44,6 +45,8 @@ export const NAMESPACE_MAP = {
     'drawSpiral',
     'drawCheckerboard',
     'measureText',
+    'drawTextBox',
+    'textBox',
     'printCentered',
     'printRight',
     'drawGlowText',
@@ -110,6 +113,8 @@ export const NAMESPACE_MAP = {
     'rotateMesh',
     'moveMesh',
     'setFlatShading',
+    'setMeshEmissive',
+    'setMeshColor',
     'setMeshVisible',
     'setMeshOpacity',
     'setCastShadow',
@@ -170,6 +175,7 @@ export const NAMESPACE_MAP = {
     'createPointLight',
     'setPointLightPosition',
     'setPointLightColor',
+    'setLightVisible',
     'removeLight',
     // Fog
     'setFog',
@@ -202,12 +208,15 @@ export const NAMESPACE_MAP = {
     'enableGlitch',
     'disableGlitch',
     'setGlitchIntensity',
+    'glitchBurst',
     // Babylon-specific bonus (graceful no-op on Three.js)
     'enableGlow',
     'disableGlow',
     'enableRetroEffects',
     'disableRetroEffects',
     'isEffectsEnabled',
+    'setEffectsBypass',
+    'isEffectsBypassed',
     'renderEffects',
     // Pixelation/dithering (api-3d.js)
     'enablePixelation',

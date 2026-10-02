@@ -116,7 +116,7 @@ class Boid {
       const dx = cx - this.x,
         dy = cy - this.y;
       const d = Math.sqrt(dx * dx + dy * dy);
-      const n = nova64.util.noise(this.x * 0.005, this.y * 0.005, time * 0.3);
+      const n = noise(this.x * 0.005, this.y * 0.005, time * 0.3);
       const angle = Math.atan2(dy, dx) + Math.PI * 0.4 + n * 2;
       fx += Math.cos(angle) * 0.15;
       fy += Math.sin(angle) * 0.15;
@@ -126,7 +126,7 @@ class Boid {
       }
     } else if (mode === 3) {
       // Fireworks — noise bursts from center
-      const n = nova64.util.noise(this.x * 0.01 + time, this.y * 0.01, time * 0.5);
+      const n = noise(this.x * 0.01 + time, this.y * 0.01, time * 0.5);
       fx += Math.cos(n * TWO_PI * 2) * 0.2;
       fy += Math.sin(n * TWO_PI * 2) * 0.2;
     }
@@ -167,7 +167,7 @@ class Boid {
 }
 
 export function init() {
-  nova64.util.noiseSeed(42);
+  noiseSeed(42);
   boids = [];
   for (let i = 0; i < NUM_BOIDS; i++) {
     boids.push(new Boid(Math.random() * W, Math.random() * H));
@@ -186,17 +186,17 @@ export function update(dt) {
   }
 
   // Manual mode switch
-  if (nova64.input.keyp('ArrowRight')) {
+  if (keyp('ArrowRight')) {
     mode = (mode + 1) % MODES.length;
     modeTimer = 0;
     autoSwitch = false;
   }
-  if (nova64.input.keyp('ArrowLeft')) {
+  if (keyp('ArrowLeft')) {
     mode = (mode - 1 + MODES.length) % MODES.length;
     modeTimer = 0;
     autoSwitch = false;
   }
-  if (nova64.input.keyp('Space') || nova64.input.btnp(13)) {
+  if (keyp('Space') || btnp(13)) {
     autoSwitch = !autoSwitch;
     modeTimer = 0;
   }
@@ -213,24 +213,18 @@ export function update(dt) {
   }
 
   // Slowly shift background hue
-  backgroundColor = nova64.util.hsb((time * 5) % 360, 15, 5);
+  backgroundColor = hsb((time * 5) % 360, 15, 5);
 }
 
 export function draw() {
-  nova64.draw.cls(backgroundColor);
+  cls(backgroundColor);
 
   // Draw trails
   for (const b of boids) {
     for (let i = 1; i < b.trail.length; i++) {
       const alpha = (i / b.trail.length) * 0.4;
-      const col = nova64.util.hsb(b.hue, 70, 80 + i * 2, alpha);
-      nova64.draw.line(
-        b.trail[i - 1].x | 0,
-        b.trail[i - 1].y | 0,
-        b.trail[i].x | 0,
-        b.trail[i].y | 0,
-        col
-      );
+      const col = hsb(b.hue, 70, 80 + i * 2, alpha);
+      line(b.trail[i - 1].x | 0, b.trail[i - 1].y | 0, b.trail[i].x | 0, b.trail[i].y | 0, col);
     }
   }
 
@@ -239,7 +233,7 @@ export function draw() {
     const angle = Math.atan2(b.vy, b.vx);
     const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
     const brightness = 60 + speed * 12;
-    const col = nova64.util.hsb(b.hue, 80, Math.min(100, brightness));
+    const col = hsb(b.hue, 80, Math.min(100, brightness));
     const s = b.size;
 
     // Triangle pointing in direction of movement
@@ -250,50 +244,32 @@ export function draw() {
     const x3 = b.x + Math.cos(angle - 2.4) * s;
     const y3 = b.y + Math.sin(angle - 2.4) * s;
 
-    nova64.draw.line(x1 | 0, y1 | 0, x2 | 0, y2 | 0, col);
-    nova64.draw.line(x2 | 0, y2 | 0, x3 | 0, y3 | 0, col);
-    nova64.draw.line(x3 | 0, y3 | 0, x1 | 0, y1 | 0, col);
+    line(x1 | 0, y1 | 0, x2 | 0, y2 | 0, col);
+    line(x2 | 0, y2 | 0, x3 | 0, y3 | 0, col);
+    line(x3 | 0, y3 | 0, x1 | 0, y1 | 0, col);
   }
 
   // Draw predator in chase mode
   if (mode === 1) {
     const pulse = Math.sin(time * 6) * 0.3 + 0.7;
     const r = 6 + pulse * 4;
-    nova64.draw.circle(
-      predator.x | 0,
-      predator.y | 0,
-      r,
-      nova64.draw.rgba8(255, 50, 50, 200),
-      true
-    );
-    nova64.draw.circle(
-      predator.x | 0,
-      predator.y | 0,
-      r + 3,
-      nova64.draw.rgba8(255, 100, 50, 100),
-      false
-    );
+    circle(predator.x | 0, predator.y | 0, r, rgba8(255, 50, 50, 200), true);
+    circle(predator.x | 0, predator.y | 0, r + 3, rgba8(255, 100, 50, 100), false);
     // Danger zone ring
-    nova64.draw.circle(
-      predator.x | 0,
-      predator.y | 0,
-      80,
-      nova64.draw.rgba8(255, 30, 30, 30),
-      false
-    );
+    circle(predator.x | 0, predator.y | 0, 80, rgba8(255, 30, 30, 30), false);
   }
 
   // HUD
-  nova64.draw.rect(0, 0, 640, 24, nova64.draw.rgba8(0, 0, 0, 150), true);
-  nova64.draw.print(
+  rect(0, 0, 640, 24, rgba8(0, 0, 0, 150), true);
+  print(
     `BOIDS FLOCKING  |  MODE: ${MODES[mode]}  |  ${NUM_BOIDS} AGENTS`,
     10,
     8,
-    nova64.draw.rgba8(180, 220, 255)
+    rgba8(180, 220, 255)
   );
 
   const controlText = autoSwitch
     ? 'AUTO-SWITCHING (SPACE to pause)  |  LEFT/RIGHT to manual'
     : 'MANUAL  |  LEFT/RIGHT switch  |  SPACE to auto';
-  nova64.draw.print(controlText, 10, 348, nova64.draw.rgba8(120, 120, 150, 200));
+  print(controlText, 10, 348, rgba8(120, 120, 150, 200));
 }

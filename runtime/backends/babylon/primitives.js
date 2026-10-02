@@ -102,6 +102,7 @@ export function createBabylonPrimitivesApi(self) {
         roughness: opts.roughness ?? 0.7,
         metalness: opts.metalness ?? 0,
         emissive: opts.emissive ?? 0,
+        emissiveIntensity: opts.emissiveIntensity,
         transparent: opts.transparent ?? false,
         opacity: opts.opacity ?? 1,
         wireframe: opts.wireframe ?? false,

@@ -1,18 +1,1 @@
-{
-  "name": "Test Minimal",
-  "description": "ABSOLUTE MINIMUM TEST - Does 2D work at all?",
-  "author": "Nova64 Team",
-  "version": "1.0.0",
-  "category": "test",
-
-  "text": {
-    "defaultLocale": "en",
-    "strings": {
-      "game.title": "MINIMUM TEST"
-    }
-  },
-
-  "defaults": {
-    "cheats": { "enabled": false, "items": {} }
-  }
-}
+{"name":"test-minimal","description":"G6 cart port from examples/test-minimal","author":"Nova64","version":"0.1.0","category":"port","source":"examples/test-minimal"}

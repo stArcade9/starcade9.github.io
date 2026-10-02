@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bds8s3aj62fq5"
+path="res://.godot/imported/meta.json-da5501c555dcb1c63dac20fc3d032595.res"
+
+[deps]
+
+source_file="res://carts/tween-bounce/meta.json"
+dest_files=["res://.godot/imported/meta.json-da5501c555dcb1c63dac20fc3d032595.res"]
+
+[params]
+

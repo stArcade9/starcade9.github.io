@@ -1,0 +1,7 @@
+{
+  "name": "TV — In-World Video",
+  "description": "A 3D television playing video as an in-world texture on its screen mesh. Web uses a VideoTexture; RetroArch decodes MPEG1 in-core to a GLES texture refreshed each frame.",
+  "author": "Nova64",
+  "version": "1.0.0",
+  "category": "demo"
+}

@@ -25,16 +25,16 @@ export async function init() {
   console.log('🖥️ Nova64 Screen Management Demo');
 
   // Setup 3D scene
-  nova64.draw.cls();
-  nova64.camera.setCameraPosition(0, 5, 10);
-  nova64.camera.setCameraTarget(0, 0, 0);
-  nova64.camera.setCameraFOV(60);
+  cls();
+  setCameraPosition(0, 5, 10);
+  setCameraTarget(0, 0, 0);
+  setCameraFOV(60);
 
   // Set background fog
-  nova64.light.setFog(0x001122, 20, 100);
+  setFog(0x001122, 20, 100);
 
   // Register Menu Screen
-  nova64.ui.addScreen('menu', {
+  addScreen('menu', {
     enter() {
       console.log('📋 Menu Screen Active');
       this.selectedOption = 0;
@@ -45,29 +45,26 @@ export async function init() {
     update(dt) {
       this.animTime += dt;
 
-      if (
-        (nova64.input.isKeyPressed('w') || nova64.input.isKeyPressed('ArrowUp')) &&
-        this.selectedOption > 0
-      ) {
+      if ((isKeyPressed('w') || isKeyPressed('ArrowUp')) && this.selectedOption > 0) {
         this.selectedOption--;
       }
       if (
-        (nova64.input.isKeyPressed('s') || nova64.input.isKeyPressed('ArrowDown')) &&
+        (isKeyPressed('s') || isKeyPressed('ArrowDown')) &&
         this.selectedOption < this.options.length - 1
       ) {
         this.selectedOption++;
       }
 
-      if (nova64.input.isKeyPressed(' ') || nova64.input.isKeyPressed('Enter')) {
+      if (isKeyPressed(' ') || isKeyPressed('Enter')) {
         switch (this.selectedOption) {
           case 0:
-            nova64.ui.switchToScreen('game', { level: 1 });
+            switchToScreen('game', { level: 1 });
             break;
           case 1:
-            nova64.ui.switchToScreen('settings');
+            switchToScreen('settings');
             break;
           case 2:
-            nova64.ui.switchToScreen('credits');
+            switchToScreen('credits');
             break;
           case 3:
             console.log('Quit selected');
@@ -80,45 +77,25 @@ export async function init() {
       const cx = W / 2;
 
       // Dark gradient background
-      nova64.draw.drawGradient(
-        0,
-        0,
-        W,
-        H,
-        nova64.draw.rgba8(5, 5, 22, 255),
-        nova64.draw.rgba8(16, 8, 42, 255),
-        'v'
-      );
+      drawGradient(0, 0, W, H, rgba8(5, 5, 22, 255), rgba8(16, 8, 42, 255), 'v');
 
       // Radial spotlight behind title
-      nova64.draw.drawRadialGradient(
-        cx,
-        70,
-        120,
-        nova64.draw.rgba8(0, 180, 120, 35),
-        nova64.draw.rgba8(0, 0, 0, 0)
-      );
+      drawRadialGradient(cx, 70, 120, rgba8(0, 180, 120, 35), rgba8(0, 0, 0, 0));
 
       // Title with glow
       const titleY = 40 + Math.sin(this.animTime * 2) * 3;
-      nova64.draw.drawGlowTextCentered(
-        'NOVA64',
-        cx,
-        titleY,
-        nova64.draw.rgba8(100, 255, 200, 255),
-        nova64.draw.rgba8(0, 100, 80, 140)
-      );
+      drawGlowTextCentered('NOVA64', cx, titleY, rgba8(100, 255, 200, 255), rgba8(0, 100, 80, 140));
 
       // Pixel-bordered option box
       const boxY = 100;
       const boxH = this.options.length * 38 + 24;
-      nova64.draw.drawPixelBorder(
+      drawPixelBorder(
         60,
         boxY,
         W - 120,
         boxH,
-        nova64.draw.rgba8(70, 150, 255, 180),
-        nova64.draw.rgba8(18, 45, 110, 180),
+        rgba8(70, 150, 255, 180),
+        rgba8(18, 45, 110, 180),
         2
       );
 
@@ -129,47 +106,47 @@ export async function init() {
 
         if (selected) {
           // Highlight bar
-          nova64.draw.drawGradient(
+          drawGradient(
             62,
             y - 3,
             W - 124,
             30,
-            nova64.draw.rgba8(50, 110, 255, 130),
-            nova64.draw.rgba8(25, 55, 190, 80),
+            rgba8(50, 110, 255, 130),
+            rgba8(25, 55, 190, 80),
             'v'
           );
-          nova64.draw.drawGlowTextCentered(
+          drawGlowTextCentered(
             '> ' + option + ' <',
             cx,
             y,
-            nova64.draw.rgba8(255, 255, 80, 255),
-            nova64.draw.rgba8(120, 100, 0, 90)
+            rgba8(255, 255, 80, 255),
+            rgba8(120, 100, 0, 90)
           );
         } else {
-          nova64.draw.printCentered(option, cx, y, nova64.draw.rgba8(175, 180, 205, 255));
+          printCentered(option, cx, y, rgba8(175, 180, 205, 255));
         }
       });
 
-      nova64.draw.printCentered(
+      printCentered(
         'W/S/\u2191\u2193  Navigate    Space/Enter  Select',
         cx,
         H - 60,
-        nova64.draw.rgba8(110, 115, 135, 255)
+        rgba8(110, 115, 135, 255)
       );
 
       // CRT scanlines overlay
-      nova64.draw.drawScanlines(48, 2);
+      drawScanlines(48, 2);
     },
   });
 
   // Register Game Screen
-  nova64.ui.addScreen('game', {
+  addScreen('game', {
     enter(data) {
       console.log('🎮 Game Screen Active');
       this.level = data.level || 1;
       this.score = 0;
       this.time = 0;
-      this.cube = nova64.scene.createCube(2, 0x44aaff, [0, 0, 0]);
+      this.cube = createCube(2, 0x44aaff, [0, 0, 0]);
       this.rotation = 0;
     },
 
@@ -178,15 +155,15 @@ export async function init() {
       this.rotation += dt;
       this.score += Math.floor(dt * 10);
 
-      nova64.scene.setRotation(this.cube, this.rotation, this.rotation * 0.7, 0);
-      nova64.scene.setPosition(this.cube, Math.sin(this.time) * 3, 0, 0);
+      setRotation(this.cube, this.rotation, this.rotation * 0.7, 0);
+      setPosition(this.cube, Math.sin(this.time) * 3, 0, 0);
 
-      if (nova64.input.isKeyPressed('m')) {
-        nova64.ui.switchToScreen('menu');
+      if (isKeyPressed('m')) {
+        switchToScreen('menu');
       }
 
       if (this.time > 15) {
-        nova64.ui.switchToScreen('gameOver', {
+        switchToScreen('gameOver', {
           score: this.score,
           level: this.level,
         });
@@ -194,30 +171,25 @@ export async function init() {
     },
 
     draw() {
-      nova64.draw.print(`Level: ${this.level}`, 10, 10, nova64.draw.rgba8(255, 255, 255));
-      nova64.draw.print(`Score: ${this.score}`, 10, 30, nova64.draw.rgba8(255, 255, 255));
-      nova64.draw.print(
-        `Time: ${Math.floor(this.time)}s`,
-        10,
-        50,
-        nova64.draw.rgba8(255, 255, 255)
-      );
-      nova64.draw.print('Press M for Menu', W - 120, 10, nova64.draw.rgba8(200, 200, 200));
+      print(`Level: ${this.level}`, 10, 10, rgba8(255, 255, 255));
+      print(`Score: ${this.score}`, 10, 30, rgba8(255, 255, 255));
+      print(`Time: ${Math.floor(this.time)}s`, 10, 50, rgba8(255, 255, 255));
+      print('Press M for Menu', W - 120, 10, rgba8(200, 200, 200));
 
       // Crosshair
       const centerX = W / 2,
         centerY = H / 2;
-      nova64.draw.line(centerX - 8, centerY, centerX + 8, centerY, 0xffffff);
-      nova64.draw.line(centerX, centerY - 8, centerX, centerY + 8, 0xffffff);
+      line(centerX - 8, centerY, centerX + 8, centerY, 0xffffff);
+      line(centerX, centerY - 8, centerX, centerY + 8, 0xffffff);
     },
 
     exit() {
-      if (this.cube) nova64.scene.destroyMesh(this.cube);
+      if (this.cube) destroyMesh(this.cube);
     },
   });
 
   // Register Settings Screen
-  nova64.ui.addScreen('settings', {
+  addScreen('settings', {
     enter() {
       console.log('⚙️ Settings Screen Active');
       this.volume = 75;
@@ -225,36 +197,26 @@ export async function init() {
     },
 
     update(dt) {
-      if (nova64.input.isKeyPressed('a')) this.volume = Math.max(0, this.volume - 5);
-      if (nova64.input.isKeyPressed('d')) this.volume = Math.min(100, this.volume + 5);
+      if (isKeyPressed('a')) this.volume = Math.max(0, this.volume - 5);
+      if (isKeyPressed('d')) this.volume = Math.min(100, this.volume + 5);
 
-      if (nova64.input.isKeyPressed('m')) {
-        nova64.ui.switchToScreen('menu');
+      if (isKeyPressed('m')) {
+        switchToScreen('menu');
       }
     },
 
     draw() {
       const centerX = W / 2;
 
-      nova64.draw.print('SETTINGS', centerX - 30, 50, nova64.draw.rgba8(255, 255, 100));
-      nova64.draw.print(
-        `Volume: ${this.volume}%`,
-        centerX - 40,
-        100,
-        nova64.draw.rgba8(255, 255, 255)
-      );
-      nova64.draw.print(
-        'A/D to adjust volume',
-        centerX - 50,
-        120,
-        nova64.draw.rgba8(150, 150, 150)
-      );
-      nova64.draw.print('Press M for Menu', centerX - 40, 160, nova64.draw.rgba8(200, 200, 200));
+      print('SETTINGS', centerX - 30, 50, rgba8(255, 255, 100));
+      print(`Volume: ${this.volume}%`, centerX - 40, 100, rgba8(255, 255, 255));
+      print('A/D to adjust volume', centerX - 50, 120, rgba8(150, 150, 150));
+      print('Press M for Menu', centerX - 40, 160, rgba8(200, 200, 200));
     },
   });
 
   // Register Credits Screen
-  nova64.ui.addScreen('credits', {
+  addScreen('credits', {
     enter() {
       console.log('📜 Credits Screen Active');
       this.scrollY = 200;
@@ -267,8 +229,8 @@ export async function init() {
         this.scrollY = 200;
       }
 
-      if (nova64.input.isKeyPressed('m')) {
-        nova64.ui.switchToScreen('menu');
+      if (isKeyPressed('m')) {
+        switchToScreen('menu');
       }
     },
 
@@ -287,19 +249,19 @@ export async function init() {
       credits.forEach((line, i) => {
         const y = this.scrollY + i * 25;
         if (y > -20 && y < H) {
-          const color = line === '' ? 0 : nova64.draw.rgba8(200, 200, 255);
+          const color = line === '' ? 0 : rgba8(200, 200, 255);
           if (color !== 0) {
-            nova64.draw.print(line, centerX - line.length * 3, y, color);
+            print(line, centerX - line.length * 3, y, color);
           }
         }
       });
 
-      nova64.draw.print('Press M for Menu', centerX - 40, H - 20, nova64.draw.rgba8(150, 150, 150));
+      print('Press M for Menu', centerX - 40, H - 20, rgba8(150, 150, 150));
     },
   });
 
   // Register Game Over Screen
-  nova64.ui.addScreen('gameOver', {
+  addScreen('gameOver', {
     enter(data) {
       console.log('💀 Game Over Screen Active');
       this.data = data;
@@ -309,12 +271,12 @@ export async function init() {
     update(dt) {
       this.animTime += dt;
 
-      if (nova64.input.isKeyPressed(' ')) {
-        nova64.ui.switchToScreen('menu');
+      if (isKeyPressed(' ')) {
+        switchToScreen('menu');
       }
 
-      if (nova64.input.isKeyPressed('r')) {
-        nova64.ui.switchToScreen('game', { level: this.data.level });
+      if (isKeyPressed('r')) {
+        switchToScreen('game', { level: this.data.level });
       }
     },
 
@@ -323,26 +285,16 @@ export async function init() {
         centerY = H / 2;
 
       const flash = Math.sin(this.animTime * 6) > 0;
-      const color = flash ? nova64.draw.rgba8(255, 100, 100) : nova64.draw.rgba8(200, 50, 50);
+      const color = flash ? rgba8(255, 100, 100) : rgba8(200, 50, 50);
 
-      nova64.draw.print('GAME OVER', centerX - 35, centerY - 20, color);
-      nova64.draw.print(
-        `Score: ${this.data.score}`,
-        centerX - 30,
-        centerY + 10,
-        nova64.draw.rgba8(255, 255, 255)
-      );
-      nova64.draw.print(
-        'Space = Menu, R = Retry',
-        centerX - 55,
-        centerY + 40,
-        nova64.draw.rgba8(200, 200, 200)
-      );
+      print('GAME OVER', centerX - 35, centerY - 20, color);
+      print(`Score: ${this.data.score}`, centerX - 30, centerY + 10, rgba8(255, 255, 255));
+      print('Space = Menu, R = Retry', centerX - 55, centerY + 40, rgba8(200, 200, 200));
     },
   });
 
   // Start with menu
-  nova64.ui.startScreens('menu');
+  startScreens('menu');
   console.log('✅ Screen System Ready!');
 }
 
@@ -351,6 +303,6 @@ export function update(dt) {
 }
 
 export function draw() {
-  nova64.draw.cls();
+  cls();
   // Screen manager handles drawing automatically
 }

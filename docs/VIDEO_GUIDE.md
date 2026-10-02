@@ -1,9 +1,5 @@
 # Nova64 Video Guide
 
-Looking for gameplay capture, native Godot playtesting, or trailer authoring
-rather than the cart-facing `nova64.video` API? See
-[Godot Playtest and Trailer Workflow](GODOT_PLAYTEST_AND_TRAILER_WORKFLOW.md).
-
 Nova64 plays fullscreen video and in-world video textures from a **single cart
 API** — `nova64.video` — across all three backends. You write one
 `playFullscreen` call; each host decodes the format it understands.

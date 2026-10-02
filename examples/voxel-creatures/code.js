@@ -90,12 +90,12 @@ function spawnMob(xOff, zOff) {
   const mz = player.z + zOff;
   let my = 70;
   if (typeof getVoxelHighestBlock === 'function') {
-    my = nova64.voxel.getVoxelHighestBlock(Math.floor(mx), Math.floor(mz)) + 1;
+    my = getVoxelHighestBlock(Math.floor(mx), Math.floor(mz)) + 1;
   }
   if (my < 5) my = 70;
 
   const ai = def.type === 'zombie' ? chaseAI : wanderAI;
-  nova64.voxel.spawnVoxelEntity(def.type, [mx, my, mz], {
+  spawnVoxelEntity(def.type, [mx, my, mz], {
     color: def.color,
     size: def.size,
     health: def.health,
@@ -105,20 +105,20 @@ function spawnMob(xOff, zOff) {
 }
 
 export function init() {
-  nova64.camera.setCameraPosition(0, 80, 0);
-  nova64.light.setFog(0x87ceeb, 30, 100);
-  if (typeof enableVoxelTextures === 'function') nova64.voxel.enableVoxelTextures(true);
+  setCameraPosition(0, 80, 0);
+  setFog(0x87ceeb, 30, 100);
+  if (typeof enableVoxelTextures === 'function') enableVoxelTextures(true);
 }
 
 export function update(dt) {
   if (!loaded) {
     if (typeof forceLoadVoxelChunks === 'function') {
-      nova64.voxel.forceLoadVoxelChunks(0, 0);
+      forceLoadVoxelChunks(0, 0);
     } else if (typeof updateVoxelWorld === 'function') {
-      nova64.voxel.updateVoxelWorld(0, 0);
+      updateVoxelWorld(0, 0);
     }
     if (typeof getVoxelHighestBlock === 'function') {
-      player.y = nova64.voxel.getVoxelHighestBlock(0, 0) + 2;
+      player.y = getVoxelHighestBlock(0, 0) + 2;
     }
     // Spawn initial creatures
     for (let i = 0; i < 8; i++) {
@@ -133,26 +133,26 @@ export function update(dt) {
   // Movement
   const cosY = Math.cos(player.yaw);
   const sinY = Math.sin(player.yaw);
-  if (nova64.input.key('ArrowLeft')) player.yaw -= 0.04;
-  if (nova64.input.key('ArrowRight')) player.yaw += 0.04;
-  if (nova64.input.key('ArrowUp') && player.pitch < 1.4) player.pitch += 0.04;
-  if (nova64.input.key('ArrowDown') && player.pitch > -1.4) player.pitch -= 0.04;
+  if (key('ArrowLeft')) player.yaw -= 0.04;
+  if (key('ArrowRight')) player.yaw += 0.04;
+  if (key('ArrowUp') && player.pitch < 1.4) player.pitch += 0.04;
+  if (key('ArrowDown') && player.pitch > -1.4) player.pitch -= 0.04;
 
   let dx = 0,
     dz = 0;
-  if (nova64.input.key('KeyW')) {
+  if (key('KeyW')) {
     dx -= sinY;
     dz -= cosY;
   }
-  if (nova64.input.key('KeyS')) {
+  if (key('KeyS')) {
     dx += sinY;
     dz += cosY;
   }
-  if (nova64.input.key('KeyA')) {
+  if (key('KeyA')) {
     dx -= cosY;
     dz += sinY;
   }
-  if (nova64.input.key('KeyD')) {
+  if (key('KeyD')) {
     dx += cosY;
     dz -= sinY;
   }
@@ -166,14 +166,14 @@ export function update(dt) {
     player.vz = 0;
   }
 
-  if (nova64.input.key('Space') && player.onGround) {
+  if (key('Space') && player.onGround) {
     player.vy = 0.35;
     player.onGround = false;
   }
   player.vy -= 0.02;
 
   if (typeof moveVoxelEntity === 'function') {
-    const r = nova64.voxel.moveVoxelEntity(
+    const r = moveVoxelEntity(
       [player.x, player.y, player.z],
       [player.vx, player.vy, player.vz],
       [0.6, 1.8, 0.6],
@@ -193,17 +193,17 @@ export function update(dt) {
 
   // Tab through mob types
   for (let i = 0; i < MOB_DEFS.length; i++) {
-    if (nova64.input.keyp(`Digit${i + 1}`)) selectedMob = i;
+    if (keyp(`Digit${i + 1}`)) selectedMob = i;
   }
 
   // Spawn mob
-  if (nova64.input.keyp('KeyE')) {
+  if (keyp('KeyE')) {
     spawnMob((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15);
     showMsg(`Spawned ${MOB_DEFS[selectedMob].type}!`);
   }
 
   // Spawn a bunch
-  if (nova64.input.keyp('KeyR')) {
+  if (keyp('KeyR')) {
     for (let i = 0; i < 5; i++) {
       spawnMob((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30);
     }
@@ -211,23 +211,23 @@ export function update(dt) {
   }
 
   // Clear all entities
-  if (nova64.input.keyp('KeyC') && typeof cleanupVoxelEntities === 'function') {
+  if (keyp('KeyC') && typeof cleanupVoxelEntities === 'function') {
     // Mark all alive entities as dead first
     if (typeof getVoxelEntitiesByType === 'function') {
       for (const def of MOB_DEFS) {
-        const ents = nova64.voxel.getVoxelEntitiesByType(def.type);
+        const ents = getVoxelEntitiesByType(def.type);
         for (const e of ents) {
-          if (typeof damageVoxelEntity === 'function') nova64.voxel.damageVoxelEntity(e.id, 9999);
+          if (typeof damageVoxelEntity === 'function') damageVoxelEntity(e.id, 9999);
         }
       }
     }
-    nova64.voxel.cleanupVoxelEntities();
+    cleanupVoxelEntities();
     showMsg('All creatures cleared!');
   }
 
   // Camera
-  nova64.camera.setCameraPosition(player.x, player.y + 0.8, player.z);
-  nova64.camera.setCameraTarget(
+  setCameraPosition(player.x, player.y + 0.8, player.z);
+  setCameraTarget(
     player.x - Math.sin(player.yaw) * Math.cos(player.pitch),
     player.y + 0.8 + Math.sin(player.pitch),
     player.z - Math.cos(player.yaw) * Math.cos(player.pitch)
@@ -235,13 +235,13 @@ export function update(dt) {
 
   // Update entities
   if (typeof updateVoxelEntities === 'function') {
-    nova64.voxel.updateVoxelEntities(1 / 60, [player.x, player.y, player.z]);
+    updateVoxelEntities(1 / 60, [player.x, player.y, player.z]);
   }
   if (typeof getVoxelEntityCount === 'function') {
-    entityCount = nova64.voxel.getVoxelEntityCount();
+    entityCount = getVoxelEntityCount();
   }
 
-  if (typeof updateVoxelWorld === 'function') nova64.voxel.updateVoxelWorld(player.x, player.z);
+  if (typeof updateVoxelWorld === 'function') updateVoxelWorld(player.x, player.z);
   if (msgTimer > 0) msgTimer--;
 }
 
@@ -252,51 +252,41 @@ function showMsg(text) {
 
 export function draw() {
   if (!loaded) {
-    nova64.draw.rectfill(0, 0, 640, 360, nova64.draw.rgba8(10, 10, 20));
-    nova64.draw.print('LOADING CREATURE WORLD...', 215, 175, 0xffffff);
+    rectfill(0, 0, 640, 360, rgba8(10, 10, 20));
+    print('LOADING CREATURE WORLD...', 215, 175, 0xffffff);
     return;
   }
 
   // Top bar
-  nova64.draw.rect(0, 0, 640, 18, nova64.draw.rgba8(0, 0, 0, 150), true);
-  nova64.draw.print('VOXEL CREATURES', 5, 4, 0xffaa44);
-  nova64.draw.print(`Entities: ${entityCount}`, 420, 4, nova64.draw.rgba8(180, 255, 180));
+  rect(0, 0, 640, 18, rgba8(0, 0, 0, 150), true);
+  print('VOXEL CREATURES', 5, 4, 0xffaa44);
+  print(`Entities: ${entityCount}`, 420, 4, rgba8(180, 255, 180));
   const pos = `${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}`;
-  nova64.draw.print(pos, 540, 4, nova64.draw.rgba8(200, 200, 200));
+  print(pos, 540, 4, rgba8(200, 200, 200));
 
   // Crosshair
-  nova64.draw.rect(319, 172, 2, 16, nova64.draw.rgba8(255, 255, 255, 180), true);
-  nova64.draw.rect(312, 179, 16, 2, nova64.draw.rgba8(255, 255, 255, 180), true);
+  rect(319, 172, 2, 16, rgba8(255, 255, 255, 180), true);
+  rect(312, 179, 16, 2, rgba8(255, 255, 255, 180), true);
 
   // Mob selector
   const selY = 335;
-  nova64.draw.rect(10, selY, MOB_DEFS.length * 48 + 10, 24, nova64.draw.rgba8(0, 0, 0, 180), true);
+  rect(10, selY, MOB_DEFS.length * 48 + 10, 24, rgba8(0, 0, 0, 180), true);
   for (let i = 0; i < MOB_DEFS.length; i++) {
     const bx = 15 + i * 48;
     if (i === selectedMob) {
-      nova64.draw.rect(bx - 1, selY - 1, 46, 26, nova64.draw.rgba8(255, 255, 100), false);
+      rect(bx - 1, selY - 1, 46, 26, rgba8(255, 255, 100), false);
     }
-    nova64.draw.rect(bx + 2, selY + 2, 16, 18, MOB_DEFS[i].color, true);
-    nova64.draw.print(`${i + 1}`, bx + 22, selY + 6, 0xffffff);
+    rect(bx + 2, selY + 2, 16, 18, MOB_DEFS[i].color, true);
+    print(`${i + 1}`, bx + 22, selY + 6, 0xffffff);
   }
-  nova64.draw.print(MOB_DEFS[selectedMob].type.toUpperCase(), 15, selY - 14, 0xffdd88);
+  print(MOB_DEFS[selectedMob].type.toUpperCase(), 15, selY - 14, 0xffdd88);
 
   // Controls
-  nova64.draw.print(
-    'WASD=Move  E=Spawn  R=Spawn5  C=Clear  1-6=Select Mob',
-    10,
-    20,
-    nova64.draw.rgba8(255, 255, 255, 160)
-  );
+  print('WASD=Move  E=Spawn  R=Spawn5  C=Clear  1-6=Select Mob', 10, 20, rgba8(255, 255, 255, 160));
 
   // Message
   if (msgTimer > 0) {
     const alpha = Math.min(255, msgTimer * 4);
-    nova64.draw.print(
-      msg,
-      (640 - msg.length * 8) / 2,
-      160,
-      nova64.draw.rgba8(255, 255, 100, alpha)
-    );
+    print(msg, (640 - msg.length * 8) / 2, 160, rgba8(255, 255, 100, alpha));
   }
 }

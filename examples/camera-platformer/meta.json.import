@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cvsn6sp3spc5i"
+path="res://.godot/imported/meta.json-fb10f9ec45d16294a785e6b98db454a2.res"
+
+[deps]
+
+source_file="res://carts/camera-platformer/meta.json"
+dest_files=["res://.godot/imported/meta.json-fb10f9ec45d16294a785e6b98db454a2.res"]
+
+[params]
+

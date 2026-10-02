@@ -71,6 +71,13 @@ export function lightsModule({ scene, cartLights, counters }) {
     return true;
   }
 
+  function setLightVisible(lightId, visible = true) {
+    const light = cartLights.get(lightId);
+    if (!light) return false;
+    light.visible = !!visible;
+    return true;
+  }
+
   function removeLight(lightId) {
     const light = cartLights.get(lightId);
     if (!light) return false;
@@ -81,5 +88,11 @@ export function lightsModule({ scene, cartLights, counters }) {
     return true;
   }
 
-  return { createPointLight, setPointLightPosition, setPointLightColor, removeLight };
+  return {
+    createPointLight,
+    setPointLightPosition,
+    setPointLightColor,
+    setLightVisible,
+    removeLight,
+  };
 }

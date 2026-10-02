@@ -53,6 +53,12 @@ function toColor3(BABYLON, colorOpt) {
   return null;
 }
 
+function scaleColor3(BABYLON, color, scale = 1) {
+  if (!color) return null;
+  if (typeof color.scale === 'function') return color.scale(scale);
+  return new BABYLON.Color3((color.r ?? 0) * scale, (color.g ?? 0) * scale, (color.b ?? 0) * scale);
+}
+
 function applyBabylonTextureColorSpace(texture) {
   if (!texture) return texture;
   if ('gammaSpace' in texture) texture.gammaSpace = true;
@@ -185,7 +191,9 @@ export function createBabylonEngineAdapter(BABYLON, scene, opts = {}) {
         }
 
         if (matOpts.emissive !== undefined) {
-          mat.emissiveColor = toColor3(BABYLON, matOpts.emissive) ?? mat.emissiveColor;
+          const emissive = toColor3(BABYLON, matOpts.emissive);
+          const intensity = Math.max(Number(matOpts.emissiveIntensity) || 0, 0.3);
+          mat.emissiveColor = scaleColor3(BABYLON, emissive, intensity) ?? mat.emissiveColor;
         }
       } else {
         // 'basic' and 'phong'
@@ -236,7 +244,9 @@ export function createBabylonEngineAdapter(BABYLON, scene, opts = {}) {
         }
 
         if (matOpts.emissive !== undefined) {
-          mat.emissiveColor = toColor3(BABYLON, matOpts.emissive) ?? mat.emissiveColor;
+          const emissive = toColor3(BABYLON, matOpts.emissive);
+          const intensity = Math.max(Number(matOpts.emissiveIntensity) || 0, 0.3);
+          mat.emissiveColor = scaleColor3(BABYLON, emissive, intensity) ?? mat.emissiveColor;
         }
       }
 

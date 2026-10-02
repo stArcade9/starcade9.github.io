@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bs3fql3p3mnye"
+path="res://.godot/imported/meta.json-f1a9769433947f07f4884695c4eb954d.res"
+
+[deps]
+
+source_file="res://carts/game-of-life-3d/meta.json"
+dest_files=["res://.godot/imported/meta.json-f1a9769433947f07f4884695c4eb954d.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://csfs5pxk5srfm"
+path="res://.godot/imported/meta.json-214f82d2e23b19c8050fbd8ec70fa624.res"
+
+[deps]
+
+source_file="res://carts/tween-typewriter/meta.json"
+dest_files=["res://.godot/imported/meta.json-214f82d2e23b19c8050fbd8ec70fa624.res"]
+
+[params]
+

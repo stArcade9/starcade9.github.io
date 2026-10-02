@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://85jhpyolvrr5"
+path="res://.godot/imported/meta.json-da321465215e778f5a036e8bd5287a0d.res"
+
+[deps]
+
+source_file="res://carts/generative-art/meta.json"
+dest_files=["res://.godot/imported/meta.json-da321465215e778f5a036e8bd5287a0d.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bed0h1q84hrf2"
+path="res://.godot/imported/meta.json-2558bc2ac94c2d2997890b220b54b224.res"
+
+[deps]
+
+source_file="res://carts/indie-odyssey/meta.json"
+dest_files=["res://.godot/imported/meta.json-2558bc2ac94c2d2997890b220b54b224.res"]
+
+[params]
+

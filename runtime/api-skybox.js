@@ -1,5 +1,6 @@
 // Skybox API for Nova64 - Space, gradient, and solid sky backgrounds
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 export function skyboxApi(gpu) {
   const backendSkybox =
@@ -114,6 +115,20 @@ export function skyboxApi(gpu) {
     }
     _clearSky();
     skyboxMesh = _gradientSphere(topColor, bottomColor);
+
+    // Update scene.environment so PBR metallic surfaces get reflections even
+    // when no image skybox is loaded. RoomEnvironment provides directional
+    // variation; a flat solid-color scene leaves metals looking dull.
+    try {
+      const pmrem = new THREE.PMREMGenerator(gpu.renderer);
+      const next = pmrem.fromScene(new RoomEnvironment()).texture;
+      pmrem.dispose();
+      gpu.scene.environment?.dispose();
+      gpu.scene.environment = next;
+    } catch (_) {
+      // Environment reflections are a visual bonus; skybox rendering still works without them.
+    }
+
     return skyboxMesh;
   }
 
@@ -181,8 +196,10 @@ export function skyboxApi(gpu) {
           try {
             const pmrem = new THREE.PMREMGenerator(gpu.renderer);
             pmrem.compileCubemapShader();
-            gpu.scene.environment = pmrem.fromCubemap(cubeTexture).texture;
+            const next = pmrem.fromCubemap(cubeTexture).texture;
             pmrem.dispose();
+            gpu.scene.environment?.dispose();
+            gpu.scene.environment = next;
           } catch (_) {
             // PMREM is optional; the skybox still renders without env reflections
           }

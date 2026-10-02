@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://jbfoagta1bg7"
+path="res://.godot/imported/meta.json-7fff34d405ccbe7d092db9a69bc28fd6.res"
+
+[deps]
+
+source_file="res://carts/wing-commander-space/meta.json"
+dest_files=["res://.godot/imported/meta.json-7fff34d405ccbe7d092db9a69bc28fd6.res"]
+
+[params]
+

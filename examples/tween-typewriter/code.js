@@ -31,14 +31,14 @@ let cursorBlink = 0;
 let showCursor = true;
 
 export function init() {
-  W = typeof screenWidth === 'function' ? nova64.draw.screenWidth() : 640;
-  H = typeof screenHeight === 'function' ? nova64.draw.screenHeight() : 360;
-  root = nova64.ui.createContainer();
+  W = typeof screenWidth === 'function' ? screenWidth() : 640;
+  H = typeof screenHeight === 'function' ? screenHeight() : 360;
+  root = createContainer();
   displayTexts = LINES.map(() => '');
 
   LINES.forEach((line, i) => {
     // Text node starts empty
-    const tn = nova64.ui.createTextNode('', {
+    const tn = createTextNode('', {
       font: '10px monospace',
       fill: `#${line.color.toString(16).padStart(6, '0')}`,
       align: 'left',
@@ -46,7 +46,7 @@ export function init() {
     tn.x = 14;
     tn.y = 28 + i * 16;
     tn.alpha = 0;
-    nova64.ui.addChild(root, tn);
+    addChild(root, tn);
     lineNodes.push(tn);
   });
 
@@ -62,7 +62,7 @@ export function init() {
     // After delay, reveal text progressively
     setTimeout(() => {
       lineNodes[i].alpha = 1;
-      const tw = nova64.tween.createTween({
+      const tw = createTween({
         from: 0,
         to: chars,
         duration: dur,
@@ -98,22 +98,22 @@ export function update(dt) {
 }
 
 export function draw() {
-  nova64.draw.cls(0x030608);
+  cls(0x030608);
 
   // Scanlines
   for (let y = 0; y < H; y += 2) {
-    nova64.draw.rectfill(0, y, W, 1, 0x00000033);
+    rectfill(0, y, W, 1, 0x00000033);
   }
 
   // Screen border
-  nova64.draw.rect(2, 2, W - 4, H - 4, 0x224422);
-  nova64.draw.rect(4, 4, W - 8, H - 8, 0x112211);
+  rect(2, 2, W - 4, H - 4, 0x224422);
+  rect(4, 4, W - 8, H - 8, 0x112211);
 
   // Header bar
-  nova64.draw.rectfill(6, 6, W - 12, 14, 0x112211);
-  nova64.draw.print('▒▒▒ NOVA64 BOOT TERMINAL ▒▒▒', 8, 9, 0x44aa44);
+  rectfill(6, 6, W - 12, 14, 0x112211);
+  print('▒▒▒ NOVA64 BOOT TERMINAL ▒▒▒', 8, 9, 0x44aa44);
 
-  nova64.ui.drawStage(root);
+  drawStage(root);
 
   // Blinking cursor on last active line
   let lastActive = -1;
@@ -125,7 +125,7 @@ export function draw() {
     const txt = ln.text ?? '';
     const cx = ln.x + txt.length * 6.02; // monospace ~6px per char at 10px
     const cy = ln.y - 1;
-    nova64.draw.rectfill(cx, cy, 6, 10, 0x44ff88);
+    rectfill(cx, cy, 6, 10, 0x44ff88);
   }
 
   // Bottom prompt
@@ -134,8 +134,8 @@ export function draw() {
   if (allDone) {
     const b = 0.5 + 0.5 * Math.sin(time * 4);
     const c = Math.floor(b * 255);
-    nova64.draw.printCentered('[ PRESS START OR INSERT CART ]', H - 14, (c << 8) | 0);
+    printCentered('[ PRESS START OR INSERT CART ]', H - 14, (c << 8) | 0);
   }
 
-  nova64.draw.print('TWEEN TYPEWRITER', 4, H - 12, 0x224422);
+  print('TWEEN TYPEWRITER', 4, H - 12, 0x224422);
 }
