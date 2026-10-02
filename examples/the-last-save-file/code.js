@@ -25,7 +25,7 @@ const BUTTONS = [
   },
   {
     label: 'SEE LOST GAMES',
-    url: '/examples/gallery?gCampaign=1&intro=random',
+    url: 'https://nova64.io/console',
     key: 'gallery',
   },
   {
