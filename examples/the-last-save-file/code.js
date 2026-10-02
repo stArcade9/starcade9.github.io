@@ -1201,8 +1201,8 @@ function chooseButton(index) {
   memory.lastPlayedAt = new Date().toISOString();
   nova64.data.saveData(SAVE_KEY, memory);
   playSound('confirm');
-  if (typeof window !== 'undefined' && window.location) {
-    window.location.href = choice.url;
+  if (typeof window !== 'undefined' && typeof window.open === 'function') {
+    window.open(choice.url, '_blank', 'noopener,noreferrer');
   }
 }
 
