@@ -375,13 +375,14 @@
         </header>
 
         <section class="md">
-<h2>Overview</h2>
+<h2 id="overview">Overview</h2>
 <p>Nova64 now has a <strong>professional-grade UI system</strong> with buttons, panels, advanced text rendering, progress bars, and layout helpers. This makes Nova64 the most powerful fantasy console for creating polished game interfaces!</p>
+
         </section>
 
         <section class="md">
-<h2>Features</h2>
-<h3>✅ Complete Font System</h3>
+<h2 id="features">Features</h2>
+<h3 id="complete-font-system">✅ Complete Font System</h3>
 <ul>
 <li><strong>5 font sizes</strong>: tiny, small, normal, large, huge</li>
 <li><strong>Text alignment</strong>: left, center, right</li>
@@ -389,7 +390,7 @@
 <li><strong>Text effects</strong>: shadows, outlines</li>
 <li><strong>Text measurement</strong>: get width/height before rendering</li>
 </ul>
-<h3>✅ Panel System</h3>
+<h3 id="panel-system">✅ Panel System</h3>
 <ul>
 <li><strong>Customizable panels</strong> with borders, shadows, gradients</li>
 <li><strong>Title bars</strong> with custom colors</li>
@@ -397,7 +398,7 @@
 <li><strong>Gradient backgrounds</strong></li>
 <li><strong>Flexible styling</strong> options</li>
 </ul>
-<h3>✅ Button System</h3>
+<h3 id="button-system">✅ Button System</h3>
 <ul>
 <li><strong>Interactive buttons</strong> with hover/press states</li>
 <li><strong>Callback functions</strong> on click</li>
@@ -405,68 +406,69 @@
 <li><strong>Auto-update system</strong> for all buttons</li>
 <li><strong>Flexible positioning</strong> and sizing</li>
 </ul>
-<h3>✅ Progress Bars</h3>
+<h3 id="progress-bars">✅ Progress Bars</h3>
 <ul>
 <li><strong>Horizontal progress bars</strong> with fill</li>
 <li><strong>Customizable colors</strong> based on value</li>
 <li><strong>Text display</strong> showing current/max values</li>
 <li><strong>Border and background</strong> styling</li>
 </ul>
-<h3>✅ Advanced Shapes</h3>
+<h3 id="advanced-shapes">✅ Advanced Shapes</h3>
 <ul>
 <li><strong>Rounded rectangles</strong> with radius</li>
 <li><strong>Gradient rectangles</strong> (vertical/horizontal)</li>
 <li><strong>Enhanced drawing</strong> primitives</li>
 </ul>
-<h3>✅ Layout Helpers</h3>
+<h3 id="layout-helpers">✅ Layout Helpers</h3>
 <ul>
 <li><strong>Center positioning</strong> for X and Y</li>
 <li><strong>Grid layout system</strong> for arranging elements</li>
 <li><strong>Automatic calculations</strong></li>
 </ul>
-<h3>✅ Mouse/Input Support</h3>
+<h3 id="mouseinput-support">✅ Mouse/Input Support</h3>
 <ul>
 <li><strong>Mouse position</strong> tracking</li>
 <li><strong>Click detection</strong> with pressed/held states</li>
 <li><strong>Button hover detection</strong></li>
 <li><strong>Input system integration</strong></li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>API Reference</h2>
-<h3>Font System</h3>
+<h2 id="api-reference">API Reference</h2>
+<h3 id="font-system">Font System</h3>
 <pre><code class="language-javascript">// Set font size
-setFont(&#39;tiny&#39;); // 1x size
-setFont(&#39;small&#39;); // 1x size, more spacing
-setFont(&#39;normal&#39;); // 2x size (default)
-setFont(&#39;large&#39;); // 3x size
-setFont(&#39;huge&#39;); // 4x size
+nova64.ui.setFont('tiny'); // 1x size
+nova64.ui.setFont('small'); // 1x size, more spacing
+nova64.ui.setFont('normal'); // 2x size (default)
+nova64.ui.setFont('large'); // 3x size
+nova64.ui.setFont('huge'); // 4x size
 
 // Text alignment
-setTextAlign(&#39;left&#39;); // Default
-setTextAlign(&#39;center&#39;); // Center-aligned
-setTextAlign(&#39;right&#39;); // Right-aligned
+nova64.ui.setTextAlign('left'); // Default
+nova64.ui.setTextAlign('center'); // Center-aligned
+nova64.ui.setTextAlign('right'); // Right-aligned
 
 // Text baseline
-setTextBaseline(&#39;top&#39;); // Default
-setTextBaseline(&#39;middle&#39;); // Vertically centered
-setTextBaseline(&#39;bottom&#39;); // Bottom-aligned
+nova64.ui.setTextBaseline('top'); // Default
+nova64.ui.setTextBaseline('middle'); // Vertically centered
+nova64.ui.setTextBaseline('bottom'); // Bottom-aligned
 
 // Measure text
-const metrics = measureText(&#39;Hello&#39;, 2);
+const metrics = measureText('Hello', 2);
 // Returns: { width: 60, height: 16 }
 
 // Draw text
-drawText(&#39;Hello World&#39;, x, y, color, scale);
+nova64.ui.drawText('Hello World', x, y, color, scale);
 
 // Draw text with shadow
-drawTextShadow(&#39;Title&#39;, x, y, color, shadowColor, offset, scale);
+nova64.ui.drawTextShadow('Title', x, y, color, shadowColor, offset, scale);
 
 // Draw text with outline
-drawTextOutline(&#39;SCORE&#39;, x, y, color, outlineColor, scale);
+nova64.ui.drawTextOutline('SCORE', x, y, color, outlineColor, scale);
 </code></pre>
-<h3>Panel System</h3>
+<h3 id="panel-system_1">Panel System</h3>
 <pre><code class="language-javascript">// Create panel
 const panel = createPanel(x, y, width, height, {
   bgColor: rgba8(0, 0, 0, 200),
@@ -475,7 +477,7 @@ const panel = createPanel(x, y, width, height, {
   cornerRadius: 0,
   shadow: true,
   shadowOffset: 4,
-  title: &#39;Panel Title&#39;,
+  title: 'Panel Title',
   titleColor: uiColors.white,
   titleBgColor: uiColors.primary,
   padding: 10,
@@ -485,27 +487,27 @@ const panel = createPanel(x, y, width, height, {
 });
 
 // Draw single panel
-drawPanel(panel);
+nova64.draw.drawPanel(panel);
 
 // Draw all panels
-drawAllPanels();
+nova64.ui.drawAllPanels();
 
 // Remove panel
-removePanel(panel);
+nova64.ui.removePanel(panel);
 
 // Clear all panels
-clearPanels();
+nova64.ui.clearPanels();
 </code></pre>
-<h3>Button System</h3>
+<h3 id="button-system_1">Button System</h3>
 <pre><code class="language-javascript">// Create button
 const button = createButton(
   x,
   y,
   width,
   height,
-  &#39;Click Me&#39;,
+  'Click Me',
   () =&gt; {
-    console.log(&#39;Button clicked!&#39;);
+    console.log('Button clicked!');
   },
   {
     enabled: true,
@@ -522,26 +524,26 @@ const button = createButton(
 );
 
 // Update single button
-updateButton(button);
+nova64.ui.updateButton(button);
 
 // Update all buttons
-updateAllButtons();
+nova64.ui.updateAllButtons();
 
 // Draw single button
-drawButton(button);
+nova64.ui.drawButton(button);
 
 // Draw all buttons
-drawAllButtons();
+nova64.ui.drawAllButtons();
 
 // Remove button
-removeButton(button);
+nova64.ui.removeButton(button);
 
 // Clear all buttons
-clearButtons();
+nova64.ui.clearButtons();
 </code></pre>
-<h3>Progress Bars</h3>
+<h3 id="progress-bars_1">Progress Bars</h3>
 <pre><code class="language-javascript">// Draw progress bar
-drawProgressBar(x, y, width, height, currentValue, maxValue, {
+nova64.draw.drawProgressBar(x, y, width, height, currentValue, maxValue, {
   bgColor: rgba8(50, 50, 50, 255),
   fillColor: uiColors.success,
   borderColor: uiColors.white,
@@ -553,30 +555,30 @@ drawProgressBar(x, y, width, height, currentValue, maxValue, {
 const healthColor =
   health &gt; 50 ? uiColors.success : health &gt; 25 ? uiColors.warning : uiColors.danger;
 
-drawProgressBar(x, y, 200, 20, health, 100, {
+nova64.draw.drawProgressBar(x, y, 200, 20, health, 100, {
   fillColor: healthColor,
   showText: true,
 });
 </code></pre>
-<h3>Advanced Shapes</h3>
+<h3 id="advanced-shapes_1">Advanced Shapes</h3>
 <pre><code class="language-javascript">// Rounded rectangle
-drawRoundedRect(x, y, width, height, radius, color, filled);
+nova64.draw.drawRoundedRect(x, y, width, height, radius, color, filled);
 
 // Gradient rectangle
-drawGradientRect(x, y, width, height, color1, color2, vertical);
+nova64.ui.drawGradientRect(x, y, width, height, color1, color2, vertical);
 
 // Example
-drawGradientRect(
+nova64.ui.drawGradientRect(
   0,
   0,
   640,
   360,
-  rgba8(10, 10, 30, 255), // Top color
-  rgba8(30, 10, 50, 255), // Bottom color
+  nova64.draw.rgba8(10, 10, 30, 255), // Top color
+  nova64.draw.rgba8(30, 10, 50, 255), // Bottom color
   true // Vertical gradient
 );
 </code></pre>
-<h3>Layout Helpers</h3>
+<h3 id="layout-helpers_1">Layout Helpers</h3>
 <pre><code class="language-javascript">// Center element horizontally
 const x = centerX(elementWidth, 640);
 
@@ -590,17 +592,17 @@ const cells = grid(cols, rows, cellWidth, cellHeight, paddingX, paddingY);
 // Example: 3x2 grid of buttons
 const buttonGrid = grid(3, 2, 80, 40, 10, 10);
 buttonGrid.forEach((cell, i) =&gt; {
-  createButton(cell.x, cell.y, cell.width, cell.height, `Btn ${i}`, () =&gt; {
+  nova64.ui.createButton(cell.x, cell.y, cell.width, cell.height, `Btn ${i}`, () =&gt; {
     console.log(`Button ${i} clicked`);
   });
 });
 </code></pre>
-<h3>Mouse/Input</h3>
+<h3 id="mouseinput">Mouse/Input</h3>
 <pre><code class="language-javascript">// Set mouse position (from actual mouse or keyboard)
-setMousePosition(x, y);
+nova64.ui.setMousePosition(x, y);
 
 // Set mouse button state
-setMouseButton(isDown);
+nova64.ui.setMouseButton(isDown);
 
 // Get mouse position
 const pos = getMousePosition();
@@ -615,7 +617,7 @@ if (isMousePressed()) {
   // Mouse button just pressed this frame
 }
 </code></pre>
-<h3>Color Palette</h3>
+<h3 id="color-palette">Color Palette</h3>
 <pre><code class="language-javascript">// Built-in colors
 uiColors.primary; // Blue
 uiColors.secondary; // Light blue
@@ -628,10 +630,11 @@ uiColors.white; // White
 uiColors.black; // Black
 uiColors.transparent; // Transparent
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Complete Example</h2>
+<h2 id="complete-example">Complete Example</h2>
 <pre><code class="language-javascript">// UI Demo Game
 
 let ui = {
@@ -644,49 +647,49 @@ let ui = {
 export async function init() {
   // Create health panel
   ui.healthPanel = createPanel(10, 10, 220, 80, {
-    title: &#39;Player Stats&#39;,
+    title: 'Player Stats',
     borderColor: uiColors.primary,
     shadow: true,
   });
 
   // Create menu buttons
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       200,
       100,
       40,
-      &#39;START&#39;,
+      'START',
       () =&gt; {
-        console.log(&#39;Game started!&#39;);
+        console.log('Game started!');
       },
       { normalColor: uiColors.success }
     )
   );
 
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       250,
       100,
       40,
-      &#39;OPTIONS&#39;,
+      'OPTIONS',
       () =&gt; {
-        console.log(&#39;Options opened!&#39;);
+        console.log('Options opened!');
       },
       { normalColor: uiColors.primary }
     )
   );
 
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       300,
       100,
       40,
-      &#39;QUIT&#39;,
+      'QUIT',
       () =&gt; {
-        console.log(&#39;Game quit!&#39;);
+        console.log('Game quit!');
       },
       { normalColor: uiColors.danger }
     )
@@ -698,7 +701,7 @@ export function update(dt) {
   // (In real game, use actual mouse events)
 
   // Update all buttons
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 
   // Game logic
   ui.health = Math.max(0, ui.health - dt * 2);
@@ -707,127 +710,131 @@ export function update(dt) {
 
 export function draw() {
   // Clear screen
-  cls();
+  nova64.draw.cls();
 
   // Draw gradient background
-  drawGradientRect(0, 0, 640, 360, rgba8(20, 20, 40, 255), rgba8(40, 20, 60, 255), true);
+  nova64.ui.drawGradientRect(0, 0, 640, 360, rgba8(20, 20, 40, 255), rgba8(40, 20, 60, 255), true);
 
   // Draw panels
-  drawAllPanels();
+  nova64.ui.drawAllPanels();
 
   // Draw health bar
-  setFont(&#39;normal&#39;);
-  setTextAlign(&#39;left&#39;);
-  drawText(&#39;HEALTH&#39;, 20, 40, uiColors.white, 1);
-  drawProgressBar(20, 60, 200, 20, ui.health, 100, {
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('left');
+  nova64.ui.drawText('HEALTH', 20, 40, uiColors.white, 1);
+  nova64.draw.drawProgressBar(20, 60, 200, 20, ui.health, 100, {
     fillColor: ui.health &gt; 50 ? uiColors.success : uiColors.danger,
   });
 
   // Draw score
-  setFont(&#39;large&#39;);
-  setTextAlign(&#39;center&#39;);
-  const scoreText = &#39;SCORE: &#39; + ui.score.toString().padStart(6, &#39;0&#39;);
-  drawTextOutline(scoreText, 320, 100, uiColors.warning, uiColors.black, 1);
+  nova64.ui.setFont('large');
+  nova64.ui.setTextAlign('center');
+  const scoreText = 'SCORE: ' + ui.score.toString().padStart(6, '0');
+  nova64.ui.drawTextOutline(scoreText, 320, 100, uiColors.warning, uiColors.black, 1);
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
   // Draw title
-  setFont(&#39;huge&#39;);
-  setTextAlign(&#39;center&#39;);
-  drawTextShadow(&#39;MY GAME&#39;, 320, 30, uiColors.primary, uiColors.black, 3, 1);
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawTextShadow('MY GAME', 320, 30, uiColors.primary, uiColors.black, 3, 1);
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Best Practices</h2>
-<h3>1. Use Panels for Grouping</h3>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-use-panels-for-grouping">1. Use Panels for Grouping</h3>
 <pre><code class="language-javascript">// Create a panel for related UI elements
 const statsPanel = createPanel(10, 10, 200, 150, {
-  title: &#39;Statistics&#39;,
+  title: 'Statistics',
   shadow: true,
 });
 
 // Draw panel first
-drawPanel(statsPanel);
+nova64.draw.drawPanel(statsPanel);
 
 // Then draw contents inside panel bounds
-drawText(&#39;Health: 100&#39;, 20, 40);
-drawText(&#39;Mana: 50&#39;, 20, 60);
+nova64.ui.drawText('Health: 100', 20, 40);
+nova64.ui.drawText('Mana: 50', 20, 60);
 </code></pre>
-<h3>2. Update Buttons Every Frame</h3>
+<h3 id="2-update-buttons-every-frame">2. Update Buttons Every Frame</h3>
 <pre><code class="language-javascript">export function update(dt) {
   // Always update buttons to track hover/click
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 }
 
 export function draw() {
   // Always draw buttons after updating
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 </code></pre>
-<h3>3. Use Font Sizes Appropriately</h3>
-<pre><code class="language-javascript">setFont(&#39;huge&#39;); // Game titles
-setFont(&#39;large&#39;); // Section headers
-setFont(&#39;normal&#39;); // Body text (default)
-setFont(&#39;small&#39;); // Details
-setFont(&#39;tiny&#39;); // Fine print
+<h3 id="3-use-font-sizes-appropriately">3. Use Font Sizes Appropriately</h3>
+<pre><code class="language-javascript">nova64.ui.setFont('huge'); // Game titles
+nova64.ui.setFont('large'); // Section headers
+nova64.ui.setFont('normal'); // Body text (default)
+nova64.ui.setFont('small'); // Details
+nova64.ui.setFont('tiny'); // Fine print
 </code></pre>
-<h3>4. Center Important Elements</h3>
+<h3 id="4-center-important-elements">4. Center Important Elements</h3>
 <pre><code class="language-javascript">// Title centered horizontally
 const titleX = centerX(200);
-drawText(&#39;GAME TITLE&#39;, titleX, 50);
+nova64.ui.drawText('GAME TITLE', titleX, 50);
 
 // Dialog centered both ways
 const dialogWidth = 300;
 const dialogHeight = 200;
 const dialogX = centerX(dialogWidth);
 const dialogY = centerY(dialogHeight);
-createPanel(dialogX, dialogY, dialogWidth, dialogHeight);
+nova64.ui.createPanel(dialogX, dialogY, dialogWidth, dialogHeight);
 </code></pre>
-<h3>5. Use Color Palette Consistently</h3>
+<h3 id="5-use-color-palette-consistently">5. Use Color Palette Consistently</h3>
 <pre><code class="language-javascript">// Good: Use semantic colors
-createButton(x, y, w, h, &#39;Accept&#39;, callback, {
+nova64.ui.createButton(x, y, w, h, 'Accept', callback, {
   normalColor: uiColors.success,
 });
 
-createButton(x, y, w, h, &#39;Cancel&#39;, callback, {
+nova64.ui.createButton(x, y, w, h, 'Cancel', callback, {
   normalColor: uiColors.danger,
 });
 
 // Consistent throughout your game
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Performance Tips</h2>
+<h2 id="performance-tips">Performance Tips</h2>
 <ol>
 <li><strong>Create UI elements once in <code>init()</code></strong>, not every frame</li>
 <li><strong>Only update buttons when needed</strong> (e.g., on menu screens)</li>
 <li><strong>Use <code>visible</code> property</strong> to hide/show without recreating</li>
 <li><strong>Clear panels/buttons</strong> when switching screens</li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Migration from Old API</h2>
-<h3>Before (Basic)</h3>
-<pre><code class="language-javascript">print(&#39;Score: 100&#39;, 10, 10, rgba8(255, 255, 0, 255));
-rect(10, 30, 200, 20, rgba8(0, 255, 0, 255), true);
+<h2 id="migration-from-old-api">Migration from Old API</h2>
+<h3 id="before-basic">Before (Basic)</h3>
+<pre><code class="language-javascript">nova64.draw.print('Score: 100', 10, 10, rgba8(255, 255, 0, 255));
+nova64.draw.rect(10, 30, 200, 20, rgba8(0, 255, 0, 255), true);
 </code></pre>
-<h3>After (Professional)</h3>
-<pre><code class="language-javascript">setFont(&#39;large&#39;);
-setTextAlign(&#39;left&#39;);
-drawTextOutline(&#39;Score: 100&#39;, 10, 10, uiColors.warning, uiColors.black, 1);
-drawProgressBar(10, 30, 200, 20, score, maxScore, {
+<h3 id="after-professional">After (Professional)</h3>
+<pre><code class="language-javascript">nova64.ui.setFont('large');
+nova64.ui.setTextAlign('left');
+nova64.ui.drawTextOutline('Score: 100', 10, 10, uiColors.warning, uiColors.black, 1);
+nova64.draw.drawProgressBar(10, 30, 200, 20, score, maxScore, {
   fillColor: uiColors.success,
 });
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Try It Now!</h2>
+<h2 id="try-it-now">Try It Now!</h2>
 <pre><code class="language-bash"># Start dev server
 pnpm dev
 
@@ -835,8 +842,9 @@ pnpm dev
 http://localhost:5173/?demo=ui-demo
 </code></pre>
 <p>Use <strong>Arrow Keys</strong> to move cursor, <strong>Space</strong> to click buttons!</p>
-<hr>
-<p><strong>Nova64: The Best Fantasy Console</strong> 🎮✨<br><em>Now with first-class UI system!</em></p>
+<hr />
+<p><strong>Nova64: The Best Fantasy Console</strong> 🎮✨<br />
+<em>Now with first-class UI system!</em></p>
         </section>
 
         <footer>

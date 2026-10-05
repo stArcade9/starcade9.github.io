@@ -376,134 +376,137 @@
         </header>
 
         <section class="md">
-<hr>
+<p>A prioritized list of bugs, gaps, and enhancements to make the Nova64 API easier for cart authors to use.</p>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🔴 Bugs — Broken Right Now</h2>
-<h3>1. <code>createCylinder()</code> produces a box</h3>
+<h2 id="bugs-broken-right-now">🔴 Bugs — Broken Right Now</h2>
+<h3 id="1-createcylinder-produces-a-box">1. <code>createCylinder()</code> produces a box</h3>
 <p><strong>File:</strong> <code>runtime/api-3d.js</code>
 <code>createCylinder()</code> calls <code>gpu.createCylinderGeometry()</code> which does not exist on <code>GpuThreeJS</code>. It silently falls back to <code>createBoxGeometry</code>, so every cylinder is a box.
 <strong>Fix:</strong> Add <code>createCylinderGeometry(rt, rb, h, segs)</code> to <code>gpu-threejs.js</code> using <code>THREE.CylinderGeometry</code>.</p>
-<h3>2. Game-studio code uses wrong skybox API names</h3>
+<h3 id="2-game-studio-code-uses-wrong-skybox-api-names">2. Game-studio code uses wrong skybox API names</h3>
 <p><strong>File:</strong> <code>src/main.js</code> lines 318–319
 The <code>EXECUTE_CODE</code> message handler passes <code>skyApi.createSkybox</code>, <code>skyApi.updateSkybox</code>, and <code>skyApi.removeSkybox</code> — none of which exist. The actual names are <code>createSpaceSkybox</code>, <code>animateSkybox</code>, and <code>clearSkybox</code>. Skybox is silently broken in the game-studio execution path.
 <strong>Fix:</strong> Update those three references to the correct names.</p>
-<h3>3. <code>galaxySpiral</code> option is accepted but does nothing</h3>
+<h3 id="3-galaxyspiral-option-is-accepted-but-does-nothing">3. <code>galaxySpiral</code> option is accepted but does nothing</h3>
 <p><strong>File:</strong> <code>runtime/api-skybox.js</code>
 <code>createSpaceSkybox({ galaxySpiral: true })</code> destructures the option but never uses it in the geometry.
 <strong>Fix:</strong> Either implement a spiral star-field variant or remove the option entirely to avoid confusion.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🟡 Missing Features — Hard to Use Without</h2>
-<h3>4. Skybox rotation speed is hardcoded</h3>
+<h2 id="missing-features-hard-to-use-without">🟡 Missing Features — Hard to Use Without</h2>
+<h3 id="4-skybox-rotation-speed-is-hardcoded">4. Skybox rotation speed is hardcoded</h3>
 <p><strong>File:</strong> <code>runtime/api-skybox.js</code>
 <code>animateSkybox(dt)</code> always rotates at <code>dt * 0.01</code>. There is no way for a cart to slow it down, speed it up, pause it, or reverse it.
 <strong>Add:</strong></p>
-<pre><code class="language-js">setSkyboxSpeed(multiplier); // e.g. 0 = frozen, 2.0 = double speed, -1 = reverse
+<pre><code class="language-js">nova64.light.setSkyboxSpeed(multiplier); // e.g. 0 = frozen, 2.0 = double speed, -1 = reverse
 </code></pre>
-<h3>5. Cart authors must manually call <code>animateSkybox(dt)</code> every frame</h3>
+<h3 id="5-cart-authors-must-manually-call-animateskyboxdt-every-frame">5. Cart authors must manually call <code>animateSkybox(dt)</code> every frame</h3>
 <p><strong>File:</strong> <code>runtime/api-skybox.js</code>
 Forgetting to call it in <code>update()</code> is the most common skybox mistake. The engine already has a frame loop — skybox animation should be opt-in automatic.
 <strong>Add:</strong></p>
-<pre><code class="language-js">enableSkyboxAutoAnimate((speed = 1.0)); // engine calls animateSkybox internally
-disableSkyboxAutoAnimate();
+<pre><code class="language-js">nova64.light.enableSkyboxAutoAnimate((speed = 1.0)); // engine calls animateSkybox internally
+nova64.light.disableSkyboxAutoAnimate();
 </code></pre>
-<h3>6. Only one skybox type (procedural space)</h3>
+<h3 id="6-only-one-skybox-type-procedural-space">6. Only one skybox type (procedural space)</h3>
 <p><strong>File:</strong> <code>runtime/api-skybox.js</code>
 There is no way to create a daytime sky, sunset, cave, or interior environment. Only the star-field + nebula preset exists.
 <strong>Add:</strong></p>
-<pre><code class="language-js">createGradientSkybox(topColor, bottomColor, horizonColor?)
+<pre><code class="language-js">nova64.light.createGradientSkybox(topColor, bottomColor, horizonColor?)
 // e.g. createGradientSkybox(0x1a6aa8, 0xf4a460)  → sunset
 
-createSolidSkybox(color)
+nova64.light.createSolidSkybox(color)
 // e.g. createSolidSkybox(0x000000)  → cave / indoor
 
-createImageSkybox([px, nx, py, ny, pz, nz])
+nova64.light.createImageSkybox([px, nx, py, ny, pz, nz])
 // cube-face textures for full photorealistic environments
 </code></pre>
-<h3>7. <code>removeMesh</code> vs <code>destroyMesh</code> mismatch</h3>
+<h3 id="7-removemesh-vs-destroymesh-mismatch">7. <code>removeMesh</code> vs <code>destroyMesh</code> mismatch</h3>
 <p><strong>Files:</strong> <code>runtime/api-3d.js</code>, <code>CLAUDE.md</code>, demos
 <code>CLAUDE.md</code> and several demos reference <code>removeMesh()</code> but the exposed function is <code>destroyMesh()</code>. This causes silent no-ops when cart authors follow the documentation.
 <strong>Fix:</strong> Add <code>removeMesh</code> as an alias for <code>destroyMesh</code>, or rename throughout and update docs.</p>
-<h3>8. Missing 3D primitives</h3>
+<h3 id="8-missing-3d-primitives">8. Missing 3D primitives</h3>
 <p>Useful shapes absent from the API:</p>
 <ul>
 <li><code>createCone(radius, height, color, position, opts)</code> — projectiles, trees, hat shapes</li>
 <li><code>createCapsule(radius, height, color, position, opts)</code> — humanoid character bodies</li>
 </ul>
-<h3>13. Reusable hero-cart loader as a public API ✅ LANDED (<code>nova64.loader</code>)</h3>
-<p><strong>Where it exists today:</strong> the home screen at <code>http://localhost:3000/</code> shows a hero cart loader (boot animation + asset progress) that&#39;s currently hand-wired in the homepage shell.
+<h3 id="13-reusable-hero-cart-loader-as-a-public-api-landed-nova64loader">13. Reusable hero-cart loader as a public API ✅ LANDED (<code>nova64.loader</code>)</h3>
+<p><strong>Where it exists today:</strong> the home screen at <code>http://localhost:3000/</code> shows a hero cart loader (boot animation + asset progress) that's currently hand-wired in the homepage shell.
 <strong>Why it matters:</strong> every cart that loads GLBs, textures, or audio has to either ship its own loader UI or pop into gameplay with a half-loaded scene (see <code>examples/indie-odyssey</code> combat enemy GLBs racing the autoplay timer). A first-class loader is a portable solution.
 <strong>Proposed shape:</strong></p>
-<pre><code class="language-js">nova64.loader.show({ title: &#39;INDIE ODYSSEY&#39;, subtitle: &#39;Loading shardgrid…&#39; });
-nova64.loader.track([&#39;models/dataImp.glb&#39;, &#39;images/spritesheet/dataImp.png&#39;]);
+<pre><code class="language-js">nova64.loader.show({ title: 'INDIE ODYSSEY', subtitle: 'Loading shardgrid…' });
+nova64.loader.track(['models/dataImp.glb', 'images/spritesheet/dataImp.png']);
 nova64.loader.onReady(() =&gt; startGame());
 nova64.loader.hide();
 </code></pre>
 <p>Engine handles the visual + progress wiring; cart just tells it what to wait on.
 <strong>Effort:</strong> Medium — needs progress hooks into <code>scene.loadModel</code> / <code>loadTexture</code> / image preload paths, plus a default themable overlay.</p>
-<h3>14. Story-mode helper with slides ✅ LANDED (<code>nova64.story</code>)</h3>
-<p><strong>Where it exists today:</strong> <code>examples/indie-odyssey/code.js</code> has a multi-slide intro with image + text + transitions (<code>drawStory</code>, <code>drawStoryFrameImage</code>, <code>drawStoryTransitionFrame</code>, <code>storyFrameCanvas</code>, <code>storyPixelCanvas</code>). It&#39;s ~300 lines of cart-local code.
+<h3 id="14-story-mode-helper-with-slides-landed-nova64story">14. Story-mode helper with slides ✅ LANDED (<code>nova64.story</code>)</h3>
+<p><strong>Where it exists today:</strong> <code>examples/indie-odyssey/code.js</code> has a multi-slide intro with image + text + transitions (<code>drawStory</code>, <code>drawStoryFrameImage</code>, <code>drawStoryTransitionFrame</code>, <code>storyFrameCanvas</code>, <code>storyPixelCanvas</code>). It's ~300 lines of cart-local code.
 <strong>Why it matters:</strong> every narrative game wants intro / cutscene / chapter-break slides with pixel transitions. Re-implementing this each time is wasteful and discourages story sequences.
 <strong>Proposed shape:</strong></p>
 <pre><code class="language-js">nova64.story.play([
-  { image: &#39;assets/intro_01.png&#39;, text: &#39;The shardgrid awakens…&#39; },
-  { image: &#39;assets/intro_02.png&#39;, text: &#39;A new operator boots up.&#39; },
-  { image: &#39;assets/intro_03.png&#39;, text: &#39;Welcome to the network.&#39; },
+  { image: 'assets/intro_01.png', text: 'The shardgrid awakens…' },
+  { image: 'assets/intro_02.png', text: 'A new operator boots up.' },
+  { image: 'assets/intro_03.png', text: 'Welcome to the network.' },
 ], {
   onAdvance: () =&gt; beep(),
-  onFinish: () =&gt; setScreen(&#39;game&#39;),
-  transition: &#39;pixel-melt&#39;, // or &#39;fade&#39;, &#39;crt-cut&#39;, etc.
+  onFinish: () =&gt; setScreen('game'),
+  transition: 'pixel-melt', // or 'fade', 'crt-cut', etc.
 });
 </code></pre>
-<p>Engine owns the slide canvas, transition timing, &quot;Press Enter to continue&quot; prompt, image preload, and pixel-grid effect — same patterns indie-odyssey already has, but shared.
-<strong>Effort:</strong> Medium — port indie-odyssey&#39;s helpers up into <code>runtime/api-story.js</code> (new file) and expose as <code>nova64.story</code>.</p>
-<h3>15. MP4 / video playback support ✅ LANDED (<code>nova64.video</code>)</h3>
+<p>Engine owns the slide canvas, transition timing, "Press Enter to continue" prompt, image preload, and pixel-grid effect — same patterns indie-odyssey already has, but shared.
+<strong>Effort:</strong> Medium — port indie-odyssey's helpers up into <code>runtime/api-story.js</code> (new file) and expose as <code>nova64.story</code>.</p>
+<h3 id="15-mp4-video-playback-support-landed-nova64video">15. MP4 / video playback support ✅ LANDED (<code>nova64.video</code>)</h3>
 <blockquote>
 <p><strong>Now cross-backend.</strong> Web, Godot, and RetroArch all play real video from one
 <code>nova64.video.playFullscreen</code> call (RetroArch decodes MPEG1 in-core via
 <code>pl_mpeg</code>, with MP2 audio mixing). See <a href="/docs/VIDEO_GUIDE">VIDEO_GUIDE.md</a> and
-<a href="../examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>. Item #17
+<a href="/examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>. Item #17
 below (RetroArch/Godot hosts) is now landed, not a stub.</p>
 </blockquote>
-<p><strong>Why it matters:</strong> cutscenes, animated logos, in-world TV screens, FMV-style sequences. There&#39;s currently no engine-supported path — carts would have to manually create a <code>&lt;video&gt;</code> element, manage z-index against the WebGL canvas, and worry about the same <code>canvas { background: #000 }</code> CSS trap that bit indie-odyssey combat overlays.
+<p><strong>Why it matters:</strong> cutscenes, animated logos, in-world TV screens, FMV-style sequences. There's currently no engine-supported path — carts would have to manually create a <code>&lt;video&gt;</code> element, manage z-index against the WebGL canvas, and worry about the same <code>canvas { background: #000 }</code> CSS trap that bit indie-odyssey combat overlays.
 <strong>Proposed shape:</strong></p>
 <pre><code class="language-js">// Full-screen video (cutscene / intro)
-nova64.video.play(&#39;assets/intro.mp4&#39;, { onFinish: () =&gt; setScreen(&#39;game&#39;) });
+nova64.video.play('assets/intro.mp4', { onFinish: () =&gt; setScreen('game') });
 
 // In-world video texture (TV screen, billboard, monitor mesh)
-const tex = nova64.video.loadTexture(&#39;assets/news_loop.mp4&#39;, { loop: true });
+const tex = nova64.video.loadTexture('assets/news_loop.mp4', { loop: true });
 nova64.scene.setMeshTexture(tvMeshId, tex);
 </code></pre>
 <p>Both paths use the same underlying <code>HTMLVideoElement</code> — the engine wires it into the framebuffer overlay or as a <code>THREE.VideoTexture</code> depending on call site. Background must be set to <code>transparent</code> (see lesson from indie-odyssey skybox session).
 <strong>Effort:</strong> Medium-High — <code>THREE.VideoTexture</code> for in-world is straightforward; full-screen cutscene needs to slot into the cart framebuffer overlay z-stack and handle autoplay-policy unlocks (audio requires user gesture in some browsers).</p>
 <p><strong>Landed status:</strong> <code>runtime/api-video.js</code> ships <code>loadTexture(url, opts)</code> and
 <code>playFullscreen(url, opts)</code>. The texture handle exposes
-<code>applyToMesh(meshId)</code> which wires <code>THREE.VideoTexture</code> into the mesh&#39;s
+<code>applyToMesh(meshId)</code> which wires <code>THREE.VideoTexture</code> into the mesh's
 <code>material.map</code> on Three.js, and <code>BABYLON.VideoTexture</code> into
 <code>material.diffuseTexture</code> / <code>albedoTexture</code> on Babylon.js. RetroArch and
 Godot hosts fall through to a graceful no-op stub (see item #17 below for
 the follow-up).</p>
-<h3>16. Grid-driven level/dungeon builder ✅ LANDED (<code>nova64.level</code>)</h3>
+<h3 id="16-grid-driven-leveldungeon-builder-landed-nova64level">16. Grid-driven level/dungeon builder ✅ LANDED (<code>nova64.level</code>)</h3>
 <p><strong>Why it matters:</strong> every dungeon-crawler, top-down RPG, or grid puzzle
 cart re-implements the same pattern — a 2D grid + a tile spec map + a
-list of &quot;special&quot; locations that gets a placeholder mesh, an optional
-GLB model, and an optional point light. Indie Odyssey&#39;s <code>buildLevel</code>
-was ~150 lines of this; future carts shouldn&#39;t have to write it again.</p>
+list of "special" locations that gets a placeholder mesh, an optional
+GLB model, and an optional point light. Indie Odyssey's <code>buildLevel</code>
+was ~150 lines of this; future carts shouldn't have to write it again.</p>
 <p><strong>Landed shape:</strong></p>
 <pre><code class="language-js">const level = nova64.level.fromGrid({
   grid: [[1,1,1,1,1], [1,0,0,0,1], [1,0,0,0,1], [1,0,0,0,1], [1,1,1,1,1]],
   tileSize: 1,
   origin: [0, 0, 0],
   tiles: {
-    1: { type: &#39;wall&#39;, color: 0x10051c, height: 2, emissive: 0x00aaff, emissiveIntensity: 0.3 },
-    0: { type: &#39;open&#39;, floorColor: 0x07010d, ceilingColor: 0x1f4f9a },
+    1: { type: 'wall', color: 0x10051c, height: 2, emissive: 0x00aaff, emissiveIntensity: 0.3 },
+    0: { type: 'open', floorColor: 0x07010d, ceilingColor: 0x1f4f9a },
   },
   specials: [
-    { x: 2, z: 2, type: &#39;portal&#39;, color: 0xff00cc, model: &#39;portal.glb&#39;,
+    { x: 2, z: 2, type: 'portal', color: 0xff00cc, model: 'portal.glb',
       light: { color: 0xff00cc, intensity: 1.2 } },
   ],
 });
@@ -516,45 +519,47 @@ level.destroy();         // cleanup all meshes + lights at once
 <p>Tile types beyond <code>wall</code>/<code>open</code> can supply a <code>spawn(p, x, z, tile)</code>
 function for custom geometry. The returned handle owns the mesh ids so
 cart cleanup is a one-liner.</p>
-<h3>17. Video on RetroArch + Godot hosts (follow-up to #15) ✅ LANDED</h3>
+<h3 id="17-video-on-retroarch-godot-hosts-follow-up-to-15-landed">17. Video on RetroArch + Godot hosts (follow-up to #15) ✅ LANDED</h3>
 <p>Both native hosts now play <strong>real fullscreen video</strong>, not a stub — full guide in
 <a href="/docs/VIDEO_GUIDE">VIDEO_GUIDE.md</a>, demo in
-<a href="../examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>.</p>
+<a href="/examples/story-video-demo/code.js"><code>examples/story-video-demo</code></a>.</p>
 <ul>
 <li><strong>RetroArch</strong>: the libretro core decodes MPEG1 (<code>.mpg</code>) in-core via the
-vendored single-header <a href="https://github.com/seacloud9/nova64/blob/main/retroarch/pl_mpeg.h"><code>retroarch/pl_mpeg.h</code></a>
-(<code>__novaVideoOpen/Advance/Blit/Close</code>). Decoded frames blit into the 2D
-framebuffer — shown directly in software mode, composited over 3D in GLES.
-MP2 audio is mixed into the core&#39;s audio output (gated on <code>plm_probe</code>).</li>
+  vendored single-header <a href="https://github.com/seacloud9/nova64/blob/v0.5.6/retroarch/pl_mpeg.h"><code>retroarch/pl_mpeg.h</code></a>
+  (<code>__novaVideoOpen/Advance/Blit/Close</code>). Decoded frames blit into the 2D
+  framebuffer — shown directly in software mode, composited over 3D in GLES.
+  MP2 audio is mixed into the core's audio output (gated on <code>plm_probe</code>).</li>
 <li><strong>Godot</strong>: the gdextension bridge drives a native <code>VideoStreamPlayer</code>
-(<code>video.playFullscreen/stop/poll</code>), playing Theora <code>.ogv</code>.</li>
+  (<code>video.playFullscreen/stop/poll</code>), playing Theora <code>.ogv</code>.</li>
 </ul>
-<p><code>nova64.video.loadTexture</code> (in-world &quot;TV&quot; texture) now works on <strong>all three
+<p><code>nova64.video.loadTexture</code> (in-world "TV" texture) now works on <strong>all three
 backends</strong> — web (<code>VideoTexture</code>), RetroArch (MPEG1 → GLES texture, re-uploaded
 each frame), and Godot (offscreen <code>VideoStreamPlayer</code> → <code>get_video_texture()</code>
 bound to the mesh material). Bind it with <code>applyToMesh(meshId)</code>. Demo:
-<a href="../examples/tv-demo/code.js"><code>examples/tv-demo</code></a>. Generate per-backend assets
-with <a href="https://github.com/seacloud9/nova64/blob/main/scripts/transcode-video.py"><code>scripts/transcode-video.py</code></a>.</p>
-<hr>
+<a href="/examples/tv-demo/code.js"><code>examples/tv-demo</code></a>. Generate per-backend assets
+with <a href="https://github.com/seacloud9/nova64/blob/v0.5.6/scripts/transcode-video.py"><code>scripts/transcode-video.py</code></a>.</p>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🟢 Quality-of-Life Improvements</h2>
-<h3>9. <code>printCentered</code> is not discoverable</h3>
+<h2 id="quality-of-life-improvements">🟢 Quality-of-Life Improvements</h2>
+<h3 id="9-printcentered-is-not-discoverable">9. <code>printCentered</code> is not discoverable</h3>
 <p><strong>File:</strong> <code>runtime/api-2d.js</code>
 <code>printCentered(text, y, color)</code> exists and works well, but many demos re-implement text centering manually because <code>print()</code> dominates examples. The function should be demonstrated in at least one prominent demo.</p>
-<h3>10. <code>createPointLight</code> signature unclear</h3>
+<h3 id="10-createpointlight-signature-unclear">10. <code>createPointLight</code> signature unclear</h3>
 <p><strong>File:</strong> <code>runtime/api-3d.js</code>
 <code>createPointLight</code> exists but its signature (does it take intensity? color? range?) is not documented and not obvious from usage in demos. Add clear JSDoc and a usage example.</p>
-<h3>11. <code>print()</code> has no size parameter — requires <code>setFont()</code> call first</h3>
-<p>Cart authors wanting larger HUD text must call <code>setFont(&#39;large&#39;)</code> before <code>print()</code> and reset it after. A convenience overload <code>print(text, x, y, color, size?)</code> would reduce boilerplate.</p>
-<h3>12. No built-in crosshair / reticle helper</h3>
+<h3 id="11-print-has-no-size-parameter-requires-setfont-call-first">11. <code>print()</code> has no size parameter — requires <code>setFont()</code> call first</h3>
+<p>Cart authors wanting larger HUD text must call <code>setFont('large')</code> before <code>print()</code> and reset it after. A convenience overload <code>print(text, x, y, color, size?)</code> would reduce boilerplate.</p>
+<h3 id="12-no-built-in-crosshair-reticle-helper">12. No built-in crosshair / reticle helper</h3>
 <p>Several FPS and space-shooter demos manually draw a crosshair using <code>line()</code> or <code>rect()</code>. A simple <code>drawCrosshair(x, y, size, color, style?)</code> in <code>api-2d.js</code> would reduce copy-paste code.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Summary Priority Order</h2>
+<h2 id="summary-priority-order">Summary Priority Order</h2>
 <table>
 <thead>
 <tr>
@@ -564,7 +569,8 @@ with <a href="https://github.com/seacloud9/nova64/blob/main/scripts/transcode-vi
 <th>Effort</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>1</td>
 <td><code>createCylinder()</code> broken</td>
 <td>🔴 Bug</td>
@@ -666,7 +672,8 @@ with <a href="https://github.com/seacloud9/nova64/blob/main/scripts/transcode-vi
 <td>🟢 QoL</td>
 <td>Low</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
         </section>
 
         <footer>

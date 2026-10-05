@@ -376,42 +376,49 @@
         </header>
 
         <section class="md">
-<h2>🌟 <strong>Migration to v0.2.0</strong></h2>
-<h3>🎯 <strong>Breaking Changes</strong></h3>
+<p>Transform your Nova64 experiences into <strong>spectacular 3D fantasy console adventures</strong> with advanced materials, cinematic lighting, and Nintendo 64/PlayStation aesthetics!</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="migration-to-v020">🌟 <strong>Migration to v0.2.0</strong></h2>
+<h3 id="breaking-changes">🎯 <strong>Breaking Changes</strong></h3>
 <ul>
 <li><strong>Three.js Only</strong>: Nova64 now exclusively uses Three.js for maximum 3D performance</li>
 <li><strong>Enhanced API</strong>: New 3D functions with improved parameter structure</li>
 <li><strong>Material System</strong>: Advanced material options with new configuration format</li>
 <li><strong>Camera Controls</strong>: Improved camera system with smooth interpolation</li>
 </ul>
-<h3>✅ <strong>Backward Compatibility</strong></h3>
+<h3 id="backward-compatibility">✅ <strong>Backward Compatibility</strong></h3>
 <ul>
 <li><strong>100% 2D Compatibility</strong>: All existing 2D carts work without modification</li>
 <li><strong>Gradual Migration</strong>: Add 3D elements incrementally to existing projects</li>
 <li><strong>API Preservation</strong>: Core 2D functions remain unchanged</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>🌟 <strong>Revolutionary 3D Transformation</strong></h2>
-<h3>🎪 <strong>Advanced Rendering Pipeline</strong></h3>
+<h2 id="revolutionary-3d-transformation">🌟 <strong>Revolutionary 3D Transformation</strong></h2>
+<h3 id="advanced-rendering-pipeline">🎪 <strong>Advanced Rendering Pipeline</strong></h3>
 <ol>
 <li><strong>🎯 3D Scene Rendering</strong>: Automatic Three.js rendering with advanced materials and lighting</li>
 <li><strong>🎨 2D Overlay Compositing</strong>: High-precision transparent overlay for HUD and UI elements</li>
 <li><strong>✅ 100% Backward Compatibility</strong>: All existing 2D carts work flawlessly with zero changes</li>
 <li><strong>⚡ Hot Reloading</strong>: Instant updates without losing game state during development</li>
 </ol>
-<h3>📐 <strong>Coordinate Systems</strong></h3>
+<h3 id="coordinate-systems">📐 <strong>Coordinate Systems</strong></h3>
 <ul>
 <li><strong>🌍 3D World Space</strong>: Standard 3D coordinates (Y-up) with perspective projection</li>
 <li><strong>🖥️ 2D Screen Space</strong>: 320×180 pixel overlay coordinates (Y-down) for UI elements</li>
 <li><strong>🎯 Hybrid Mapping</strong>: Seamless conversion between 2D screen and 3D world positions</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>🎯 <strong>Spectacular Migration Steps</strong></h2>
-<h3>🌟 <strong>Step 1: Advanced 3D Scene Setup</strong></h3>
+<h2 id="spectacular-migration-steps">🎯 <strong>Spectacular Migration Steps</strong></h2>
+<h3 id="step-1-advanced-3d-scene-setup">🌟 <strong>Step 1: Advanced 3D Scene Setup</strong></h3>
 <p>Transform your cart into a cinematic 3D experience:</p>
 <pre><code class="language-javascript">// ❌ Before (Basic 2D)
 export function init() {
@@ -421,30 +428,30 @@ export function init() {
 
 // ✅ After (Ultimate 3D Fantasy Console)
 export function init() {
-  console.log(&#39;🚀 Initializing spectacular 3D world...&#39;);
+  console.log('🚀 Initializing spectacular 3D world...');
 
   // 🎪 Advanced 3D scene setup
-  setCameraPosition(0, 5, 10); // Cinematic camera position
-  setCameraTarget(0, 0, 0); // Look at world origin
-  setCameraFOV(75); // Wide-angle perspective
+  nova64.camera.setCameraPosition(0, 5, 10); // Cinematic camera position
+  nova64.camera.setCameraTarget(0, 0, 0); // Look at world origin
+  nova64.camera.setCameraFOV(75); // Wide-angle perspective
 
   // 🌫️ Atmospheric effects for depth and mood
-  setFog(0x1a1a2e, 8, 25); // Mysterious purple fog
+  nova64.light.setFog(0x1a1a2e, 8, 25); // Mysterious purple fog
 
   // 💡 Enhanced lighting system
-  setAmbientLight(0x404060, 0.3); // Subtle ambient lighting
-  setDirectionalLight(0xffffff, 0.8); // Strong directional light
+  nova64.light.setAmbientLight(0x404060, 0.3); // Subtle ambient lighting
+  nova64.light.setDirectionalLight(0xffffff, 0.8); // Strong directional light
 
   // ✨ Visual enhancement effects
   enablePostProcessing(true); // ACES tone mapping + bloom
-  setRenderQuality(&#39;high&#39;); // 4K shadows, full effects
+  setRenderQuality('high'); // 4K shadows, full effects
 
   // 🎨 Existing 2D initialization (still works!)
-  cls();
+  nova64.draw.cls();
   // ... your existing 2D setup
 }
 </code></pre>
-<h3>🎨 <strong>Step 2: Advanced 3D Object Creation</strong></h3>
+<h3 id="step-2-advanced-3d-object-creation">🎨 <strong>Step 2: Advanced 3D Object Creation</strong></h3>
 <p>Add spectacular 3D objects with professional materials:</p>
 <pre><code class="language-javascript">let player2D = { x: 160, y: 90 }; // Existing 2D player
 let player3D,
@@ -456,7 +463,7 @@ export function init() {
 
   // 👤 Create spectacular 3D player with advanced materials
   player3D = createCube(0, 1, 0, 1, {
-    material: &#39;metallic&#39;, // Professional metallic surface
+    material: 'metallic', // Professional metallic surface
     color: 0x0088ff, // Bright blue primary color
     emissive: 0x002244, // Subtle blue glow
     metalness: 0.8, // High metallic reflection
@@ -465,11 +472,11 @@ export function init() {
 
   // 🌍 Create immersive world environment
   const ground = createPlane(0, -1, 0, 30, 30, {
-    material: &#39;standard&#39;,
+    material: 'standard',
     color: 0x2a4d3a, // Forest green ground
     roughness: 0.8, // Natural rough surface
   });
-  rotateMesh(ground, -Math.PI / 2, 0, 0); // Make horizontal
+  nova64.scene.rotateMesh(ground, -Math.PI / 2, 0, 0); // Make horizontal
 
   // ✨ Add magical floating crystals
   for (let i = 0; i &lt; 8; i++) {
@@ -479,7 +486,7 @@ export function init() {
       Math.sin((i * Math.PI) / 4) * 5,
       0.6,
       {
-        material: &#39;holographic&#39;, // Ultimate visual effect
+        material: 'holographic', // Ultimate visual effect
         color: 0xff0088,
         emissive: 0x440022,
       }
@@ -488,7 +495,7 @@ export function init() {
   }
 }
 </code></pre>
-<h3>📐 <strong>Step 3: Advanced Coordinate Transformation</strong></h3>
+<h3 id="step-3-advanced-coordinate-transformation">📐 <strong>Step 3: Advanced Coordinate Transformation</strong></h3>
 <p>Seamlessly convert between 2D screen and 3D world coordinates:</p>
 <pre><code class="language-javascript">// 🎯 Professional coordinate mapping with perspective correction
 function screen2DToWorld3D(screenX, screenY, depth = 0) {
@@ -523,7 +530,7 @@ function enhance2DWith3D(gameObject2D) {
 
   // Create spectacular 3D representation
   const mesh3D = createCube(world3D.x, world3D.y + 1, world3D.z, 0.8, {
-    material: &#39;emissive&#39;,
+    material: 'emissive',
     color: gameObject2D.color || 0xff4488,
     emissive: 0x220011,
   });
@@ -531,7 +538,7 @@ function enhance2DWith3D(gameObject2D) {
   return { ...gameObject2D, mesh3D, world3D };
 }
 </code></pre>
-<h3>⚡ <strong>Step 4: Enhanced Update System</strong></h3>
+<h3 id="step-4-enhanced-update-system">⚡ <strong>Step 4: Enhanced Update System</strong></h3>
 <p>Create smooth, responsive hybrid 2D/3D gameplay:</p>
 <pre><code class="language-javascript">export function update() {
   // 🎮 Enhanced input system with WASD + arrows support
@@ -539,27 +546,27 @@ function enhance2DWith3D(gameObject2D) {
   const rotationSpeed = 0.05;
 
   // Modern WASD movement (enhanced input system)
-  if (key(&#39;KeyW&#39;) || btn(2)) {
+  if (key('KeyW') || btn(2)) {
     // W or Up
     player2D.y -= 2;
     player3D.velocity.z = -moveSpeed;
   }
-  if (key(&#39;KeyS&#39;) || btn(3)) {
+  if (key('KeyS') || btn(3)) {
     // S or Down
     player2D.y += 2;
     player3D.velocity.z = moveSpeed;
   }
-  if (key(&#39;KeyA&#39;) || btn(0)) {
+  if (key('KeyA') || btn(0)) {
     // A or Left
     player2D.x -= 2;
     player3D.velocity.x = -moveSpeed;
   }
-  if (key(&#39;KeyD&#39;) || btn(1)) {
+  if (key('KeyD') || btn(1)) {
     // D or Right
     player2D.x += 2;
     player3D.velocity.x = moveSpeed;
   }
-  if (key(&#39;Space&#39;) || btn(4)) {
+  if (key('Space') || btn(4)) {
     // Space or Z button
     player3D.velocity.y = 0.08; // Jump with physics
   }
@@ -571,33 +578,33 @@ function enhance2DWith3D(gameObject2D) {
   const currentPos = getMeshPosition(player3D);
   const targetX = lerp(currentPos.x, world3D.x, 0.1);
   const targetZ = lerp(currentPos.z, world3D.z, 0.1);
-  setPosition(player3D, targetX, currentPos.y, targetZ);
+  nova64.scene.setPosition(player3D, targetX, currentPos.y, targetZ);
 
   // Apply physics (gravity, ground collision)
   player3D.velocity.y -= 0.01; // Gravity
   if (currentPos.y &lt;= 1) {
     // Ground collision
-    setPosition(player3D, targetX, 1, targetZ);
+    nova64.scene.setPosition(player3D, targetX, 1, targetZ);
     player3D.velocity.y = 0;
   }
 
   // 🎪 Spectacular world object animations
   worldObjects.forEach((obj, i) =&gt; {
     obj.spin += rotationSpeed;
-    rotateMesh(obj.mesh, obj.spin, obj.spin * 1.3, obj.spin * 0.7);
+    nova64.scene.rotateMesh(obj.mesh, obj.spin, obj.spin * 1.3, obj.spin * 0.7);
 
     // Dynamic floating motion
     const floatY = 2 + Math.sin(time * 0.02 + i) * 0.4;
     const pos = getMeshPosition(obj.mesh);
-    setPosition(obj.mesh, pos.x, floatY, pos.z);
+    nova64.scene.setPosition(obj.mesh, pos.x, floatY, pos.z);
   });
 
   // 📷 Cinematic camera following
-  setCameraPosition(world3D.x + 4, world3D.y + 3, world3D.z + 6);
-  setCameraTarget(world3D.x, world3D.y + 1, world3D.z);
+  nova64.camera.setCameraPosition(world3D.x + 4, world3D.y + 3, world3D.z + 6);
+  nova64.camera.setCameraTarget(world3D.x, world3D.y + 1, world3D.z);
 }
 </code></pre>
-<h3>🎨 <strong>Step 5: Professional Hybrid Rendering</strong></h3>
+<h3 id="step-5-professional-hybrid-rendering">🎨 <strong>Step 5: Professional Hybrid Rendering</strong></h3>
 <p>Create stunning 3D scenes with polished 2D HUD overlays:</p>
 <pre><code class="language-javascript">export function draw() {
   // 🎪 Advanced 3D rendering with cinematic effects
@@ -607,70 +614,71 @@ function enhance2DWith3D(gameObject2D) {
 
     // 🌟 Optional: Add dynamic lighting effects
     const lightIntensity = 0.8 + Math.sin(time * 0.05) * 0.2;
-    setDirectionalLight(0xffffff, lightIntensity);
+    nova64.light.setDirectionalLight(0xffffff, lightIntensity);
 
     // 💫 Optional: Dynamic atmospheric effects
     const fogColor = Math.floor(Math.sin(time * 0.03) * 20 + 40);
-    setFog((fogColor &lt;&lt; 16) + (fogColor &lt;&lt; 8) + (fogColor + 20), 8, 25);
+    nova64.light.setFog((fogColor &lt;&lt; 16) + (fogColor &lt;&lt; 8) + (fogColor + 20), 8, 25);
   });
 
   // 📊 Professional HUD system (rendered over 3D)
-  cls(); // Clear 2D overlay (transparent background)
+  nova64.draw.cls(); // Clear 2D overlay (transparent background)
 
   // 🏆 Game statistics with modern styling
-  print(&#39;🏆 SCORE: 1,337&#39;, 10, 10, 0xffffff);
-  print(&#39;❤️  HEALTH: ██████████&#39;, 10, 26, 0xff4444);
-  print(&#39;💎 CRYSTALS: &#39; + collectedCrystals, 10, 42, 0x44ff88);
-  print(&#39;⚡ ENERGY: &#39; + Math.floor(playerEnergy), 10, 58, 0x4488ff);
+  nova64.draw.print('🏆 SCORE: 1,337', 10, 10, 0xffffff);
+  nova64.draw.print('❤️  HEALTH: ██████████', 10, 26, 0xff4444);
+  nova64.draw.print('💎 CRYSTALS: ' + collectedCrystals, 10, 42, 0x44ff88);
+  nova64.draw.print('⚡ ENERGY: ' + Math.floor(playerEnergy), 10, 58, 0x4488ff);
 
   // 🗺️ Advanced minimap with 3D awareness
   const mapX = 240,
     mapY = 10,
     mapSize = 70;
-  rect(mapX, mapY, mapSize, mapSize, 0x333333, true); // Map background
-  rect(mapX, mapY, mapSize, mapSize, 0x888888, false); // Map border
+  nova64.draw.rect(mapX, mapY, mapSize, mapSize, 0x333333, true); // Map background
+  nova64.draw.rect(mapX, mapY, mapSize, mapSize, 0x888888, false); // Map border
 
   // Draw 3D objects on minimap
   worldObjects.forEach(obj =&gt; {
     const pos = getMeshPosition(obj.mesh);
     const mapPosX = mapX + (pos.x + 10) * (mapSize / 20);
     const mapPosY = mapY + (pos.z + 10) * (mapSize / 20);
-    pset(mapPosX, mapPosY, 0xff0088); // Crystal positions
+    nova64.draw.pset(mapPosX, mapPosY, 0xff0088); // Crystal positions
   });
 
   // Player position on minimap
   const playerPos = getMeshPosition(player3D);
   const playerMapX = mapX + (playerPos.x + 10) * (mapSize / 20);
   const playerMapY = mapY + (playerPos.z + 10) * (mapSize / 20);
-  rect(playerMapX - 1, playerMapY - 1, 3, 3, 0x00ff00, true); // Player dot
+  nova64.draw.rect(playerMapX - 1, playerMapY - 1, 3, 3, 0x00ff00, true); // Player dot
 
   // 🎮 Control instructions
-  print(&#39;WASD: Move • Space: Jump • Mouse: Look&#39;, 10, 165, 0x888888);
+  nova64.draw.print('WASD: Move • Space: Jump • Mouse: Look', 10, 165, 0x888888);
 
   // 📈 Performance overlay (optional debug info)
   if (showDebug) {
     const stats = get3DStats();
-    print(`FPS: ${Math.round(1000 / deltaTime)}`, 270, 10, 0x88ff88);
-    print(`Triangles: ${stats.triangles}`, 270, 26, 0x88ff88);
-    print(`Objects: ${stats.objects}`, 270, 42, 0x88ff88);
+    nova64.draw.print(`FPS: ${Math.round(1000 / deltaTime)}`, 270, 10, 0x88ff88);
+    nova64.draw.print(`Triangles: ${stats.triangles}`, 270, 26, 0x88ff88);
+    nova64.draw.print(`Objects: ${stats.objects}`, 270, 42, 0x88ff88);
   }
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Common Patterns</h2>
-<h3>Camera Following 2D Character</h3>
+<h2 id="common-patterns">Common Patterns</h2>
+<h3 id="camera-following-2d-character">Camera Following 2D Character</h3>
 <pre><code class="language-js">export function update(dt) {
   // Update 2D player...
 
   // Make 3D camera follow 2D position
   const [worldX, , worldZ] = screen2DToWorld3D(player2D.x, player2D.y);
-  setCameraPosition(worldX, 5, worldZ + 5);
-  setCameraTarget(worldX, 0, worldZ);
+  nova64.camera.setCameraPosition(worldX, 5, worldZ + 5);
+  nova64.camera.setCameraTarget(worldX, 0, worldZ);
 }
 </code></pre>
-<h3>3D Background with 2D Gameplay</h3>
+<h3 id="3d-background-with-2d-gameplay">3D Background with 2D Gameplay</h3>
 <p>Perfect for platformers or shoot-em-ups:</p>
 <pre><code class="language-js">let terrain3D = [];
 let enemies2D = [];
@@ -693,20 +701,20 @@ export function update(dt) {
 
   // Animate 3D background
   terrain3D.forEach((cube, i) =&gt; {
-    rotateMesh(cube, 0, dt * 0.1, 0);
+    nova64.scene.rotateMesh(cube, 0, dt * 0.1, 0);
   });
 }
 
 export function draw() {
-  cls();
+  nova64.draw.cls();
 
   // Draw 2D gameplay elements
   enemies2D.forEach(enemy =&gt; {
-    rect(enemy.x, enemy.y, 16, 16, rgba8(255, 0, 0, 255), true);
+    nova64.draw.rect(enemy.x, enemy.y, 16, 16, rgba8(255, 0, 0, 255), true);
   });
 }
 </code></pre>
-<h3>Mixed 2D/3D Particles</h3>
+<h3 id="mixed-2d3d-particles">Mixed 2D/3D Particles</h3>
 <pre><code class="language-js">let particles2D = [];
 let particles3D = [];
 
@@ -736,11 +744,12 @@ function spawnExplosion(x, y) {
   }
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Performance Tips</h2>
-<h3>Efficient 3D Object Management</h3>
+<h2 id="performance-tips">Performance Tips</h2>
+<h3 id="efficient-3d-object-management">Efficient 3D Object Management</h3>
 <pre><code class="language-js">// Object pooling for frequently created/destroyed objects
 let particlePool = [];
 
@@ -752,11 +761,11 @@ function getPooledParticle() {
 }
 
 function returnToPool(meshId) {
-  setPosition(meshId, 1000, 1000, 1000); // Move offscreen
+  nova64.scene.setPosition(meshId, 1000, 1000, 1000); // Move offscreen
   particlePool.push(meshId);
 }
 </code></pre>
-<h3>LOD (Level of Detail)</h3>
+<h3 id="lod-level-of-detail">LOD (Level of Detail)</h3>
 <pre><code class="language-js">export function update(dt) {
   const cameraPos = getCamera().position;
 
@@ -765,57 +774,59 @@ function returnToPool(meshId) {
 
     if (distance &gt; 20) {
       // Hide distant objects
-      setPosition(obj.mesh, 1000, 1000, 1000);
+      nova64.scene.setPosition(obj.mesh, 1000, 1000, 1000);
     } else if (distance &gt; 10) {
       // Use low-detail version
-      setScale(obj.mesh, 0.5);
+      nova64.scene.setScale(obj.mesh, 0.5);
     } else {
       // Full detail
-      setScale(obj.mesh, 1);
+      nova64.scene.setScale(obj.mesh, 1);
     }
   });
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Debugging</h2>
-<h3>Visual Debugging</h3>
+<h2 id="debugging">Debugging</h2>
+<h3 id="visual-debugging">Visual Debugging</h3>
 <pre><code class="language-js">export function draw() {
-  cls();
+  nova64.draw.cls();
 
   // Show 3D object count
-  print(`3D Objects: ${get3DStats().render.geometries}`, 8, 8, rgba8(255, 255, 255, 255));
+  nova64.draw.print(`3D Objects: ${get3DStats().render.geometries}`, 8, 8, rgba8(255, 255, 255, 255));
 
   // Show renderer type
-  const rendererInfo = typeof createCube === &#39;function&#39; ? &#39;Three.js&#39; : &#39;WebGL2&#39;;
-  print(`Renderer: ${rendererInfo}`, 8, 24, rgba8(200, 200, 200, 255));
+  const rendererInfo = typeof createCube === 'function' ? 'Three.js' : 'WebGL2';
+  nova64.draw.print(`Renderer: ${rendererInfo}`, 8, 24, rgba8(200, 200, 200, 255));
 
   // Performance overlay
   const stats = get3DStats();
   if (stats.render) {
-    print(`Triangles: ${stats.render.triangles}`, 8, 40, rgba8(150, 255, 150, 255));
-    print(`Draw Calls: ${stats.render.calls}`, 8, 56, rgba8(150, 255, 150, 255));
+    nova64.draw.print(`Triangles: ${stats.render.triangles}`, 8, 40, rgba8(150, 255, 150, 255));
+    nova64.draw.print(`Draw Calls: ${stats.render.calls}`, 8, 56, rgba8(150, 255, 150, 255));
   }
 }
 </code></pre>
-<h3>Console Debugging</h3>
+<h3 id="console-debugging">Console Debugging</h3>
 <pre><code class="language-js">// Check if 3D features are available
-if (typeof createCube === &#39;function&#39;) {
-  console.log(&#39;3D features available&#39;);
+if (typeof createCube === 'function') {
+  console.log('3D features available');
 } else {
-  console.log(&#39;Running in 2D-only mode&#39;);
+  console.log('Running in 2D-only mode');
 }
 
 // Get object information
 const cube = createCube(1, 0xff0000);
-console.log(&#39;Cube position:&#39;, getPosition(cube));
-console.log(&#39;Cube rotation:&#39;, getRotation(cube));
+console.log('Cube position:', getPosition(cube));
+console.log('Cube rotation:', getRotation(cube));
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Best Practices</h2>
+<h2 id="best-practices">Best Practices</h2>
 <ol>
 <li><strong>Start Simple</strong>: Add one 3D element at a time to existing carts</li>
 <li><strong>Maintain 2D Feel</strong>: Use 3D to enhance, not replace, the 2D aesthetic</li>
@@ -823,10 +834,11 @@ console.log(&#39;Cube rotation:&#39;, getRotation(cube));
 <li><strong>Consistent Style</strong>: Use N64-style effects (<code>enablePixelation</code>, <code>enableDithering</code>)</li>
 <li><strong>Test Fallbacks</strong>: Ensure carts work on WebGL2-only systems</li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Example: Upgrading a Shooter</h2>
+<h2 id="example-upgrading-a-shooter">Example: Upgrading a Shooter</h2>
 <pre><code class="language-js">// Before: Pure 2D shooter
 let player = { x: 160, y: 140 };
 let bullets = [];

@@ -122,6 +122,8 @@ function readLines(dv) {
       v1: dv.getUint16(i, true),
       v2: dv.getUint16(i + 2, true),
       flags: dv.getUint16(i + 4, true),
+      special: dv.getUint16(i + 6, true),
+      tag: dv.getUint16(i + 8, true),
       right: dv.getInt16(i + 10, true),
       left: dv.getInt16(i + 12, true),
     });
@@ -183,6 +185,35 @@ function rasterSeg(out, x1, z1, x2, z2, r) {
     const t = i / steps;
     out.push({ x: x1 + (x2 - x1) * t, z: z1 + (z2 - z1) * t, r });
   }
+}
+
+// DOOM movement constants, expressed in original map units so callers can scale them.
+// The player is a 16-unit-radius cylinder 56 units tall that can step up 24 units.
+const DOOM_PLAYER_RADIUS = 16;
+const DOOM_MAX_STEP = 24;
+const DOOM_PLAYER_HEIGHT = 56;
+// Carts that render a WAD without implementing line specials have no way to open
+// a door or ride a lift, so a strict 24-unit step seals off every lift shaft and
+// leaves large parts of a map unreachable. Explorer-style carts use this looser
+// limit instead and smooth the climb visually.
+const DOOM_EXPLORER_MAX_STEP = 128;
+
+// Squared distance from a point to a line segment in the XZ plane.
+function distSqToSegment(px, pz, ax, az, bx, bz) {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const lenSq = dx * dx + dz * dz;
+  if (lenSq < 1e-12) {
+    const ox = px - ax;
+    const oz = pz - az;
+    return ox * ox + oz * oz;
+  }
+  let t = ((px - ax) * dx + (pz - az) * dz) / lenSq;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const ox = px - (ax + dx * t);
+  const oz = pz - (az + dz * t);
+  return ox * ox + oz * oz;
 }
 
 function pointNearSegment(px, pz, ax, az, bx, bz, epsilon) {
@@ -250,13 +281,51 @@ function buildSectorFloorData(vertexes, linedefs, sidedefs, sectors, cx, cy, sca
   return sectorFloors;
 }
 
-function buildFloorHeightLookup(sectorFloors) {
+// Buckets a sector's edges into horizontal z bands. A point-in-sector test only
+// needs the edges that span the query's z, so a 400-edge outdoor sector costs a
+// handful of comparisons instead of 400. Built lazily — maps have many sectors
+// the player never visits.
+const Z_BAND = 4;
+
+function edgeBandsFor(sector) {
+  if (sector._bands) return sector._bands;
+  const bands = new Map();
+  for (const edge of sector.edges) {
+    const b0 = Math.floor(Math.min(edge.z1, edge.z2) / Z_BAND);
+    const b1 = Math.floor(Math.max(edge.z1, edge.z2) / Z_BAND);
+    for (let b = b0; b <= b1; b++) {
+      let bucket = bands.get(b);
+      if (!bucket) {
+        bucket = [];
+        bands.set(b, bucket);
+      }
+      bucket.push(edge);
+    }
+  }
+  sector._bands = bands;
+  return bands;
+}
+
+function pointInSector(px, pz, sector) {
+  const bands = edgeBandsFor(sector);
+  const band = bands.get(Math.floor(pz / Z_BAND));
+  if (!band) return false;
+  return pointInEdges(px, pz, band);
+}
+
+// Shared spatial index over the sectors that actually enclose floor area, used by
+// both the floor and ceiling lookups.
+function buildSectorIndex(sectorFloors) {
   const activeSectors = sectorFloors.filter(sector => sector.bounds && sector.edges.length > 0);
   let minX = Infinity;
   let minZ = Infinity;
   for (const sector of activeSectors) {
     minX = Math.min(minX, sector.bounds.minX);
     minZ = Math.min(minZ, sector.bounds.minZ);
+  }
+  if (!Number.isFinite(minX)) {
+    minX = 0;
+    minZ = 0;
   }
 
   const cellSize = 8;
@@ -279,21 +348,314 @@ function buildFloorHeightLookup(sectorFloors) {
     }
   }
 
+  return {
+    activeSectors,
+    candidatesAt(x, z) {
+      if (activeSectors.length === 0) return null;
+      const gx = Math.floor((x - minX) / cellSize);
+      const gz = Math.floor((z - minZ) / cellSize);
+      return grid.get(`${gx},${gz}`) || null;
+    },
+  };
+}
+
+// Where sectors overlap in the index we take the highest floor, so a point under
+// a raised ledge resolves to the surface the player would stand on.
+function buildFloorHeightLookup(sectorFloors, index) {
+  const idx = index || buildSectorIndex(sectorFloors);
   return function getFloorHeight(x, z, fallback = 0) {
-    if (activeSectors.length === 0) return fallback;
-    const gx = Math.floor((x - minX) / cellSize);
-    const gz = Math.floor((z - minZ) / cellSize);
-    const candidates = grid.get(`${gx},${gz}`) || activeSectors;
+    const candidates = idx.candidatesAt(x, z);
+    if (!candidates) return fallback;
     let best = null;
     for (const sector of candidates) {
       const b = sector.bounds;
       if (x < b.minX - 0.02 || x > b.maxX + 0.02 || z < b.minZ - 0.02 || z > b.maxZ + 0.02)
         continue;
-      if (pointInEdges(x, z, sector.edges)) {
-        if (best == null || sector.floorH > best) best = sector.floorH;
-      }
+      if (!pointInSector(x, z, sector)) continue;
+      if (best == null || sector.floorH > best) best = sector.floorH;
     }
     return best == null ? fallback : best;
+  };
+}
+
+// Ceiling counterpart: lowest ceiling wins, so both lookups describe the same
+// walkable slab.
+function buildCeilingHeightLookup(sectorFloors, sectorData, index) {
+  const idx = index || buildSectorIndex(sectorFloors);
+  return function getCeilingHeight(x, z, fallback = 0) {
+    const candidates = idx.candidatesAt(x, z);
+    if (!candidates) return fallback;
+    let best = null;
+    for (const sector of candidates) {
+      const b = sector.bounds;
+      if (x < b.minX - 0.02 || x > b.maxX + 0.02 || z < b.minZ - 0.02 || z > b.maxZ + 0.02)
+        continue;
+      if (!pointInSector(x, z, sector)) continue;
+      const ceil = sectorData[sector.index]?.ceilH;
+      if (ceil == null) continue;
+      if (best == null || ceil < best) best = ceil;
+    }
+    return best == null ? fallback : best;
+  };
+}
+
+// ── Wall collider ──
+//
+// Collision is done against the real linedef segments, not against a cloud of
+// rasterized points: a point cloud inflates every wall by its sample radius in
+// both axes, which seals DOOM's 64-unit doorways shut and makes maps
+// untraversable. A circle-vs-segment test keeps doorways the width the mapper
+// drew them.
+function createWallCollider(colLines, options = {}) {
+  const scale = options.scale || 1;
+  const radius = options.radius != null ? options.radius : DOOM_PLAYER_RADIUS * scale;
+  const maxStep = options.maxStep != null ? options.maxStep : DOOM_MAX_STEP * scale;
+  const floorAt = typeof options.floorAt === 'function' ? options.floorAt : null;
+
+  const lines = (colLines || []).filter(l => l.solid);
+
+  // Uniform grid so a frame's worth of queries stays cheap on large maps.
+  const cellSize = Math.max(2, radius * 4);
+  const grid = new Map();
+  let minX = Infinity;
+  let minZ = Infinity;
+  for (const l of lines) {
+    minX = Math.min(minX, l.x1, l.x2);
+    minZ = Math.min(minZ, l.z1, l.z2);
+  }
+  if (!Number.isFinite(minX)) {
+    minX = 0;
+    minZ = 0;
+  }
+  for (const l of lines) {
+    const gx0 = Math.floor((Math.min(l.x1, l.x2) - minX) / cellSize);
+    const gx1 = Math.floor((Math.max(l.x1, l.x2) - minX) / cellSize);
+    const gz0 = Math.floor((Math.min(l.z1, l.z2) - minZ) / cellSize);
+    const gz1 = Math.floor((Math.max(l.z1, l.z2) - minZ) / cellSize);
+    for (let gz = gz0; gz <= gz1; gz++) {
+      for (let gx = gx0; gx <= gx1; gx++) {
+        const key = `${gx},${gz}`;
+        let bucket = grid.get(key);
+        if (!bucket) {
+          bucket = [];
+          grid.set(key, bucket);
+        }
+        bucket.push(l);
+      }
+    }
+  }
+
+  // Lines whose cells can touch a circle of `r` centred at (x, z).
+  function candidates(x, z, r) {
+    const span = Math.ceil((r + 0.001) / cellSize);
+    const gx = Math.floor((x - minX) / cellSize);
+    const gz = Math.floor((z - minZ) / cellSize);
+    const out = [];
+    for (let dz = -span; dz <= span; dz++) {
+      for (let dx = -span; dx <= span; dx++) {
+        const bucket = grid.get(`${gx + dx},${gz + dz}`);
+        if (bucket) out.push(bucket);
+      }
+    }
+    return out;
+  }
+
+  function blocked(x, z, r = radius) {
+    const rSq = r * r;
+    for (const bucket of candidates(x, z, r)) {
+      for (const l of bucket) {
+        if (distSqToSegment(x, z, l.x1, l.z1, l.x2, l.z2) < rSq) return true;
+      }
+    }
+    return false;
+  }
+
+  // Shoves a penetrating actor back out so a bad spawn point can never wedge the
+  // player in place forever. Runs several passes: one pass only escapes the single
+  // nearest line, which leaves an actor stuck in a corner still inside the other
+  // wall, and move() would then refuse both axes for good.
+  function resolve(x, z, r = radius, passes = 4) {
+    let cx = x;
+    let cz = z;
+    let pushed = false;
+    for (let pass = 0; pass < passes; pass++) {
+      let best = null;
+      let bestSq = Infinity;
+      const rSq = r * r;
+      for (const bucket of candidates(cx, cz, r)) {
+        for (const l of bucket) {
+          const d = distSqToSegment(cx, cz, l.x1, l.z1, l.x2, l.z2);
+          if (d < rSq && d < bestSq) {
+            bestSq = d;
+            best = l;
+          }
+        }
+      }
+      if (!best) break;
+      const dx = best.x2 - best.x1;
+      const dz = best.z2 - best.z1;
+      let nx = -dz;
+      let nz = dx;
+      const nLen = Math.hypot(nx, nz);
+      if (nLen < 1e-9) break;
+      nx /= nLen;
+      nz /= nLen;
+      // Push along whichever side of the line the actor is already on.
+      const side = (cx - best.x1) * nx + (cz - best.z1) * nz >= 0 ? 1 : -1;
+      const push = r - Math.sqrt(bestSq) + 0.01;
+      cx += nx * side * push;
+      cz += nz * side * push;
+      pushed = true;
+    }
+    return { x: cx, z: cz, pushed };
+  }
+
+  // Axis-separated slide: each axis is tried on its own so the player glides
+  // along angled walls instead of sticking to them.
+  function move(x, z, dx, dz, opts = {}) {
+    const r = opts.radius != null ? opts.radius : radius;
+    const step = opts.maxStep != null ? opts.maxStep : maxStep;
+    const floorFn = opts.floorAt || floorAt;
+    const fromFloor = opts.floorY;
+
+    let cx = x;
+    let cz = z;
+    if (blocked(cx, cz, r)) {
+      const out = resolve(cx, cz, r);
+      cx = out.x;
+      cz = out.z;
+    }
+
+    // A move is rejected when the destination floor is more than one step above
+    // the floor we are standing on — DOOM's 24-unit step limit.
+    const stepOk = (tx, tz) => {
+      if (!floorFn || fromFloor == null || !Number.isFinite(step)) return true;
+      const target = floorFn(tx, tz, null);
+      if (target == null) return true;
+      return target - fromFloor <= step + 1e-6;
+    };
+
+    const tryAxis = (tx, tz) => !blocked(tx, tz, r) && stepOk(tx, tz);
+
+    if (dx !== 0 && tryAxis(cx + dx, cz)) cx += dx;
+    if (dz !== 0 && tryAxis(cx, cz + dz)) cz += dz;
+    return { x: cx, z: cz };
+  }
+
+  return { lines, radius, maxStep, blocked, resolve, move };
+}
+
+// ── Reachability ──
+//
+// Flood fills the walkable floor outward from a start point using the same
+// collider the player moves with. Carts use it to avoid depending on parts of a
+// map that need mechanics they do not implement (doors, switches, teleporters):
+// an enemy sealed behind a locked door can never be killed, so a cart that
+// requires every kill to finish a level would deadlock there.
+function buildReachability(collider, start, options = {}) {
+  const cell = options.cell || 0.6;
+  const floorAt = options.floorAt || null;
+  const maxCells = options.maxCells || 400000;
+  const radius = options.radius;
+  const maxStep = options.maxStep != null ? options.maxStep : collider.maxStep;
+
+  // `seen` only de-duplicates work. `reach` is the answer: a cell lands there
+  // solely by being stepped into, so a cell the collider refused never counts as
+  // reachable. Collapsing the two makes the result depend on traversal order.
+  const seen = new Set();
+  const reach = new Set();
+  const key = (gx, gz) => gx + ',' + gz;
+  // The grid is anchored on the start point so a doorway is sampled down its
+  // middle rather than along an arbitrary lattice offset.
+  const gridX = v => Math.round((v - start.x) / cell);
+  const gridZ = v => Math.round((v - start.z) / cell);
+
+  let origin = { x: start.x, z: start.z };
+  if (collider.blocked(origin.x, origin.z, radius)) {
+    const out = collider.resolve(origin.x, origin.z, radius);
+    origin = { x: out.x, z: out.z };
+  }
+
+  const floorCache = new Map();
+  const floorOf = (x, z, gk) => {
+    if (!floorAt) return null;
+    if (floorCache.has(gk)) return floorCache.get(gk);
+    const h = floorAt(x, z, null);
+    floorCache.set(gk, h);
+    return h;
+  };
+
+  const startFloor = floorAt ? floorAt(origin.x, origin.z, start.floorH || 0) : start.floorH || 0;
+  const originKey = key(gridX(origin.x), gridZ(origin.z));
+  seen.add(originKey);
+  reach.add(originKey);
+  const queue = [[origin.x, origin.z, startFloor]];
+  let count = 0;
+  let minX = origin.x;
+  let maxX = origin.x;
+  let minZ = origin.z;
+  let maxZ = origin.z;
+  const steps = [
+    [cell, 0],
+    [-cell, 0],
+    [0, cell],
+    [0, -cell],
+  ];
+
+  // Mirrors createWallCollider.move() for a single-axis step, minus the
+  // depenetration pass move() runs first — that pass is pure overhead here and
+  // tripled the number of blocked() queries per cell.
+  const canEnter = (nx, nz, floorY, gk) => {
+    if (collider.blocked(nx, nz, radius)) return false;
+    if (!floorAt || !Number.isFinite(maxStep)) return true;
+    const target = floorOf(nx, nz, gk);
+    if (target == null) return true;
+    return target - floorY <= maxStep + 1e-6;
+  };
+
+  while (queue.length && count < maxCells) {
+    const [x, z, floorY] = queue.pop();
+    count++;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (z < minZ) minZ = z;
+    if (z > maxZ) maxZ = z;
+    for (const [dx, dz] of steps) {
+      const nx = x + dx;
+      const nz = z + dz;
+      const k = key(gridX(nx), gridZ(nz));
+      if (seen.has(k)) continue;
+      seen.add(k);
+      if (!canEnter(nx, nz, floorY, k)) continue;
+      reach.add(k);
+      const nextFloor = floorAt ? floorOf(nx, nz, k) : null;
+      queue.push([nx, nz, nextFloor == null ? floorY : nextFloor]);
+    }
+  }
+
+  // A point counts as reachable when a flood cell sits within `tolerance` of it,
+  // so an actor standing slightly inside a wall still registers.
+  function isReachable(x, z, tolerance = 1.2) {
+    const span = Math.ceil(tolerance / cell);
+    const gx = gridX(x);
+    const gz = gridZ(z);
+    const tolSq = tolerance * tolerance;
+    for (let dz = -span; dz <= span; dz++) {
+      for (let dx = -span; dx <= span; dx++) {
+        if ((dx * dx + dz * dz) * cell * cell > tolSq) continue;
+        if (reach.has(key(gx + dx, gz + dz))) return true;
+      }
+    }
+    return false;
+  }
+
+  return {
+    isReachable,
+    cells: reach.size,
+    walkable: count,
+    truncated: queue.length > 0,
+    origin,
+    bounds: { minX, maxX, minZ, maxZ },
   };
 }
 
@@ -552,6 +914,10 @@ function convertWADMap(map, scale) {
   const baseFloor = playerSectorFloor;
   const walls = [];
   const colSegs = [];
+  // Exact linedef segments used for collision (see createWallCollider).
+  const colLines = [];
+  const addColLine = (x1, z1, x2, z2, solid, info) =>
+    colLines.push({ x1, z1, x2, z2, solid, ...info });
 
   for (const line of linedefs) {
     const va = vertexes[line.v1],
@@ -582,6 +948,15 @@ function convertWADMap(map, scale) {
     const light = fSec ? Math.max(0.25, fSec.light / 255) : 0.5;
 
     if (!bSec) {
+      // A line with nothing behind it is the edge of the map: always solid.
+      addColLine(x1, z1, x2, z2, true, {
+        oneSided: true,
+        loFloor: fF,
+        hiFloor: fF,
+        loCeil: fC,
+        headroom: fC - fF,
+        step: 0,
+      });
       const h = fC - fF;
       if (h > 0.05) {
         const fSide = line.right >= 0 ? sidedefs[line.right] : null;
@@ -647,7 +1022,17 @@ function convertWADMap(map, scale) {
         });
       }
 
-      if (line.flags & 1) rasterSeg(colSegs, x1, z1, x2, z2, 1.0);
+      const impassable = (line.flags & 1) !== 0;
+      addColLine(x1, z1, x2, z2, impassable, {
+        oneSided: false,
+        loFloor: Math.min(fF, bF),
+        hiFloor: Math.max(fF, bF),
+        loCeil: Math.min(fC, bC),
+        headroom: Math.min(fC, bC) - Math.max(fF, bF),
+        step: Math.abs(bF - fF),
+        special: line.special || 0,
+      });
+      if (impassable) rasterSeg(colSegs, x1, z1, x2, z2, 1.0);
     }
   }
 
@@ -679,7 +1064,8 @@ function convertWADMap(map, scale) {
     scale,
     baseFloor
   );
-  const getFloorHeight = buildFloorHeightLookup(sectorFloors);
+  const sectorIndex = buildSectorIndex(sectorFloors);
+  const getFloorHeight = buildFloorHeightLookup(sectorFloors, sectorIndex);
 
   const sectorData = sectors.map((s, index) => ({
     floorH: (s.floorH - baseFloor) * scale,
@@ -693,7 +1079,35 @@ function convertWADMap(map, scale) {
   for (const e of enemies) e.floorH = getFloorHeight(e.x, e.z, 0);
   for (const item of items) item.floorH = getFloorHeight(item.x, item.z, 0);
 
-  return { walls, colSegs, enemies, items, playerStart, sectors: sectorData, getFloorHeight };
+  const getCeilingHeight = buildCeilingHeightLookup(sectorFloors, sectorData, sectorIndex);
+  // Two colliders over the same geometry: `collider` is DOOM-accurate, while
+  // `explorerCollider` relaxes the step limit so carts without door/lift logic
+  // can still reach the whole map.
+  const collider = createWallCollider(colLines, { scale, floorAt: getFloorHeight });
+  const explorerCollider = createWallCollider(colLines, {
+    scale,
+    floorAt: getFloorHeight,
+    maxStep: DOOM_EXPLORER_MAX_STEP * scale,
+  });
+
+  return {
+    walls,
+    colSegs,
+    colLines,
+    collider,
+    explorerCollider,
+    enemies,
+    items,
+    playerStart,
+    sectors: sectorData,
+    getFloorHeight,
+    getCeilingHeight,
+    scale,
+    playerRadius: DOOM_PLAYER_RADIUS * scale,
+    maxStepHeight: DOOM_MAX_STEP * scale,
+    explorerMaxStepHeight: DOOM_EXPLORER_MAX_STEP * scale,
+    playerHeight: DOOM_PLAYER_HEIGHT * scale,
+  };
 }
 
 // ── WADTextureManager class ──
@@ -1113,6 +1527,8 @@ export function wadApi() {
         WADLoader,
         WADTextureManager,
         convertWADMap,
+        createWallCollider,
+        buildReachability,
         setWallUVs,
         THING_MONSTERS,
         THING_ITEMS,

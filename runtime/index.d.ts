@@ -1464,14 +1464,94 @@ export interface WADConvertedSector {
   bounds: WADSectorBounds | null;
 }
 
+/** One linedef as a collision segment, with the sector heights either side of it. */
+export interface WADCollisionLine {
+  x1: number;
+  z1: number;
+  x2: number;
+  z2: number;
+  /** True when the player cannot walk through it at all. */
+  solid: boolean;
+  oneSided: boolean;
+  loFloor: number;
+  hiFloor: number;
+  loCeil: number;
+  headroom: number;
+  /** Absolute floor height difference across the line. */
+  step: number;
+  /** Linedef special (door, lift, teleporter, ...). 0 for plain geometry. */
+  special?: number;
+}
+
+export interface WADColliderMoveOptions {
+  radius?: number;
+  maxStep?: number;
+  /** Floor height the actor is currently standing on, for the step-up check. */
+  floorY?: number;
+  floorAt?: (x: number, z: number, fallback?: number | null) => number | null;
+}
+
+export interface WADWallCollider {
+  lines: WADCollisionLine[];
+  radius: number;
+  maxStep: number;
+  /** True when a circle of `radius` at (x, z) overlaps a solid line. */
+  blocked(x: number, z: number, radius?: number): boolean;
+  /** Pushes a penetrating position back out of the geometry. */
+  resolve(
+    x: number,
+    z: number,
+    radius?: number,
+    passes?: number
+  ): { x: number; z: number; pushed: boolean };
+  /** Axis-separated slide honouring the step-up limit. */
+  move(
+    x: number,
+    z: number,
+    dx: number,
+    dz: number,
+    options?: WADColliderMoveOptions
+  ): { x: number; z: number };
+}
+
+export interface WADReachability {
+  /** True when a flood-fill cell within `tolerance` of (x, z) was walked into. */
+  isReachable(x: number, z: number, tolerance?: number): boolean;
+  cells: number;
+  walkable: number;
+  truncated: boolean;
+  origin: { x: number; z: number };
+  bounds: WADSectorBounds;
+}
+
+export interface WADReachabilityOptions {
+  cell?: number;
+  radius?: number;
+  maxStep?: number;
+  maxCells?: number;
+  floorAt?: (x: number, z: number, fallback?: number | null) => number | null;
+}
+
 export interface WADConvertedMap {
   walls: WADWall[];
+  /** Legacy rasterized point cloud. Prefer `colLines` / `collider`. */
   colSegs: WADCollisionSegment[];
+  colLines: WADCollisionLine[];
+  /** DOOM-accurate collider: 16-unit radius, 24-unit step limit. */
+  collider: WADWallCollider;
+  /** Same geometry with a relaxed step limit, for carts with no door/lift logic. */
+  explorerCollider: WADWallCollider;
   enemies: WADSpawn[];
   items: WADSpawn[];
   playerStart: WADPlayerStart;
   sectors: WADConvertedSector[];
   getFloorHeight(x: number, z: number, fallback?: number): number;
+  getCeilingHeight(x: number, z: number, fallback?: number): number;
+  scale: number;
+  playerRadius: number;
+  maxStepHeight: number;
+  explorerMaxStepHeight: number;
+  playerHeight: number;
 }
 
 export interface WADLump {
@@ -1505,6 +1585,20 @@ export declare class WADTextureManager {
 }
 
 export declare function convertWADMap(map: WADMapData, scale?: number): WADConvertedMap;
+export declare function createWallCollider(
+  colLines: WADCollisionLine[],
+  options?: {
+    scale?: number;
+    radius?: number;
+    maxStep?: number;
+    floorAt?: (x: number, z: number, fallback?: number | null) => number | null;
+  }
+): WADWallCollider;
+export declare function buildReachability(
+  collider: WADWallCollider,
+  start: { x: number; z: number; floorH?: number },
+  options?: WADReachabilityOptions
+): WADReachability;
 export declare function setWallUVs(
   meshId: MeshId,
   wallDoomLen: number,

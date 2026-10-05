@@ -62,7 +62,7 @@ the rendered 3D scene**. `cls(color)` fills that layer. The catch:
 
 ```js
 // runtime/api.js — cls() with a plain Number is OPAQUE
-cls(0x000000); // → fills the 2D layer solid black, alpha 255
+nova64.draw.cls(0x000000); // → fills the 2D layer solid black, alpha 255
                // → composites over and HIDES the entire 3D scene
 ```
 
@@ -197,7 +197,7 @@ screen becomes the brightest thing in frame and lights the room for free.
 ```js
 const push = easeInOut(clamp(t / 22, 0, 1));     // main dolly over ~22s
 const creep = clamp((t - 22) / 30, 0, 1);        // slow ongoing creep
-setCamera(camX + sway*0.06, camY, 6.4 - push*3.1 - creep*0.7,
+nova64.draw.setCamera(camX + sway*0.06, camY, 6.4 - push*3.1 - creep*0.7,
           targetX, targetY, targetZ, 56 - push*19 - creep*4);
 ```
 

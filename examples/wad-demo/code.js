@@ -24,7 +24,8 @@ const {
 } = nova64.light;
 const { btn, key, keyp, mouseDown } = nova64.input;
 const { sfx } = nova64.audio;
-const { WADLoader, WADTextureManager, convertWADMap, setWallUVs, t } = nova64.data;
+const { WADLoader, WADTextureManager, buildReachability, convertWADMap, setWallUVs, t } =
+  nova64.data;
 const { createShake, triggerShake, updateShake } = nova64.util;
 
 let gameTime = 0;
@@ -43,7 +44,14 @@ let texturedSpriteCount = 0;
 let texturedFloorCount = 0;
 
 let player = { x: 0, y: 1.5, z: 0, yaw: 0, pitch: 0, health: 100, armor: 0, ammo: 50, score: 0 };
-let playerFloorBase = 0; // Y offset of the floor the player stands on
+// Height of the floor the player is standing on. This tracks the sector under the
+// player every frame — pinning it to the spawn sector made every raised room,
+// staircase and pit in the map render at the wrong height under your feet.
+let playerFloorBase = 0;
+let playerFloorTarget = 0;
+// Collision + floor queries for the level currently loaded.
+let levelGeom = null;
+let unreachableEnemies = 0;
 let kills = 0;
 let totalEnemies = 0;
 let levelClearTimer = 0;
@@ -57,7 +65,7 @@ let entities = {
   enemyBullets: [],
 };
 let enemyLights = [];
-let floorMesh = null;
+let floorMesh = null; // single ground plane; follows the player's sector floor
 let ceilingMesh = null;
 
 let mouseInit = false;
@@ -88,6 +96,14 @@ function exposeDebugState() {
     texturedWallCount,
     texturedSpriteCount,
     texturedFloorCount,
+    playerX: player.x,
+    playerY: player.y,
+    playerZ: player.z,
+    playerFloorBase,
+    playerFloorTarget,
+    unreachableEnemies,
+    colliderLines: levelGeom ? levelGeom.collider.lines.length : 0,
+    reachableCells: levelGeom ? levelGeom.reach.cells : 0,
   });
 }
 
@@ -161,43 +177,47 @@ export function init() {
     // the console-level Enter handler can treat them as START/reload.
     const keyTarget =
       typeof window !== 'undefined' && canUseEventTarget(window) ? window : document;
-    keyTarget.addEventListener('keydown', e => {
-      // Prevent Enter/Space/Arrows from triggering browser defaults in menu
-      // Stop Enter/Space from reaching Nova64 console's START handler (which reloads the cart)
-      if (gameState === 'menu' && ['Enter', 'Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-      }
-      if (gameState === 'playing' && e.code === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-      }
+    keyTarget.addEventListener(
+      'keydown',
+      e => {
+        // Prevent Enter/Space/Arrows from triggering browser defaults in menu
+        // Stop Enter/Space from reaching Nova64 console's START handler (which reloads the cart)
+        if (gameState === 'menu' && ['Enter', 'Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation?.();
+        }
+        if (gameState === 'playing' && e.code === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation?.();
+        }
 
-      // Direct menu input handling via DOM events (more reliable than keyp)
-      if (gameState === 'menu') {
-        if (e.code === 'ArrowUp' && currentMapIdx > 0) {
-          currentMapIdx--;
+        // Direct menu input handling via DOM events (more reliable than keyp)
+        if (gameState === 'menu') {
+          if (e.code === 'ArrowUp' && currentMapIdx > 0) {
+            currentMapIdx--;
+          }
+          if (e.code === 'ArrowDown' && currentMapIdx < mapNames.length - 1) {
+            currentMapIdx++;
+          }
+          if (e.code === 'Enter' && !e.repeat) {
+            startLevel();
+          }
         }
-        if (e.code === 'ArrowDown' && currentMapIdx < mapNames.length - 1) {
-          currentMapIdx++;
-        }
-        if (e.code === 'Enter' && !e.repeat) {
-          startLevel();
-        }
-      }
 
-      if (e.code === 'KeyL' && (gameState === 'loading' || gameState === 'missing')) {
-        const inp = document.createElement('input');
-        inp.type = 'file';
-        inp.accept = '.wad';
-        inp.onchange = async () => {
-          if (inp.files[0]) await loadWADFromFile(inp.files[0]);
-        };
-        inp.click();
-      }
-    }, true);
+        if (e.code === 'KeyL' && (gameState === 'loading' || gameState === 'missing')) {
+          const inp = document.createElement('input');
+          inp.type = 'file';
+          inp.accept = '.wad';
+          inp.onchange = async () => {
+            if (inp.files[0]) await loadWADFromFile(inp.files[0]);
+          };
+          inp.click();
+        }
+      },
+      true
+    );
   }
 
   // Load WAD (try Godot path first, fall back to browser fetch)
@@ -315,6 +335,10 @@ function cleanupLevel() {
   for (let l of enemyLights) removeLight(l);
   enemyLights = [];
   entities = { walls: [], enemies: [], bullets: [], particles: [], pickups: [], enemyBullets: [] };
+  levelGeom = null;
+  unreachableEnemies = 0;
+  // cleanupLevel() destroys every mesh in entities.walls, the ground plane included.
+  floorMesh = null;
   texturedWallCount = 0;
   texturedSpriteCount = 0;
   texturedFloorCount = 0;
@@ -425,37 +449,60 @@ function _startLevelInner() {
     }
   }
 
-  // Collision
-  for (const seg of converted.colSegs) {
-    entities.walls.push({ m: null, x: seg.x, z: seg.z, r: seg.r });
-  }
+  // Collision + floor queries. explorerCollider relaxes DOOM's 24-unit step limit
+  // because this cart renders geometry only — it has no switches, doors or lifts,
+  // so a strict limit would leave lift shafts and raised ledges unreachable.
+  const reach = buildReachability(converted.explorerCollider, converted.playerStart, {
+    cell: 0.6,
+    floorAt: converted.getFloorHeight,
+  });
+  levelGeom = {
+    collider: converted.explorerCollider,
+    getFloorHeight: converted.getFloorHeight,
+    playerRadius: converted.playerRadius,
+    maxStep: converted.explorerMaxStepHeight,
+    reach,
+  };
 
-  // Enemies (cap 60)
+  // Player start
+  player.x = converted.playerStart.x;
+  player.z = converted.playerStart.z;
+  player.yaw = converted.playerStart.angle;
+  player.pitch = 0;
+  // Never leave the player embedded in a wall: a wedged spawn cannot be walked out of.
+  const spawn = converted.explorerCollider.resolve(player.x, player.z);
+  player.x = spawn.x;
+  player.z = spawn.z;
+  playerFloorBase = floorAt(player.x, player.z, converted.playerStart.floorH || 0);
+  playerFloorTarget = playerFloorBase;
+  player.y = playerFloorBase + 1.0;
+
+  // Enemies (cap 60). Anything the flood fill could not walk to is skipped: the
+  // level only clears once every spawned enemy is dead, so an enemy sealed behind
+  // a door this cart cannot open would deadlock the run forever.
   const maxEnemies = 60;
-  for (const e of converted.enemies.slice(0, maxEnemies)) {
-    spawnEnemy(e.x, e.z, e.type, e.doomType);
+  const reachableEnemies = converted.enemies.filter(e => reach.isReachable(e.x, e.z));
+  unreachableEnemies = converted.enemies.length - reachableEnemies.length;
+  for (const e of reachableEnemies.slice(0, maxEnemies)) {
+    spawnEnemy(e.x, e.z, e.type, e.doomType, e.floorH);
     totalEnemies++;
   }
 
-  // Pickups
+  // Pickups — same filter, so none of them float inside sealed geometry.
   for (const item of converted.items) {
-    spawnPickupAt(item.x, 1, item.z, item.type, item.doomType);
+    if (!reach.isReachable(item.x, item.z)) continue;
+    spawnPickupAt(item.x, (item.floorH || 0) + 1, item.z, item.type, item.doomType);
   }
-
-  // Player start — set Y to the sector floor height the player starts on
-  playerFloorBase = converted.playerStart.floorH || 0;
-  player.x = converted.playerStart.x;
-  player.z = converted.playerStart.z;
-  player.y = playerFloorBase + 1.0;
-  player.yaw = converted.playerStart.angle;
-  player.pitch = 0;
 
   setFog(FOG_COLORS[currentMapIdx % FOG_COLORS.length], 20, 150);
 
-  // Add a floor plane
+  // Ground plane. Only one is drawn for the whole map, so updatePlayer() slides it
+  // to whatever sector floor the player is standing on; pinned at y = 0 it put solid
+  // ground under your feet only in sectors that happened to sit at the start height.
   const floorSize = 400;
-  const floor = createPlane(floorSize, floorSize, 0x222222, [0, 0, 0]);
+  const floor = createPlane(floorSize, floorSize, 0x222222, [0, playerFloorBase, 0]);
   setRotation(floor, -Math.PI / 2, 0, 0);
+  floorMesh = floor;
   entities.walls.push({ m: floor, x: 0, z: 0, r: 0 });
 
   // Texture the floor with the most common floor flat
@@ -492,7 +539,7 @@ function _startLevelInner() {
 
 // ── Enemy spawning ──
 
-function spawnEnemy(x, z, type, doomType) {
+function spawnEnemy(x, z, type, doomType, floorH = 0) {
   let mat, hp, spd, size, dmg, detailMat;
   switch (type) {
     case 'shooter':
@@ -529,26 +576,28 @@ function spawnEnemy(x, z, type, doomType) {
       break;
   }
 
-  let body = createCube(size, mat.color, [x, 2, z], mat);
+  // Everything about an enemy is built relative to the floor of its own sector.
+  const baseY = floorH + 2;
+  let body = createCube(size, mat.color, [x, baseY, z], mat);
   setScale(body, 0.7, 1.2, 0.7);
-  let head = createCube(size * 0.55, MAT.enemyEye.color, [x, 2 + size * 0.7, z], MAT.enemyEye);
+  let head = createCube(size * 0.55, MAT.enemyEye.color, [x, baseY + size * 0.7, z], MAT.enemyEye);
   setScale(head, 1, 0.6, 0.8);
 
   let detail = null;
   if (type === 'tank') {
-    detail = createCube(size * 0.9, detailMat.color, [x, 2, z], detailMat);
+    detail = createCube(size * 0.9, detailMat.color, [x, baseY, z], detailMat);
     setScale(detail, 1.3, 0.3, 1.3);
   } else if (type === 'boss') {
-    detail = createCube(size * 0.6, detailMat.color, [x, 2 + size, z], detailMat);
+    detail = createCube(size * 0.6, detailMat.color, [x, baseY + size, z], detailMat);
     setScale(detail, 1.5, 0.4, 0.5);
   } else if (type === 'shooter') {
-    detail = createCube(size * 0.2, detailMat.color, [x, 2, z + size * 0.5], detailMat);
+    detail = createCube(size * 0.2, detailMat.color, [x, baseY, z + size * 0.5], detailMat);
     setScale(detail, 0.4, 0.4, 2.0);
   }
 
   let light = null;
   if (enemyLights.length < 20) {
-    light = createPointLight(mat.color, 1.2, 12, [x, 3, z]);
+    light = createPointLight(mat.color, 1.2, 12, [x, floorH + 3, z]);
     enemyLights.push(light);
   }
 
@@ -561,7 +610,7 @@ function spawnEnemy(x, z, type, doomType) {
       const sc = 1 / 20;
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
-      sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
+      sprite = createPlane(sprW, spriteH, 0xffffff, [x, floorH + spriteH / 2, z]);
       engine.setMeshMaterial(
         sprite,
         engine.createMaterial('basic', {
@@ -588,7 +637,8 @@ function spawnEnemy(x, z, type, doomType) {
     spriteH,
     x,
     z,
-    y: 2,
+    y: baseY,
+    floorH,
     health: hp,
     maxHealth: hp,
     speed: spd,
@@ -602,12 +652,21 @@ function spawnEnemy(x, z, type, doomType) {
 
 // ── Collision ──
 
+// Walls are tested as the line segments the mapper actually drew. The previous
+// implementation rasterized every wall into a cloud of points and compared axis
+// distances against each one, which inflated a wall into a square 3.6 units thick
+// — wider than a standard 64-unit DOOM doorway (3.2 units at this scale). Every
+// door on every map was sealed shut, so most of each level was unreachable.
 function getWallCollision(nx, nz, radius) {
-  for (let w of entities.walls) {
-    if (w.r <= 0) continue;
-    if (Math.abs(nx - w.x) < w.r + radius && Math.abs(nz - w.z) < w.r + radius) return true;
-  }
-  return false;
+  if (!levelGeom) return false;
+  return levelGeom.collider.blocked(nx, nz, radius);
+}
+
+// Floor height under a point, falling back to the last known height so stepping
+// past the edge of the sector data never snaps the camera down to zero.
+function floorAt(x, z, fallback) {
+  if (!levelGeom) return fallback || 0;
+  return levelGeom.getFloorHeight(x, z, fallback == null ? 0 : fallback);
 }
 
 // ── Shooting ──
@@ -683,6 +742,9 @@ function enemyShoot(e, angleOffset) {
 // ── Pickups & Effects ──
 
 function spawnPickupAt(x, y, z, type, doomType) {
+  // y arrives already offset one unit above the sector floor; recover the floor so
+  // the billboard and the bob animation share the same ground plane.
+  const floorH = y - 1;
   let mat =
     type === 'health' ? MAT.healthPickup : type === 'armor' ? MAT.armorPickup : MAT.ammoPickup;
   let m = createCube(0.6, mat.color, [x, y, z], mat);
@@ -696,7 +758,7 @@ function spawnPickupAt(x, y, z, type, doomType) {
       const sc = 1 / 20;
       spriteH = spriteInfo.height * sc;
       const sprW = spriteInfo.width * sc;
-      sprite = createPlane(sprW, spriteH, 0xffffff, [x, spriteH / 2, z]);
+      sprite = createPlane(sprW, spriteH, 0xffffff, [x, floorH + spriteH / 2, z]);
       engine.setMeshMaterial(
         sprite,
         engine.createMaterial('basic', {
@@ -711,7 +773,7 @@ function spawnPickupAt(x, y, z, type, doomType) {
     }
   }
 
-  entities.pickups.push({ m, sprite, spriteH, x, y, z, type, life: 30 });
+  entities.pickups.push({ m, sprite, spriteH, floorH, x, y, z, type, life: 30 });
 }
 
 function spawnPickupRandom(x, y, z) {
@@ -798,7 +860,8 @@ export function update(dt) {
       currentMapIdx++;
       if (currentMapIdx >= mapNames.length) {
         gameState = 'victory';
-        if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock();
+        if (typeof document !== 'undefined' && document.pointerLockElement)
+          document.exitPointerLock();
       } else {
         startLevel();
       }
@@ -844,9 +907,35 @@ export function update(dt) {
     dz = (dz / len) * speed * dt;
   }
 
-  let plrRadius = 0.8;
-  if (!getWallCollision(player.x + dx, player.z, plrRadius)) player.x += dx;
-  if (!getWallCollision(player.x, player.z + dz, plrRadius)) player.z += dz;
+  // The collider slides along each axis separately and refuses any step that
+  // climbs higher than the configured step height, so walking into a wall glides
+  // along it instead of sticking, and a tall ledge stops you instead of letting you
+  // walk through the air at the old floor height.
+  let plrRadius = levelGeom ? levelGeom.playerRadius : 0.8;
+  if (levelGeom) {
+    const moved = levelGeom.collider.move(player.x, player.z, dx, dz, {
+      radius: plrRadius,
+      floorY: playerFloorTarget,
+    });
+    player.x = moved.x;
+    player.z = moved.z;
+  } else {
+    player.x += dx;
+    player.z += dz;
+  }
+
+  // Follow the floor of whatever sector we are now standing in. Dropping down is
+  // quicker than stepping up, so stairs read as a climb rather than a teleport, but
+  // the camera is never left floating above or sunk below the floor.
+  playerFloorTarget = floorAt(player.x, player.z, playerFloorTarget);
+  const floorDelta = playerFloorTarget - playerFloorBase;
+  if (Math.abs(floorDelta) < 0.01) playerFloorBase = playerFloorTarget;
+  else playerFloorBase += floorDelta * Math.min(1, (floorDelta < 0 ? 18 : 10) * dt);
+
+  // Keep the single ground plane under the player's feet as they climb or drop.
+  // Only the height moves — sliding it in X/Z would drag its tiled flat texture
+  // along and make the ground look like it is scrolling underfoot.
+  if (floorMesh) setPosition(floorMesh, 0, playerFloorBase, 0);
 
   // Head bob
   let bobFreq = isSprinting ? 12 : 8;
@@ -916,7 +1005,7 @@ export function update(dt) {
           killFlash = 0.15;
           triggerShake(shake, 3);
           sfx('explosion');
-          if (Math.random() < 0.55) spawnPickupRandom(e.x, 1, e.z);
+          if (Math.random() < 0.55) spawnPickupRandom(e.x, (e.floorH || 0) + 1, e.z);
         } else {
           sfx('hit');
         }
@@ -981,7 +1070,10 @@ export function update(dt) {
     }
 
     let t = gameTime * 2 + i;
-    e.y = e.type === 'boss' ? 3 + Math.sin(t) * 0.6 : 2 + Math.sin(t * 1.5) * 0.3;
+    // Hover relative to the floor beneath the enemy, not relative to y = 0, or
+    // enemies in raised or sunken sectors float in mid-air / sink into the ground.
+    e.floorH = floorAt(e.x, e.z, e.floorH);
+    e.y = e.floorH + (e.type === 'boss' ? 3 + Math.sin(t) * 0.6 : 2 + Math.sin(t * 1.5) * 0.3);
     let faceYaw = Math.atan2(player.x - e.x, player.z - e.z);
     setPosition(e.body, e.x, e.y, e.z);
     setRotation(e.body, 0, faceYaw, 0);
@@ -1013,7 +1105,7 @@ export function update(dt) {
 
     // Update sprite billboard
     if (e.sprite) {
-      setPosition(e.sprite, e.x, e.spriteH / 2, e.z);
+      setPosition(e.sprite, e.x, e.floorH + e.spriteH / 2, e.z);
       const cam = getCamera();
       const sdx = cam.position.x - e.x;
       const sdz = cam.position.z - e.z;
@@ -1051,7 +1143,7 @@ export function update(dt) {
 
     // Billboard pickup sprite
     if (p.sprite) {
-      setPosition(p.sprite, p.x, p.spriteH / 2 + Math.sin(gameTime * 3 + i) * 0.3, p.z);
+      setPosition(p.sprite, p.x, p.floorH + p.spriteH / 2 + Math.sin(gameTime * 3 + i) * 0.3, p.z);
       const cam = getCamera();
       const sdx = cam.position.x - p.x;
       const sdz = cam.position.z - p.z;
@@ -1108,11 +1200,16 @@ export function update(dt) {
     }
   }
 
-  // Level clear
-  if (entities.enemies.length === 0 && kills >= totalEnemies && totalEnemies > 0) {
+  // Level clear. A map with no reachable enemies still has to advance, otherwise
+  // the run dead-ends on the handful of FreeDoom maps that start you in a sealed
+  // teleporter closet — this cart renders geometry only and cannot work a
+  // teleporter or a locked door. Those maps get a few seconds of look-around
+  // before moving on.
+  const nothingToFight = totalEnemies === 0;
+  if (entities.enemies.length === 0 && kills >= totalEnemies && (!nothingToFight || gameTime > 4)) {
     gameState = 'levelclear';
     levelClearTimer = 3.0;
-    player.score += 500;
+    if (!nothingToFight) player.score += 500;
     sfx('powerup');
   }
 }

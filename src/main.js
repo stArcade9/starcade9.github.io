@@ -13,6 +13,7 @@ import { textInputApi } from '../runtime/textinput.js';
 import { aabb, circle as circleCollision, raycastTilemap } from '../runtime/collision.js';
 import { audioApi } from '../runtime/audio.js';
 import { inputApi } from '../runtime/input.js';
+import { initTouchControls, touchApi } from '../runtime/touch-controls.js';
 import { storageApi } from '../runtime/storage.js';
 import { screenApi } from '../runtime/screens.js';
 import { skyboxApi } from '../runtime/api-skybox.js';
@@ -49,6 +50,8 @@ import { tweenApi } from '../runtime/tween.js';
 import { DebugPanel } from '../runtime/debug-panel.js';
 import { registerCartResetHook } from '../runtime/cart-reset.js';
 import { createStudioCartFunction } from '../runtime/studio-executor.js';
+import { createG1WebBridge } from '../runtime/g1-web-bridge.js';
+import { acceptExecuteCode, StudioMessageType } from '../runtime/studio-protocol.js';
 import * as THREE from 'three';
 
 const canvas = document.getElementById('screen');
@@ -77,10 +80,6 @@ let gpu;
 let backendLabel = 'Three.js';
 try {
   if (_useBabylon) {
-    // Loaded on demand, never statically: the Babylon backend imports bare
-    // '@babylonjs/*' specifiers, so a top-level import makes the whole module
-    // graph fail to resolve on any page whose import map only declares three —
-    // which took the default Three.js path down with it (demo-embed.html).
     const { GpuBabylon } = await import('../runtime/gpu-babylon.js');
     gpu = new GpuBabylon(canvas, _paramW, _paramH);
     backendLabel = 'Babylon.js';
@@ -107,6 +106,13 @@ try {
 } catch (e) {
   console.error(`❌ ${_useBabylon ? 'Babylon.js' : 'Three.js'} renderer failed to initialize:`, e);
   throw new Error('Fantasy console requires 3D GPU support');
+}
+
+// G1 web bridge: expose `engine.call(method, payload)` so G1-adapter carts run
+// in the web/desktop runtime with parity to the Godot host. Babylon installs its
+// own `self.engine`, so only wire this for the default Three.js backend.
+if (!_useBabylon) {
+  globalThis.engine = createG1WebBridge({ gpu, THREE });
 }
 
 // Bake in responsive resize when no fixed ?w= param is provided.
@@ -187,6 +193,7 @@ tApi.exposeTo(nova64api);
 Object.assign(nova64api, { aabb, circleCollision, raycastTilemap });
 aApi.exposeTo(nova64api);
 iApi.exposeTo(nova64api);
+touchApi().exposeTo(nova64api);
 stApi.exposeTo(nova64api);
 scrApi.exposeTo(nova64api);
 skyApi.exposeTo(nova64api);
@@ -275,6 +282,11 @@ if (nova64api.getCamera) sApi.setCameraRef(nova64api.getCamera());
 const nova = new Nova64(gpu, manifestInst);
 globalThis.NOVA64_VERSION = NOVA64_VERSION;
 globalThis.__nova64Runtime = nova;
+
+// On-screen gamepad for phones and tablets. Mounts only when
+// NOVA64_TOUCH_CONTROLS says so — 'auto' (the default) means touch devices
+// only, so desktop is untouched. See docs/TOUCH_CONTROLS.md.
+globalThis.__nova64TouchControls = initTouchControls();
 globalThis.__nova64CartLoadState = {
   path: '',
   count: 0,
@@ -623,6 +635,75 @@ const gamePathParam = urlParams.get('path'); // Allow direct path parameter
 const demoParam = urlParams.get('demo') || urlParams.get('cart');
 const studioMode = urlParams.get('studio') === '1'; // Game Studio embeds console.html?studio=1
 
+// Embedding host origin, declared by the embedder via `?host=<origin>`. Custom
+// schemes (nova64-app://) don't populate document.referrer, so a cross-surface
+// desktop embed (Dev nova64-app://dev → runtime nova64-app://os) can't derive the
+// parent origin from the referrer. The embedder declares it explicitly; the
+// EXECUTE_CODE handler still requires event.source === window.parent, so a forged
+// host can't inject code.
+const studioHostOrigin = (() => {
+  // The embedder passes its own `location.origin` (e.g. "nova64-app://dev").
+  // Do NOT re-parse via `new URL(h).origin`: the WHATWG URL API returns "null"
+  // for non-special custom schemes, even though Chromium treats registered
+  // standard schemes as real origins. Accept a well-formed origin string as-is.
+  const h = urlParams.get('host') || '';
+  return /^[a-z][a-z0-9+.-]*:\/\/[^/]+$/i.test(h) ? h : '';
+})();
+
+// In Studio mode, forward console output (cart logs + runtime errors) to the
+// embedding host so they're visible in the Dev preview's log console. Internal
+// per-frame debug lines (prefixed "[main.js]") are filtered out to avoid spam.
+if (studioMode) {
+  const stringify = a => {
+    if (typeof a === 'string') return a;
+    if (a instanceof Error) return a.message;
+    try {
+      return JSON.stringify(a);
+    } catch {
+      return String(a);
+    }
+  };
+  const forward = (prefix, args) => {
+    if (!(window.parent && window.parent !== window)) return;
+    const text = args.map(stringify).join(' ');
+    if (!text || text.startsWith('[main.js]')) return; // skip internal debug noise
+    try {
+      window.parent.postMessage(
+        { type: StudioMessageType.LOG, message: (prefix + text).slice(0, 8192) },
+        studioParentOrigin()
+      );
+    } catch {
+      /* parent gone / cross-origin */
+    }
+  };
+  for (const [name, prefix] of [
+    ['log', ''],
+    ['info', ''],
+    ['warn', '⚠ '],
+    ['error', '❌ '],
+  ]) {
+    const orig = console[name].bind(console);
+    console[name] = (...args) => {
+      orig(...args);
+      forward(prefix, args);
+    };
+  }
+
+  // Carts (notably the G1 conformance carts: 01-cube, 02-input, …) call bare
+  // `print(...)` as a log statement. In a browser the global `print` is
+  // window.print(), which opens a BLOCKING print dialog and hangs the cart's
+  // init(). Redirect it to a console log so those carts run (and their output
+  // shows in the preview console). Nova64's own 2D text API is namespaced
+  // (nova64.draw.print), so this doesn't affect drawing.
+  globalThis.print = (...args) => {
+    try {
+      console.log('[cart]', ...args);
+    } catch {
+      /* ignore */
+    }
+  };
+}
+
 // Map game IDs to their paths
 const gameMap = {
   'space-harrier': '/examples/space-harrier-3d/code.js',
@@ -737,7 +818,10 @@ const demoMap = {
     // onLoad handler fires first, avoiding any timing race.
     const sendReady = () => {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'EXECUTE_READY' }, '*');
+        // Target the embedding Studio's origin instead of '*' so the readiness
+        // signal is not broadcast to arbitrary cross-origin ancestors. Falls back
+        // to same-origin, then '*' only when the embedder origin is unknowable.
+        window.parent.postMessage({ type: StudioMessageType.READY }, studioParentOrigin());
       }
     };
     if (document.readyState === 'complete') {
@@ -767,14 +851,62 @@ const demoMap = {
   startLoop();
 })();
 
-// Listen for messages from Game Studio to execute code
+// Origin of the page that embedded this runtime (the Game Studio host). Derived
+// from the referrer so the dev cross-origin case (Studio :3000 → runtime :5173)
+// is trusted without hardcoding ports. Empty when unknowable.
+function studioParentOrigin() {
+  try {
+    if (document.referrer) return new URL(document.referrer).origin;
+  } catch {
+    /* malformed referrer */
+  }
+  if (studioHostOrigin) return studioHostOrigin; // declared by the embedder (custom scheme)
+  return window.location.origin;
+}
+
+// Origins allowed to send EXECUTE_CODE, beyond same-origin (handled separately).
+function studioAllowedOrigins() {
+  const origins = [];
+  try {
+    if (document.referrer) origins.push(new URL(document.referrer).origin);
+  } catch {
+    /* ignore */
+  }
+  if (studioHostOrigin) origins.push(studioHostOrigin); // declared embedder origin
+  return origins;
+}
+
+// Listen for messages from Game Studio to execute code.
+// SECURITY: the handler runs user code via `new Function`, so every inbound
+// message is validated first — it must come from this runtime's embedding parent
+// window, from a trusted origin, and pass schema + size checks. Forged messages
+// from other windows, opener tabs, extensions, or untrusted origins are dropped.
 let _studioGen = 0;
 window.addEventListener('message', async event => {
-  if (event.data && event.data.type === 'EXECUTE_CODE') {
+  if (!event.data || event.data.type !== StudioMessageType.CODE) return;
+
+  const verdict = acceptExecuteCode(event, {
+    expectedSource: window.parent,
+    selfOrigin: window.location.origin,
+    allowedOrigins: studioAllowedOrigins(),
+  });
+  if (!verdict.ok) {
+    console.warn(`🚫 Rejected EXECUTE_CODE: ${verdict.error}`);
+    return;
+  }
+
+  {
     // Bump generation — any earlier in-flight execution will bail out
     const gen = ++_studioGen;
+    // Send status/logs back via window.parent (not event.source): under the
+    // nova64-app:// custom scheme, the cross-origin WindowProxy from
+    // MessageEvent.source silently drops postMessage, while window.parent works.
     const postLog = msg => {
-      if (event.source) event.source.postMessage({ type: 'CART_LOG', message: msg }, event.origin);
+      if (window.parent && window.parent !== window)
+        window.parent.postMessage(
+          { type: StudioMessageType.LOG, message: msg },
+          studioParentOrigin()
+        );
     };
     console.log('🎮 Game Studio: Executing code...');
 
@@ -799,13 +931,16 @@ window.addEventListener('message', async event => {
       // Clean up XR and MediaPipe tracking between cart loads
       if (typeof nova64api.disableXR === 'function') nova64api.disableXR();
       mpInst._cleanup();
+      // Tear down any G1-bridge scene objects from a previous cart run.
+      if (globalThis.engine && typeof globalThis.engine.reset === 'function')
+        globalThis.engine.reset();
       postLog('🧹 Scene reset for new cart');
 
       // Race-condition guard: if a newer execution arrived, bail out
       if (gen !== _studioGen) return;
 
-      // Execute the new code
-      const userCode = event.data.code;
+      // Execute the new code (validated + size-bounded by acceptExecuteCode)
+      const userCode = verdict.code;
 
       const gameFunction = createStudioCartFunction(userCode);
       const gameFunctions = gameFunction();
@@ -834,21 +969,18 @@ window.addEventListener('message', async event => {
       paused = false;
       postLog('✅ Cart loaded and running!');
 
-      // Send success message back
-      if (event.source) {
-        event.source.postMessage({ type: 'EXECUTE_SUCCESS' }, event.origin);
+      // Send success message back (via window.parent — see postLog note above).
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'EXECUTE_SUCCESS' }, studioParentOrigin());
       }
     } catch (error) {
       console.error('❌ Game Studio: Error executing code:', error);
       // Always resume so the next Run attempt isn't permanently frozen
       paused = false;
-      if (event.source) {
-        event.source.postMessage(
-          {
-            type: 'EXECUTE_ERROR',
-            error: error.message,
-          },
-          event.origin
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          { type: 'EXECUTE_ERROR', error: error.message },
+          studioParentOrigin()
         );
       }
     }

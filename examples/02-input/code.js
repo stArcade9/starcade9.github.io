@@ -19,7 +19,7 @@ function call(method, payload) {
 
 export function init() {
   const caps = call('engine.init').capabilities;
-  print('[02-input] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
+  console.log('[02-input] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
 
   call('light.createDirectional', { color: [1, 1, 1, 1], energy: 1.2 });
 
@@ -52,7 +52,7 @@ export function init() {
   });
   call('camera.setActive', { handle: camera });
 
-  print('[02-input] ready — WASD/arrows to move, Space to jump, Esc to reset');
+  console.log('[02-input] ready — WASD/arrows to move, Space to jump, Esc to reset');
 }
 
 export function update(dt) {

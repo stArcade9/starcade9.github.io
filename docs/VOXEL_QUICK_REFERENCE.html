@@ -375,19 +375,20 @@
         </header>
 
         <section class="md">
-<h2>🎮 Getting Started (3 lines)</h2>
+<h2 id="getting-started-3-lines">🎮 Getting Started (3 lines)</h2>
 <pre><code class="language-javascript">export function init() {
-  updateVoxelWorld(0, 0); // Generate world
+  nova64.voxel.updateVoxelWorld(0, 0); // Generate world
 }
 
 export function update(dt) {
   if (Math.random() &lt; 0.1) updateVoxelWorld(playerX, playerZ);
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>📦 Block Types</h2>
+<h2 id="block-types">📦 Block Types</h2>
 <pre><code class="language-javascript">BLOCK_TYPES.AIR; // 0  - Empty
 BLOCK_TYPES.GRASS; // 1  - Green grass
 BLOCK_TYPES.DIRT; // 2  - Brown dirt
@@ -426,35 +427,36 @@ BLOCK_TYPES.TALL_GRASS; // 33 - Tall grass (cross)
 BLOCK_TYPES.BRICK_SLAB; // 34 - Brick slab
 BLOCK_TYPES.BRICK_STAIR; // 35 - Brick stair
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>🔧 Core Functions</h2>
-<h3>World Management</h3>
+<h2 id="core-functions">🔧 Core Functions</h2>
+<h3 id="world-management">World Management</h3>
 <pre><code class="language-javascript">// Load chunks around player (call in update loop)
-updateVoxelWorld(playerX, playerZ);
+nova64.voxel.updateVoxelWorld(playerX, playerZ);
 
 // Force-load all chunks synchronously (use in init)
-forceLoadVoxelChunks(playerX, playerZ);
+nova64.voxel.forceLoadVoxelChunks(playerX, playerZ);
 
 // Configure world before generating
-configureVoxelWorld({ seed: 42, renderDistance: 6, seaLevel: 62 });
+nova64.voxel.configureVoxelWorld({ seed: 42, renderDistance: 6, seaLevel: 62 });
 
 // Reset everything
-resetVoxelWorld();
-getVoxelConfig(); // current config
+nova64.voxel.resetVoxelWorld();
+nova64.voxel.getVoxelConfig(); // current config
 </code></pre>
-<h3>Block Get/Set</h3>
+<h3 id="block-getset">Block Get/Set</h3>
 <pre><code class="language-javascript">// Get block type at position
 const block = getVoxelBlock(x, y, z);
 
 // Place block
-setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
+nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
 
 // Remove block
-setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
 </code></pre>
-<h3>Raycasting (Mining/Building)</h3>
+<h3 id="raycasting-miningbuilding">Raycasting (Mining/Building)</h3>
 <pre><code class="language-javascript">const result = raycastVoxelBlock(
   [playerX, playerY, playerZ], // Origin
   [dirX, dirY, dirZ], // Direction (normalized)
@@ -467,7 +469,7 @@ if (result.hit) {
   console.log(`Distance: ${result.distance}`);
 }
 </code></pre>
-<h3>Collision Detection</h3>
+<h3 id="collision-detection">Collision Detection</h3>
 <pre><code class="language-javascript">const isColliding = checkVoxelCollision(
   [x, y, z], // Center position
   0.3 // Radius (half-size)
@@ -476,80 +478,81 @@ if (result.hit) {
 // Player collision example
 const onGround = checkVoxelCollision([player.x, player.y, player.z], 0.3);
 </code></pre>
-<h3>Structure Generation</h3>
+<h3 id="structure-generation">Structure Generation</h3>
 <pre><code class="language-javascript">// Place a tree
-placeVoxelTree(x, y, z);
+nova64.voxel.placeVoxelTree(x, y, z);
 
 // Forest
 for (let i = 0; i &lt; 20; i++) {
   const x = Math.random() * 200 - 100;
   const z = Math.random() * 200 - 100;
-  placeVoxelTree(x, 35, z);
+  nova64.voxel.placeVoxelTree(x, 35, z);
 }
 </code></pre>
-<h3>Custom Block Shapes</h3>
-<pre><code class="language-javascript">getVoxelBlockShape(blockId); // &#39;cube&#39;, &#39;slab_bottom&#39;, &#39;stair&#39;, etc.
-getVoxelBlockBoundingBox(blockId); // [minX,minY,minZ, maxX,maxY,maxZ]
-isVoxelBlockFullCube(blockId); // true for cubes only
+<h3 id="custom-block-shapes">Custom Block Shapes</h3>
+<pre><code class="language-javascript">nova64.voxel.getVoxelBlockShape(blockId); // 'cube', 'slab_bottom', 'stair', etc.
+nova64.voxel.getVoxelBlockBoundingBox(blockId); // [minX,minY,minZ, maxX,maxY,maxZ]
+nova64.voxel.isVoxelBlockFullCube(blockId); // true for cubes only
 </code></pre>
-<h3>Lighting &amp; Day/Night</h3>
-<pre><code class="language-javascript">getVoxelLightLevel(x, y, z); // 0-15
-setVoxelDayTime(0.5); // 0.0=midnight, 0.5=noon
+<h3 id="lighting-daynight">Lighting &amp; Day/Night</h3>
+<pre><code class="language-javascript">nova64.voxel.getVoxelLightLevel(x, y, z); // 0-15
+nova64.voxel.setVoxelDayTime(0.5); // 0.0=midnight, 0.5=noon
 </code></pre>
-<h3>Fluid Simulation</h3>
-<pre><code class="language-javascript">setVoxelFluidSource(x, y, z, BLOCK_TYPES.WATER);
-removeVoxelFluidSource(x, y, z);
-getVoxelFluidLevel(x, y, z); // 0=full, 7=thinnest, -1=none
+<h3 id="fluid-simulation">Fluid Simulation</h3>
+<pre><code class="language-javascript">nova64.voxel.setVoxelFluidSource(x, y, z, BLOCK_TYPES.WATER);
+nova64.voxel.removeVoxelFluidSource(x, y, z);
+nova64.voxel.getVoxelFluidLevel(x, y, z); // 0=full, 7=thinnest, -1=none
 </code></pre>
-<h3>Entity System</h3>
-<pre><code class="language-javascript">const e = spawnVoxelEntity(&#39;zombie&#39;, [10, 65, 10], { health: 20 });
-damageVoxelEntity(e.id, 5);
-healVoxelEntity(e.id, 3);
-updateVoxelEntities(dt); // Call in update()
-getVoxelEntitiesInRadius(pos, 16); // Spatial query
-getVoxelEntitiesByType(&#39;zombie&#39;);
-getVoxelEntityCount();
-removeVoxelEntity(e.id);
-cleanupVoxelEntities();
+<h3 id="entity-system">Entity System</h3>
+<pre><code class="language-javascript">const e = spawnVoxelEntity('zombie', [10, 65, 10], { health: 20 });
+nova64.voxel.damageVoxelEntity(e.id, 5);
+nova64.voxel.healVoxelEntity(e.id, 3);
+nova64.voxel.updateVoxelEntities(dt); // Call in update()
+nova64.voxel.getVoxelEntitiesInRadius(pos, 16); // Spatial query
+nova64.voxel.getVoxelEntitiesByType('zombie');
+nova64.voxel.getVoxelEntityCount();
+nova64.voxel.removeVoxelEntity(e.id);
+nova64.voxel.cleanupVoxelEntities();
 </code></pre>
-<h3>ECS Components</h3>
-<pre><code class="language-javascript">setVoxelEntityComponent(id, &#39;hostile&#39;, { damage: 3 });
-getVoxelEntityComponent(id, &#39;hostile&#39;);
-hasVoxelEntityComponent(id, &#39;hostile&#39;);
-removeVoxelEntityComponent(id, &#39;hostile&#39;);
-queryVoxelEntities([&#39;hostile&#39;, &#39;ai&#39;]); // All with both components
-createVoxelEntityArchetype(&#39;skeleton&#39;, { health: 15, hostile: {} });
-spawnVoxelEntityFromArchetype(&#39;skeleton&#39;, [x, y, z]);
-findVoxelPath([x1, y1, z1], [x2, y2, z2]); // A* pathfinding
+<h3 id="ecs-components">ECS Components</h3>
+<pre><code class="language-javascript">nova64.voxel.setVoxelEntityComponent(id, 'hostile', { damage: 3 });
+nova64.voxel.getVoxelEntityComponent(id, 'hostile');
+nova64.voxel.hasVoxelEntityComponent(id, 'hostile');
+nova64.voxel.removeVoxelEntityComponent(id, 'hostile');
+nova64.voxel.queryVoxelEntities(['hostile', 'ai']); // All with both components
+nova64.voxel.createVoxelEntityArchetype('skeleton', { health: 15, hostile: {} });
+nova64.voxel.spawnVoxelEntityFromArchetype('skeleton', [x, y, z]);
+nova64.voxel.findVoxelPath([x1, y1, z1], [x2, y2, z2]); // A* pathfinding
 </code></pre>
-<h3>Schematics &amp; Persistence</h3>
+<h3 id="schematics-persistence">Schematics &amp; Persistence</h3>
 <pre><code class="language-javascript">// Region export/import (RLE compressed)
 const data = exportVoxelRegion(x1, y1, z1, x2, y2, z2);
-importVoxelRegion(data, x, y, z, { skipAir: true });
+nova64.voxel.importVoxelRegion(data, x, y, z, { skipAir: true });
 
 // World export/import (JSON)
 const world = exportVoxelWorldJSON();
-importVoxelWorldJSON(world);
+nova64.voxel.importVoxelWorldJSON(world);
 
 // IndexedDB persistence
-await saveVoxelWorld(&#39;my-world&#39;);
-await loadVoxelWorld(&#39;my-world&#39;);
+await saveVoxelWorld('my-world');
+await loadVoxelWorld('my-world');
 const worlds = await listVoxelWorlds();
-await deleteVoxelWorld(&#39;old&#39;);
+await deleteVoxelWorld('old');
 </code></pre>
-<h3>Textures</h3>
-<pre><code class="language-javascript">enableVoxelTextures(true); // Procedural 27-tile atlas
-loadVoxelTextureAtlas(&#39;atlas.png&#39;, mapping); // Custom atlas
+<h3 id="textures">Textures</h3>
+<pre><code class="language-javascript">nova64.voxel.enableVoxelTextures(true); // Procedural 27-tile atlas
+nova64.voxel.loadVoxelTextureAtlas('atlas.png', mapping); // Custom atlas
 </code></pre>
-<h3>Swept AABB Physics</h3>
+<h3 id="swept-aabb-physics">Swept AABB Physics</h3>
 <pre><code class="language-javascript">const result = moveVoxelEntity(pos, vel, [0.6, 1.8, 0.6], dt);
 // result: { position, velocity, grounded, hitCeiling, onIce }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>💡 Common Patterns</h2>
-<h3>Mining System</h3>
+<h2 id="common-patterns">💡 Common Patterns</h2>
+<h3 id="mining-system">Mining System</h3>
 <pre><code class="language-javascript">// In update()
 const lookDir = getCameraDirection();
 const eyePos = [player.x, player.y + 1.6, player.z];
@@ -557,11 +560,11 @@ const result = raycastVoxelBlock(eyePos, lookDir, 10);
 
 if (result.hit &amp;&amp; isMousePressed(0)) {
   const [x, y, z] = result.position;
-  setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
-  console.log(&#39;Block broken!&#39;);
+  nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+  console.log('Block broken!');
 }
 </code></pre>
-<h3>Building System</h3>
+<h3 id="building-system">Building System</h3>
 <pre><code class="language-javascript">// In update()
 const result = raycastVoxelBlock(eyePos, lookDir, 10);
 
@@ -572,10 +575,10 @@ if (result.hit &amp;&amp; isMousePressed(2)) {
   const placeY = y - Math.sign(lookDir[1]);
   const placeZ = z - Math.sign(lookDir[2]);
 
-  setVoxelBlock(placeX, placeY, placeZ, selectedBlockType);
+  nova64.voxel.setVoxelBlock(placeX, placeY, placeZ, selectedBlockType);
 }
 </code></pre>
-<h3>Player Physics</h3>
+<h3 id="player-physics">Player Physics</h3>
 <pre><code class="language-javascript">// Gravity
 player.velY -= 20 * dt;
 
@@ -590,11 +593,11 @@ if (onGround &amp;&amp; player.velY &lt;= 0) {
 }
 
 // Jump
-if (isKeyPressed(&#39;Space&#39;) &amp;&amp; onGround) {
+if (isKeyPressed('Space') &amp;&amp; onGround) {
   player.velY = 8.0;
 }
 </code></pre>
-<h3>Find Ground Height</h3>
+<h3 id="find-ground-height">Find Ground Height</h3>
 <pre><code class="language-javascript">function getGroundHeight(x, z) {
   for (let y = 63; y &gt;= 0; y--) {
     const block = getVoxelBlock(x, y, z);
@@ -605,13 +608,13 @@ if (isKeyPressed(&#39;Space&#39;) &amp;&amp; onGround) {
   return 0;
 }
 </code></pre>
-<h3>Build Structure</h3>
+<h3 id="build-structure">Build Structure</h3>
 <pre><code class="language-javascript">// Simple house
 function buildHouse(x, y, z) {
   // Floor (8x8)
   for (let dx = 0; dx &lt; 8; dx++) {
     for (let dz = 0; dz &lt; 8; dz++) {
-      setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
+      nova64.voxel.setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
     }
   }
 
@@ -619,32 +622,33 @@ function buildHouse(x, y, z) {
   for (let dy = 1; dy &lt;= 4; dy++) {
     // Front and back
     for (let dx = 0; dx &lt; 8; dx++) {
-      setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
-      setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
     }
     // Left and right
     for (let dz = 0; dz &lt; 8; dz++) {
-      setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
-      setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
     }
   }
 
   // Roof
   for (let dx = 0; dx &lt; 8; dx++) {
     for (let dz = 0; dz &lt; 8; dz++) {
-      setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
+      nova64.voxel.setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
     }
   }
 
   // Door (2 blocks high)
-  setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
-  setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
+  nova64.voxel.setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
+  nova64.voxel.setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>🎯 Minimal Minecraft Clone</h2>
+<h2 id="minimal-minecraft-clone">🎯 Minimal Minecraft Clone</h2>
 <pre><code class="language-javascript">const player = {
   pos: [8, 40, 8],
   vel: [0, 0, 0],
@@ -655,15 +659,15 @@ function buildHouse(x, y, z) {
 let locked = false;
 
 export function init() {
-  setAmbientLight(0x666666);
-  updateVoxelWorld(0, 0);
+  nova64.light.setAmbientLight(0x666666);
+  nova64.voxel.updateVoxelWorld(0, 0);
 
-  const canvas = document.getElementById(&#39;screen&#39;);
-  canvas.addEventListener(&#39;click&#39;, () =&gt; canvas.requestPointerLock());
-  document.addEventListener(&#39;pointerlockchange&#39;, () =&gt; {
+  const canvas = document.getElementById('screen');
+  canvas.addEventListener('click', () =&gt; canvas.requestPointerLock());
+  document.addEventListener('pointerlockchange', () =&gt; {
     locked = document.pointerLockElement === canvas;
   });
-  canvas.addEventListener(&#39;mousemove&#39;, e =&gt; {
+  canvas.addEventListener('mousemove', e =&gt; {
     if (locked) {
       player.rot[0] -= e.movementX * 0.002;
       player.rot[1] -= e.movementY * 0.002;
@@ -676,14 +680,14 @@ export function update(dt) {
 
   // Movement
   const speed = 4;
-  if (isKeyDown(&#39;KeyW&#39;)) player.vel[2] -= speed * dt;
-  if (isKeyDown(&#39;KeyS&#39;)) player.vel[2] += speed * dt;
-  if (isKeyDown(&#39;KeyA&#39;)) player.vel[0] -= speed * dt;
-  if (isKeyDown(&#39;KeyD&#39;)) player.vel[0] += speed * dt;
+  if (isKeyDown('KeyW')) player.vel[2] -= speed * dt;
+  if (isKeyDown('KeyS')) player.vel[2] += speed * dt;
+  if (isKeyDown('KeyA')) player.vel[0] -= speed * dt;
+  if (isKeyDown('KeyD')) player.vel[0] += speed * dt;
 
   // Physics
   player.vel[1] -= 20 * dt;
-  if (isKeyPressed(&#39;Space&#39;) &amp;&amp; checkVoxelCollision(player.pos, 0.3)) {
+  if (isKeyPressed('Space') &amp;&amp; checkVoxelCollision(player.pos, 0.3)) {
     player.vel[1] = 8;
   }
 
@@ -700,13 +704,13 @@ export function update(dt) {
   player.vel[2] *= 0.8;
 
   // Camera
-  setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
+  nova64.camera.setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
   const lookDir = [
     -Math.sin(player.rot[0]) * Math.cos(player.rot[1]),
     Math.sin(player.rot[1]),
     -Math.cos(player.rot[0]) * Math.cos(player.rot[1]),
   ];
-  setCameraLookAt(lookDir);
+  nova64.camera.setCameraLookAt(lookDir);
 
   // Block interaction
   const result = raycastVoxelBlock(
@@ -731,22 +735,23 @@ export function update(dt) {
 }
 
 export function draw() {
-  cls();
+  nova64.draw.cls();
   if (locked) {
-    rectfill(318, 179, 322, 181, rgba8(1, 1, 1, 1));
-    rectfill(319, 178, 321, 182, rgba8(1, 1, 1, 1));
+    nova64.draw.rectfill(318, 179, 322, 181, rgba8(1, 1, 1, 1));
+    nova64.draw.rectfill(319, 178, 321, 182, rgba8(1, 1, 1, 1));
   }
-  print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
+  nova64.draw.print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>⚡ Performance Tips</h2>
-<h3>✅ DO:</h3>
+<h2 id="performance-tips">⚡ Performance Tips</h2>
+<h3 id="do">✅ DO:</h3>
 <pre><code class="language-javascript">// Update chunks occasionally
 if (frameCount % 10 === 0) {
-  updateVoxelWorld(playerX, playerZ);
+  nova64.voxel.updateVoxelWorld(playerX, playerZ);
 }
 
 // Use collision detection
@@ -754,26 +759,27 @@ const onGround = checkVoxelCollision(pos, 0.3);
 
 // Batch block changes
 for (let i = 0; i &lt; 100; i++) {
-  setVoxelBlock(x + i, y, z, type);
+  nova64.voxel.setVoxelBlock(x + i, y, z, type);
 }
 </code></pre>
-<h3>❌ DON&#39;T:</h3>
-<pre><code class="language-javascript">// Don&#39;t update every frame
+<h3 id="dont">❌ DON'T:</h3>
+<pre><code class="language-javascript">// Don't update every frame
 export function update() {
   updateVoxelWorld(x, z); // TOO EXPENSIVE!
 }
 
-// Don&#39;t check many blocks manually
+// Don't check many blocks manually
 for (let x = -10; x &lt; 10; x++) {
   for (let z = -10; z &lt; 10; z++) {
     getVoxelBlock(x, y, z); // Use collision instead!
   }
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>🌍 World Info</h2>
+<h2 id="world-info">🌍 World Info</h2>
 <ul>
 <li><strong>Chunk Size</strong>: 16×128×16 blocks</li>
 <li><strong>Render Distance</strong>: 4 chunks (64 blocks), configurable</li>
@@ -784,10 +790,11 @@ for (let x = -10; x &lt; 10; x++) {
 <li><strong>Infinite</strong>: Chunks generate on demand</li>
 <li><strong>Persistence</strong>: Save/load via IndexedDB</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>🎨 Terrain Features</h2>
+<h2 id="terrain-features">🎨 Terrain Features</h2>
 <ul>
 <li><strong>Height</strong>: Multi-octave Perlin noise</li>
 <li><strong>Biomes</strong>: Grass, Sand, Snow (based on temperature/moisture)</li>
@@ -795,22 +802,24 @@ for (let x = -10; x &lt; 10; x++) {
 <li><strong>Trees</strong>: Procedural with random height</li>
 <li><strong>Water</strong>: Fills below Y=30</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>🔍 Debugging</h2>
+<h2 id="debugging">🔍 Debugging</h2>
 <pre><code class="language-javascript">// Check block under player
 const block = getVoxelBlock(Math.floor(player.x), Math.floor(player.y) - 1, Math.floor(player.z));
 console.log(`Standing on: ${block}`);
 
 // Draw debug info
-print(`Pos: ${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}`, 4, 4);
-print(`Chunks loaded: ${chunkCount}`, 4, 12);
+nova64.draw.print(`Pos: ${Math.floor(player.x)}, ${Math.floor(player.y)}, ${Math.floor(player.z)}`, 4, 4);
+nova64.draw.print(`Chunks loaded: ${chunkCount}`, 4, 12);
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>📊 Performance Costs</h2>
+<h2 id="performance-costs">📊 Performance Costs</h2>
 <table>
 <thead>
 <tr>
@@ -819,7 +828,8 @@ print(`Chunks loaded: ${chunkCount}`, 4, 12);
 <th>Notes</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td><code>updateVoxelWorld()</code></td>
 <td>High</td>
 <td>Call every 10 frames</td>
@@ -849,11 +859,13 @@ print(`Chunks loaded: ${chunkCount}`, 4, 12);
 <td>Medium</td>
 <td>Places ~100 blocks</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
+
         </section>
 
         <section class="md">
-<h2>🚀 Ready to Build!</h2>
+<h2 id="ready-to-build">🚀 Ready to Build!</h2>
 <p>Check out the full Minecraft demo in <code>examples/minecraft-demo/</code> for a complete working game!</p>
 <p>See <code>VOXEL_ENGINE_GUIDE.md</code> for detailed documentation and advanced examples.</p>
         </section>

@@ -1,3 +1,5 @@
+const { print } = nova64.draw;
+
 // Nova64 Game Cart: CRYSTAL DUNGEON
 // Top-down dungeon crawler. Arrow keys to move, Z to attack.
 // Clear each room to unlock the exit. Reach the crystal!

@@ -62,34 +62,34 @@ Nova64 now has a **professional-grade UI system** with buttons, panels, advanced
 
 ```javascript
 // Set font size
-setFont('tiny'); // 1x size
-setFont('small'); // 1x size, more spacing
-setFont('normal'); // 2x size (default)
-setFont('large'); // 3x size
-setFont('huge'); // 4x size
+nova64.ui.setFont('tiny'); // 1x size
+nova64.ui.setFont('small'); // 1x size, more spacing
+nova64.ui.setFont('normal'); // 2x size (default)
+nova64.ui.setFont('large'); // 3x size
+nova64.ui.setFont('huge'); // 4x size
 
 // Text alignment
-setTextAlign('left'); // Default
-setTextAlign('center'); // Center-aligned
-setTextAlign('right'); // Right-aligned
+nova64.ui.setTextAlign('left'); // Default
+nova64.ui.setTextAlign('center'); // Center-aligned
+nova64.ui.setTextAlign('right'); // Right-aligned
 
 // Text baseline
-setTextBaseline('top'); // Default
-setTextBaseline('middle'); // Vertically centered
-setTextBaseline('bottom'); // Bottom-aligned
+nova64.ui.setTextBaseline('top'); // Default
+nova64.ui.setTextBaseline('middle'); // Vertically centered
+nova64.ui.setTextBaseline('bottom'); // Bottom-aligned
 
 // Measure text
 const metrics = measureText('Hello', 2);
 // Returns: { width: 60, height: 16 }
 
 // Draw text
-drawText('Hello World', x, y, color, scale);
+nova64.ui.drawText('Hello World', x, y, color, scale);
 
 // Draw text with shadow
-drawTextShadow('Title', x, y, color, shadowColor, offset, scale);
+nova64.ui.drawTextShadow('Title', x, y, color, shadowColor, offset, scale);
 
 // Draw text with outline
-drawTextOutline('SCORE', x, y, color, outlineColor, scale);
+nova64.ui.drawTextOutline('SCORE', x, y, color, outlineColor, scale);
 ```
 
 ### Panel System
@@ -113,16 +113,16 @@ const panel = createPanel(x, y, width, height, {
 });
 
 // Draw single panel
-drawPanel(panel);
+nova64.draw.drawPanel(panel);
 
 // Draw all panels
-drawAllPanels();
+nova64.ui.drawAllPanels();
 
 // Remove panel
-removePanel(panel);
+nova64.ui.removePanel(panel);
 
 // Clear all panels
-clearPanels();
+nova64.ui.clearPanels();
 ```
 
 ### Button System
@@ -153,29 +153,29 @@ const button = createButton(
 );
 
 // Update single button
-updateButton(button);
+nova64.ui.updateButton(button);
 
 // Update all buttons
-updateAllButtons();
+nova64.ui.updateAllButtons();
 
 // Draw single button
-drawButton(button);
+nova64.ui.drawButton(button);
 
 // Draw all buttons
-drawAllButtons();
+nova64.ui.drawAllButtons();
 
 // Remove button
-removeButton(button);
+nova64.ui.removeButton(button);
 
 // Clear all buttons
-clearButtons();
+nova64.ui.clearButtons();
 ```
 
 ### Progress Bars
 
 ```javascript
 // Draw progress bar
-drawProgressBar(x, y, width, height, currentValue, maxValue, {
+nova64.draw.drawProgressBar(x, y, width, height, currentValue, maxValue, {
   bgColor: rgba8(50, 50, 50, 255),
   fillColor: uiColors.success,
   borderColor: uiColors.white,
@@ -187,7 +187,7 @@ drawProgressBar(x, y, width, height, currentValue, maxValue, {
 const healthColor =
   health > 50 ? uiColors.success : health > 25 ? uiColors.warning : uiColors.danger;
 
-drawProgressBar(x, y, 200, 20, health, 100, {
+nova64.draw.drawProgressBar(x, y, 200, 20, health, 100, {
   fillColor: healthColor,
   showText: true,
 });
@@ -197,19 +197,19 @@ drawProgressBar(x, y, 200, 20, health, 100, {
 
 ```javascript
 // Rounded rectangle
-drawRoundedRect(x, y, width, height, radius, color, filled);
+nova64.draw.drawRoundedRect(x, y, width, height, radius, color, filled);
 
 // Gradient rectangle
-drawGradientRect(x, y, width, height, color1, color2, vertical);
+nova64.ui.drawGradientRect(x, y, width, height, color1, color2, vertical);
 
 // Example
-drawGradientRect(
+nova64.ui.drawGradientRect(
   0,
   0,
   640,
   360,
-  rgba8(10, 10, 30, 255), // Top color
-  rgba8(30, 10, 50, 255), // Bottom color
+  nova64.draw.rgba8(10, 10, 30, 255), // Top color
+  nova64.draw.rgba8(30, 10, 50, 255), // Bottom color
   true // Vertical gradient
 );
 ```
@@ -230,7 +230,7 @@ const cells = grid(cols, rows, cellWidth, cellHeight, paddingX, paddingY);
 // Example: 3x2 grid of buttons
 const buttonGrid = grid(3, 2, 80, 40, 10, 10);
 buttonGrid.forEach((cell, i) => {
-  createButton(cell.x, cell.y, cell.width, cell.height, `Btn ${i}`, () => {
+  nova64.ui.createButton(cell.x, cell.y, cell.width, cell.height, `Btn ${i}`, () => {
     console.log(`Button ${i} clicked`);
   });
 });
@@ -240,10 +240,10 @@ buttonGrid.forEach((cell, i) => {
 
 ```javascript
 // Set mouse position (from actual mouse or keyboard)
-setMousePosition(x, y);
+nova64.ui.setMousePosition(x, y);
 
 // Set mouse button state
-setMouseButton(isDown);
+nova64.ui.setMouseButton(isDown);
 
 // Get mouse position
 const pos = getMousePosition();
@@ -297,8 +297,8 @@ export async function init() {
 
   // Create menu buttons
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       200,
       100,
       40,
@@ -311,8 +311,8 @@ export async function init() {
   );
 
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       250,
       100,
       40,
@@ -325,8 +325,8 @@ export async function init() {
   );
 
   ui.menuButtons.push(
-    createButton(
-      centerX(100),
+    nova64.ui.createButton(
+      nova64.ui.centerX(100),
       300,
       100,
       40,
@@ -344,7 +344,7 @@ export function update(dt) {
   // (In real game, use actual mouse events)
 
   // Update all buttons
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 
   // Game logic
   ui.health = Math.max(0, ui.health - dt * 2);
@@ -353,35 +353,35 @@ export function update(dt) {
 
 export function draw() {
   // Clear screen
-  cls();
+  nova64.draw.cls();
 
   // Draw gradient background
-  drawGradientRect(0, 0, 640, 360, rgba8(20, 20, 40, 255), rgba8(40, 20, 60, 255), true);
+  nova64.ui.drawGradientRect(0, 0, 640, 360, rgba8(20, 20, 40, 255), rgba8(40, 20, 60, 255), true);
 
   // Draw panels
-  drawAllPanels();
+  nova64.ui.drawAllPanels();
 
   // Draw health bar
-  setFont('normal');
-  setTextAlign('left');
-  drawText('HEALTH', 20, 40, uiColors.white, 1);
-  drawProgressBar(20, 60, 200, 20, ui.health, 100, {
+  nova64.ui.setFont('normal');
+  nova64.ui.setTextAlign('left');
+  nova64.ui.drawText('HEALTH', 20, 40, uiColors.white, 1);
+  nova64.draw.drawProgressBar(20, 60, 200, 20, ui.health, 100, {
     fillColor: ui.health > 50 ? uiColors.success : uiColors.danger,
   });
 
   // Draw score
-  setFont('large');
-  setTextAlign('center');
+  nova64.ui.setFont('large');
+  nova64.ui.setTextAlign('center');
   const scoreText = 'SCORE: ' + ui.score.toString().padStart(6, '0');
-  drawTextOutline(scoreText, 320, 100, uiColors.warning, uiColors.black, 1);
+  nova64.ui.drawTextOutline(scoreText, 320, 100, uiColors.warning, uiColors.black, 1);
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 
   // Draw title
-  setFont('huge');
-  setTextAlign('center');
-  drawTextShadow('MY GAME', 320, 30, uiColors.primary, uiColors.black, 3, 1);
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
+  nova64.ui.drawTextShadow('MY GAME', 320, 30, uiColors.primary, uiColors.black, 3, 1);
 }
 ```
 
@@ -397,11 +397,11 @@ const statsPanel = createPanel(10, 10, 200, 150, {
 });
 
 // Draw panel first
-drawPanel(statsPanel);
+nova64.draw.drawPanel(statsPanel);
 
 // Then draw contents inside panel bounds
-drawText('Health: 100', 20, 40);
-drawText('Mana: 50', 20, 60);
+nova64.ui.drawText('Health: 100', 20, 40);
+nova64.ui.drawText('Mana: 50', 20, 60);
 ```
 
 ### 2. Update Buttons Every Frame
@@ -409,23 +409,23 @@ drawText('Mana: 50', 20, 60);
 ```javascript
 export function update(dt) {
   // Always update buttons to track hover/click
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 }
 
 export function draw() {
   // Always draw buttons after updating
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 ```
 
 ### 3. Use Font Sizes Appropriately
 
 ```javascript
-setFont('huge'); // Game titles
-setFont('large'); // Section headers
-setFont('normal'); // Body text (default)
-setFont('small'); // Details
-setFont('tiny'); // Fine print
+nova64.ui.setFont('huge'); // Game titles
+nova64.ui.setFont('large'); // Section headers
+nova64.ui.setFont('normal'); // Body text (default)
+nova64.ui.setFont('small'); // Details
+nova64.ui.setFont('tiny'); // Fine print
 ```
 
 ### 4. Center Important Elements
@@ -433,25 +433,25 @@ setFont('tiny'); // Fine print
 ```javascript
 // Title centered horizontally
 const titleX = centerX(200);
-drawText('GAME TITLE', titleX, 50);
+nova64.ui.drawText('GAME TITLE', titleX, 50);
 
 // Dialog centered both ways
 const dialogWidth = 300;
 const dialogHeight = 200;
 const dialogX = centerX(dialogWidth);
 const dialogY = centerY(dialogHeight);
-createPanel(dialogX, dialogY, dialogWidth, dialogHeight);
+nova64.ui.createPanel(dialogX, dialogY, dialogWidth, dialogHeight);
 ```
 
 ### 5. Use Color Palette Consistently
 
 ```javascript
 // Good: Use semantic colors
-createButton(x, y, w, h, 'Accept', callback, {
+nova64.ui.createButton(x, y, w, h, 'Accept', callback, {
   normalColor: uiColors.success,
 });
 
-createButton(x, y, w, h, 'Cancel', callback, {
+nova64.ui.createButton(x, y, w, h, 'Cancel', callback, {
   normalColor: uiColors.danger,
 });
 
@@ -470,17 +470,17 @@ createButton(x, y, w, h, 'Cancel', callback, {
 ### Before (Basic)
 
 ```javascript
-print('Score: 100', 10, 10, rgba8(255, 255, 0, 255));
-rect(10, 30, 200, 20, rgba8(0, 255, 0, 255), true);
+nova64.draw.print('Score: 100', 10, 10, rgba8(255, 255, 0, 255));
+nova64.draw.rect(10, 30, 200, 20, rgba8(0, 255, 0, 255), true);
 ```
 
 ### After (Professional)
 
 ```javascript
-setFont('large');
-setTextAlign('left');
-drawTextOutline('Score: 100', 10, 10, uiColors.warning, uiColors.black, 1);
-drawProgressBar(10, 30, 200, 20, score, maxScore, {
+nova64.ui.setFont('large');
+nova64.ui.setTextAlign('left');
+nova64.ui.drawTextOutline('Score: 100', 10, 10, uiColors.warning, uiColors.black, 1);
+nova64.draw.drawProgressBar(10, 30, 200, 20, score, maxScore, {
   fillColor: uiColors.success,
 });
 ```

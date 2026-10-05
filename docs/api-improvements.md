@@ -35,7 +35,7 @@ The `EXECUTE_CODE` message handler passes `skyApi.createSkybox`, `skyApi.updateS
 **Add:**
 
 ```js
-setSkyboxSpeed(multiplier); // e.g. 0 = frozen, 2.0 = double speed, -1 = reverse
+nova64.light.setSkyboxSpeed(multiplier); // e.g. 0 = frozen, 2.0 = double speed, -1 = reverse
 ```
 
 ### 5. Cart authors must manually call `animateSkybox(dt)` every frame
@@ -45,8 +45,8 @@ Forgetting to call it in `update()` is the most common skybox mistake. The engin
 **Add:**
 
 ```js
-enableSkyboxAutoAnimate((speed = 1.0)); // engine calls animateSkybox internally
-disableSkyboxAutoAnimate();
+nova64.light.enableSkyboxAutoAnimate((speed = 1.0)); // engine calls animateSkybox internally
+nova64.light.disableSkyboxAutoAnimate();
 ```
 
 ### 6. Only one skybox type (procedural space)
@@ -56,13 +56,13 @@ There is no way to create a daytime sky, sunset, cave, or interior environment. 
 **Add:**
 
 ```js
-createGradientSkybox(topColor, bottomColor, horizonColor?)
+nova64.light.createGradientSkybox(topColor, bottomColor, horizonColor?)
 // e.g. createGradientSkybox(0x1a6aa8, 0xf4a460)  → sunset
 
-createSolidSkybox(color)
+nova64.light.createSolidSkybox(color)
 // e.g. createSolidSkybox(0x000000)  → cave / indoor
 
-createImageSkybox([px, nx, py, ny, pz, nz])
+nova64.light.createImageSkybox([px, nx, py, ny, pz, nz])
 // cube-face textures for full photorealistic environments
 ```
 

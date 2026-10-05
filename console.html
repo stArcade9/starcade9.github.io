@@ -401,6 +401,12 @@
       }
 
       /* Mobile Controls Styling */
+      /* Nova64 0.5.6 supplies its own touch gamepad. Keep the legacy controls
+         only as a fallback when the runtime overlay is disabled. */
+      body:has(#nova64-touch-controls) .mobile-controls {
+        display: none !important;
+      }
+
       .mobile-controls {
         display: none; /* hidden on desktop */
         width: 100%;
@@ -574,7 +580,7 @@
       }
     }
     </script>
-  <script type="module" crossorigin src="./assets/main-B94wM1bV.js"></script>
+  <script type="module" crossorigin src="./assets/main-CElGycxl.js"></script>
 </head>
   <body>
     <div class="shell">

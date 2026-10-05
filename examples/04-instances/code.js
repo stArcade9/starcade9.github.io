@@ -16,7 +16,7 @@ function call(method, payload) {
 
 export function init() {
   const caps = call('engine.init').capabilities;
-  print('[04-instances] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
+  console.log('[04-instances] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
 
   call('light.createDirectional', { color: [1, 1, 1, 1], energy: 1.4 });
 
@@ -46,7 +46,7 @@ export function init() {
   call('transform.set', { handle: cam, position: [0, 18, 22], rotation: [-0.55, 0, 0] });
   call('camera.setActive', { handle: cam });
 
-  print('[04-instances] ready, count=' + COUNT);
+  console.log('[04-instances] ready, count=' + COUNT);
 }
 
 export function update(dt) {

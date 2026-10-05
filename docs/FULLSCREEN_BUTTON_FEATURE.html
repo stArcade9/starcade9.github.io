@@ -375,59 +375,64 @@
         </header>
 
         <section class="md">
-<h2>Overview</h2>
+<h2 id="overview">Overview</h2>
 <p>A universal fullscreen button that appears in the lower-right corner of the canvas for <strong>every</strong> Nova64 demo. This allows users to quickly toggle fullscreen mode with a single click.</p>
+
         </section>
 
         <section class="md">
-<h2>Features</h2>
-<p>✅ <strong>Universal</strong>: Appears for all demos automatically<br>✅ <strong>Stylish UI</strong>: Neon cyan button with hover effects matching Nova64 theme<br>✅ <strong>Smooth Transitions</strong>: Animated hover and fullscreen transitions<br>✅ <strong>Keyboard Support</strong>: ESC key exits fullscreen mode<br>✅ <strong>Cross-browser</strong>: Works in Chrome, Firefox, Safari, Edge<br>✅ <strong>Icon Changes</strong>: Shows expand icon (⛶) normally, compress icon (⛉) in fullscreen<br>✅ <strong>Transparent Background</strong>: Blurred backdrop for modern glass effect</p>
+<h2 id="features">Features</h2>
+<p>✅ <strong>Universal</strong>: Appears for all demos automatically<br />
+✅ <strong>Stylish UI</strong>: Neon cyan button with hover effects matching Nova64 theme<br />
+✅ <strong>Smooth Transitions</strong>: Animated hover and fullscreen transitions<br />
+✅ <strong>Keyboard Support</strong>: ESC key exits fullscreen mode<br />
+✅ <strong>Cross-browser</strong>: Works in Chrome, Firefox, Safari, Edge<br />
+✅ <strong>Icon Changes</strong>: Shows expand icon (⛶) normally, compress icon (⛉) in fullscreen<br />
+✅ <strong>Transparent Background</strong>: Blurred backdrop for modern glass effect</p>
+
         </section>
 
         <section class="md">
-<h2>Usage</h2>
-<h3>For Users:</h3>
+<h2 id="usage">Usage</h2>
+<h3 id="for-users">For Users:</h3>
 <ol>
-<li><p><strong>Enter Fullscreen</strong>:</p>
-<ul>
-<li>Click the button in the lower-right corner</li>
-<li>Or use F11 (browser default)</li>
-</ul>
+<li>
+<p><strong>Enter Fullscreen</strong>:
+   - Click the button in the lower-right corner
+   - Or use F11 (browser default)</p>
 </li>
-<li><p><strong>Exit Fullscreen</strong>:</p>
-<ul>
-<li>Click the button again</li>
-<li>Or press <strong>ESC</strong> key</li>
-<li>Or press F11 again</li>
-</ul>
+<li>
+<p><strong>Exit Fullscreen</strong>:
+   - Click the button again
+   - Or press <strong>ESC</strong> key
+   - Or press F11 again</p>
 </li>
 </ol>
-<h3>For Developers:</h3>
+<h3 id="for-developers">For Developers:</h3>
 <p>The fullscreen button is <strong>automatically created</strong> when the Nova64 runtime initializes. No setup needed in individual demos!</p>
 <pre><code class="language-javascript">// In main.js - already configured!
-import { createFullscreenButton } from &#39;../runtime/fullscreen-button.js&#39;;
+import { createFullscreenButton } from '../runtime/fullscreen-button.js';
 
-const canvas = document.getElementById(&#39;screen&#39;);
+const canvas = document.getElementById('screen');
 globalThis.fullscreenButton = createFullscreenButton(canvas);
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Implementation Details</h2>
-<h3>File: <code>runtime/fullscreen-button.js</code></h3>
+<h2 id="implementation-details">Implementation Details</h2>
+<h3 id="file-runtimefullscreen-buttonjs">File: <code>runtime/fullscreen-button.js</code></h3>
 <p>The fullscreen button:</p>
 <ul>
 <li>Creates a floating button element</li>
 <li>Positions it at <code>bottom: 20px</code>, <code>right: 20px</code></li>
 <li>Uses fixed positioning (visible in all demos)</li>
-<li>Adds event listeners for:<ul>
+<li>Adds event listeners for:</li>
 <li>Click to toggle fullscreen</li>
 <li>ESC key to exit</li>
 <li>Fullscreen change detection (handles F11, ESC, etc.)</li>
 </ul>
-</li>
-</ul>
-<h3>Styling</h3>
+<h3 id="styling">Styling</h3>
 <pre><code class="language-css">Position: Fixed (lower-right corner)
 Size: 48px × 48px
 Border: 2px solid cyan (#00ffff)
@@ -435,7 +440,7 @@ Background: Semi-transparent dark with blur effect
 Shadow: Neon cyan glow
 Z-index: 9999 (always on top)
 </code></pre>
-<h3>Browser Compatibility</h3>
+<h3 id="browser-compatibility">Browser Compatibility</h3>
 <p>Uses standard Fullscreen API with fallbacks:</p>
 <ul>
 <li><code>requestFullscreen()</code> - Standard</li>
@@ -443,24 +448,25 @@ Z-index: 9999 (always on top)
 <li><code>mozRequestFullScreen()</code> - Firefox</li>
 <li><code>msRequestFullscreen()</code> - IE11</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Technical Architecture</h2>
-<h3>Class: FullscreenButton</h3>
+<h2 id="technical-architecture">Technical Architecture</h2>
+<h3 id="class-fullscreenbutton">Class: FullscreenButton</h3>
 <pre><code class="language-javascript">class FullscreenButton {
   constructor(canvas)
-  createButton()           // Creates DOM element with styles
+  nova64.ui.createButton()           // Creates DOM element with styles
   attachListeners()        // Sets up click and keyboard handlers
   toggleFullscreen()       // Toggles between fullscreen/normal
   enterFullscreen()        // Enters fullscreen mode
   exitFullscreen()         // Exits fullscreen mode
   handleFullscreenChange() // Syncs state with browser
-  updateButton()           // Updates icon based on state
+  nova64.ui.updateButton()           // Updates icon based on state
   destroy()                // Cleanup (if needed)
 }
 </code></pre>
-<h3>State Management</h3>
+<h3 id="state-management">State Management</h3>
 <pre><code class="language-javascript">this.isFullscreen = false; // Tracks current state
 </code></pre>
 <p>State is automatically synchronized when:</p>
@@ -470,41 +476,44 @@ Z-index: 9999 (always on top)
 <li>User presses F11</li>
 <li>Browser exits fullscreen for any reason</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Customization</h2>
+<h2 id="customization">Customization</h2>
 <p>If you need to customize the button appearance, edit <code>runtime/fullscreen-button.js</code>:</p>
 <pre><code class="language-javascript">// Change position
-bottom: &#39;20px&#39;,    // Distance from bottom
-right: &#39;20px&#39;,     // Distance from right
+bottom: '20px',    // Distance from bottom
+right: '20px',     // Distance from right
 
 // Change size
-width: &#39;48px&#39;,
-height: &#39;48px&#39;,
+width: '48px',
+height: '48px',
 
 // Change colors
-border: &#39;2px solid #00ffff&#39;,  // Cyan border
-color: &#39;#00ffff&#39;,              // Cyan icon
+border: '2px solid #00ffff',  // Cyan border
+color: '#00ffff',              // Cyan icon
 
 // Change background
-background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
+background: 'rgba(21, 24, 34, 0.9)',  // Dark semi-transparent
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>ESC Key Behavior</h2>
+<h2 id="esc-key-behavior">ESC Key Behavior</h2>
 <p>The ESC key is handled at two levels:</p>
 <ol>
 <li><strong>Browser Level</strong>: Native fullscreen ESC handling</li>
 <li><strong>Button Level</strong>: Custom ESC listener that calls <code>exitFullscreen()</code></li>
 </ol>
 <p>Both work together to ensure ESC always exits fullscreen mode.</p>
+
         </section>
 
         <section class="md">
-<h2>Examples</h2>
-<h3>Button in Different States</h3>
+<h2 id="examples">Examples</h2>
+<h3 id="button-in-different-states">Button in Different States</h3>
 <p><strong>Normal Mode</strong>:</p>
 <pre><code>┌──────────────────┐
 │        ⛶         │  ← Expand icon
@@ -515,17 +524,18 @@ background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
 │        ⛉         │  ← Compress icon
 └──────────────────┘
 </code></pre>
-<h3>Hover Effect</h3>
+<h3 id="hover-effect">Hover Effect</h3>
 <ul>
 <li>Scale: 1.0 → 1.1</li>
 <li>Background: Darker → Cyan tint</li>
 <li>Shadow: Subtle → Bright glow</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Testing</h2>
-<h3>Test Checklist</h3>
+<h2 id="testing">Testing</h2>
+<h3 id="test-checklist">Test Checklist</h3>
 <ul>
 <li>☐ Button appears in lower-right corner</li>
 <li>☐ Button has cyan neon glow effect</li>
@@ -538,7 +548,7 @@ background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
 <li>☐ Button works across all demos</li>
 <li>☐ Button stays on top of game content</li>
 </ul>
-<h3>Browser Testing</h3>
+<h3 id="browser-testing">Browser Testing</h3>
 <p>Test in:</p>
 <ul>
 <li>✅ Chrome/Edge</li>
@@ -546,10 +556,11 @@ background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
 <li>✅ Safari</li>
 <li>✅ Mobile browsers (if applicable)</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Canvas Behavior in Fullscreen</h2>
+<h2 id="canvas-behavior-in-fullscreen">Canvas Behavior in Fullscreen</h2>
 <p>When entering fullscreen:</p>
 <ul>
 <li>Canvas expands to fill entire screen</li>
@@ -557,114 +568,126 @@ background: &#39;rgba(21, 24, 34, 0.9)&#39;,  // Dark semi-transparent
 <li>Image rendering stays pixelated for retro look</li>
 <li>All controls remain functional</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Performance</h2>
+<h2 id="performance">Performance</h2>
 <ul>
 <li><strong>Minimal overhead</strong>: Single DOM element</li>
 <li><strong>No rendering impact</strong>: Pure CSS/HTML</li>
 <li><strong>Event efficient</strong>: Uses native fullscreen API</li>
 <li><strong>Memory</strong>: ~1KB footprint</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Accessibility</h2>
+<h2 id="accessibility">Accessibility</h2>
 <ul>
 <li><strong>Keyboard</strong>: ESC key support</li>
 <li><strong>Visual</strong>: Clear icon indication</li>
-<li><strong>Tooltip</strong>: Hover shows &quot;Toggle Fullscreen (ESC to exit)&quot;</li>
+<li><strong>Tooltip</strong>: Hover shows "Toggle Fullscreen (ESC to exit)"</li>
 <li><strong>Color contrast</strong>: Cyan on dark meets WCAG standards</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Troubleshooting</h2>
-<h3>Button doesn&#39;t appear</h3>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="button-doesnt-appear">Button doesn't appear</h3>
 <ul>
 <li>Check browser console for errors</li>
 <li>Verify <code>fullscreen-button.js</code> is loaded</li>
 <li>Check z-index conflicts with other UI</li>
 </ul>
-<h3>Fullscreen doesn&#39;t work</h3>
+<h3 id="fullscreen-doesnt-work">Fullscreen doesn't work</h3>
 <ul>
 <li>Check browser permissions (some block fullscreen)</li>
 <li>Verify canvas element exists</li>
 <li>Try F11 as alternative</li>
 </ul>
-<h3>ESC doesn&#39;t exit fullscreen</h3>
+<h3 id="esc-doesnt-exit-fullscreen">ESC doesn't exit fullscreen</h3>
 <ul>
 <li>Check for conflicting ESC handlers in demos</li>
 <li>Verify fullscreen API is supported</li>
 </ul>
-<h3>Button blocked by game UI</h3>
+<h3 id="button-blocked-by-game-ui">Button blocked by game UI</h3>
 <ul>
 <li>Adjust z-index (default: 9999)</li>
 <li>Move position if needed</li>
-<li>Check demo&#39;s custom UI elements</li>
+<li>Check demo's custom UI elements</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Future Enhancements</h2>
+<h2 id="future-enhancements">Future Enhancements</h2>
 <p>Potential additions:</p>
 <ul>
-<li><input disabled="" type="checkbox"> Customizable position (corners)</li>
-<li><input disabled="" type="checkbox"> Hide button in fullscreen (auto-show on mouse move)</li>
-<li><input disabled="" type="checkbox"> Keyboard shortcut display</li>
-<li><input disabled="" type="checkbox"> Animation on enter/exit fullscreen</li>
-<li><input disabled="" type="checkbox"> Mobile-specific handling</li>
-<li><input disabled="" type="checkbox"> VR mode toggle</li>
+<li>[ ] Customizable position (corners)</li>
+<li>[ ] Hide button in fullscreen (auto-show on mouse move)</li>
+<li>[ ] Keyboard shortcut display</li>
+<li>[ ] Animation on enter/exit fullscreen</li>
+<li>[ ] Mobile-specific handling</li>
+<li>[ ] VR mode toggle</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Integration with Demos</h2>
+<h2 id="integration-with-demos">Integration with Demos</h2>
 <p>No changes needed in individual demos! The button is globally available.</p>
-<h3>If a demo needs to disable it:</h3>
-<pre><code class="language-javascript">// In your demo&#39;s init()
+<h3 id="if-a-demo-needs-to-disable-it">If a demo needs to disable it:</h3>
+<pre><code class="language-javascript">// In your demo's init()
 if (globalThis.fullscreenButton) {
   globalThis.fullscreenButton.destroy();
 }
 </code></pre>
-<h3>If a demo needs custom fullscreen handling:</h3>
+<h3 id="if-a-demo-needs-custom-fullscreen-handling">If a demo needs custom fullscreen handling:</h3>
 <pre><code class="language-javascript">// Access the button instance
 const fsBtn = globalThis.fullscreenButton;
 
 // Check state
 if (fsBtn.isFullscreen) {
-  console.log(&#39;Currently in fullscreen&#39;);
+  console.log('Currently in fullscreen');
 }
 
 // Programmatically toggle
 fsBtn.toggleFullscreen();
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Files Modified</h2>
+<h2 id="files-modified">Files Modified</h2>
 <ol>
-<li><p><strong>Created</strong>: <code>runtime/fullscreen-button.js</code></p>
-<ul>
-<li>New fullscreen button class</li>
-<li>150+ lines of code</li>
-</ul>
+<li>
+<p><strong>Created</strong>: <code>runtime/fullscreen-button.js</code>
+   - New fullscreen button class
+   - 150+ lines of code</p>
 </li>
-<li><p><strong>Modified</strong>: <code>src/main.js</code></p>
-<ul>
-<li>Added import statement</li>
-<li>Created button instance</li>
-<li>2 lines added</li>
-</ul>
+<li>
+<p><strong>Modified</strong>: <code>src/main.js</code>
+   - Added import statement
+   - Created button instance
+   - 2 lines added</p>
 </li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Summary</h2>
-<p>✅ <strong>Universal fullscreen button</strong> added to all Nova64 demos<br>✅ <strong>ESC key support</strong> for easy exit<br>✅ <strong>Modern UI</strong> with neon effects matching Nova64 theme<br>✅ <strong>Zero configuration</strong> needed in individual demos<br>✅ <strong>Cross-browser compatible</strong> with fallbacks<br>✅ <strong>Performance optimized</strong> with minimal overhead</p>
-<p><strong>Status</strong>: ✅ Production Ready<br><strong>Last Updated</strong>: October 26, 2025<br><strong>Version</strong>: 1.0</p>
+<h2 id="summary">Summary</h2>
+<p>✅ <strong>Universal fullscreen button</strong> added to all Nova64 demos<br />
+✅ <strong>ESC key support</strong> for easy exit<br />
+✅ <strong>Modern UI</strong> with neon effects matching Nova64 theme<br />
+✅ <strong>Zero configuration</strong> needed in individual demos<br />
+✅ <strong>Cross-browser compatible</strong> with fallbacks<br />
+✅ <strong>Performance optimized</strong> with minimal overhead</p>
+<p><strong>Status</strong>: ✅ Production Ready<br />
+<strong>Last Updated</strong>: October 26, 2025<br />
+<strong>Version</strong>: 1.0</p>
         </section>
 
         <footer>

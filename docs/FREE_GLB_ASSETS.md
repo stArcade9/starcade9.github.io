@@ -244,7 +244,7 @@ Historical artifacts and specimens:
    ```javascript
    export function update(dt) {
      // Play animation
-     playAnimation(modelMesh, 'Walk', dt);
+     nova64.scene.playAnimation(modelMesh, 'Walk', dt);
    }
    ```
 

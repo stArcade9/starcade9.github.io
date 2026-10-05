@@ -1,3 +1,5 @@
+const { print } = nova64.draw;
+
 // examples/babylon-demo/code.js
 // Babylon.js backend demo for Nova64 — Phase 2
 //

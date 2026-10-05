@@ -75,12 +75,12 @@ const RenderBackend = {
   setAvatarVisible(id, visible)   // e.g. hide own body in first-person
   removeAvatar(id)
   // Camera
-  setCamera({ x, y, z, yaw, pitch, mode })   // mode: 'first' | 'third'
+  nova64.draw.setCamera({ x, y, z, yaw, pitch, mode })   // mode: 'first' | 'third'
   // 2D UI — the UI component tree rasterizes through these:
-  drawRect(x, y, w, h, color)
-  drawText(text, x, y, color)
+  nova64.draw.drawRect(x, y, w, h, color)
+  nova64.ui.drawText(text, x, y, color)
   drawCircle(x, y, r, color, filled)
-  measureText(text) -> width
+  nova64.draw.measureText(text) -> width
   viewport() -> { w, h }                      // design units (web: 640x360)
   // Project a 3D world point to 2D design space (name tags, world markers):
   worldToScreen(x, y, z) -> { x, y, visible, dist }

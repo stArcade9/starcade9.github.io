@@ -402,6 +402,11 @@
       }
 
       /* Mobile Controls Styling */
+      /* Avoid showing both the legacy gamepad and Nova64's runtime controls. */
+      body:has(#nova64-touch-controls) .mobile-controls {
+        display: none !important;
+      }
+
       .mobile-controls {
         display: none; /* hidden on desktop */
         width: 100%;

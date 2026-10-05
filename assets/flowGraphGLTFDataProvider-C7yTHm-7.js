@@ -1,0 +1,2 @@
+import{j6 as a,wf as t}from"./nativeXRFrame-PgYLlvIt.js";import"./backend-surface-AmtNDkC8.js";class s extends a{constructor(a){super(a);const s=a.glTF,o=s?.animations?.map(a=>a._babylonAnimationGroup)||[];this.animationGroups=this.registerDataOutput("animationGroups",t,o);const r=s?.nodes?.map(a=>a._babylonTransformNode)||[];this.nodes=this.registerDataOutput("nodes",t,r)}getClassName(){return"FlowGraphGLTFDataProvider"}}export{s as FlowGraphGLTFDataProvider};
+//# sourceMappingURL=flowGraphGLTFDataProvider-C7yTHm-7.js.map

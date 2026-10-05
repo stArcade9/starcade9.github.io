@@ -376,7 +376,12 @@
         </header>
 
         <section class="md">
-<h2>Current Position</h2>
+<p>This note is for agents continuing Babylon voxel parity work.</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="current-position">Current Position</h2>
 <p>Nova64 has an experimental NOA probe seam at:</p>
 <ul>
 <li><code>runtime/backends/babylon/noa-prototype.js</code></li>
@@ -391,10 +396,11 @@
 <li><code>runtime/api-voxel.js</code></li>
 </ul>
 <p>The shared Nova64 voxel API remains the canonical cart-facing contract.</p>
+
         </section>
 
         <section class="md">
-<h2>Why The Prototype Is Guarded</h2>
+<h2 id="why-the-prototype-is-guarded">Why The Prototype Is Guarded</h2>
 <p><code>noa-engine</code> is promising because it is Babylon-native, but it is also a larger engine with its own world, registry, entity, and render ownership model.</p>
 <p>Two practical constraints matter right now:</p>
 <ol>
@@ -402,10 +408,11 @@
 <li>The published package is currently <code>noa-engine@0.33.0</code>, and its npm peer dependency still targets <code>@babylonjs/core ^6.1.0</code>, while Nova64 is on Babylon 7.</li>
 </ol>
 <p>Because of that, the current integration point is probe-first instead of takeover-first.</p>
+
         </section>
 
         <section class="md">
-<h2>What Exists Today</h2>
+<h2 id="what-exists-today">What Exists Today</h2>
 <p>The prototype exposes two shared voxel diagnostics:</p>
 <ul>
 <li><code>getVoxelNoaPrototypeStatus()</code></li>
@@ -415,14 +422,19 @@
 <p>On Babylon:</p>
 <ul>
 <li><code>?noaVoxel=1</code> or <code>?noaVoxel=probe</code> requests a probe on boot.</li>
-<li><code>localStorage[&#39;nova64:noaVoxel&#39;] = &#39;1&#39;</code> also requests a probe.</li>
+<li><code>localStorage['nova64:noaVoxel'] = '1'</code> also requests a probe.</li>
 <li><code>globalThis.NOVA64_NOA_PROTOTYPE = true</code> can request a probe before runtime boot.</li>
 </ul>
 <p>The probe attempts to load <code>noa-engine</code> and reports whether the module is available. The adapter APIs are separate and opt-in so the default Babylon renderer remains stable.</p>
+<p><code>noa-engine</code> is an optional peer dependency; Nova64 does not install it automatically.
+Install it explicitly in a project that uses this prototype. Its Git-based transitive
+dependency may be rejected by pnpm 11's default dependency policy; the normal Nova64
+install and built-in Babylon voxel renderer do not require it.</p>
+
         </section>
 
         <section class="md">
-<h2>Adapter Controls</h2>
+<h2 id="adapter-controls">Adapter Controls</h2>
 <p>The experimental adapter exposes these controls through flat globals and <code>nova64.voxel.*</code>:</p>
 <ul>
 <li><code>enableVoxelNoaAdapter(options)</code></li>
@@ -431,10 +443,11 @@
 <li><code>isVoxelNoaActive()</code></li>
 </ul>
 <p>Keep these guarded. They should report inactive status gracefully when NOA is unavailable or incompatible.</p>
+
         </section>
 
         <section class="md">
-<h2>Expected Status Values</h2>
+<h2 id="expected-status-values">Expected Status Values</h2>
 <p>Typical <code>reason</code> values from <code>getVoxelNoaPrototypeStatus()</code>:</p>
 <ul>
 <li><code>disabled</code></li>
@@ -444,33 +457,33 @@
 <li><code>loaded-awaiting-adapter</code></li>
 </ul>
 <p><code>active</code> should stay <code>false</code> for probe-only status. Adapter status is reported separately by <code>getVoxelNoaAdapterStatus()</code>.</p>
+
         </section>
 
         <section class="md">
-<h2>Next Safe Steps</h2>
+<h2 id="next-safe-steps">Next Safe Steps</h2>
 <ol>
 <li>Keep validating <code>minecraft-demo</code> and <code>voxel-creatures</code> first.</li>
-<li>Prototype one isolated concern at a time:<ul>
-<li>chunk meshing</li>
-<li>chunk streaming / world paging</li>
-<li>collision / entity movement</li>
-</ul>
-</li>
+<li>Prototype one isolated concern at a time:
+   - chunk meshing
+   - chunk streaming / world paging
+   - collision / entity movement</li>
 <li>Keep Nova64 carts on the existing shared voxel API while experimenting behind the Babylon seam.</li>
-<li>Do not add cart-level <code>if (backend === &#39;babylon&#39;)</code> NOA branches.</li>
-<li>Test build stability first when touching the adapter because <code>noa-engine@0.33.0</code> predates Nova64&#39;s current Babylon line.</li>
+<li>Do not add cart-level <code>if (backend === 'babylon')</code> NOA branches.</li>
+<li>Test build stability first when touching the adapter because <code>noa-engine@0.33.0</code> predates Nova64's current Babylon line.</li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Validation</h2>
+<h2 id="validation">Validation</h2>
 <p>Use these first when touching the prototype seam:</p>
 <ul>
 <li><code>pnpm test:babylon:api</code></li>
-<li><code>pnpm exec playwright test tests/playwright/wad-vox-regression.spec.js --grep &quot;Voxel Regression&quot; --reporter=line</code></li>
-<li><code>pnpm exec playwright test tests/playwright/backend-parity.spec.js --grep &quot;Voxel&quot; --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/wad-vox-regression.spec.js --grep "Voxel Regression" --reporter=line</code></li>
+<li><code>pnpm exec playwright test tests/playwright/backend-parity.spec.js --grep "Voxel" --reporter=line</code></li>
 </ul>
-<p>If the probe seam changes, keep the fallback path graceful: Babylon should continue using Nova64&#39;s built-in voxel renderer when NOA is unavailable.</p>
+<p>If the probe seam changes, keep the fallback path graceful: Babylon should continue using Nova64's built-in voxel renderer when NOA is unavailable.</p>
         </section>
 
         <footer>

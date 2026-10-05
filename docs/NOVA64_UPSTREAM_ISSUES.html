@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova64 upstream issues - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+
+        /* ── mobile: wide content scrolls or wraps instead of widening the page ── */
+        table { display: block; overflow-x: auto; max-width: 100%; }
+        :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        p, li, td, th, h1, h2, h3, h4 { overflow-wrap: break-word; }
+        section, .function, .note, .example, .param { max-width: 100%; }
+        .function-sig { overflow-x: auto; max-width: 100%; }
+        pre { overflow-x: auto; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+            .function { padding: 16px 14px; }
+        }
+
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="/docs" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>Nova64 upstream issues</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<p>Issues in the <code>nova64</code> package itself, written up so they can be fixed in the
+Nova64 workspace rather than worked around again in m{ai}geXR.</p>
+<p><strong>Verified against <code>nova64@0.5.3</code></strong> (current <code>latest</code> on npm, 2026-10-04), by
+reading the published tarball: <code>npm pack nova64@0.5.3</code>.</p>
+<p>All file references below are paths inside that tarball.</p>
+<hr />
+
+        </section>
+
+        <section class="md">
+<h2 id="1-the-readmes-cart-example-cannot-run-in-studio-mode">1. The README's cart example cannot run in studio mode</h2>
+<p><strong>Severity:</strong> high — it is the first example a new user copies, and it fails
+three separate ways.</p>
+<p><code>README.md</code>, under <em>"Creating Your First 3D Cart"</em> (around line 697), opens with:</p>
+<blockquote>
+<p>Nova64 carts are <strong>ES modules</strong> with three lifecycle functions:</p>
+</blockquote>
+<pre><code class="language-javascript">export function init() {
+  ground = createPlane(50, 50, 0x2a4d3a, [0, 0, 0]);
+  player = createCube(1, 0x0088ff, [0, 1, 0], { material: 'metallic' });
+  setFog(0x1a1a2e, 10, 30);
+}
+
+export function update(dt) {
+  if (key('KeyW')) setPosition(player, 0, 1, -5 * dt);
+}
+
+export function draw() {
+  print(`Score: ${score}`, 10, 10, 0xffffff);
+}
+</code></pre>
+<p>That shape is correct for carts loaded as modules by the CLI. It does not work
+in <strong>studio mode</strong>, which is the path every embedding host uses, including the
+hosted <code>cart-runner.html</code> and <code>hero-embed</code>.</p>
+<h3 id="1a-export-is-a-syntax-error-under-the-studio-executor">1a. <code>export</code> is a syntax error under the studio executor</h3>
+<p><code>runtime/studio-executor.js</code> evaluates cart source with <code>new Function</code>:</p>
+<pre><code class="language-javascript">export function createStudioCartFunction(userCode) {
+  return new Function(
+    `${userCode}
+; return {
+  init: typeof init !== &quot;undefined&quot; ? init : null,
+  ...
+};`
+  );
+}
+</code></pre>
+<p>A function body is not a module, so a top-level <code>export</code> throws
+<code>SyntaxError: Unexpected token 'export'</code> before any cart code runs. The README's
+example therefore fails immediately, with an error that does not mention modules
+or studio mode.</p>
+<p>This bites hardest with AI-generated carts. A model that has read the README
+emits the <code>export</code> form confidently, and then <em>every</em> generated cart fails for a
+reason the error text does not explain.</p>
+<h3 id="1b-the-example-calls-bare-globals-that-no-longer-exist">1b. The example calls bare globals that no longer exist</h3>
+<p><code>createPlane</code>, <code>createCube</code>, <code>setFog</code>, <code>setAmbientLight</code>, <code>key</code>, <code>setPosition</code>,
+<code>rotateMesh</code>, <code>setCameraPosition</code> and <code>setCameraTarget</code> are all written without a
+namespace. The grouped API in <code>runtime/namespace.js</code> (<code>NAMESPACE_MAP</code>) is
+authoritative now, and nothing in <code>runtime/</code> assigns these names onto
+<code>globalThis</code> — a <code>grep</code> for <code>globalThis.createCube</code> finds no assignment. So each
+call throws <code>ReferenceError: createCube is not defined</code>.</p>
+<h3 id="1c-bare-print-is-worse-than-undefined-it-silently-calls-windowprint">1c. Bare <code>print</code> is worse than undefined — it silently calls <code>window.print()</code></h3>
+<p>This is the one worth fixing first, because it fails <em>silently in the wrong
+direction</em> rather than throwing.</p>
+<p><code>print</code> is not undefined in a browser: it is <code>window.print</code>. So the README's
+<code>print(\</code>Score: ${score}`, 10, 10, 0xffffff)<code>does not raise a</code>ReferenceError`
+like the other bare globals — it opens the browser's <strong>print dialog</strong>, mid-frame,
+on a cart that otherwise looks like it is working.</p>
+<p>The runtime is already aware of this. <code>runtime/api-2d.js:445</code>:</p>
+<pre><code class="language-javascript">// Use the grouped namespace's draw.print (NOT globalThis.print, which is window.print).
+function _print(text, x, y, color, scale) {
+  const fn = globalThis.nova64?.draw?.print;
+  if (typeof fn === 'function') fn(text, x, y, color, scale);
+}
+</code></pre>
+<p>The internal helper guards against exactly this collision. The README still
+shows the unguarded form.</p>
+<blockquote>
+<p>Not executed end to end. The collision is inferred from <code>window.print</code> being
+standard, from no global assignment existing in <code>runtime/</code>, and from the
+runtime's own comment above. Worth confirming with a one-line cart before
+fixing.</p>
+</blockquote>
+<h3 id="suggested-fix">Suggested fix</h3>
+<p>Either of these resolves 1a–1c together:</p>
+<ol>
+<li><strong>Document the studio shape as the default.</strong> Show plain <code>function init()</code>
+   declarations with namespaced calls, and move the <code>export</code> module form into a
+   clearly separated "CLI / file-based carts" section.</li>
+<li><strong>Accept both in the executor.</strong> Strip or tolerate top-level <code>export</code> in
+   <code>createStudioCartFunction</code>, so the documented shape runs wherever it is
+   pasted.</li>
+</ol>
+<p>(1) is the smaller change and removes the ambiguity at the source. (2) is more
+forgiving for AI-generated carts, which will keep reproducing the README's form
+for as long as it is the first example on the page.</p>
+<p>A clearer error would help regardless: catching the <code>SyntaxError</code> in
+<code>createStudioCartFunction</code> and re-throwing with "carts cannot use <code>export</code> in
+studio mode — declare <code>function init()</code> directly" would turn a confusing failure
+into a self-answering one.</p>
+<hr />
+
+        </section>
+
+        <section class="md">
+<h2 id="2-untrusted-origin-rejection-is-silent-at-the-host">2. Untrusted-origin rejection is silent at the host</h2>
+<p><strong>Severity:</strong> low — behaviour is correct, only the diagnosis is hard.</p>
+<p><code>runtime/studio-protocol.js:46</code> is explicit, and right:</p>
+<pre><code>the opaque 'null' origin (sandboxed iframe / file://) is NEVER trusted
+</code></pre>
+<p><code>readInboundStudioMessage</code> returns a structured reason:</p>
+<pre><code class="language-javascript">if (!isTrustedOrigin(event.origin, { selfOrigin, allowedOrigins })) {
+  return { ok: false, error: `untrusted origin: ${String(event.origin)}` };
+}
+</code></pre>
+<p>The reason is good. The problem is that an embedding host that loads the runner
+from a <code>file://</code> page — which is the normal situation for a native app shipping
+a local playground — sees only a console that never becomes ready. No message
+reaches the page, so there is nothing to show the user beyond a blank canvas and
+a timeout.</p>
+<p><strong>Suggested fix:</strong> emit the rejection outward as well, so a host can distinguish
+"blocked for a reason I can explain" from "still loading". A single
+<code>console.warn</code> on rejection would be enough to make this diagnosable; a
+<code>CART_ERROR</code>-style message posted back would make it displayable.</p>
+<p>This is not a request to trust opaque origins. Keep rejecting them.</p>
+<hr />
+
+        </section>
+
+        <section class="md">
+<h2 id="3-already-fixed-in-053-do-not-chase">3. Already fixed in 0.5.3 — do not chase</h2>
+<p>Earlier notes in <code>docs/NOVA64_INTEGRATION.md</code> recorded that the published
+tarball's <code>dist/cart-runner.html</code> referenced an <code>assets/main-*.js</code> file the
+tarball did not contain.</p>
+<p><strong>This no longer reproduces.</strong> In 0.5.3, <code>dist/cart-runner.html:215</code> references
+<code>./assets/main-Bs8E5IrM.js</code>, and that file is present in <code>dist/assets/</code>
+alongside 48 others. The note in our integration doc is stale and refers to
+0.5.2.</p>
+<hr />
+
+        </section>
+
+        <section class="md">
+<h2 id="how-maigexr-works-around-1a1c-today">How m{ai}geXR works around 1a–1c today</h2>
+<p>Worth knowing, since fixing upstream may let some of this be removed:</p>
+<ul>
+<li>All three clients state the studio cart shape emphatically in their Nova64
+  system prompts, and state that <code>export</code> must not be used.</li>
+<li>The prompts list the namespaced API surface explicitly, so the model does not
+  reach for the retired flat globals.</li>
+<li><code>WebMaigeXr/src/lib/scene-errors.ts</code> classifies both failures and tells the
+  user the fix: the <code>export</code> trap by name, and a bare global by naming the
+  namespaced call to use instead. The mobile playgrounds carry the same logic.</li>
+</ul>
+<p>See <code>docs/NOVA64_INTEGRATION.md</code> for the full integration design.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="/docs" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

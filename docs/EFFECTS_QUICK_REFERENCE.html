@@ -375,68 +375,70 @@
         </header>
 
         <section class="md">
-<h2>🚀 Quick Start</h2>
-<h3>Enable Bloom (Glow Effects)</h3>
-<pre><code class="language-javascript">enableBloom(); // Use defaults
-enableBloom(1.5, 0.5, 0.85); // Custom: strength, radius, threshold
+<h2 id="quick-start">🚀 Quick Start</h2>
+<h3 id="enable-bloom-glow-effects">Enable Bloom (Glow Effects)</h3>
+<pre><code class="language-javascript">nova64.fx.enableBloom(); // Use defaults
+nova64.fx.enableBloom(1.5, 0.5, 0.85); // Custom: strength, radius, threshold
 </code></pre>
-<h3>Enable Anti-Aliasing</h3>
-<pre><code class="language-javascript">enableFXAA(); // Smooth edges
+<h3 id="enable-anti-aliasing">Enable Anti-Aliasing</h3>
+<pre><code class="language-javascript">nova64.fx.enableFXAA(); // Smooth edges
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🎨 Custom Shaders</h2>
-<h3>Holographic</h3>
-<pre><code class="language-javascript">const holo = createShaderMaterial(&#39;holographic&#39;, {
+<h2 id="custom-shaders">🎨 Custom Shaders</h2>
+<h3 id="holographic">Holographic</h3>
+<pre><code class="language-javascript">const holo = createShaderMaterial('holographic', {
   color: new THREE.Color(0x00ffff), // Cyan
   scanlineSpeed: 3.0,
   glitchAmount: 0.15,
   opacity: 0.7,
 });
 const cube = createCube(2, 0xffffff, [0, 0, -5]);
-getMesh(cube).material = holo.material;
+nova64.scene.getMesh(cube).material = holo.material;
 </code></pre>
-<h3>Energy Shield</h3>
-<pre><code class="language-javascript">const shield = createShaderMaterial(&#39;shield&#39;, {
+<h3 id="energy-shield">Energy Shield</h3>
+<pre><code class="language-javascript">const shield = createShaderMaterial('shield', {
   color: new THREE.Color(0x0088ff), // Blue
   opacity: 0.5,
 });
 const sphere = createSphere(3, 0xffffff, [0, 0, 0], 32);
-getMesh(sphere).material = shield.material;
+nova64.scene.getMesh(sphere).material = shield.material;
 
 // Trigger hit effect
-updateShaderUniform(shield.id, &#39;hitPosition&#39;, new THREE.Vector3(x, y, z));
-updateShaderUniform(shield.id, &#39;hitStrength&#39;, 1.0);
+nova64.shader.updateShaderUniform(shield.id, 'hitPosition', new THREE.Vector3(x, y, z));
+nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 1.0);
 </code></pre>
-<h3>Water</h3>
-<pre><code class="language-javascript">const water = createShaderMaterial(&#39;water&#39;, {
+<h3 id="water">Water</h3>
+<pre><code class="language-javascript">const water = createShaderMaterial('water', {
   color: new THREE.Color(0x0088ff),
   waveSpeed: 1.0,
   waveHeight: 0.3,
   transparency: 0.8,
 });
 const plane = createPlane(50, 50, [0, -1, 0]);
-getMesh(plane).material = water.material;
-getMesh(plane).rotation.x = -Math.PI / 2; // Horizontal
+nova64.scene.getMesh(plane).material = water.material;
+nova64.scene.getMesh(plane).rotation.x = -Math.PI / 2; // Horizontal
 </code></pre>
-<h3>Fire/Plasma</h3>
-<pre><code class="language-javascript">const fire = createShaderMaterial(&#39;fire&#39;, {
+<h3 id="fireplasma">Fire/Plasma</h3>
+<pre><code class="language-javascript">const fire = createShaderMaterial('fire', {
   color1: new THREE.Color(0xff4400), // Orange
   color2: new THREE.Color(0xffff00), // Yellow
   intensity: 1.5,
   speed: 2.0,
 });
 const plane = createPlane(2, 3, [0, 1.5, 0]);
-getMesh(plane).material = fire.material;
+nova64.scene.getMesh(plane).material = fire.material;
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>💥 Particles</h2>
-<h3>Explosion</h3>
+<h2 id="particles">💥 Particles</h2>
+<h3 id="explosion">Explosion</h3>
 <pre><code class="language-javascript">const explosion = createParticleSystem(500, {
   color: 0xff4400, // Orange
   size: 0.3,
@@ -448,10 +450,10 @@ getMesh(plane).material = fire.material;
 explosion.position.set(x, y, z);
 
 export function update(dt) {
-  updateParticles(explosion, dt);
+  nova64.fx.updateParticles(explosion, dt);
 }
 </code></pre>
-<h3>Smoke</h3>
+<h3 id="smoke">Smoke</h3>
 <pre><code class="language-javascript">const smoke = createParticleSystem(500, {
   color: 0x888888, // Gray
   size: 0.5,
@@ -461,7 +463,7 @@ export function update(dt) {
   gravity: 1.0, // Rises
 });
 </code></pre>
-<h3>Sparks</h3>
+<h3 id="sparks">Sparks</h3>
 <pre><code class="language-javascript">const sparks = createParticleSystem(200, {
   color: 0xffff00, // Yellow
   size: 0.1,
@@ -471,7 +473,7 @@ export function update(dt) {
   gravity: -5.0, // Falls fast
 });
 </code></pre>
-<h3>Magic Effect</h3>
+<h3 id="magic-effect">Magic Effect</h3>
 <pre><code class="language-javascript">const magic = createParticleSystem(300, {
   color: 0xff00ff, // Purple
   size: 0.15,
@@ -481,25 +483,26 @@ export function update(dt) {
   gravity: 0.5, // Slow rise
 });
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🎮 Complete Game Template</h2>
+<h2 id="complete-game-template">🎮 Complete Game Template</h2>
 <pre><code class="language-javascript">let playerShield, engineTrail, shieldId;
 
 export async function init() {
   // Enable effects
-  enableBloom(1.5, 0.5, 0.8);
-  enableFXAA();
+  nova64.fx.enableBloom(1.5, 0.5, 0.8);
+  nova64.fx.enableFXAA();
 
   // Create shield
-  const shield = createShaderMaterial(&#39;shield&#39;, {
+  const shield = createShaderMaterial('shield', {
     color: new THREE.Color(0x00ffff),
     opacity: 0.3,
   });
   playerShield = createSphere(2, 0xffffff, [0, 0, 0], 32);
-  getMesh(playerShield).material = shield.material;
+  nova64.scene.getMesh(playerShield).material = shield.material;
   shieldId = shield.id;
 
   // Engine particles
@@ -515,21 +518,21 @@ export async function init() {
 
 export function update(dt) {
   // Update particles
-  updateParticles(engineTrail, dt);
+  nova64.fx.updateParticles(engineTrail, dt);
 
   // Follow player
   engineTrail.position.set(player.x, player.y, player.z + 2);
 
   // Dynamic bloom
-  setBloomStrength(1.0 + player.speed * 0.5);
+  nova64.fx.setBloomStrength(1.0 + player.speed * 0.5);
 }
 
 function onHit(position) {
-  updateShaderUniform(shieldId, &#39;hitPosition&#39;, position);
-  updateShaderUniform(shieldId, &#39;hitStrength&#39;, 1.0);
+  nova64.shader.updateShaderUniform(shieldId, 'hitPosition', position);
+  nova64.shader.updateShaderUniform(shieldId, 'hitStrength', 1.0);
 
   setTimeout(() =&gt; {
-    updateShaderUniform(shieldId, &#39;hitStrength&#39;, 0.0);
+    nova64.shader.updateShaderUniform(shieldId, 'hitStrength', 0.0);
   }, 300);
 }
 
@@ -544,41 +547,43 @@ function createExplosion(pos) {
   exp.position.copy(pos);
 }
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>⚡ Performance Tips</h2>
-<h3>Bloom</h3>
+<h2 id="performance-tips">⚡ Performance Tips</h2>
+<h3 id="bloom">Bloom</h3>
 <pre><code class="language-javascript">// Good - only bright objects glow
-setBloomThreshold(0.85);
+nova64.fx.setBloomThreshold(0.85);
 
 // Bad - performance hit
-setBloomThreshold(0.0);
+nova64.fx.setBloomThreshold(0.0);
 </code></pre>
-<h3>Particles</h3>
+<h3 id="particles_1">Particles</h3>
 <pre><code class="language-javascript">// Mobile: 500 max
 const particles = createParticleSystem(500, {...});
 
 // Desktop: 2000 max
 const particles = createParticleSystem(2000, {...});
 </code></pre>
-<h3>Shaders</h3>
+<h3 id="shaders">Shaders</h3>
 <pre><code class="language-javascript">// Reuse materials!
-const holoPink = createShaderMaterial(&#39;holographic&#39;, {
+const holoPink = createShaderMaterial('holographic', {
   color: new THREE.Color(0xff00ff),
 });
 
 // Use on multiple objects
-getMesh(cube1).material = holoPink.material;
-getMesh(cube2).material = holoPink.material;
+nova64.scene.getMesh(cube1).material = holoPink.material;
+nova64.scene.getMesh(cube2).material = holoPink.material;
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🐛 Common Issues</h2>
-<h3>No Bloom Visible</h3>
+<h2 id="common-issues">🐛 Common Issues</h2>
+<h3 id="no-bloom-visible">No Bloom Visible</h3>
 <pre><code class="language-javascript">// Make objects emissive
 const material = createN64Material({
   color: 0xff0000,
@@ -586,23 +591,24 @@ const material = createN64Material({
   emissiveIntensity: 1.0,
 });
 </code></pre>
-<h3>Particles Not Moving</h3>
+<h3 id="particles-not-moving">Particles Not Moving</h3>
 <pre><code class="language-javascript">// Must call every frame!
 export function update(dt) {
-  updateParticles(myParticles, dt);
+  nova64.fx.updateParticles(myParticles, dt);
 }
 </code></pre>
-<h3>Shader Too Dark</h3>
+<h3 id="shader-too-dark">Shader Too Dark</h3>
 <pre><code class="language-javascript">// Increase opacity
-const shader = createShaderMaterial(&#39;holographic&#39;, {
+const shader = createShaderMaterial('holographic', {
   opacity: 1.0, // Full opacity
 });
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>📊 Effect Costs</h2>
+<h2 id="effect-costs">📊 Effect Costs</h2>
 <table>
 <thead>
 <tr>
@@ -611,7 +617,8 @@ const shader = createShaderMaterial(&#39;holographic&#39;, {
 <th>Best For</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>Bloom</td>
 <td>~5-10%</td>
 <td>Glow, neon, energy</td>
@@ -651,39 +658,41 @@ const shader = createShaderMaterial(&#39;holographic&#39;, {
 <td>~10%</td>
 <td>Heavy effects</td>
 </tr>
-</tbody></table>
-<hr>
+</tbody>
+</table>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>🎯 Use Cases</h2>
-<h3>Sci-Fi</h3>
-<pre><code class="language-javascript">enableBloom(2.0, 0.8, 0.6);  // Bright neon glow
-enableGlitch(0.3);            // Digital distortion
-const holo = createShaderMaterial(&#39;holographic&#39;, {...});
-const shield = createShaderMaterial(&#39;shield&#39;, {...});
+<h2 id="use-cases">🎯 Use Cases</h2>
+<h3 id="sci-fi">Sci-Fi</h3>
+<pre><code class="language-javascript">nova64.fx.enableBloom(2.0, 0.8, 0.6);  // Bright neon glow
+nova64.fx.enableGlitch(0.3);            // Digital distortion
+const holo = createShaderMaterial('holographic', {...});
+const shield = createShaderMaterial('shield', {...});
 </code></pre>
-<h3>Fantasy</h3>
-<pre><code class="language-javascript">enableBloom(1.2, 0.5, 0.9);  // Subtle magic glow
-const water = createShaderMaterial(&#39;water&#39;, {...});
+<h3 id="fantasy">Fantasy</h3>
+<pre><code class="language-javascript">nova64.fx.enableBloom(1.2, 0.5, 0.9);  // Subtle magic glow
+const water = createShaderMaterial('water', {...});
 const magic = createParticleSystem(300, {...});
 </code></pre>
-<h3>Damage Feedback</h3>
+<h3 id="damage-feedback">Damage Feedback</h3>
 <pre><code class="language-javascript">// Glitch + shake + chromatic aberration on hit
-enableGlitch(0.5);
-enableChromaticAberration(0.008);
+nova64.fx.enableGlitch(0.5);
+nova64.fx.enableChromaticAberration(0.008);
 // Fade out over time in update()
-setGlitchIntensity(glitchTimer * 2.0);
+nova64.fx.setGlitchIntensity(glitchTimer * 2.0);
 // When timer expires
-disableGlitch();
+nova64.fx.disableGlitch();
 </code></pre>
-<h3>Modern</h3>
-<pre><code class="language-javascript">enableFXAA(); // Clean visuals
+<h3 id="modern">Modern</h3>
+<pre><code class="language-javascript">nova64.fx.enableFXAA(); // Clean visuals
 const rain = createParticleSystem(2000, {
   gravity: -8.0, // Falling rain
 });
 </code></pre>
-<hr>
+<hr />
 <p>For complete docs, see <strong>EFFECTS_API_GUIDE.md</strong></p>
         </section>
 

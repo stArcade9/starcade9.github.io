@@ -47,6 +47,11 @@ On Babylon:
 
 The probe attempts to load `noa-engine` and reports whether the module is available. The adapter APIs are separate and opt-in so the default Babylon renderer remains stable.
 
+`noa-engine` is an optional peer dependency; Nova64 does not install it automatically.
+Install it explicitly in a project that uses this prototype. Its Git-based transitive
+dependency may be rejected by pnpm 11's default dependency policy; the normal Nova64
+install and built-in Babylon voxel renderer do not require it.
+
 ## Adapter Controls
 
 The experimental adapter exposes these controls through flat globals and `nova64.voxel.*`:

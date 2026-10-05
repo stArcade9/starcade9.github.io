@@ -382,34 +382,36 @@ on <code>nova64.net</code> (Colyseus 0.17, cross-play web ↔ Godot — see
 plausibly be swapped is behind a seam:</p>
 <ul>
 <li><strong>Render backend</strong> — how the world/avatars/camera and 2D UI are drawn. Web
-(Three.js) is the reference; <strong>Godot</strong> (native) and a future <strong>XR</strong> build are
-alternate backends that register against the same interface.</li>
+  (Three.js) is the reference; <strong>Godot</strong> (native) and a future <strong>XR</strong> build are
+  alternate backends that register against the same interface.</li>
 <li><strong>UI components</strong> — a small, composable, Radix-inspired primitive set
-(Panel/Text/Button/List/Input) rendered through the active backend, with
-pointer hit-testing for <strong>mouse and touch</strong>.</li>
+  (Panel/Text/Button/List/Input) rendered through the active backend, with
+  pointer hit-testing for <strong>mouse and touch</strong>.</li>
 <li><strong>Plugins</strong> — chat, presence, etc. are plugins with a shared lifecycle. Chat
-itself has a swappable <strong>transport provider</strong> (default: the colyseus <code>event</code>
-relay).</li>
+  itself has a swappable <strong>transport provider</strong> (default: the colyseus <code>event</code>
+  relay).</li>
 </ul>
 <p>Mobile is a first-class target on every backend (<a href="#5-input--mobile">touch from the start</a>).</p>
+
         </section>
 
         <section class="md">
-<h2>Current Status</h2>
+<h2 id="current-status">Current Status</h2>
 <ul>
 <li>Source of truth: <code>examples/metaverse</code>.</li>
 <li>Tests: <code>pnpm test:metaverse</code> runs the headless cart/plugin suite.</li>
 <li>Godot: <code>scripts/godot.sh sync</code> copies from <code>examples/metaverse</code> when needed
-and no-ops when the local Godot cart folder is already a Windows junction to
-the source tree.</li>
+  and no-ops when the local Godot cart folder is already a Windows junction to
+  the source tree.</li>
 <li>RetroArch: realtime networking is still out of scope until the libretro
-netpacket research spike.</li>
+  netpacket research spike.</li>
 </ul>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>1. Module layout</h2>
+<h2 id="1-module-layout">1. Module layout</h2>
 <pre><code>examples/metaverse/
   code.js                 # the cart — wires a backend + plugins + world, runs the loop
   core/
@@ -429,17 +431,18 @@ netpacket research spike.</li>
 <code>pnpm test:metaverse</code> runs them all via <code>run-tests.mjs</code> and prints a summary.</p>
 <p>The framework is plain ES modules the cart imports with relative paths (vite
 serves them on web). A Godot/XR port either bundles these into the host shim or
-re-implements the backend behind the same interface — the cart and plugins don&#39;t
+re-implements the backend behind the same interface — the cart and plugins don't
 change.</p>
+
         </section>
 
         <section class="md">
-<h2>2. Render backend interface</h2>
+<h2 id="2-render-backend-interface">2. Render backend interface</h2>
 <p>A backend turns abstract world/UI intent into backend-specific draw calls. The
 metaverse never touches <code>nova64.scene</code>/<code>nova64.draw</code> directly — only the backend.</p>
 <pre><code class="language-js">// All ids are opaque handles owned by the backend.
 const RenderBackend = {
-  id: &#39;web&#39; | &#39;godot&#39; | &#39;xr&#39;,
+  id: 'web' | 'godot' | 'xr',
   init(world)            // build floor/props/lighting; return when ready
   // Avatars (remote + local third-person)
   addAvatar(id, { color, name })
@@ -448,12 +451,12 @@ const RenderBackend = {
   setAvatarVisible(id, visible)   // e.g. hide own body in first-person
   removeAvatar(id)
   // Camera
-  setCamera({ x, y, z, yaw, pitch, mode })   // mode: &#39;first&#39; | &#39;third&#39;
+  nova64.draw.setCamera({ x, y, z, yaw, pitch, mode })   // mode: 'first' | 'third'
   // 2D UI — the UI component tree rasterizes through these:
-  drawRect(x, y, w, h, color)
-  drawText(text, x, y, color)
+  nova64.draw.drawRect(x, y, w, h, color)
+  nova64.ui.drawText(text, x, y, color)
   drawCircle(x, y, r, color, filled)
-  measureText(text) -&gt; width
+  nova64.draw.measureText(text) -&gt; width
   viewport() -&gt; { w, h }                      // design units (web: 640x360)
   // Project a 3D world point to 2D design space (name tags, world markers):
   worldToScreen(x, y, z) -&gt; { x, y, visible, dist }
@@ -470,7 +473,7 @@ pins <code>setCameraFOV(75)</code> in <code>init</code>, and Godot honors that a
 introduces minor horizontal drift only (vertical is always exact); a native
 GodotRenderBackend would use <code>unproject_position</code> to be pixel-perfect.</p>
 <p>Registering a backend: <code>metaverse.registerBackend(backend)</code>. The cart picks one
-(<code>backend: &#39;web&#39;</code>); unknown → falls back to web. <strong>XR</strong> is just another backend
+(<code>backend: 'web'</code>); unknown → falls back to web. <strong>XR</strong> is just another backend
 whose <code>setCamera</code> drives a stereo rig and whose UI draws to a world-space quad.</p>
 <p>Host backends can now be injected without editing the cart. At startup the cart
 registers the web backend as a fallback, then looks for a host-provided backend
@@ -484,36 +487,38 @@ in this order:</p>
 backend already registered by the host. If only an id is needed, hosts may set
 <code>globalThis.__NOVA64_METAVERSE_BACKEND_ID</code>, <code>nova64.metaverse.backendId</code>, or
 <code>nova64.metaverseBackendId</code>.</p>
+
         </section>
 
         <section class="md">
-<h2>3. UI component system (Radix-inspired)</h2>
+<h2 id="3-ui-component-system-radix-inspired">3. UI component system (Radix-inspired)</h2>
 <p>Small composable primitives, not a monolith. A component is a plain function
 returning a node <code>{ type, props, children }</code>; a layout pass assigns rects; the
 backend rasterizes; pointer events hit-test against rects.</p>
-<pre><code class="language-js">import { Panel, Row, Col, Text, Button, List, TextField } from &#39;./core/ui.js&#39;;
+<pre><code class="language-js">import { Panel, Row, Col, Text, Button, List, TextField } from './core/ui.js';
 
 Panel({ x: 8, y: 8, pad: 6, bg: 0x000000aa }, [
-  Text({ value: &#39;NOVA64 METAVERSE&#39; }),
-  Button({ id: &#39;cam&#39;, label: &#39;Camera&#39;, onTap: () =&gt; app.toggleCamera() }),
+  Text({ value: 'NOVA64 METAVERSE' }),
+  Button({ id: 'cam', label: 'Camera', onTap: () =&gt; app.toggleCamera() }),
 ]);
 </code></pre>
 <ul>
 <li><strong>Primitives:</strong> <code>Panel, Row, Col, Text, Button, List, TextField, Spacer</code>.</li>
 <li><strong>Interaction:</strong> the UI runtime is fed the pointer set each frame (mouse +
-<code>nova64.input.touches()</code>), so buttons work identically on desktop and mobile.</li>
+  <code>nova64.input.touches()</code>), so buttons work identically on desktop and mobile.</li>
 <li><strong>Theming:</strong> a <code>theme</code> object (colors, spacing, font) passed at mount — the
-Radix-ish &quot;tokens&quot; seam. Backends may override how tokens rasterize.</li>
+  Radix-ish "tokens" seam. Backends may override how tokens rasterize.</li>
 </ul>
 <p>This layer is intentionally backend-agnostic: it emits draw ops via the backend
 interface, so the same HUD/chat UI renders on web, Godot, and (as a world-space
 panel) XR.</p>
+
         </section>
 
         <section class="md">
-<h2>4. Plugins</h2>
+<h2 id="4-plugins">4. Plugins</h2>
 <pre><code class="language-js">const Plugin = {
-  id: &#39;chat&#39;,
+  id: 'chat',
   init(ctx)              // ctx: { app, net, ui, backend, theme, registerCommand }
   update(dt, ctx)        // per-frame
   onNetMessage(evt, ctx) // inbound relayed events ({ from, type, msg })
@@ -523,111 +528,112 @@ panel) XR.</p>
 };
 metaverse.use(chatPlugin); metaverse.use(controlsPlugin); metaverse.use(presencePlugin);
 </code></pre>
-<p>The app drives every plugin&#39;s lifecycle and merges their <code>renderUI</code> output.
+<p>The app drives every plugin's lifecycle and merges their <code>renderUI</code> output.
 Plugins are isolated — the <code>minimap</code> plugin (a top-down radar of all avatars) is
 exactly this: one module, <code>use()</code>-d in, touching only the context + backend.
 Adding an inventory or world objects later is the same shape; nothing else
 changes.</p>
-<h3>Chat plugin + transport providers</h3>
+<h3 id="chat-plugin-transport-providers">Chat plugin + transport providers</h3>
 <p>Chat is a plugin whose transport is itself swappable:</p>
 <pre><code class="language-js">const ChatProvider = {
   send(text)                    // push a message
   onMessage(cb)                 // cb({ from, name, text, ts })
 };
 </code></pre>
-<p>Default provider = the colyseus relay (<code>room.send(&#39;chat&#39;, {text})</code> →
+<p>Default provider = the colyseus relay (<code>room.send('chat', {text})</code> →
 server broadcasts <code>event</code> → <code>onNetMessage</code>). A different backend (matrix,
 websocket, p2p) implements the same two methods. Commands register through
 <code>ctx.registerCommand(name, handler)</code>: <code>/me &lt;action&gt;</code>, <code>/help</code>, and <code>/nick &lt;name&gt;</code>
 (a live rename — sends <code>setName</code> to the room; the server updates <code>player.name</code> and
-state-sync propagates it to everyone&#39;s tags + roster).</p>
-<h3>Voice plugin</h3>
+state-sync propagates it to everyone's tags + roster).</p>
+<h3 id="voice-plugin">Voice plugin</h3>
 <p><code>voice</code> is WebRTC voice chat as a plugin: a peer-to-peer mesh where each
 participant opens an <code>RTCPeerConnection</code> to every other and exchanges mic audio.
-Signaling (SDP offer/answer + ICE) rides the <strong>existing relay</strong> — <code>sendRelay(&#39;voice&#39;, …)</code>
-out, <code>onNetMessage(&#39;voice&#39;)</code> in — so no extra server endpoint is needed (the
+Signaling (SDP offer/answer + ICE) rides the <strong>existing relay</strong> — <code>sendRelay('voice', …)</code>
+out, <code>onNetMessage('voice')</code> in — so no extra server endpoint is needed (the
 StateRoom exempts <code>voice</code> from the chat rate-limit since ICE bursts during setup).
 Pairs are glare-free (smaller <code>sessionId</code> offers, the other answers), and the mic
 is gated by <strong>push-to-talk</strong> (hold <code>V</code>) or an unmute toggle — default muted, no hot
-mic. It&#39;s browser-only (<code>RTCPeerConnection</code>/<code>getUserMedia</code>); on Godot/QuickJS it
+mic. It's browser-only (<code>RTCPeerConnection</code>/<code>getUserMedia</code>); on Godot/QuickJS it
 shows <code>MIC n/a</code> and no-ops. Deps are injectable, so the signaling state machine is
 tested headlessly (<code>voice.test.mjs</code>) without a real browser.</p>
-<h3>Presence plugin</h3>
-<p>The <code>presence</code> plugin makes &quot;who&#39;s here&quot; visible in the world, using only the
-context + backend (no nova64/net access, so it runs on any backend):</p>
-<ul>
-<li><strong>Name tags</strong> float above every avatar — projected each frame via
-<code>backend.worldToScreen</code>; your own tag shows only in third-person. Backends
-without <code>worldToScreen</code> simply skip tags.</li>
-<li><strong>Join/left toasts</strong> fade in near the top, driven by the <code>onPeerJoin</code>/
-<code>onPeerLeave</code> hooks the app fires from avatar spawn/despawn.</li>
-</ul>
+<h3 id="presence-plugin">Presence plugin</h3>
+<p>The <code>presence</code> plugin makes "who's here" visible in the world, using only the
+context + backend (no nova64/net access, so it runs on any backend):
+- <strong>Name tags</strong> float above every avatar — projected each frame via
+  <code>backend.worldToScreen</code>; your own tag shows only in third-person. Backends
+  without <code>worldToScreen</code> simply skip tags.
+- <strong>Join/left toasts</strong> fade in near the top, driven by the <code>onPeerJoin</code>/
+  <code>onPeerLeave</code> hooks the app fires from avatar spawn/despawn.</p>
+
         </section>
 
         <section class="md">
-<h2>5. Input &amp; mobile</h2>
+<h2 id="5-input-mobile">5. Input &amp; mobile</h2>
 <ul>
 <li><strong>Desktop:</strong> WASD/arrows move, mouse (pointer-lock) or Q/E turn, C toggles cam.</li>
 <li><strong>Mobile:</strong> the <code>controls</code> plugin draws a left <strong>virtual joystick</strong> (move) and a
-right <strong>drag-look</strong> zone, plus tappable Camera/Chat buttons — all via
-<code>nova64.input.touches()</code> (multi-touch, 640×360 design space) so you can move and
-look at once. Text entry uses the DOM <code>&lt;input&gt;</code> (native keyboard) via
-<code>nova64.startTextInput({ onSubmit, onCancel })</code>.</li>
+  right <strong>drag-look</strong> zone, plus tappable Camera/Chat buttons — all via
+  <code>nova64.input.touches()</code> (multi-touch, 640×360 design space) so you can move and
+  look at once. Text entry uses the DOM <code>&lt;input&gt;</code> (native keyboard) via
+  <code>nova64.startTextInput({ onSubmit, onCancel })</code>.</li>
 <li><strong>Godot mobile:</strong> the same controls plugin runs unchanged. The GDScript host
-captures <code>InputEventScreenTouch</code>/<code>Drag</code>, maps them to the 640×360 logical space,
-and pushes them to the native host each frame (<code>set_touches</code> → <code>input.poll</code>), so
-<code>nova64.input.touches()</code> behaves identically to web. (On desktop Godot, enable
-<code>input_devices/pointing/emulate_touch_from_mouse</code> to test with a mouse.)</li>
+  captures <code>InputEventScreenTouch</code>/<code>Drag</code>, maps them to the 640×360 logical space,
+  and pushes them to the native host each frame (<code>set_touches</code> → <code>input.poll</code>), so
+  <code>nova64.input.touches()</code> behaves identically to web. (On desktop Godot, enable
+  <code>input_devices/pointing/emulate_touch_from_mouse</code> to test with a mouse.)</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>6. Server state</h2>
+<h2 id="6-server-state">6. Server state</h2>
 <p><code>StateRoom</code> Player carries 3D pose: <code>x, y, z, ry</code> (+ <code>name</code>, <code>data</code>). Movement
 intent is <code>pos3 { x, y, z, ry }</code>. Chat rides the generic relay (no schema
 change). <strong>Avatar appearance</strong> lives in the <code>data</code> blob: the cart sends
-<code>set { data: &#39;{&quot;color&quot;:&lt;0xAARRGGBB&gt;,&quot;provider&quot;:&quot;&lt;id&gt;&quot;}&#39; }</code>; peers parse it on
+<code>set { data: '{"color":&lt;0xAARRGGBB&gt;,"provider":"&lt;id&gt;"}' }</code>; peers parse it on
 spawn/change and the backend recolors the avatar in place (<code>setAvatarStyle</code>). The
 color persists in <code>localStorage</code> and is re-broadcast on connect, so it survives
 reloads and reaches players who join later.</p>
 <p><strong>Identity (<code>nova64.auth</code>):</strong> on connect the app calls <code>restore()</code> and adopts any
 real signed-in identity (Supabase/OAuth, or a stored session), else signs in as a
-guest. The identity&#39;s <code>displayName</code> becomes the room name (shown on tags + the
+guest. The identity's <code>displayName</code> becomes the room name (shown on tags + the
 roster) and <code>provider</code> rides the <code>data</code> blob as a roster badge; a logged-in user
-gets a stable avatar color seeded from their identity id (unless they&#39;ve picked
+gets a stable avatar color seeded from their identity id (unless they've picked
 one). <code>onChange</code> re-adopts a mid-session sign-in and re-broadcasts. The net facade
 attaches <code>nova64.auth.token()</code> on join so the server can verify real identities.
 A <code>/nick</code> chosen by the user persists in <code>localStorage</code> and wins over both the
-random visitor name and the identity name on the next load (same &quot;explicit choice
-beats default&quot; rule as the avatar color).</p>
+random visitor name and the identity name on the next load (same "explicit choice
+beats default" rule as the avatar color).</p>
 <p>The <code>auth</code> plugin renders a compact identity panel with Google, wallet, and
 sign-out controls. Google uses the Supabase client configured by the web runtime
 from <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>; wallet uses the
-server&#39;s SIWE endpoints and returns in-place.</p>
+server's SIWE endpoints and returns in-place.</p>
+
         </section>
 
         <section class="md">
-<h2>7. Phased roadmap</h2>
+<h2 id="7-phased-roadmap">7. Phased roadmap</h2>
 <ul>
 <li><strong>P1 — shared 3D world</strong> ✅ avatars move + sync; first/third-person. (<code>8c8d6ef</code>)</li>
 <li><strong>P2 — framework + mobile + chat</strong> ✅ render-backend + UI components + plugin
-system; controls plugin (mobile joystick/look); chat plugin (typed, native
-keyboard); interpolated remote avatars; HUD roster.</li>
+  system; controls plugin (mobile joystick/look); chat plugin (typed, native
+  keyboard); interpolated remote avatars; HUD roster.</li>
 <li><strong>P3 — presence &amp; polish</strong> ✅ name tags (world→screen), join/leave toasts,
-avatar color customization via <code>data</code>, and <code>nova64.auth</code> identity wiring
-(display name + provider badge + stable per-identity color; guest fallback),
-plus user-facing Google/wallet sign-in controls.
-Deferred: rendering a profile <strong>avatar image</strong> on the cube — remote avatar URLs
-are cross-origin (CORS-tainted in WebGL), absent for guests, and host-specific,
-so it&#39;s a later texture-pipeline task, not a quick win.</li>
+  avatar color customization via <code>data</code>, and <code>nova64.auth</code> identity wiring
+  (display name + provider badge + stable per-identity color; guest fallback),
+  plus user-facing Google/wallet sign-in controls.
+  Deferred: rendering a profile <strong>avatar image</strong> on the cube — remote avatar URLs
+  are cross-origin (CORS-tainted in WebGL), absent for guests, and host-specific,
+  so it's a later texture-pipeline task, not a quick win.</li>
 <li><strong>P4 — Godot parity</strong> (in progress): <strong>touch parity</strong> ✅ and host backend
-selection ✅ — the cart cross-plays unchanged, mobile joystick/drag-look work
-on Godot via the native touch bridge (<code>nova64.input.touches()</code>), and a host can
-inject a first-class backend without editing <code>code.js</code>. Remaining: an optional
-native <code>GodotRenderBackend</code> (today the cart drives <code>render-web.js</code> over the
-Godot shim, which already maps to native scene/camera/draw).</li>
+  selection ✅ — the cart cross-plays unchanged, mobile joystick/drag-look work
+  on Godot via the native touch bridge (<code>nova64.input.touches()</code>), and a host can
+  inject a first-class backend without editing <code>code.js</code>. Remaining: an optional
+  native <code>GodotRenderBackend</code> (today the cart drives <code>render-web.js</code> over the
+  Godot shim, which already maps to native scene/camera/draw).</li>
 <li><strong>P5 — XR backend:</strong> stereo camera rig + world-space UI panels; controller/hand
-ray as the pointer feeding the same UI hit-test.</li>
+  ray as the pointer feeding the same UI hit-test.</li>
 </ul>
         </section>
 

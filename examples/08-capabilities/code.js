@@ -6,10 +6,10 @@ function expect(name, fn) {
   try {
     const ok = !!fn();
     results.push({ name, ok });
-    print(`[08-caps] ${ok ? 'PASS' : 'FAIL'} ${name}`);
+    console.log(`[08-caps] ${ok ? 'PASS' : 'FAIL'} ${name}`);
   } catch (e) {
     results.push({ name, ok: false, error: String(e) });
-    print(`[08-caps] FAIL ${name} threw: ${e}`);
+    console.log(`[08-caps] FAIL ${name} threw: ${e}`);
   }
 }
 

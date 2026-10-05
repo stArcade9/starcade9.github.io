@@ -233,7 +233,7 @@ nova64/
 
 // 1. Create a button
 const startBtn = createButton(
-  centerX(200),
+  nova64.ui.centerX(200),
   200,
   200,
   50,
@@ -246,12 +246,12 @@ const startBtn = createButton(
 
 // 2. Update buttons every frame
 export function update(dt) {
-  updateAllButtons();
+  nova64.ui.updateAllButtons();
 }
 
 // 3. Draw buttons
 export function draw() {
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 ```
 
@@ -260,16 +260,16 @@ export function draw() {
 ```javascript
 function drawStartScreen() {
   // Gradient background
-  drawGradientRect(0, 0, 640, 360, rgba8(10, 10, 30, 200), rgba8(30, 10, 50, 220), true);
+  nova64.ui.drawGradientRect(0, 0, 640, 360, rgba8(10, 10, 30, 200), rgba8(30, 10, 50, 220), true);
 
   // Animated title
-  setFont('huge');
-  setTextAlign('center');
+  nova64.ui.setFont('huge');
+  nova64.ui.setTextAlign('center');
   const bounce = Math.sin(time * 2) * 10;
-  drawTextShadow('MY GAME', 320, 50 + bounce, uiColors.primary, rgba8(0, 0, 0, 255), 4, 1);
+  nova64.ui.drawTextShadow('MY GAME', 320, 50 + bounce, uiColors.primary, rgba8(0, 0, 0, 255), 4, 1);
 
   // Draw buttons
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 ```
 
@@ -355,9 +355,9 @@ rect(10, 30, 200, 20, rgba8(0, 255, 0, 255), true);
 
 ```javascript
 // New way - professional and polished
-setFont('large');
-drawTextOutline('Score: 100', 10, 10, uiColors.warning, uiColors.black, 1);
-drawProgressBar(10, 30, 200, 20, score, maxScore, {
+nova64.ui.setFont('large');
+nova64.ui.drawTextOutline('Score: 100', 10, 10, uiColors.warning, uiColors.black, 1);
+nova64.draw.drawProgressBar(10, 30, 200, 20, score, maxScore, {
   fillColor: uiColors.success,
 });
 ```
@@ -397,28 +397,28 @@ drawProgressBar(10, 30, 200, 20, score, maxScore, {
 
 ```javascript
 // Buttons
-createButton(x, y, w, h, label, callback, options);
-updateAllButtons();
-drawAllButtons();
+nova64.ui.createButton(x, y, w, h, label, callback, options);
+nova64.ui.updateAllButtons();
+nova64.ui.drawAllButtons();
 
 // Panels
-createPanel(x, y, w, h, options);
-drawPanel(panel);
+nova64.ui.createPanel(x, y, w, h, options);
+nova64.draw.drawPanel(panel);
 
 // Text
-setFont('huge' | 'large' | 'normal' | 'small' | 'tiny');
-setTextAlign('left' | 'center' | 'right');
-drawText(text, x, y, color, scale);
-drawTextShadow(text, x, y, color, shadowColor, offset, scale);
-drawTextOutline(text, x, y, color, outlineColor, scale);
+nova64.ui.setFont('huge' | 'large' | 'normal' | 'small' | 'tiny');
+nova64.ui.setTextAlign('left' | 'center' | 'right');
+nova64.ui.drawText(text, x, y, color, scale);
+nova64.ui.drawTextShadow(text, x, y, color, shadowColor, offset, scale);
+nova64.ui.drawTextOutline(text, x, y, color, outlineColor, scale);
 
 // Progress Bars
-drawProgressBar(x, y, w, h, current, max, options);
+nova64.draw.drawProgressBar(x, y, w, h, current, max, options);
 
 // Layout
-centerX(width, screenWidth);
-centerY(height, screenHeight);
-grid(cols, rows, cellW, cellH, padX, padY);
+nova64.ui.centerX(width, screenWidth);
+nova64.ui.centerY(height, screenHeight);
+nova64.ui.grid(cols, rows, cellW, cellH, padX, padY);
 
 // Colors
 uiColors.primary;

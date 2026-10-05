@@ -7,16 +7,16 @@ function expect(name, fn) {
   try {
     const ok = !!fn();
     results.push({ name, ok });
-    print(`[09-errors] ${ok ? 'PASS' : 'FAIL'} ${name}`);
+    console.log(`[09-errors] ${ok ? 'PASS' : 'FAIL'} ${name}`);
   } catch (e) {
     results.push({ name, ok: false, error: String(e) });
-    print(`[09-errors] FAIL ${name} threw: ${e}`);
+    console.log(`[09-errors] FAIL ${name} threw: ${e}`);
   }
 }
 
 export function init() {
   const caps = engine.call('engine.init', {}).capabilities;
-  print('[09-errors] adapter=' + caps.adapterVersion + ' backend=' + caps.backend);
+  console.log('[09-errors] adapter=' + caps.adapterVersion + ' backend=' + caps.backend);
 
   expect('unknown method returns error', () => {
     const r = engine.call('does.not.exist', {});

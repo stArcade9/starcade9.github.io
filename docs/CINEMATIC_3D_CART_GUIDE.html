@@ -377,44 +377,45 @@
         <section class="md">
 <p>A playbook for building rich, cinematic Nova64 carts that mix a rendered <strong>3D
 world</strong> with a <strong>2D HUD/overlay</strong> — drawn from the build of
-<a href="../examples/the-last-save-file/code.js"><code>examples/the-last-save-file</code></a>, a
-multi-scene &quot;recovered save file&quot; campaign cart (boot → loader → glitch → room →
+<a href="/examples/the-last-save-file/code.js"><code>examples/the-last-save-file</code></a>, a
+multi-scene "recovered save file" campaign cart (boot → loader → glitch → room →
 city → invite).</p>
 <p>If you read nothing else, read <strong>Rule #0</strong> (the tech) and the <strong>Brand &amp; Persona</strong>
 section (the soul). A cart that is technically correct but soulless misses the
 point; a cart with the right soul and the wrong tech just renders black.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Brand &amp; Persona — the aesthetic north star</h2>
-<p>Nova64 is <em>&quot;a new machine from the timeline where the weird games won.&quot;</em> Our
-audience and our taste are not &quot;retro for nostalgia&#39;s sake&quot; — they&#39;re <strong>makers,
+<h2 id="brand-persona-the-aesthetic-north-star">Brand &amp; Persona — the aesthetic north star</h2>
+<p>Nova64 is <em>"a new machine from the timeline where the weird games won."</em> Our
+audience and our taste are not "retro for nostalgia's sake" — they're <strong>makers,
 outsiders, and signal-chasers</strong>. Every cinematic sequence should feel like it was
 built by, and for, that crowd. Idolize these influences and let them drive colour,
 motion, type, and copy:</p>
 <ul>
 <li><strong>Vaporwave / Outrun / Synthwave</strong> — neon sunsets, wireframe grids receding to a
-banded sun, chrome, palm-and-purple horizons, VHS scanlines, &quot;mall at 2am&quot;
-melancholy. This is the default visual key: hot pink + cyan + magenta on near-
-black, everything <strong>glowing</strong> via bloom.</li>
+  banded sun, chrome, palm-and-purple horizons, VHS scanlines, "mall at 2am"
+  melancholy. This is the default visual key: hot pink + cyan + magenta on near-
+  black, everything <strong>glowing</strong> via bloom.</li>
 <li><strong>Demoscene</strong> — show off. Real-time effects as flex: RGB-shift, glitch, plasma,
-starfields, dithering, CRT artifacts, impossible-looking tricks done in tiny
-budgets. A scene should make a viewer think <em>&quot;how did they do that on a cart?&quot;</em></li>
+  starfields, dithering, CRT artifacts, impossible-looking tricks done in tiny
+  budgets. A scene should make a viewer think <em>"how did they do that on a cart?"</em></li>
 <li><strong>Design Republic</strong> — confident, graphic, editorial layout discipline. Bold
-type, strong grids, generous negative space, intentional composition. Neon
-chaos, <em>arranged</em>.</li>
+  type, strong grids, generous negative space, intentional composition. Neon
+  chaos, <em>arranged</em>.</li>
 <li><strong>Banksy / graffiti / street art</strong> — subversive, anti-corporate, a wink and a
-middle finger. Stencil energy, spray-can textures, slogans with bite. Copy is
-short, knowing, a little defiant (&quot;Keep the card. Someone else may need it.&quot;).</li>
+  middle finger. Stencil energy, spray-can textures, slogans with bite. Copy is
+  short, knowing, a little defiant ("Keep the card. Someone else may need it.").</li>
 <li><strong>Skateboarding culture</strong> — DIY, raw, anti-authority, deck-graphic boldness,
-imperfection-as-style, do-it-because-it-rips.</li>
+  imperfection-as-style, do-it-because-it-rips.</li>
 <li><strong>Video-game culture</strong> — cartridges, BIOS boots, memory cards, CRT TVs, pause
-menus, START/SELECT, the secret-passed-between-friends magic of pre-internet
-games. Lean into the fantasy-console fiction.</li>
-<li><strong>Hacking culture</strong> — terminals, memory dumps, &quot;SIGNAL FOUND&quot;, recovered/leaked
-data, phosphor green, the romance of getting <em>in</em>. Treat the player like they
-found something they weren&#39;t supposed to.</li>
+  menus, START/SELECT, the secret-passed-between-friends magic of pre-internet
+  games. Lean into the fantasy-console fiction.</li>
+<li><strong>Hacking culture</strong> — terminals, memory dumps, "SIGNAL FOUND", recovered/leaked
+  data, phosphor green, the romance of getting <em>in</em>. Treat the player like they
+  found something they weren't supposed to.</li>
 </ul>
 <p><strong>Persona / voice:</strong> an underground operator who builds beautiful things and
 distrusts the mainstream. Earnest about craft, allergic to corporate gloss.
@@ -424,15 +425,16 @@ artifact, not an ad — even when it <em>is</em> an ad.</p>
 <code>amber 0xffcc77</code> · sunset <code>0xff6a3d</code>→<code>0xff4d72</code> · near-black grounds. Glow it all.</p>
 <p><strong>Litmus test for any sequence:</strong> would this look right on a skate deck, a rave
 flyer, a cracktro, and a Banksy wall at the same time? If yes, ship it.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Rule #0 — A 3D cart MUST clear the 2D layer <em>transparent</em>, not opaque</h2>
-<p>Every cart&#39;s <code>draw()</code> runs over a 2D framebuffer that is <strong>composited on top of
+<h2 id="rule-0-a-3d-cart-must-clear-the-2d-layer-transparent-not-opaque">Rule #0 — A 3D cart MUST clear the 2D layer <em>transparent</em>, not opaque</h2>
+<p>Every cart's <code>draw()</code> runs over a 2D framebuffer that is <strong>composited on top of
 the rendered 3D scene</strong>. <code>cls(color)</code> fills that layer. The catch:</p>
 <pre><code class="language-js">// runtime/api.js — cls() with a plain Number is OPAQUE
-cls(0x000000); // → fills the 2D layer solid black, alpha 255
+nova64.draw.cls(0x000000); // → fills the 2D layer solid black, alpha 255
                // → composites over and HIDES the entire 3D scene
 </code></pre>
 <p>A 2D-only cart <em>wants</em> that (an opaque background colour). A <strong>3D cart does
@@ -442,7 +444,7 @@ wherever you happen to draw a <em>semi-transparent</em> 2D shape.</p>
 <p><strong>Do this instead</strong> (clears the 2D layer fully transparent so the 3D shows):</p>
 <pre><code class="language-js">export function draw() {
   const d = nova64.draw;
-  if (typeof d.cls3D === &#39;function&#39;) d.cls3D(); // explicit transparent clear
+  if (typeof d.cls3D === 'function') d.cls3D(); // explicit transparent clear
   else d.cls(d.rgba8(0, 0, 0, 0));              // fallback: alpha-0 via BigInt color
   // ... draw HUD on top ...
 }
@@ -453,40 +455,41 @@ carries no usable alpha, so <code>cls()</code> defaults it to opaque. <code>cls3
 self-documenting helper (added to <code>runtime/api.js</code>); <code>cls(rgba8(0,0,0,0))</code> is the
 older idiom (see <code>examples/demoscene</code>).</p>
 <blockquote>
-<p>Symptom to recognize: &quot;the 3D is rendering (HUD says triangles/draw calls are
+<p>Symptom to recognize: "the 3D is rendering (HUD says triangles/draw calls are
 live) but the screen is black/empty except my 2D text, and only a small patch
-of 3D shows through a translucent box.&quot; → You are clearing opaque. Use <code>cls3D()</code>.</p>
+of 3D shows through a translucent box." → You are clearing opaque. Use <code>cls3D()</code>.</p>
 </blockquote>
 <p>2D-only scenes inside a 3D cart (boot screens, BIOS, color bars) are fine — just
 have them paint their own <strong>opaque</strong> fullscreen rect (e.g.
 <code>rectfill(0,0,W,H, uiColor(0x000000))</code>, where <code>uiColor</code> packs alpha 255). The
 transparent <code>cls3D()</code> underneath is harmless because they cover it.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Lighting — dark materials need <em>real</em> lights, not ambient</h2>
+<h2 id="lighting-dark-materials-need-real-lights-not-ambient">Lighting — dark materials need <em>real</em> lights, not ambient</h2>
 <p>Ambient light is multiplicative: <code>dark_material × dark_ambient ≈ black</code>. Cranking
 <code>setAmbientLight</code> intensity barely lifts near-black surfaces (e.g. <code>0x141827</code>
-walls). A &quot;lit&quot; room built from moody dark materials will read as a <strong>black
+walls). A "lit" room built from moody dark materials will read as a <strong>black
 void</strong> with ambient alone.</p>
 <ul>
 <li>Add an actual <strong>point light</strong> in the scene for shape and falloff:
-<code>nova64.light.createPointLight(color, intensity, distance, x, y, z)</code>. Place it
-where the in-world light source is (a TV, a sign, a pedestal) so the room reads
-as <em>lit by that thing</em>. Toggle visibility per scene with <code>setLightVisible</code>.</li>
+  <code>nova64.light.createPointLight(color, intensity, distance, x, y, z)</code>. Place it
+  where the in-world light source is (a TV, a sign, a pedestal) so the room reads
+  as <em>lit by that thing</em>. Toggle visibility per scene with <code>setLightVisible</code>.</li>
 <li>Keep ambient <strong>low</strong> so the point light creates a dramatic pool of light
-instead of a flat wash.</li>
+  instead of a flat wash.</li>
 <li>Lighten the <strong>material colours</strong> themselves a notch if you want the geometry
-visible at all (ambient can&#39;t rescue <code>0x101010</code>).</li>
+  visible at all (ambient can't rescue <code>0x101010</code>).</li>
 <li><code>enableBloom(...)</code> makes emissive surfaces glow — lean on it for screens/neon.</li>
 </ul>
-<h3>Bloom threshold — the neon gotcha</h3>
+<h3 id="bloom-threshold-the-neon-gotcha">Bloom threshold — the neon gotcha</h3>
 <p><code>enableBloom(strength = 1.0, radius = 0.5, threshold = 0.6)</code>. The <strong>default
 threshold 0.6 only blooms near-white pixels.</strong> Saturated neon sits <em>below</em> it
 (magenta <code>0xff4bd8</code> ≈ 0.56, sunset orange ≈ 0.57 luminance), so a vaporwave scene
-of pure-colour emissives renders <strong>flat with no glow</strong> even though bloom is &quot;on&quot; —
-the classic <em>&quot;bloom works on the white TV but is broken on the neon city.&quot;</em></p>
+of pure-colour emissives renders <strong>flat with no glow</strong> even though bloom is "on" —
+the classic <em>"bloom works on the white TV but is broken on the neon city."</em></p>
 <p>Set the threshold deliberately per look:</p>
 <pre><code class="language-js">// glowing neon / outrun — strong, wide, LOW threshold so colours bloom
 nova64.fx.enableBloom(1.15, 0.85, 0.18);
@@ -495,8 +498,8 @@ nova64.fx.enableBloom(0.85); // threshold ~0.6
 </code></pre>
 <p>Bloom is per-pipeline: set it on scene-enter and <strong>reset it when leaving</strong> the
 scene.</p>
-<h3>Glitch — use the real post-process, not a hand-drawn 2D fake</h3>
-<p>There&#39;s a real GPU glitch pass (channel split + block tearing — the same
+<h3 id="glitch-use-the-real-post-process-not-a-hand-drawn-2d-fake">Glitch — use the real post-process, not a hand-drawn 2D fake</h3>
+<p>There's a real GPU glitch pass (channel split + block tearing — the same
 damage-glitch Space Harrier uses): <code>nova64.fx.enableGlitch(intensity)</code> /
 <code>setGlitchIntensity</code> / <code>disableGlitch</code>. For a one-shot juicy burst (hits, scene
 stings, signal interference) use the convenience helper — it ramps and auto-decays
@@ -506,8 +509,8 @@ itself, no cart-side timer needed:</p>
 <p>Prefer this over drawing your own RGB-shift in 2D — it looks better, is one line,
 and is consistent across carts. (Gate frequency/intensity behind reduced-motion;
 keep flashes accessible — see Accessibility.)</p>
-<h3>Self-illuminating screens (a playing TV, a monitor)</h3>
-<p><code>nova64.video.loadTexture(url).applyToMesh(meshId)</code> binds a video as the mesh&#39;s
+<h3 id="self-illuminating-screens-a-playing-tv-a-monitor">Self-illuminating screens (a playing TV, a monitor)</h3>
+<p><code>nova64.video.loadTexture(url).applyToMesh(meshId)</code> binds a video as the mesh's
 <strong>diffuse</strong> map only — under dim light it reads dark. To make a CRT <em>glow</em> with
 its own picture, promote the video to an <strong>emissive map</strong> (Three-specific escape
 hatch, guarded so other backends no-op):</p>
@@ -515,7 +518,7 @@ hatch, guarded so other backends no-op):</p>
 node?.traverse?.(child =&gt; {
   if (!child?.isMesh) return;
   for (const mat of [].concat(child.material)) {
-    if (mat &amp;&amp; &#39;emissiveMap&#39; in mat &amp;&amp; tv.texture) {
+    if (mat &amp;&amp; 'emissiveMap' in mat &amp;&amp; tv.texture) {
       mat.emissiveMap = tv.texture;
       mat.emissive?.set?.(0xffffff);
       mat.emissiveIntensity = 1.1;
@@ -532,167 +535,172 @@ mutating a material affects every mesh that shares that key. A unique
 <code>color+emissive</code> combo (like a white screen with a one-off emissive tint) is
 safe to mutate; common combos are not.</p>
 </blockquote>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Camera — make motion cinematic</h2>
+<h2 id="camera-make-motion-cinematic">Camera — make motion cinematic</h2>
 <ul>
 <li>Drive the camera every frame from <code>update()</code>/scene logic with
-<code>setCameraPosition</code> + <code>setCameraTarget</code> + <code>setCameraFOV</code>. (<code>gpu.setCameraTarget</code>
-does a <code>lookAt</code>, so whatever you target lands at screen center.)</li>
+  <code>setCameraPosition</code> + <code>setCameraTarget</code> + <code>setCameraFOV</code>. (<code>gpu.setCameraTarget</code>
+  does a <code>lookAt</code>, so whatever you target lands at screen center.)</li>
 <li>A slow <strong>dolly-in</strong> (decrease distance + FOV over time) plus a lazy
-<code>sin</code>-based <strong>sway/bob</strong> sells &quot;handheld / watching from the carpet.&quot;</li>
+  <code>sin</code>-based <strong>sway/bob</strong> sells "handheld / watching from the carpet."</li>
 <li>Keep a gentle <em>creep</em> after the main move so the shot never feels parked.</li>
 <li><code>easeInOut</code> the push; clamp progress to <code>[0,1]</code>.</li>
 </ul>
 <pre><code class="language-js">const push = easeInOut(clamp(t / 22, 0, 1));     // main dolly over ~22s
 const creep = clamp((t - 22) / 30, 0, 1);        // slow ongoing creep
-setCamera(camX + sway*0.06, camY, 6.4 - push*3.1 - creep*0.7,
+nova64.draw.setCamera(camX + sway*0.06, camY, 6.4 - push*3.1 - creep*0.7,
           targetX, targetY, targetZ, 56 - push*19 - creep*4);
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>2D overlay discipline — frame the 3D, don&#39;t bury it</h2>
+<h2 id="2d-overlay-discipline-frame-the-3d-dont-bury-it">2D overlay discipline — frame the 3D, don't bury it</h2>
 <p>Once <code>cls3D()</code> reveals the 3D, <em>less is more</em> on the 2D layer:</p>
 <ul>
 <li><strong>No full-screen dark gradients/veils.</strong> They mask the 3D you just unhid. Use
-thin <strong>top/bottom vignettes only</strong> (<code>drawGradient</code> over the top ~80px and
-bottom ~70px) for contrast behind text.</li>
+  thin <strong>top/bottom vignettes only</strong> (<code>drawGradient</code> over the top ~80px and
+  bottom ~70px) for contrast behind text.</li>
 <li>Captions: a slim translucent <strong>lower-third band</strong> with a thin accent rule and
-1–2 lines reads as cinematic; a big opaque white slab reads as &quot;boring UI.&quot;</li>
-<li>Avoid 2D elements that try to mark a 3D object&#39;s screen position — the 2D
-overlay and 3D share the full viewport, so NDC-center == overlay-center, but
-hand-placed 2D &quot;halos&quot; usually land in the wrong spot. Let <strong>bloom</strong> glow the
-3D instead.</li>
+  1–2 lines reads as cinematic; a big opaque white slab reads as "boring UI."</li>
+<li>Avoid 2D elements that try to mark a 3D object's screen position — the 2D
+  overlay and 3D share the full viewport, so NDC-center == overlay-center, but
+  hand-placed 2D "halos" usually land in the wrong spot. Let <strong>bloom</strong> glow the
+  3D instead.</li>
 <li>Interactive on-screen targets (buttons, signs): define geometry in <strong>one
-shared constant</strong> and use it for both the renderer and the tap hit-test so they
-never drift:</li>
+  shared constant</strong> and use it for both the renderer and the tap hit-test so they
+  never drift:</li>
 </ul>
-<pre><code class="language-js">const CITY_SIGNS = [{ label:&#39;MAKE&#39;, color:COLORS.cyan, x:150, y:84, w:134, h:40 }, ...];
+<pre><code class="language-js">const CITY_SIGNS = [{ label:'MAKE', color:COLORS.cyan, x:150, y:84, w:134, h:40 }, ...];
 // drawCitySigns() and checkCitySigns() both iterate CITY_SIGNS.
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Scene state machine pattern</h2>
+<h2 id="scene-state-machine-pattern">Scene state machine pattern</h2>
 <p>This cart uses a single <code>scene</code> string + <code>sceneTime</code> accumulator:</p>
 <ul>
 <li><code>update(dt)</code> advances <code>sceneTime</code>, runs per-scene logic, and calls
-<code>enterScene(next)</code> on transitions (which resets <code>sceneTime</code>, toggles mesh-group
-visibility via <code>setMeshVisible</code>, swaps lighting/fog, and toggles scene lights).</li>
+  <code>enterScene(next)</code> on transitions (which resets <code>sceneTime</code>, toggles mesh-group
+  visibility via <code>setMeshVisible</code>, swaps lighting/fog, and toggles scene lights).</li>
 <li><code>draw()</code> dispatches to a per-scene overlay function.</li>
 <li>Cross-fade with a decaying <code>transition</code> value (<code>rectfill</code> full-screen black at
-<code>alpha = transition*255</code>).</li>
+  <code>alpha = transition*255</code>).</li>
 <li>Group meshes into arrays per scene (<code>roomMeshes</code>, <code>cityMeshes</code>, ...) and
-<code>showGroup(group, visible)</code> on enter.</li>
+  <code>showGroup(group, visible)</code> on enter.</li>
 </ul>
 <p>Auto-advance scenes on <code>sceneTime</code> thresholds (and/or taps) for an
 attract-mode/ad feel.</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Host &amp; input gotchas (learned the hard way)</h2>
+<h2 id="host-input-gotchas-learned-the-hard-way">Host &amp; input gotchas (learned the hard way)</h2>
 <ul>
-<li><strong><code>Enter</code> = &quot;Restart cart&quot;</strong> in the studio console. Don&#39;t use it as an in-cart
-confirm key; it resets the cart. Use <code>Space</code> / pointer taps. (<code>Shift+X</code> = dev
-console, <code>F9</code> = debug.)</li>
-<li>The cart&#39;s input reads <strong>trusted</strong> browser events. Synthetic
-<code>dispatchEvent(new KeyboardEvent(...))</code> from devtools does <strong>not</strong> reach it —
-use real CDP key/click input (e.g. chrome-devtools <code>press_key</code> / <code>click</code>).</li>
+<li><strong><code>Enter</code> = "Restart cart"</strong> in the studio console. Don't use it as an in-cart
+  confirm key; it resets the cart. Use <code>Space</code> / pointer taps. (<code>Shift+X</code> = dev
+  console, <code>F9</code> = debug.)</li>
+<li>The cart's input reads <strong>trusted</strong> browser events. Synthetic
+  <code>dispatchEvent(new KeyboardEvent(...))</code> from devtools does <strong>not</strong> reach it —
+  use real CDP key/click input (e.g. chrome-devtools <code>press_key</code> / <code>click</code>).</li>
 <li>Pointer/tap works for <code>mousePressed()</code>; design touch-first (multi-touch via
-<code>nova64.input.touches()</code>), since this is mobile-first.</li>
+  <code>nova64.input.touches()</code>), since this is mobile-first.</li>
 </ul>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Verification workflow</h2>
+<h2 id="verification-workflow">Verification workflow</h2>
 <ul>
-<li><strong>Dev server</strong>: this project&#39;s <code>pnpm dev</code> (vite, port 3000) typically runs in
-<strong>WSL</strong>. WSL2 inotify does <strong>not</strong> see Windows-side file edits on <code>/mnt/c</code>, so
-vite won&#39;t hot-reload edits made from Windows tools — <strong>restart vite</strong> (or edit
-from inside WSL) to pick changes up. A stale vite serves an old transformed
-module even across page reloads.<ul>
+<li><strong>Dev server</strong>: this project's <code>pnpm dev</code> (vite, port 3000) typically runs in
+  <strong>WSL</strong>. WSL2 inotify does <strong>not</strong> see Windows-side file edits on <code>/mnt/c</code>, so
+  vite won't hot-reload edits made from Windows tools — <strong>restart vite</strong> (or edit
+  from inside WSL) to pick changes up. A stale vite serves an old transformed
+  module even across page reloads.</li>
 <li>Start it: <code>nvm use 20 &amp;&amp; node_modules/.bin/vite --host</code> (run persistent/in
-background; a detached <code>nohup</code> inside a one-shot shell gets reaped).</li>
-</ul>
-</li>
+    background; a detached <code>nohup</code> inside a one-shot shell gets reaped).</li>
 <li><strong>Driving the app</strong>: chrome-devtools MCP (CDP) can navigate, <code>press_key</code>,
-screenshot, and <code>evaluate_script</code>. Useful probes via <code>window.nova64</code>:
-<code>scene.getScene()</code>, <code>camera.getCamera()</code>, <code>scene.getMesh(id)</code>, project a mesh&#39;s
-world pos to NDC to verify framing.</li>
+  screenshot, and <code>evaluate_script</code>. Useful probes via <code>window.nova64</code>:
+  <code>scene.getScene()</code>, <code>camera.getCamera()</code>, <code>scene.getMesh(id)</code>, project a mesh's
+  world pos to NDC to verify framing.</li>
 <li><strong>Catching auto-advancing scenes</strong>: poll <code>camera.getCamera().position</code>/<code>fov</code>
-to detect the current scene, then screenshot <strong>promptly</strong> — a long settle delay
-lets the scene auto-advance past you.</li>
-<li>The GPU HUD&#39;s &quot;triangles: 2, calls: 1&quot; is usually just the final composite
-quad (post-processing), <strong>not</strong> evidence the 3D scene is empty.</li>
+  to detect the current scene, then screenshot <strong>promptly</strong> — a long settle delay
+  lets the scene auto-advance past you.</li>
+<li>The GPU HUD's "triangles: 2, calls: 1" is usually just the final composite
+  quad (post-processing), <strong>not</strong> evidence the 3D scene is empty.</li>
 </ul>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Recipe: an Outrun / vaporwave scene</h2>
+<h2 id="recipe-an-outrun-vaporwave-scene">Recipe: an Outrun / vaporwave scene</h2>
 <p>The Nova64 house style, assembled (see the <code>city</code> scene in the reference cart):</p>
 <ol>
 <li><strong>Sunset skybox</strong> — <code>nova64.light.createGradientSkybox(0x180a2e, 0xff4d72)</code>
-(purple zenith → hot-pink horizon). Clear it (<code>clearSkybox</code>) when leaving the
-scene so it doesn&#39;t bleed elsewhere.</li>
+   (purple zenith → hot-pink horizon). Clear it (<code>clearSkybox</code>) when leaving the
+   scene so it doesn't bleed elsewhere.</li>
 <li><strong>Retro sun</strong> at the vanishing point — a big emissive sphere (<code>0xff6a3d</code>) on
-the horizon, with a few thin dark cubes <em>just in front of its lower half</em> to
-read as the classic scanline gaps.</li>
+   the horizon, with a few thin dark cubes <em>just in front of its lower half</em> to
+   read as the classic scanline gaps.</li>
 <li><strong>Neon grid floor</strong> — thin emissive cubes (long in Z for lanes, long in X for
-rungs) in alternating cyan/magenta on a near-black ground. Reserve the center
-lane for a brighter <strong>dashed road line</strong> streaking toward the sun.</li>
+   rungs) in alternating cyan/magenta on a near-black ground. Reserve the center
+   lane for a brighter <strong>dashed road line</strong> streaking toward the sun.</li>
 <li><strong>Stars</strong> — a few dozen tiny emissive white/blue cubes scattered high in the
-sky behind everything.</li>
+   sky behind everything.</li>
 <li><strong>Skyline as silhouette</strong> — dark tower bodies flanking the avenue, each with a
-rooftop beacon + a grid of emissive windows (random lit/unlit, neon colours).</li>
+   rooftop beacon + a grid of emissive windows (random lit/unlit, neon colours).</li>
 <li><strong>Life</strong> — glowing <strong>traffic</strong> (dark car bodies + bright head/taillight cubes)
-streaming both ways, animated each frame; recycle them along the corridor.</li>
+   streaming both ways, animated each frame; recycle them along the corridor.</li>
 <li><strong>Crank bloom with a LOW threshold</strong> (<code>enableBloom(1.15, 0.85, 0.18)</code>) so the
-<em>saturated</em> neon glows — default threshold leaves it flat (see Bloom gotcha).
-<strong>Reset bloom</strong> (<code>enableBloom(0.85)</code>) on the next scene.</li>
+   <em>saturated</em> neon glows — default threshold leaves it flat (see Bloom gotcha).
+   <strong>Reset bloom</strong> (<code>enableBloom(0.85)</code>) on the next scene.</li>
 <li>Keep ambient <strong>low</strong> so towers stay silhouettes and the neon does the talking.</li>
 <li>Add motion: a <strong>banded retro sun</strong> whose bright lines wave up/down, drifting
-traffic, and occasional <strong>glitch bursts</strong> — but keep flashes accessible
-(see Accessibility).</li>
+   traffic, and occasional <strong>glitch bursts</strong> — but keep flashes accessible
+   (see Accessibility).</li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Accessibility — make the vibe inclusive</h2>
+<h2 id="accessibility-make-the-vibe-inclusive">Accessibility — make the vibe inclusive</h2>
 <p>The aesthetic is intense by design (neon, bloom, glitch, strobe, auto-advancing
-sequences). That&#39;s exactly why accessibility needs deliberate attention — the
+sequences). That's exactly why accessibility needs deliberate attention — the
 house style trends toward the <em>opposite</em> of accessible defaults. Build these in:</p>
 <ul>
 <li><strong>Photosensitivity (most important).</strong> Glitch bursts, RGB-shift, scanline rips,
-heavy bloom and full-screen flashes can trigger seizures. Keep flashes <strong>under
-3 per second</strong>, keep bursts <strong>brief and infrequent</strong>, and never strobe the
-whole screen at high contrast. Provide a <strong>reduced-motion mode</strong> that disables
-glitch/strobe/shake and softens bloom — honour <code>prefers-reduced-motion</code>
-(<code>window.matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;)</code>) as the default.</li>
-<li><strong>Don&#39;t rely on colour alone.</strong> The verb signs are colour-coded <em>and</em> labelled
-(MAKE/PLAY/REMIX/SHARE) — keep it that way. Any state shown by colour (hover,
-active) also needs shape/label/position cues.</li>
+  heavy bloom and full-screen flashes can trigger seizures. Keep flashes <strong>under
+  3 per second</strong>, keep bursts <strong>brief and infrequent</strong>, and never strobe the
+  whole screen at high contrast. Provide a <strong>reduced-motion mode</strong> that disables
+  glitch/strobe/shake and softens bloom — honour <code>prefers-reduced-motion</code>
+  (<code>window.matchMedia('(prefers-reduced-motion: reduce)')</code>) as the default.</li>
+<li><strong>Don't rely on colour alone.</strong> The verb signs are colour-coded <em>and</em> labelled
+  (MAKE/PLAY/REMIX/SHARE) — keep it that way. Any state shown by colour (hover,
+  active) also needs shape/label/position cues.</li>
 <li><strong>Contrast &amp; legibility.</strong> Caption text needs strong contrast against its
-backing (amber/white on a dark translucent band is good); avoid neon text
-directly on neon/bright-sky. Keep body text generously sized; don&#39;t put
-critical text over busy bloomed geometry.</li>
+  backing (amber/white on a dark translucent band is good); avoid neon text
+  directly on neon/bright-sky. Keep body text generously sized; don't put
+  critical text over busy bloomed geometry.</li>
 <li><strong>Timing &amp; no reflex-gating.</strong> Auto-advancing/attract sequences must not
-<em>require</em> fast reactions. Let the player <strong>pause</strong> and re-read; don&#39;t lock
-progress behind quick taps. Give captions enough dwell time.</li>
+  <em>require</em> fast reactions. Let the player <strong>pause</strong> and re-read; don't lock
+  progress behind quick taps. Give captions enough dwell time.</li>
 <li><strong>Input parity (mobile-first).</strong> Support pointer, touch, keyboard <em>and</em>
-gamepad. Tap targets ≥ ~44px. Never make <code>Enter</code> the only confirm (it&#39;s the
-console&#39;s Restart). Text entry via a real DOM input (native keyboard/IME).</li>
+  gamepad. Tap targets ≥ ~44px. Never make <code>Enter</code> the only confirm (it's the
+  console's Restart). Text entry via a real DOM input (native keyboard/IME).</li>
 <li><strong>Audio is optional, never sole.</strong> Anything conveyed by sound (a cue, a
-warning) also needs an on-screen equivalent. Default video/audio muted.</li>
+  warning) also needs an on-screen equivalent. Default video/audio muted.</li>
 <li><strong>Respect the OS.</strong> <code>prefers-reduced-motion</code>, <code>prefers-contrast</code>, and system
-font-scaling should visibly change behaviour where feasible.</li>
+  font-scaling should visibly change behaviour where feasible.</li>
 </ul>
 <blockquote>
 <p>Rule of thumb: ship the full vaporwave assault as the <em>default experience</em>, but
@@ -702,25 +710,26 @@ player can still enjoy. Inclusive ≠ watered-down.</p>
 <p><strong>Roadmap:</strong> accessibility is tracked as a phased, measured effort in
 <a href="/docs/WCAG_ACCESSIBILITY_PLAN">WCAG_ACCESSIBILITY_PLAN.md</a> (capture → measure →
 improve). New carts hit the Phase 0 boxes at minimum.</p>
+
         </section>
 
         <section class="md">
-<h2>New-cart checklist</h2>
+<h2 id="new-cart-checklist">New-cart checklist</h2>
 <ul>
-<li><input disabled="" type="checkbox"> <code>draw()</code> uses <code>cls3D()</code> (or <code>cls(rgba8(0,0,0,0))</code>) — <strong>not</strong> <code>cls(0x000000)</code>.</li>
-<li><input disabled="" type="checkbox"> 2D-only scenes paint their own opaque fullscreen background.</li>
-<li><input disabled="" type="checkbox"> A real point light (not just ambient) lights the key area; materials aren&#39;t pure-black.</li>
-<li><input disabled="" type="checkbox"> Emissive + bloom for screens/neon; video screens use an emissive map to glow.</li>
-<li><input disabled="" type="checkbox"> Bloom threshold set for the look (low ~0.18 for saturated neon, ~0.6 for white-only glow).</li>
-<li><input disabled="" type="checkbox"> Camera dolly + sway driven each frame; target lands the hero at center.</li>
-<li><input disabled="" type="checkbox"> 2D overlay = thin vignettes + slim caption band, no full-screen veils.</li>
-<li><input disabled="" type="checkbox"> Interactive targets share one geometry constant between draw and hit-test.</li>
-<li><input disabled="" type="checkbox"> <code>Space</code>/pointer for input (never <code>Enter</code> as confirm); touch-first; tap targets ≥ 44px.</li>
-<li><input disabled="" type="checkbox"> <strong>Accessibility</strong>: reduced-motion toggle (honours <code>prefers-reduced-motion</code>); flashes &lt; 3/sec; not colour-only; no reflex-gating; captions for audio.</li>
-<li><input disabled="" type="checkbox"> Verified live (restart WSL vite first; drive + screenshot each scene).</li>
+<li>[ ] <code>draw()</code> uses <code>cls3D()</code> (or <code>cls(rgba8(0,0,0,0))</code>) — <strong>not</strong> <code>cls(0x000000)</code>.</li>
+<li>[ ] 2D-only scenes paint their own opaque fullscreen background.</li>
+<li>[ ] A real point light (not just ambient) lights the key area; materials aren't pure-black.</li>
+<li>[ ] Emissive + bloom for screens/neon; video screens use an emissive map to glow.</li>
+<li>[ ] Bloom threshold set for the look (low ~0.18 for saturated neon, ~0.6 for white-only glow).</li>
+<li>[ ] Camera dolly + sway driven each frame; target lands the hero at center.</li>
+<li>[ ] 2D overlay = thin vignettes + slim caption band, no full-screen veils.</li>
+<li>[ ] Interactive targets share one geometry constant between draw and hit-test.</li>
+<li>[ ] <code>Space</code>/pointer for input (never <code>Enter</code> as confirm); touch-first; tap targets ≥ 44px.</li>
+<li>[ ] <strong>Accessibility</strong>: reduced-motion toggle (honours <code>prefers-reduced-motion</code>); flashes &lt; 3/sec; not colour-only; no reflex-gating; captions for audio.</li>
+<li>[ ] Verified live (restart WSL vite first; drive + screenshot each scene).</li>
 </ul>
-<hr>
-<p><em>Source cart: <a href="../examples/the-last-save-file/code.js"><code>examples/the-last-save-file/code.js</code></a>.
+<hr />
+<p><em>Source cart: <a href="/examples/the-last-save-file/code.js"><code>examples/the-last-save-file/code.js</code></a>.
 Host helper added: <code>cls3D()</code> in <code>runtime/api.js</code> (exposed via <code>runtime/namespace.js</code> <code>draw</code> list).</em></p>
         </section>
 

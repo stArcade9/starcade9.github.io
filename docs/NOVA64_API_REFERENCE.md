@@ -65,9 +65,9 @@ export function draw() {
 Clear the screen with a color.
 
 ```javascript
-cls(); // Clear to black
-cls(rgba8(0, 0, 0, 255)); // Clear to black
-cls(rgba8(20, 40, 80, 255)); // Clear to dark blue
+nova64.draw.cls(); // Clear to black
+nova64.draw.cls(rgba8(0, 0, 0, 255)); // Clear to black
+nova64.draw.cls(rgba8(20, 40, 80, 255)); // Clear to dark blue
 ```
 
 #### `pset(x, y, color)`
@@ -75,7 +75,7 @@ cls(rgba8(20, 40, 80, 255)); // Clear to dark blue
 Set a single pixel.
 
 ```javascript
-pset(100, 100, rgba8(255, 0, 0, 255)); // Red pixel at (100, 100)
+nova64.draw.pset(100, 100, rgba8(255, 0, 0, 255)); // Red pixel at (100, 100)
 ```
 
 #### `line(x0, y0, x1, y1, color)`
@@ -83,7 +83,7 @@ pset(100, 100, rgba8(255, 0, 0, 255)); // Red pixel at (100, 100)
 Draw a line between two points.
 
 ```javascript
-line(0, 0, 640, 360, rgba8(255, 255, 255, 255)); // Diagonal white line
+nova64.draw.line(0, 0, 640, 360, rgba8(255, 255, 255, 255)); // Diagonal white line
 ```
 
 #### `rect(x, y, width, height, color, fill?)`
@@ -91,8 +91,8 @@ line(0, 0, 640, 360, rgba8(255, 255, 255, 255)); // Diagonal white line
 Draw a rectangle.
 
 ```javascript
-rect(50, 50, 100, 80, rgba8(0, 255, 0, 255)); // Green outline
-rect(50, 50, 100, 80, rgba8(0, 255, 0, 255), true); // Green filled
+nova64.draw.rect(50, 50, 100, 80, rgba8(0, 255, 0, 255)); // Green outline
+nova64.draw.rect(50, 50, 100, 80, rgba8(0, 255, 0, 255), true); // Green filled
 ```
 
 #### `rectfill(x, y, width, height, color)`
@@ -100,7 +100,7 @@ rect(50, 50, 100, 80, rgba8(0, 255, 0, 255), true); // Green filled
 Draw a filled rectangle (alias for `rect(..., true)`).
 
 ```javascript
-rectfill(10, 10, 200, 100, rgba8(255, 128, 0, 255)); // Orange rectangle
+nova64.draw.rectfill(10, 10, 200, 100, rgba8(255, 128, 0, 255)); // Orange rectangle
 ```
 
 #### `circle(x, y, radius, color, fill?)`
@@ -108,8 +108,8 @@ rectfill(10, 10, 200, 100, rgba8(255, 128, 0, 255)); // Orange rectangle
 Draw a circle.
 
 ```javascript
-circle(320, 180, 50, rgba8(255, 0, 255, 255)); // Magenta outline
-circle(320, 180, 50, rgba8(255, 0, 255, 255), true); // Magenta filled
+nova64.draw.circle(320, 180, 50, rgba8(255, 0, 255, 255)); // Magenta outline
+nova64.draw.circle(320, 180, 50, rgba8(255, 0, 255, 255), true); // Magenta filled
 ```
 
 #### `print(text, x, y, color?, scale?)`
@@ -117,9 +117,9 @@ circle(320, 180, 50, rgba8(255, 0, 255, 255), true); // Magenta filled
 Draw text using built-in bitmap font.
 
 ```javascript
-print('HELLO WORLD', 10, 10); // White text
-print('SCORE: 1000', 10, 20, rgba8(255, 255, 0, 255)); // Yellow text
-print('BIG', 100, 100, rgba8(255, 255, 255, 255), 2); // 2x scale (future)
+nova64.draw.print('HELLO WORLD', 10, 10); // White text
+nova64.draw.print('SCORE: 1000', 10, 20, rgba8(255, 255, 0, 255)); // Yellow text
+nova64.draw.print('BIG', 100, 100, rgba8(255, 255, 255, 255), 2); // 2x scale (future)
 ```
 
 **Built-in Font Characters:**
@@ -138,7 +138,7 @@ abcdefghijklmnopqrstuvwxyz
 Set camera offset for scrolling.
 
 ```javascript
-setCamera(playerX - 320, playerY - 180); // Center camera on player
+nova64.draw.setCamera(playerX - 320, playerY - 180); // Center camera on player
 ```
 
 #### `getCamera()`
@@ -263,7 +263,7 @@ Get mouse position (scaled to 640×360).
 ```javascript
 const mx = mouseX();
 const my = mouseY();
-print(`Mouse: ${mx}, ${my}`, 10, 10);
+nova64.draw.print(`Mouse: ${mx}, ${my}`, 10, 10);
 ```
 
 #### `mouseDown()` / `mousePressed()`
@@ -290,7 +290,7 @@ Check if a gamepad is connected.
 
 ```javascript
 if (gamepadConnected()) {
-  print('🎮 GAMEPAD READY', 10, 10);
+  nova64.draw.print('🎮 GAMEPAD READY', 10, 10);
 }
 ```
 
@@ -341,7 +341,7 @@ Nova64 uses Three.js for 3D rendering with a simplified API.
 Set camera position in 3D space.
 
 ```javascript
-setCameraPosition(0, 10, 20); // Behind and above origin
+nova64.camera.setCameraPosition(0, 10, 20); // Behind and above origin
 ```
 
 #### `setCameraTarget(x, y, z)`
@@ -349,7 +349,7 @@ setCameraPosition(0, 10, 20); // Behind and above origin
 Set what the camera looks at.
 
 ```javascript
-setCameraTarget(0, 0, 0); // Look at origin
+nova64.camera.setCameraTarget(0, 0, 0); // Look at origin
 ```
 
 #### `setCameraLookAt(x, y, z)`
@@ -357,7 +357,7 @@ setCameraTarget(0, 0, 0); // Look at origin
 Set camera direction vector (for FPS controls).
 
 ```javascript
-setCameraLookAt(player.x, player.y, player.z);
+nova64.camera.setCameraLookAt(player.x, player.y, player.z);
 ```
 
 #### `setCameraFOV(degrees)`
@@ -365,7 +365,7 @@ setCameraLookAt(player.x, player.y, player.z);
 Set field of view (30-120, default 75).
 
 ```javascript
-setCameraFOV(90); // Wider view for FPS games
+nova64.camera.setCameraFOV(90); // Wider view for FPS games
 ```
 
 ### Lighting
@@ -375,8 +375,8 @@ setCameraFOV(90); // Wider view for FPS games
 Set global ambient lighting.
 
 ```javascript
-setAmbientLight(0x404040); // Gray ambient
-setAmbientLight(0x1a1a2a); // Dark blue ambient
+nova64.light.setAmbientLight(0x404040); // Gray ambient
+nova64.light.setAmbientLight(0x1a1a2a); // Dark blue ambient
 ```
 
 #### `setLightDirection(x, y, z)`
@@ -384,8 +384,8 @@ setAmbientLight(0x1a1a2a); // Dark blue ambient
 Set the main directional light direction vector.
 
 ```javascript
-setLightDirection(-0.5, -1, -0.3); // From top-left
-setLightDirection(1, 1, 0.5); // From upper-right
+nova64.light.setLightDirection(-0.5, -1, -0.3); // From top-left
+nova64.light.setLightDirection(1, 1, 0.5); // From upper-right
 ```
 
 #### `setLightColor(hexColor, intensity?)`
@@ -393,8 +393,8 @@ setLightDirection(1, 1, 0.5); // From upper-right
 Configure directional light colour and intensity.
 
 ```javascript
-setLightColor(0xffffff, 1.0); // White light, full intensity
-setLightColor(0xffd4a0, 0.8); // Warm sunset light
+nova64.light.setLightColor(0xffffff, 1.0); // White light, full intensity
+nova64.light.setLightColor(0xffd4a0, 0.8); // Warm sunset light
 ```
 
 #### `createPointLight(hexColor, intensity, [x, y, z], distance?)`
@@ -412,7 +412,7 @@ const lamp = createPointLight(0xff8800, 2.0, [5, 3, 0], 20);
 Add distance fog for atmosphere.
 
 ```javascript
-setFog(0x000020, 30, 150); // Dark blue fog
+nova64.light.setFog(0x000020, 30, 150); // Dark blue fog
 ```
 
 ### 3D Objects
@@ -472,8 +472,8 @@ const floor = createPlane(100, 100, 0x008800, [0, 0, 0]);
 Move a mesh.
 
 ```javascript
-setPosition(cube, playerX, playerY, playerZ);
-setPosition(sphere, [10, 5, 3]);
+nova64.scene.setPosition(cube, playerX, playerY, playerZ);
+nova64.scene.setPosition(sphere, [10, 5, 3]);
 ```
 
 #### `setRotation(meshId, x, y, z)` or `setRotation(meshId, [x, y, z])`
@@ -481,8 +481,8 @@ setPosition(sphere, [10, 5, 3]);
 Rotate a mesh (radians).
 
 ```javascript
-setRotation(cube, 0, Math.PI / 4, 0); // Rotate 45° around Y
-setRotation(box, [angle, 0, 0]);
+nova64.scene.setRotation(cube, 0, Math.PI / 4, 0); // Rotate 45° around Y
+nova64.scene.setRotation(box, [angle, 0, 0]);
 ```
 
 #### `setScale(meshId, x, y, z)` or `setScale(meshId, [x, y, z])`
@@ -490,8 +490,8 @@ setRotation(box, [angle, 0, 0]);
 Scale a mesh.
 
 ```javascript
-setScale(cube, 2, 1, 2); // Wide and deep
-setScale(sphere, [0.5, 0.5, 0.5]); // Half size
+nova64.scene.setScale(cube, 2, 1, 2); // Wide and deep
+nova64.scene.setScale(sphere, [0.5, 0.5, 0.5]); // Half size
 ```
 
 #### `destroyMesh(meshId)`
@@ -499,7 +499,7 @@ setScale(sphere, [0.5, 0.5, 0.5]); // Half size
 Remove a mesh from the scene.
 
 ```javascript
-destroyMesh(cube);
+nova64.scene.destroyMesh(cube);
 ```
 
 ### Skybox
@@ -509,8 +509,8 @@ destroyMesh(cube);
 Procedural starfield and nebulae — the default Nova64 space look.
 
 ```javascript
-createSpaceSkybox(); // Default stars + nebulae
-createSpaceSkybox({ starCount: 2000, nebulaCount: 4 });
+nova64.light.createSpaceSkybox(); // Default stars + nebulae
+nova64.light.createSpaceSkybox({ starCount: 2000, nebulaCount: 4 });
 ```
 
 #### `createGradientSkybox(topColor, bottomColor)`
@@ -518,8 +518,8 @@ createSpaceSkybox({ starCount: 2000, nebulaCount: 4 });
 Two-colour gradient sky — great for outdoor scenes and sunsets.
 
 ```javascript
-createGradientSkybox(0x0077ff, 0x004488); // Blue sky
-createGradientSkybox(0xff6a00, 0x1a0033); // Sunset
+nova64.light.createGradientSkybox(0x0077ff, 0x004488); // Blue sky
+nova64.light.createGradientSkybox(0xff6a00, 0x1a0033); // Sunset
 ```
 
 #### `createSolidSkybox(color)`
@@ -527,7 +527,7 @@ createGradientSkybox(0xff6a00, 0x1a0033); // Sunset
 Flat solid colour sky — good for caves or indoor scenes.
 
 ```javascript
-createSolidSkybox(0x000000); // Pure black
+nova64.light.createSolidSkybox(0x000000); // Pure black
 ```
 
 #### `createImageSkybox([px, nx, py, ny, pz, nz])`
@@ -535,7 +535,7 @@ createSolidSkybox(0x000000); // Pure black
 Cube-map skybox from 6 image URLs. Also enables image-based lighting (IBL).
 
 ```javascript
-createImageSkybox([
+nova64.light.createImageSkybox([
   '/assets/sky_px.jpg',
   '/assets/sky_nx.jpg',
   '/assets/sky_py.jpg',
@@ -550,7 +550,7 @@ createImageSkybox([
 Remove the current skybox.
 
 ```javascript
-clearSkybox();
+nova64.light.clearSkybox();
 ```
 
 #### `enableSkyboxAutoAnimate(speed?)` / `disableSkyboxAutoAnimate()`
@@ -558,8 +558,8 @@ clearSkybox();
 Auto-rotate the skybox every frame.
 
 ```javascript
-enableSkyboxAutoAnimate(0.5); // Slow drift
-disableSkyboxAutoAnimate();
+nova64.light.enableSkyboxAutoAnimate(0.5); // Slow drift
+nova64.light.disableSkyboxAutoAnimate();
 ```
 
 #### `animateSkybox(dt)`
@@ -568,7 +568,7 @@ Manually advance skybox animation by delta-time (call in `update`).
 
 ```javascript
 export function update(dt) {
-  animateSkybox(dt);
+  nova64.light.animateSkybox(dt);
 }
 ```
 
@@ -577,7 +577,7 @@ export function update(dt) {
 Scale the auto-animation speed.
 
 ```javascript
-setSkyboxSpeed(2.0); // Double speed
+nova64.light.setSkyboxSpeed(2.0); // Double speed
 ```
 
 ---
@@ -591,9 +591,9 @@ setSkyboxSpeed(2.0); // Double speed
 Add bloom glow effect.
 
 ```javascript
-enableBloom(); // Default settings
-enableBloom(1.2, 0.6, 0.3); // Balanced neon glow
-enableBloom(2.0, 0.8, 0.2); // Strong dramatic glow
+nova64.fx.enableBloom(); // Default settings
+nova64.fx.enableBloom(1.2, 0.6, 0.3); // Balanced neon glow
+nova64.fx.enableBloom(2.0, 0.8, 0.2); // Strong dramatic glow
 ```
 
 **Parameters:**
@@ -607,7 +607,7 @@ enableBloom(2.0, 0.8, 0.2); // Strong dramatic glow
 Turn off bloom effect.
 
 ```javascript
-disableBloom();
+nova64.fx.disableBloom();
 ```
 
 #### `setBloomStrength(value)`
@@ -615,7 +615,7 @@ disableBloom();
 Adjust bloom strength at runtime.
 
 ```javascript
-setBloomStrength(1.5); // Increase intensity
+nova64.fx.setBloomStrength(1.5); // Increase intensity
 ```
 
 #### `enableFXAA()`
@@ -623,7 +623,7 @@ setBloomStrength(1.5); // Increase intensity
 Enable anti-aliasing (smooths edges).
 
 ```javascript
-enableFXAA(); // Usually paired with bloom
+nova64.fx.enableFXAA(); // Usually paired with bloom
 ```
 
 #### `disableFXAA()`
@@ -631,7 +631,7 @@ enableFXAA(); // Usually paired with bloom
 Disable anti-aliasing.
 
 ```javascript
-disableFXAA();
+nova64.fx.disableFXAA();
 ```
 
 ### Optimal Bloom Settings Guide
@@ -650,12 +650,12 @@ disableFXAA();
 ```javascript
 export function init() {
   // Enable balanced bloom for neon aesthetic
-  enableBloom(1.2, 0.6, 0.3);
-  enableFXAA();
+  nova64.fx.enableBloom(1.2, 0.6, 0.3);
+  nova64.fx.enableFXAA();
 
   // Dark environment
-  setAmbientLight(0x1a1a2a);
-  setFog(0x000020, 30, 150);
+  nova64.light.setAmbientLight(0x1a1a2a);
+  nova64.light.setFog(0x000020, 30, 150);
 
   // Glowing objects
   const neonCube = createAdvancedCube(
@@ -683,7 +683,7 @@ Build Minecraft-style block worlds.
 Load/unload chunks around player.
 
 ```javascript
-updateVoxelWorld(player.x, player.z); // Call when player moves
+nova64.voxel.updateVoxelWorld(player.x, player.z); // Call when player moves
 ```
 
 ### Block Types
@@ -726,8 +726,8 @@ if (block === BLOCK_TYPES.STONE) {
 Place or remove a block.
 
 ```javascript
-setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE); // Place stone
-setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR); // Remove block
+nova64.voxel.setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE); // Place stone
+nova64.voxel.setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR); // Remove block
 ```
 
 #### `raycastVoxelBlock(origin, direction, maxDistance)`
@@ -771,7 +771,7 @@ if (colliding) {
 Generate a tree.
 
 ```javascript
-placeVoxelTree(20, 35, 20); // Trunk + leaves
+nova64.voxel.placeVoxelTree(20, 35, 20); // Trunk + leaves
 ```
 
 ### Example: Basic Voxel Game
@@ -780,8 +780,8 @@ placeVoxelTree(20, 35, 20); // Trunk + leaves
 let player = { x: 0, y: 50, z: 0, vy: 0 };
 
 export function init() {
-  updateVoxelWorld(0, 0); // Initial world gen
-  setCameraFOV(95); // Wide FOV for voxels
+  nova64.voxel.updateVoxelWorld(0, 0); // Initial world gen
+  nova64.camera.setCameraFOV(95); // Wide FOV for voxels
 }
 
 export function update(dt) {
@@ -808,7 +808,7 @@ export function update(dt) {
   }
 
   // Update world
-  updateVoxelWorld(player.x, player.z);
+  nova64.voxel.updateVoxelWorld(player.x, player.z);
 }
 ```
 
@@ -859,7 +859,7 @@ Render all buttons (call in `draw()`).
 
 ```javascript
 export function draw() {
-  drawAllButtons();
+  nova64.ui.drawAllButtons();
 }
 ```
 
@@ -868,7 +868,7 @@ export function draw() {
 Remove all buttons.
 
 ```javascript
-clearButtons(); // Clear menu when starting game
+nova64.ui.clearButtons(); // Clear menu when starting game
 ```
 
 ### Panels
@@ -893,7 +893,7 @@ const panel = createPanel(50, 50, 300, 200, {
 Draw a panel.
 
 ```javascript
-drawPanel(panel);
+nova64.draw.drawPanel(panel);
 ```
 
 ### Pre-defined UI Colors
@@ -917,9 +917,9 @@ const uiColors = {
 Change font size (future feature).
 
 ```javascript
-setFont('normal'); // 8px (default)
-setFont('large'); // 16px
-setFont('huge'); // 24px
+nova64.ui.setFont('normal'); // 8px (default)
+nova64.ui.setFont('large'); // 16px
+nova64.ui.setFont('huge'); // 24px
 ```
 
 #### `setTextAlign(align)`
@@ -927,9 +927,9 @@ setFont('huge'); // 24px
 Set text alignment.
 
 ```javascript
-setTextAlign('left'); // Default
-setTextAlign('center'); // Centered
-setTextAlign('right'); // Right-aligned
+nova64.ui.setTextAlign('left'); // Default
+nova64.ui.setTextAlign('center'); // Centered
+nova64.ui.setTextAlign('right'); // Right-aligned
 ```
 
 #### `drawText(text, x, y, color, align?)`
@@ -937,7 +937,7 @@ setTextAlign('right'); // Right-aligned
 Draw text with alignment.
 
 ```javascript
-drawText('GAME OVER', 320, 180, rgba8(255, 0, 0, 255), 1); // Centered
+nova64.ui.drawText('GAME OVER', 320, 180, rgba8(255, 0, 0, 255), 1); // Centered
 ```
 
 #### `drawTextShadow(text, x, y, color, shadowColor, shadowOffset, align?)`
@@ -945,12 +945,12 @@ drawText('GAME OVER', 320, 180, rgba8(255, 0, 0, 255), 1); // Centered
 Draw text with shadow.
 
 ```javascript
-drawTextShadow(
+nova64.ui.drawTextShadow(
   'TITLE',
   320,
   50,
-  rgba8(255, 255, 255, 255), // White text
-  rgba8(0, 0, 0, 255), // Black shadow
+  nova64.draw.rgba8(255, 255, 255, 255), // White text
+  nova64.draw.rgba8(0, 0, 0, 255), // Black shadow
   4,
   1 // Offset, alignment
 );
@@ -961,12 +961,12 @@ drawTextShadow(
 Draw text with outline.
 
 ```javascript
-drawTextOutline(
+nova64.ui.drawTextOutline(
   'SCORE: 1000',
   320,
   20,
-  rgba8(255, 255, 0, 255), // Yellow text
-  rgba8(0, 0, 0, 255), // Black outline
+  nova64.draw.rgba8(255, 255, 0, 255), // Yellow text
+  nova64.draw.rgba8(0, 0, 0, 255), // Black outline
   2,
   1 // Thickness, alignment
 );
@@ -980,13 +980,13 @@ Draw a gradient-filled rectangle.
 
 ```javascript
 // Vertical gradient
-drawGradientRect(
+nova64.ui.drawGradientRect(
   0,
   0,
   640,
   360,
-  rgba8(0, 50, 100, 255), // Top: dark blue
-  rgba8(0, 0, 20, 255), // Bottom: darker
+  nova64.draw.rgba8(0, 50, 100, 255), // Top: dark blue
+  nova64.draw.rgba8(0, 0, 20, 255), // Bottom: darker
   true
 );
 ```
@@ -1083,7 +1083,7 @@ Get current frames per second.
 
 ```javascript
 const fps = getFPS();
-print(`FPS: ${Math.round(fps)}`, 10, 10);
+nova64.draw.print(`FPS: ${Math.round(fps)}`, 10, 10);
 ```
 
 ### Storage
@@ -1130,7 +1130,7 @@ export function init() {
   console.log('🎮 Platformer initialized!');
 
   // Create menu button
-  createButton(
+  nova64.ui.createButton(
     200,
     200,
     240,
@@ -1148,7 +1148,7 @@ export function init() {
 
 export function update(dt) {
   if (gameState === 'menu') {
-    updateAllButtons();
+    nova64.ui.updateAllButtons();
     return;
   }
 
@@ -1186,7 +1186,7 @@ export function update(dt) {
   if (player.x > 640) player.x = 0;
 
   // Camera follows player
-  setCamera(player.x - 320, 0);
+  nova64.draw.setCamera(player.x - 320, 0);
 
   // Score increases over time
   score += Math.floor(dt * 10);
@@ -1194,31 +1194,31 @@ export function update(dt) {
 
 export function draw() {
   // Clear to sky blue
-  cls(rgba8(100, 150, 255, 255));
+  nova64.draw.cls(rgba8(100, 150, 255, 255));
 
   if (gameState === 'menu') {
     // Menu screen
-    drawTextShadow('PLATFORMER', 320, 100, rgba8(255, 255, 255, 255), rgba8(0, 0, 0, 255), 4, 1);
-    drawAllButtons();
+    nova64.ui.drawTextShadow('PLATFORMER', 320, 100, rgba8(255, 255, 255, 255), rgba8(0, 0, 0, 255), 4, 1);
+    nova64.ui.drawAllButtons();
     return;
   }
 
   // Draw ground
-  rectfill(0, 316, 640, 44, rgba8(50, 150, 50, 255));
+  nova64.draw.rectfill(0, 316, 640, 44, rgba8(50, 150, 50, 255));
 
   // Draw player
-  rectfill(
+  nova64.draw.rectfill(
     player.x - player.width / 2,
     player.y - player.height,
     player.width,
     player.height,
-    rgba8(255, 0, 0, 255)
+    nova64.draw.rgba8(255, 0, 0, 255)
   );
 
   // Draw HUD (no camera offset)
-  setCamera(0, 0);
-  print(`SCORE: ${score}`, 10, 10, rgba8(255, 255, 255, 255));
-  print(`FPS: ${Math.round(getFPS())}`, 10, 25, rgba8(255, 255, 0, 255));
+  nova64.draw.setCamera(0, 0);
+  nova64.draw.print(`SCORE: ${score}`, 10, 10, rgba8(255, 255, 255, 255));
+  nova64.draw.print(`FPS: ${Math.round(getFPS())}`, 10, 25, rgba8(255, 255, 0, 255));
 }
 ```
 
@@ -1362,7 +1362,7 @@ export function draw() {
 
 ```javascript
 export function update(dt) {
-  updateAllButtons(); // ✅ Required!
+  nova64.ui.updateAllButtons(); // ✅ Required!
 
   // Keyboard fallback
   if (isKeyDown('Space') || isKeyDown('Enter')) {

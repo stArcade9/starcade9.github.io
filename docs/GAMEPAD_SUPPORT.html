@@ -375,18 +375,24 @@
         </header>
 
         <section class="md">
-<h2>Overview</h2>
+<h2 id="overview">Overview</h2>
 <p>Nova64 now has full support for video game controllers (gamepads) with automatic detection and mapping to the standard button layout.</p>
+
         </section>
 
         <section class="md">
-<h2>Features</h2>
-<p>✅ <strong>Automatic Detection</strong>: Gamepads are automatically detected when connected<br>✅ <strong>Standard Mapping</strong>: Uses the standard gamepad button layout (Xbox/PlayStation compatible)<br>✅ <strong>Analog Sticks</strong>: Full support for both left and right analog sticks with deadzone<br>✅ <strong>Button States</strong>: Both held (btn) and pressed (btnp) states supported<br>✅ <strong>Dual Input</strong>: Keyboard and gamepad work simultaneously - use either or both!</p>
+<h2 id="features">Features</h2>
+<p>✅ <strong>Automatic Detection</strong>: Gamepads are automatically detected when connected<br />
+✅ <strong>Standard Mapping</strong>: Uses the standard gamepad button layout (Xbox/PlayStation compatible)<br />
+✅ <strong>Analog Sticks</strong>: Full support for both left and right analog sticks with deadzone<br />
+✅ <strong>Button States</strong>: Both held (btn) and pressed (btnp) states supported<br />
+✅ <strong>Dual Input</strong>: Keyboard and gamepad work simultaneously - use either or both!</p>
+
         </section>
 
         <section class="md">
-<h2>Button Mapping</h2>
-<h3>D-Pad and Face Buttons</h3>
+<h2 id="button-mapping">Button Mapping</h2>
+<h3 id="d-pad-and-face-buttons">D-Pad and Face Buttons</h3>
 <pre><code>btn(0)  - D-pad Up    / Arrow Up
 btn(1)  - D-pad Left  / Arrow Left
 btn(2)  - D-pad Right / Arrow Right
@@ -400,7 +406,7 @@ btn(9)  - RT button   / S key
 btn(12) - Start       / Enter
 btn(13) - Select      / Space
 </code></pre>
-<h3>Analog Sticks</h3>
+<h3 id="analog-sticks">Analog Sticks</h3>
 <p>Access analog stick values directly:</p>
 <pre><code class="language-javascript">// Left analog stick
 const leftX = leftStickX(); // -1.0 to 1.0 (left to right)
@@ -411,17 +417,18 @@ const rightX = rightStickX(); // -1.0 to 1.0 (left to right)
 const rightY = rightStickY(); // -1.0 to 1.0 (up to down)
 
 // Or use the gamepadAxis function
-const lx = gamepadAxis(&#39;leftX&#39;);
-const ly = gamepadAxis(&#39;leftY&#39;);
-const rx = gamepadAxis(&#39;rightX&#39;);
-const ry = gamepadAxis(&#39;rightY&#39;);
+const lx = gamepadAxis('leftX');
+const ly = gamepadAxis('leftY');
+const rx = gamepadAxis('rightX');
+const ry = gamepadAxis('rightY');
 </code></pre>
 <p><strong>Note</strong>: A deadzone of 0.15 is applied automatically to prevent stick drift.</p>
+
         </section>
 
         <section class="md">
-<h2>API Functions</h2>
-<h3>Button Functions</h3>
+<h2 id="api-functions">API Functions</h2>
+<h3 id="button-functions">Button Functions</h3>
 <pre><code class="language-javascript">// Check if button is currently held down
 if (btn(0)) {
   // D-pad up is being held (keyboard or gamepad)
@@ -433,7 +440,7 @@ if (btnp(4)) {
   shoot();
 }
 </code></pre>
-<h3>Analog Stick Functions</h3>
+<h3 id="analog-stick-functions">Analog Stick Functions</h3>
 <pre><code class="language-javascript">// Left stick for movement
 export function update(dt) {
   const moveX = leftStickX();
@@ -454,17 +461,18 @@ export function update(dt) {
   camera.pitch += camY * sensitivity * dt;
 }
 </code></pre>
-<h3>Detection</h3>
+<h3 id="detection">Detection</h3>
 <pre><code class="language-javascript">// Check if a gamepad is connected
 if (gamepadConnected()) {
-  print(&#39;Gamepad Ready!&#39;, 10, 10, rgba8(0, 255, 0, 255));
+  nova64.draw.print('Gamepad Ready!', 10, 10, rgba8(0, 255, 0, 255));
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Usage Examples</h2>
-<h3>Basic Movement</h3>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-movement">Basic Movement</h3>
 <pre><code class="language-javascript">export function update(dt) {
   // Movement with D-pad or left stick
   if (btn(0) || leftStickY() &lt; -0.3) {
@@ -489,7 +497,7 @@ if (gamepadConnected()) {
   }
 }
 </code></pre>
-<h3>Racing Game Controls</h3>
+<h3 id="racing-game-controls">Racing Game Controls</h3>
 <pre><code class="language-javascript">export function update(dt) {
   // Use left stick for steering
   const steer = leftStickX();
@@ -511,9 +519,9 @@ if (gamepadConnected()) {
   }
 }
 </code></pre>
-<h3>Menu Navigation</h3>
+<h3 id="menu-navigation">Menu Navigation</h3>
 <pre><code class="language-javascript">let menuIndex = 0;
-const menuItems = [&#39;Start Game&#39;, &#39;Options&#39;, &#39;Quit&#39;];
+const menuItems = ['Start Game', 'Options', 'Quit'];
 
 export function update(dt) {
   // Navigate menu with D-pad or left stick
@@ -530,7 +538,7 @@ export function update(dt) {
   }
 }
 </code></pre>
-<h3>Camera Control</h3>
+<h3 id="camera-control">Camera Control</h3>
 <pre><code class="language-javascript">export function update(dt) {
   // Left stick for player movement
   const moveX = leftStickX();
@@ -547,17 +555,18 @@ export function update(dt) {
   camera.pitch += camY * sensitivity * dt;
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Best Practices</h2>
-<h3>1. Support Both Input Methods</h3>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-support-both-input-methods">1. Support Both Input Methods</h3>
 <p>Always support both keyboard and gamepad for maximum accessibility:</p>
 <pre><code class="language-javascript">// Good - supports both
 const leftPressed = btn(1) || leftStickX() &lt; -0.3;
 const rightPressed = btn(2) || leftStickX() &gt; 0.3;
 </code></pre>
-<h3>2. Use btnp() for Actions</h3>
+<h3 id="2-use-btnp-for-actions">2. Use btnp() for Actions</h3>
 <p>Use <code>btnp()</code> for discrete actions like jumping, shooting, or menu selection:</p>
 <pre><code class="language-javascript">if (btnp(4)) {
   jump(); // Only triggers once per press
@@ -568,7 +577,7 @@ const rightPressed = btn(2) || leftStickX() &gt; 0.3;
   accelerate(); // Continuously accelerates while held
 }
 </code></pre>
-<h3>3. Tune Your Deadzones</h3>
+<h3 id="3-tune-your-deadzones">3. Tune Your Deadzones</h3>
 <p>The default deadzone is 0.15. For analog movement, you may want to apply additional thresholds:</p>
 <pre><code class="language-javascript">const moveX = leftStickX();
 const moveY = leftStickY();
@@ -578,17 +587,17 @@ const threshold = 0.2;
 if (Math.abs(moveX) &lt; threshold) moveX = 0;
 if (Math.abs(moveY) &lt; threshold) moveY = 0;
 </code></pre>
-<h3>4. Show Gamepad Prompts</h3>
+<h3 id="4-show-gamepad-prompts">4. Show Gamepad Prompts</h3>
 <p>Display appropriate button prompts based on input method:</p>
 <pre><code class="language-javascript">export function draw() {
   if (gamepadConnected()) {
-    print(&#39;Press A to Jump&#39;, 10, 10, rgba8(255, 255, 255, 255));
+    nova64.draw.print('Press A to Jump', 10, 10, rgba8(255, 255, 255, 255));
   } else {
-    print(&#39;Press Z to Jump&#39;, 10, 10, rgba8(255, 255, 255, 255));
+    nova64.draw.print('Press Z to Jump', 10, 10, rgba8(255, 255, 255, 255));
   }
 }
 </code></pre>
-<h3>5. Test With Multiple Controllers</h3>
+<h3 id="5-test-with-multiple-controllers">5. Test With Multiple Controllers</h3>
 <p>Different gamepads may have slightly different button mappings. Test with:</p>
 <ul>
 <li>Xbox controllers</li>
@@ -596,40 +605,44 @@ if (Math.abs(moveY) &lt; threshold) moveY = 0;
 <li>Generic USB gamepads</li>
 <li>Switch Pro controllers</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Troubleshooting</h2>
-<h3>Gamepad Not Detected</h3>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="gamepad-not-detected">Gamepad Not Detected</h3>
 <ol>
 <li>Make sure the gamepad is connected before loading the game</li>
 <li>Try pressing a button to wake up the gamepad</li>
 <li>Check browser console for any errors</li>
 <li>Some browsers require HTTPS for gamepad API</li>
 </ol>
-<h3>Buttons Not Working</h3>
+<h3 id="buttons-not-working">Buttons Not Working</h3>
 <ol>
 <li>Verify button mapping with <code>console.log(btn(0), btn(1), btn(2))</code></li>
 <li>Check if gamepadConnected() returns true</li>
 <li>Try a different gamepad or browser</li>
 </ol>
-<h3>Stick Drift</h3>
+<h3 id="stick-drift">Stick Drift</h3>
 <p>If you experience stick drift:</p>
 <ol>
 <li>The default deadzone is 0.15</li>
 <li>Increase it in your game code with custom thresholds</li>
 <li>Consider calibrating the physical controller</li>
 </ol>
+
         </section>
 
         <section class="md">
-<h2>Migration Guide</h2>
-<h3>Existing Games</h3>
+<h2 id="migration-guide">Migration Guide</h2>
+<h3 id="existing-games">Existing Games</h3>
 <p>To add gamepad support to existing games:</p>
 <ol>
-<li><p><strong>No changes needed!</strong> All existing <code>btn()</code> and <code>btnp()</code> calls now work with gamepads automatically</p>
+<li>
+<p><strong>No changes needed!</strong> All existing <code>btn()</code> and <code>btnp()</code> calls now work with gamepads automatically</p>
 </li>
-<li><p><strong>Optional</strong>: Add analog stick support for smoother movement:</p>
+<li>
+<p><strong>Optional</strong>: Add analog stick support for smoother movement:</p>
 </li>
 </ol>
 <pre><code class="language-javascript">// Before (keyboard only)
@@ -648,13 +661,14 @@ player.x += leftStickX() * speed * dt;
 <li><strong>Optional</strong>: Show gamepad indicator:</li>
 </ol>
 <pre><code class="language-javascript">if (gamepadConnected()) {
-  print(&#39;🎮&#39;, 600, 10, rgba8(0, 255, 0, 255));
+  nova64.draw.print('🎮', 600, 10, rgba8(0, 255, 0, 255));
 }
 </code></pre>
+
         </section>
 
         <section class="md">
-<h2>Technical Details</h2>
+<h2 id="technical-details">Technical Details</h2>
 <ul>
 <li><strong>Polling</strong>: Gamepad state is polled automatically every frame</li>
 <li><strong>Latency</strong>: Sub-frame latency for responsive controls</li>
@@ -662,23 +676,25 @@ player.x += leftStickX() * speed * dt;
 <li><strong>Multiple Gamepads</strong>: Currently uses first connected gamepad (index 0)</li>
 <li><strong>Deadzone</strong>: 0.15 applied to all analog axes</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Future Enhancements</h2>
+<h2 id="future-enhancements">Future Enhancements</h2>
 <p>Planned features:</p>
 <ul>
-<li><input disabled="" type="checkbox"> Rumble/vibration support</li>
-<li><input disabled="" type="checkbox"> Multiple gamepad support (local multiplayer)</li>
-<li><input disabled="" type="checkbox"> Button remapping</li>
-<li><input disabled="" type="checkbox"> Configurable deadzones</li>
-<li><input disabled="" type="checkbox"> Analog button pressure (triggers)</li>
-<li><input disabled="" type="checkbox"> Motion controls (gyro/accelerometer)</li>
+<li>[ ] Rumble/vibration support</li>
+<li>[ ] Multiple gamepad support (local multiplayer)</li>
+<li>[ ] Button remapping</li>
+<li>[ ] Configurable deadzones</li>
+<li>[ ] Analog button pressure (triggers)</li>
+<li>[ ] Motion controls (gyro/accelerometer)</li>
 </ul>
+
         </section>
 
         <section class="md">
-<h2>Conclusion</h2>
+<h2 id="conclusion">Conclusion</h2>
 <p>Gamepad support in Nova64 makes your games more accessible and enjoyable. Players can use whatever input method they prefer, and analog sticks provide smoother, more precise control for 3D games.</p>
 <p>For questions or issues, please refer to the Nova64 documentation or submit an issue on GitHub.</p>
         </section>

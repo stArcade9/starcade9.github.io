@@ -1,3 +1,5 @@
+const { printCentered } = nova64.draw;
+
 // Nova64 Game Cart: NOVA DRIFT
 // 6DOF asteroid field — collect 15 crystals before hostile drones end you.
 // Z/Up=Thrust  X/Down=Brake  Left/Right=Yaw  C/V=Pitch  B=BOOST (B key or joypad)

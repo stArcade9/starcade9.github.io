@@ -20,26 +20,26 @@ The Nova64 Voxel Engine enables Minecraft-style block-based games with infinite 
 ```javascript
 export function init() {
   // Setup lighting
-  setAmbientLight(0x666666);
-  setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
+  nova64.light.setAmbientLight(0x666666);
+  nova64.light.setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
 
   // Generate world around player
-  updateVoxelWorld(playerX, playerZ);
+  nova64.voxel.updateVoxelWorld(playerX, playerZ);
 
   // Add some trees
-  placeVoxelTree(10, 35, 10);
+  nova64.voxel.placeVoxelTree(10, 35, 10);
 }
 
 export function update(dt) {
   // Update chunks as player moves
-  updateVoxelWorld(playerX, playerZ);
+  nova64.voxel.updateVoxelWorld(playerX, playerZ);
 
   // Get block at position
   const block = getVoxelBlock(x, y, z);
 
   // Place or remove blocks
   if (isKeyPressed('Space')) {
-    setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
+    nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.STONE);
   }
 }
 ```
@@ -93,7 +93,7 @@ BLOCK_TYPES.BRICK_STAIR; // 35 - Brick staircase
 
 ```javascript
 // Register a custom block type for your cart
-registerVoxelBlock(100, {
+nova64.voxel.registerVoxelBlock(100, {
   name: 'crystal',
   color: 0xff00ff,
   solid: true,
@@ -122,7 +122,7 @@ Updates visible chunks around the player position. Call this in your `update()` 
 export function update(dt) {
   // Update every few frames to reduce overhead
   if (Math.random() < 0.1) {
-    updateVoxelWorld(player.pos[0], player.pos[2]);
+    nova64.voxel.updateVoxelWorld(player.pos[0], player.pos[2]);
   }
 }
 ```
@@ -144,7 +144,7 @@ Returns the biome name at the given world position. Biomes include: "Frozen Tund
 
 ```javascript
 const biome = getVoxelBiome(player.x, player.z);
-print(`Biome: ${biome}`, 10, 10, 0xffffff);
+nova64.draw.print(`Biome: ${biome}`, 10, 10, 0xffffff);
 ```
 
 ### configureVoxelWorld(options)
@@ -152,7 +152,7 @@ print(`Biome: ${biome}`, 10, 10, 0xffffff);
 Configure world generation parameters. Call before generating any chunks.
 
 ```javascript
-configureVoxelWorld({
+nova64.voxel.configureVoxelWorld({
   seed: 42, // World seed (deterministic generation)
   chunkHeight: 128, // Vertical chunk size (default: 128)
   renderDistance: 6, // Chunks in each direction (default: 4)
@@ -247,14 +247,14 @@ Places or removes a block at the specified world coordinates. Automatically upda
 
 ```javascript
 // Break block (set to air)
-setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR);
+nova64.voxel.setVoxelBlock(10, 35, 10, BLOCK_TYPES.AIR);
 
 // Place stone block
-setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE);
+nova64.voxel.setVoxelBlock(10, 35, 10, BLOCK_TYPES.STONE);
 
 // Build a wall
 for (let y = 0; y < 5; y++) {
-  setVoxelBlock(20, 30 + y, 20, BLOCK_TYPES.BRICK);
+  nova64.voxel.setVoxelBlock(20, 30 + y, 20, BLOCK_TYPES.BRICK);
 }
 ```
 
@@ -304,12 +304,12 @@ const result = raycastVoxelBlock(
 if (result.hit) {
   // Break block
   if (isKeyPressed('KeyF')) {
-    setVoxelBlock(result.position[0], result.position[1], result.position[2], BLOCK_TYPES.AIR);
+    nova64.voxel.setVoxelBlock(result.position[0], result.position[1], result.position[2], BLOCK_TYPES.AIR);
   }
 
   // Place block on adjacent face
   if (isKeyPressed('KeyE')) {
-    setVoxelBlock(
+    nova64.voxel.setVoxelBlock(
       result.adjacent[0],
       result.adjacent[1],
       result.adjacent[2],
@@ -375,19 +375,19 @@ Generates a tree structure at the specified coordinates. Trees consist of wood t
 ```javascript
 export function init() {
   // Generate initial world
-  updateVoxelWorld(0, 0);
+  nova64.voxel.updateVoxelWorld(0, 0);
 
   // Add trees to landscape
-  placeVoxelTree(10, 35, 10);
-  placeVoxelTree(20, 33, 15);
-  placeVoxelTree(-5, 36, 8);
+  nova64.voxel.placeVoxelTree(10, 35, 10);
+  nova64.voxel.placeVoxelTree(20, 33, 15);
+  nova64.voxel.placeVoxelTree(-5, 36, 8);
 
   // Cluster of trees
   for (let i = 0; i < 10; i++) {
     const x = Math.random() * 100 - 50;
     const z = Math.random() * 100 - 50;
     const y = getGroundHeight(x, z);
-    placeVoxelTree(x, y, z);
+    nova64.voxel.placeVoxelTree(x, y, z);
   }
 }
 ```
@@ -413,18 +413,18 @@ let mouseLocked = false;
 
 export function init() {
   // Setup world
-  setAmbientLight(0x666666);
-  setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
-  setFog(0x87ceeb, 80, 200);
+  nova64.light.setAmbientLight(0x666666);
+  nova64.light.setDirectionalLight([1, 2, 1], 0xffffff, 0.6);
+  nova64.light.setFog(0x87ceeb, 80, 200);
 
   // Generate terrain
-  updateVoxelWorld(player.pos[0], player.pos[2]);
+  nova64.voxel.updateVoxelWorld(player.pos[0], player.pos[2]);
 
   // Add trees
   for (let i = 0; i < 20; i++) {
     const x = Math.random() * 200 - 100;
     const z = Math.random() * 200 - 100;
-    placeVoxelTree(x, 35, z);
+    nova64.voxel.placeVoxelTree(x, 35, z);
   }
 
   // Pointer lock for mouse control
@@ -501,13 +501,13 @@ export function update(dt) {
   player.vel[2] *= 0.8;
 
   // Camera
-  setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
+  nova64.camera.setCameraPosition(player.pos[0], player.pos[1] + 1.6, player.pos[2]);
   const lookDir = [
     -Math.sin(player.rot[0]) * Math.cos(player.rot[1]),
     Math.sin(player.rot[1]),
     -Math.cos(player.rot[0]) * Math.cos(player.rot[1]),
   ];
-  setCameraLookAt(lookDir);
+  nova64.camera.setCameraLookAt(lookDir);
 
   // Block interaction
   const rayOrigin = [player.pos[0], player.pos[1] + 1.6, player.pos[2]];
@@ -518,7 +518,7 @@ export function update(dt) {
 
     // Break block
     if (isMousePressed(0)) {
-      setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+      nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
     }
 
     // Place block
@@ -526,13 +526,13 @@ export function update(dt) {
       const placeX = x - Math.sign(lookDir[0]);
       const placeY = y - Math.sign(lookDir[1]);
       const placeZ = z - Math.sign(lookDir[2]);
-      setVoxelBlock(placeX, placeY, placeZ, player.selectedBlock);
+      nova64.voxel.setVoxelBlock(placeX, placeY, placeZ, player.selectedBlock);
     }
   }
 
   // Update world chunks
   if (Math.random() < 0.1) {
-    updateVoxelWorld(player.pos[0], player.pos[2]);
+    nova64.voxel.updateVoxelWorld(player.pos[0], player.pos[2]);
   }
 
   // Block selection
@@ -544,24 +544,24 @@ export function update(dt) {
 }
 
 export function draw() {
-  cls();
+  nova64.draw.cls();
 
   // Draw crosshair
   if (mouseLocked) {
     const cx = 320,
       cy = 180,
       size = 8;
-    rectfill(cx - size, cy - 1, cx + size, cy + 1, rgba8(1, 1, 1, 1));
-    rectfill(cx - 1, cy - size, cx + 1, cy + size, rgba8(1, 1, 1, 1));
+    nova64.draw.rectfill(cx - size, cy - 1, cx + size, cy + 1, rgba8(1, 1, 1, 1));
+    nova64.draw.rectfill(cx - 1, cy - size, cx + 1, cy + size, rgba8(1, 1, 1, 1));
   }
 
   // HUD
-  print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
-  print(
+  nova64.draw.print(`FPS: ${Math.round(1 / getDeltaTime())}`, 4, 4, rgba8(1, 1, 1, 1));
+  nova64.draw.print(
     `Pos: ${Math.floor(player.pos[0])}, ${Math.floor(player.pos[1])}, ${Math.floor(player.pos[2])}`,
     4,
     12,
-    rgba8(1, 1, 1, 1)
+    nova64.draw.rgba8(1, 1, 1, 1)
   );
 }
 ```
@@ -618,17 +618,17 @@ Y=35-64 → Air (or water below Y=30)
 ```javascript
 // ✅ Good - Update chunks occasionally
 if (frameCount % 10 === 0) {
-  updateVoxelWorld(playerX, playerZ);
+  nova64.voxel.updateVoxelWorld(playerX, playerZ);
 }
 
 // ❌ Bad - Don't update every frame
 export function update(dt) {
-  updateVoxelWorld(playerX, playerZ); // Too expensive!
+  nova64.voxel.updateVoxelWorld(playerX, playerZ); // Too expensive!
 }
 
 // ✅ Good - Batch block changes
 for (let i = 0; i < 100; i++) {
-  setVoxelBlock(x + i, y, z, BLOCK_TYPES.STONE);
+  nova64.voxel.setVoxelBlock(x + i, y, z, BLOCK_TYPES.STONE);
 }
 // Chunks updated once after loop
 
@@ -669,32 +669,32 @@ function buildHouse(x, y, z) {
   // Floor
   for (let dx = 0; dx < 8; dx++) {
     for (let dz = 0; dz < 8; dz++) {
-      setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
+      nova64.voxel.setVoxelBlock(x + dx, y, z + dz, BLOCK_TYPES.PLANKS);
     }
   }
 
   // Walls
   for (let dy = 1; dy < 5; dy++) {
     for (let dx = 0; dx < 8; dx++) {
-      setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
-      setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + dx, y + dy, z, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + dx, y + dy, z + 7, BLOCK_TYPES.WOOD);
     }
     for (let dz = 0; dz < 8; dz++) {
-      setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
-      setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x, y + dy, z + dz, BLOCK_TYPES.WOOD);
+      nova64.voxel.setVoxelBlock(x + 7, y + dy, z + dz, BLOCK_TYPES.WOOD);
     }
   }
 
   // Roof
   for (let dx = 0; dx < 8; dx++) {
     for (let dz = 0; dz < 8; dz++) {
-      setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
+      nova64.voxel.setVoxelBlock(x + dx, y + 5, z + dz, BLOCK_TYPES.BRICK);
     }
   }
 
   // Door
-  setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
-  setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
+  nova64.voxel.setVoxelBlock(x + 3, y + 1, z, BLOCK_TYPES.AIR);
+  nova64.voxel.setVoxelBlock(x + 3, y + 2, z, BLOCK_TYPES.AIR);
 }
 ```
 
@@ -721,7 +721,7 @@ function updateMining(dt) {
       // Break after 1 second
       if (miningProgress >= 1.0) {
         const [x, y, z] = miningBlock;
-        setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
+        nova64.voxel.setVoxelBlock(x, y, z, BLOCK_TYPES.AIR);
         miningProgress = 0;
         miningBlock = null;
       }
@@ -755,10 +755,10 @@ Blocks can have non-cube shapes. Non-cube shapes skip greedy mesh merging and em
 ### Shape Query Functions
 
 ```javascript
-getVoxelBlockShape(BLOCK_TYPES.STONE_SLAB); // 'slab_bottom'
-getVoxelBlockBoundingBox(BLOCK_TYPES.FENCE); // [0.375,0,0.375, 0.625,1,0.625]
-isVoxelBlockFullCube(BLOCK_TYPES.STONE); // true
-isVoxelBlockFullCube(BLOCK_TYPES.STONE_SLAB); // false
+nova64.voxel.getVoxelBlockShape(BLOCK_TYPES.STONE_SLAB); // 'slab_bottom'
+nova64.voxel.getVoxelBlockBoundingBox(BLOCK_TYPES.FENCE); // [0.375,0,0.375, 0.625,1,0.625]
+nova64.voxel.isVoxelBlockFullCube(BLOCK_TYPES.STONE); // true
+nova64.voxel.isVoxelBlockFullCube(BLOCK_TYPES.STONE_SLAB); // false
 ```
 
 Non-cube blocks don't occlude neighboring cube faces. Collision uses shape-specific bounding boxes.
@@ -775,7 +775,7 @@ const light = getVoxelLightLevel(x, y, z);
 let time = 0;
 export function update(dt) {
   time = (time + dt * 0.01) % 1;
-  setVoxelDayTime(time);
+  nova64.voxel.setVoxelDayTime(time);
 }
 ```
 
@@ -785,13 +785,13 @@ Water spreads 7 blocks horizontally with BFS flow. Lava spreads 3 blocks. Fluids
 
 ```javascript
 // Place a water source
-setVoxelFluidSource(10, 70, 10, BLOCK_TYPES.WATER);
+nova64.voxel.setVoxelFluidSource(10, 70, 10, BLOCK_TYPES.WATER);
 
 // Place a lava source
-setVoxelFluidSource(20, 70, 20, BLOCK_TYPES.LAVA);
+nova64.voxel.setVoxelFluidSource(20, 70, 20, BLOCK_TYPES.LAVA);
 
 // Remove a fluid source (flowing blocks retract)
-removeVoxelFluidSource(10, 70, 10);
+nova64.voxel.removeVoxelFluidSource(10, 70, 10);
 
 // Check fluid level (0=full, 7=thinnest, -1=no fluid)
 const level = getVoxelFluidLevel(10, 69, 10);
@@ -813,8 +813,8 @@ const zombie = spawnVoxelEntity('zombie', [10, 65, 10], {
 });
 
 // Damage / heal entities
-damageVoxelEntity(zombie.id, 5);
-healVoxelEntity(zombie.id, 3);
+nova64.voxel.damageVoxelEntity(zombie.id, 5);
+nova64.voxel.healVoxelEntity(zombie.id, 3);
 
 // Spatial queries
 const nearby = getVoxelEntitiesInRadius([px, py, pz], 16);
@@ -822,11 +822,11 @@ const allZombies = getVoxelEntitiesByType('zombie');
 const total = getVoxelEntityCount();
 
 // Tick all entities (call in update)
-updateVoxelEntities(dt);
+nova64.voxel.updateVoxelEntities(dt);
 
 // Cleanup
-removeVoxelEntity(zombie.id);
-cleanupVoxelEntities(); // Remove all
+nova64.voxel.removeVoxelEntity(zombie.id);
+nova64.voxel.cleanupVoxelEntities(); // Remove all
 ```
 
 ## ECS Components & Archetypes
@@ -835,22 +835,22 @@ Attach arbitrary components to entities for flexible game logic.
 
 ```javascript
 // Attach components
-setVoxelEntityComponent(id, 'inventory', { slots: 10, items: [] });
-setVoxelEntityComponent(id, 'hostile', { aggroRange: 16 });
+nova64.voxel.setVoxelEntityComponent(id, 'inventory', { slots: 10, items: [] });
+nova64.voxel.setVoxelEntityComponent(id, 'hostile', { aggroRange: 16 });
 
 // Query/check components
 const inv = getVoxelEntityComponent(id, 'inventory');
 if (hasVoxelEntityComponent(id, 'hostile')) {
   /* ... */
 }
-removeVoxelEntityComponent(id, 'hostile');
+nova64.voxel.removeVoxelEntityComponent(id, 'hostile');
 
 // Query all entities with specific components
 const enemies = queryVoxelEntities(['hostile', 'ai']);
 const nearbyEnemies = queryVoxelEntities(['hostile'], e => dist(e.position, player.pos) < 32);
 
 // Define reusable archetypes
-createVoxelEntityArchetype('skeleton', {
+nova64.voxel.createVoxelEntityArchetype('skeleton', {
   health: 15,
   hostile: { damage: 2 },
   ai: { type: 'wander' },
@@ -879,14 +879,14 @@ Export and import regions or entire worlds. Regions use RLE compression.
 const schematic = exportVoxelRegion(0, 60, 0, 9, 69, 9);
 
 // Paste it somewhere else
-importVoxelRegion(schematic, 100, 60, 100);
+nova64.voxel.importVoxelRegion(schematic, 100, 60, 100);
 
 // Paste without overwriting existing blocks
-importVoxelRegion(schematic, 200, 60, 200, { skipAir: true });
+nova64.voxel.importVoxelRegion(schematic, 200, 60, 200, { skipAir: true });
 
 // Export/import entire worlds as JSON
 const worldData = exportVoxelWorldJSON();
-importVoxelWorldJSON(worldData);
+nova64.voxel.importVoxelWorldJSON(worldData);
 ```
 
 ## World Persistence
@@ -911,10 +911,10 @@ await deleteVoxelWorld('old-world');
 
 ```javascript
 // Enable/disable procedural textures (27 pixel-art tiles)
-enableVoxelTextures(true);
+nova64.voxel.enableVoxelTextures(true);
 
 // Load a custom texture atlas
-loadVoxelTextureAtlas('atlas.png', mapping);
+nova64.voxel.loadVoxelTextureAtlas('atlas.png', mapping);
 ```
 
 ## Swept AABB Physics (moveVoxelEntity)
@@ -938,7 +938,7 @@ player.grounded = result.grounded;
 
 ```javascript
 // Synchronously load all chunks in render distance (use in init)
-forceLoadVoxelChunks(playerX, playerZ);
+nova64.voxel.forceLoadVoxelChunks(playerX, playerZ);
 ```
 
 ## Troubleshooting

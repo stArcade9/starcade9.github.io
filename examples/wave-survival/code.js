@@ -1,3 +1,5 @@
+const { print } = nova64.draw;
+
 // Wave Survival Arena — Nova64
 // Arrow keys to move, Z to shoot. 3 lives, player HP, power-up drops, enemy variety.
 // High score saved between sessions.

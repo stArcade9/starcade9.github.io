@@ -50,23 +50,23 @@ export function init() {
   console.log('🚀 Initializing spectacular 3D world...');
 
   // 🎪 Advanced 3D scene setup
-  setCameraPosition(0, 5, 10); // Cinematic camera position
-  setCameraTarget(0, 0, 0); // Look at world origin
-  setCameraFOV(75); // Wide-angle perspective
+  nova64.camera.setCameraPosition(0, 5, 10); // Cinematic camera position
+  nova64.camera.setCameraTarget(0, 0, 0); // Look at world origin
+  nova64.camera.setCameraFOV(75); // Wide-angle perspective
 
   // 🌫️ Atmospheric effects for depth and mood
-  setFog(0x1a1a2e, 8, 25); // Mysterious purple fog
+  nova64.light.setFog(0x1a1a2e, 8, 25); // Mysterious purple fog
 
   // 💡 Enhanced lighting system
-  setAmbientLight(0x404060, 0.3); // Subtle ambient lighting
-  setDirectionalLight(0xffffff, 0.8); // Strong directional light
+  nova64.light.setAmbientLight(0x404060, 0.3); // Subtle ambient lighting
+  nova64.light.setDirectionalLight(0xffffff, 0.8); // Strong directional light
 
   // ✨ Visual enhancement effects
   enablePostProcessing(true); // ACES tone mapping + bloom
   setRenderQuality('high'); // 4K shadows, full effects
 
   // 🎨 Existing 2D initialization (still works!)
-  cls();
+  nova64.draw.cls();
   // ... your existing 2D setup
 }
 ```
@@ -99,7 +99,7 @@ export function init() {
     color: 0x2a4d3a, // Forest green ground
     roughness: 0.8, // Natural rough surface
   });
-  rotateMesh(ground, -Math.PI / 2, 0, 0); // Make horizontal
+  nova64.scene.rotateMesh(ground, -Math.PI / 2, 0, 0); // Make horizontal
 
   // ✨ Add magical floating crystals
   for (let i = 0; i < 8; i++) {
@@ -209,30 +209,30 @@ export function update() {
   const currentPos = getMeshPosition(player3D);
   const targetX = lerp(currentPos.x, world3D.x, 0.1);
   const targetZ = lerp(currentPos.z, world3D.z, 0.1);
-  setPosition(player3D, targetX, currentPos.y, targetZ);
+  nova64.scene.setPosition(player3D, targetX, currentPos.y, targetZ);
 
   // Apply physics (gravity, ground collision)
   player3D.velocity.y -= 0.01; // Gravity
   if (currentPos.y <= 1) {
     // Ground collision
-    setPosition(player3D, targetX, 1, targetZ);
+    nova64.scene.setPosition(player3D, targetX, 1, targetZ);
     player3D.velocity.y = 0;
   }
 
   // 🎪 Spectacular world object animations
   worldObjects.forEach((obj, i) => {
     obj.spin += rotationSpeed;
-    rotateMesh(obj.mesh, obj.spin, obj.spin * 1.3, obj.spin * 0.7);
+    nova64.scene.rotateMesh(obj.mesh, obj.spin, obj.spin * 1.3, obj.spin * 0.7);
 
     // Dynamic floating motion
     const floatY = 2 + Math.sin(time * 0.02 + i) * 0.4;
     const pos = getMeshPosition(obj.mesh);
-    setPosition(obj.mesh, pos.x, floatY, pos.z);
+    nova64.scene.setPosition(obj.mesh, pos.x, floatY, pos.z);
   });
 
   // 📷 Cinematic camera following
-  setCameraPosition(world3D.x + 4, world3D.y + 3, world3D.z + 6);
-  setCameraTarget(world3D.x, world3D.y + 1, world3D.z);
+  nova64.camera.setCameraPosition(world3D.x + 4, world3D.y + 3, world3D.z + 6);
+  nova64.camera.setCameraTarget(world3D.x, world3D.y + 1, world3D.z);
 }
 ```
 
@@ -249,52 +249,52 @@ export function draw() {
 
     // 🌟 Optional: Add dynamic lighting effects
     const lightIntensity = 0.8 + Math.sin(time * 0.05) * 0.2;
-    setDirectionalLight(0xffffff, lightIntensity);
+    nova64.light.setDirectionalLight(0xffffff, lightIntensity);
 
     // 💫 Optional: Dynamic atmospheric effects
     const fogColor = Math.floor(Math.sin(time * 0.03) * 20 + 40);
-    setFog((fogColor << 16) + (fogColor << 8) + (fogColor + 20), 8, 25);
+    nova64.light.setFog((fogColor << 16) + (fogColor << 8) + (fogColor + 20), 8, 25);
   });
 
   // 📊 Professional HUD system (rendered over 3D)
-  cls(); // Clear 2D overlay (transparent background)
+  nova64.draw.cls(); // Clear 2D overlay (transparent background)
 
   // 🏆 Game statistics with modern styling
-  print('🏆 SCORE: 1,337', 10, 10, 0xffffff);
-  print('❤️  HEALTH: ██████████', 10, 26, 0xff4444);
-  print('💎 CRYSTALS: ' + collectedCrystals, 10, 42, 0x44ff88);
-  print('⚡ ENERGY: ' + Math.floor(playerEnergy), 10, 58, 0x4488ff);
+  nova64.draw.print('🏆 SCORE: 1,337', 10, 10, 0xffffff);
+  nova64.draw.print('❤️  HEALTH: ██████████', 10, 26, 0xff4444);
+  nova64.draw.print('💎 CRYSTALS: ' + collectedCrystals, 10, 42, 0x44ff88);
+  nova64.draw.print('⚡ ENERGY: ' + Math.floor(playerEnergy), 10, 58, 0x4488ff);
 
   // 🗺️ Advanced minimap with 3D awareness
   const mapX = 240,
     mapY = 10,
     mapSize = 70;
-  rect(mapX, mapY, mapSize, mapSize, 0x333333, true); // Map background
-  rect(mapX, mapY, mapSize, mapSize, 0x888888, false); // Map border
+  nova64.draw.rect(mapX, mapY, mapSize, mapSize, 0x333333, true); // Map background
+  nova64.draw.rect(mapX, mapY, mapSize, mapSize, 0x888888, false); // Map border
 
   // Draw 3D objects on minimap
   worldObjects.forEach(obj => {
     const pos = getMeshPosition(obj.mesh);
     const mapPosX = mapX + (pos.x + 10) * (mapSize / 20);
     const mapPosY = mapY + (pos.z + 10) * (mapSize / 20);
-    pset(mapPosX, mapPosY, 0xff0088); // Crystal positions
+    nova64.draw.pset(mapPosX, mapPosY, 0xff0088); // Crystal positions
   });
 
   // Player position on minimap
   const playerPos = getMeshPosition(player3D);
   const playerMapX = mapX + (playerPos.x + 10) * (mapSize / 20);
   const playerMapY = mapY + (playerPos.z + 10) * (mapSize / 20);
-  rect(playerMapX - 1, playerMapY - 1, 3, 3, 0x00ff00, true); // Player dot
+  nova64.draw.rect(playerMapX - 1, playerMapY - 1, 3, 3, 0x00ff00, true); // Player dot
 
   // 🎮 Control instructions
-  print('WASD: Move • Space: Jump • Mouse: Look', 10, 165, 0x888888);
+  nova64.draw.print('WASD: Move • Space: Jump • Mouse: Look', 10, 165, 0x888888);
 
   // 📈 Performance overlay (optional debug info)
   if (showDebug) {
     const stats = get3DStats();
-    print(`FPS: ${Math.round(1000 / deltaTime)}`, 270, 10, 0x88ff88);
-    print(`Triangles: ${stats.triangles}`, 270, 26, 0x88ff88);
-    print(`Objects: ${stats.objects}`, 270, 42, 0x88ff88);
+    nova64.draw.print(`FPS: ${Math.round(1000 / deltaTime)}`, 270, 10, 0x88ff88);
+    nova64.draw.print(`Triangles: ${stats.triangles}`, 270, 26, 0x88ff88);
+    nova64.draw.print(`Objects: ${stats.objects}`, 270, 42, 0x88ff88);
   }
 }
 ```
@@ -309,8 +309,8 @@ export function update(dt) {
 
   // Make 3D camera follow 2D position
   const [worldX, , worldZ] = screen2DToWorld3D(player2D.x, player2D.y);
-  setCameraPosition(worldX, 5, worldZ + 5);
-  setCameraTarget(worldX, 0, worldZ);
+  nova64.camera.setCameraPosition(worldX, 5, worldZ + 5);
+  nova64.camera.setCameraTarget(worldX, 0, worldZ);
 }
 ```
 
@@ -340,16 +340,16 @@ export function update(dt) {
 
   // Animate 3D background
   terrain3D.forEach((cube, i) => {
-    rotateMesh(cube, 0, dt * 0.1, 0);
+    nova64.scene.rotateMesh(cube, 0, dt * 0.1, 0);
   });
 }
 
 export function draw() {
-  cls();
+  nova64.draw.cls();
 
   // Draw 2D gameplay elements
   enemies2D.forEach(enemy => {
-    rect(enemy.x, enemy.y, 16, 16, rgba8(255, 0, 0, 255), true);
+    nova64.draw.rect(enemy.x, enemy.y, 16, 16, rgba8(255, 0, 0, 255), true);
   });
 }
 ```
@@ -403,7 +403,7 @@ function getPooledParticle() {
 }
 
 function returnToPool(meshId) {
-  setPosition(meshId, 1000, 1000, 1000); // Move offscreen
+  nova64.scene.setPosition(meshId, 1000, 1000, 1000); // Move offscreen
   particlePool.push(meshId);
 }
 ```
@@ -419,13 +419,13 @@ export function update(dt) {
 
     if (distance > 20) {
       // Hide distant objects
-      setPosition(obj.mesh, 1000, 1000, 1000);
+      nova64.scene.setPosition(obj.mesh, 1000, 1000, 1000);
     } else if (distance > 10) {
       // Use low-detail version
-      setScale(obj.mesh, 0.5);
+      nova64.scene.setScale(obj.mesh, 0.5);
     } else {
       // Full detail
-      setScale(obj.mesh, 1);
+      nova64.scene.setScale(obj.mesh, 1);
     }
   });
 }
@@ -437,20 +437,20 @@ export function update(dt) {
 
 ```js
 export function draw() {
-  cls();
+  nova64.draw.cls();
 
   // Show 3D object count
-  print(`3D Objects: ${get3DStats().render.geometries}`, 8, 8, rgba8(255, 255, 255, 255));
+  nova64.draw.print(`3D Objects: ${get3DStats().render.geometries}`, 8, 8, rgba8(255, 255, 255, 255));
 
   // Show renderer type
   const rendererInfo = typeof createCube === 'function' ? 'Three.js' : 'WebGL2';
-  print(`Renderer: ${rendererInfo}`, 8, 24, rgba8(200, 200, 200, 255));
+  nova64.draw.print(`Renderer: ${rendererInfo}`, 8, 24, rgba8(200, 200, 200, 255));
 
   // Performance overlay
   const stats = get3DStats();
   if (stats.render) {
-    print(`Triangles: ${stats.render.triangles}`, 8, 40, rgba8(150, 255, 150, 255));
-    print(`Draw Calls: ${stats.render.calls}`, 8, 56, rgba8(150, 255, 150, 255));
+    nova64.draw.print(`Triangles: ${stats.render.triangles}`, 8, 40, rgba8(150, 255, 150, 255));
+    nova64.draw.print(`Draw Calls: ${stats.render.calls}`, 8, 56, rgba8(150, 255, 150, 255));
   }
 }
 ```

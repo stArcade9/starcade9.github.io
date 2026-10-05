@@ -11,9 +11,9 @@ function call(method, payload) {
 
 export function init() {
   const caps = call('engine.init').capabilities;
-  print('[05-particles] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
+  console.log('[05-particles] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
   if (typeof cart_meta !== 'undefined') {
-	print('[05-particles] meta: ' + cart_meta.name + ' - ' + cart_meta.description);
+	console.log('[05-particles] meta: ' + cart_meta.name + ' - ' + cart_meta.description);
   }
 
   call('light.createDirectional', { color: [0.9, 0.95, 1.0, 1.0], energy: 0.4 });
@@ -76,7 +76,7 @@ export function init() {
   call('transform.set', { handle: cam, position: [0, 1.8, 6], rotation: [-0.18, 0, 0] });
   call('camera.setActive', { handle: cam });
 
-  print('[05-particles] ready');
+  console.log('[05-particles] ready');
 }
 
 export function update(dt) {

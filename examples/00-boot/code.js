@@ -18,7 +18,7 @@ export function init() {
   if (!Array.isArray(c.features)) {
 	throw new Error('00-boot: features is not an array');
   }
-  print(
+  console.log(
 	'[00-boot] OK backend=' + c.backend +
 	' contract=' + c.contractVersion +
 	' adapter=' + c.adapterVersion +

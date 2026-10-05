@@ -1,0 +1,2 @@
+import{x8 as o}from"./nativeXRFrame-PgYLlvIt.js";import"./backend-surface-AmtNDkC8.js";const r="oitFinalSimpleBlendPixelShader",e="precision highp float;uniform sampler2D uFrontColor;void main() {ivec2 fragCoord=ivec2(gl_FragCoord.xy);vec4 frontColor=texelFetch(uFrontColor,fragCoord,0);glFragColor=frontColor;}\n";o.ShadersStore[r]||(o.ShadersStore[r]=e);const a={name:r,shader:e};export{a as oitFinalSimpleBlendPixelShader};
+//# sourceMappingURL=oitFinalSimpleBlend.fragment-BkXOWPvg.js.map

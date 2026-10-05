@@ -326,6 +326,18 @@ export const NAMESPACE_MAP = {
     'stopTracking',
   ],
 
+  // On-screen touch gamepad for phones/tablets. The buttons drive the same
+  // input.setKeyState() path the keyboard uses, so carts need no touch code.
+  // Configured globally via NOVA64_TOUCH_CONTROLS — see docs/TOUCH_CONTROLS.md.
+  touch: [
+    'isTouchDevice',
+    'shouldEnableTouchControls',
+    'initTouchControls',
+    'setTouchControlsEnabled',
+    'getTouchControls',
+    'createTouchControls',
+  ],
+
   audio: ['sfx', 'setVolume'],
 
   physics: [
@@ -560,6 +572,8 @@ export const NAMESPACE_MAP = {
     'WADLoader',
     'WADTextureManager',
     'convertWADMap',
+    'createWallCollider',
+    'buildReachability',
     'setWallUVs',
     'THING_MONSTERS',
     'THING_ITEMS',

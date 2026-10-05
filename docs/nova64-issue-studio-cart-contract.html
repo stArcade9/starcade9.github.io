@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>README&#x27;s first cart example cannot run in studio mode - Nova64 Documentation</title>
+    <style>
+        :root {
+            --bg-primary: #0f1115;
+            --bg-secondary: #151822;
+            --bg-tertiary: #1a1d2e;
+            --text-primary: #dcdfe4;
+            --text-secondary: #99a1b3;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff0080;
+            --accent-yellow: #ffff00;
+            --border: #2a324a;
+            --code-bg: #1a1d2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1625 50%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-cyan);
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #33ffff;
+            text-decoration: underline;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        h2 {
+            color: var(--accent-magenta);
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+        
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .function {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .function-sig {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--code-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+        
+        .param-list, .return-info {
+            margin: 15px 0;
+        }
+        
+        .param {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .param:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .param-type {
+            color: var(--accent-magenta);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .example {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .example-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        code {
+            color: var(--text-primary);
+        }
+        
+        .keyword { color: #ff79c6; }
+        .function-name { color: #50fa7b; }
+        .number { color: #f1fa8c; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        
+        .note {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note-title {
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-tertiary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+
+        /* ── mobile: wide content scrolls or wraps instead of widening the page ── */
+        table { display: block; overflow-x: auto; max-width: 100%; }
+        :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        p, li, td, th, h1, h2, h3, h4 { overflow-wrap: break-word; }
+        section, .function, .note, .example, .param { max-width: 100%; }
+        .function-sig { overflow-x: auto; max-width: 100%; }
+        pre { overflow-x: auto; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+            .function { padding: 16px 14px; }
+        }
+
+        /* ── converted markdown body ── */
+        .md p { margin: 0 0 14px; }
+        .md ul, .md ol { margin: 0 0 14px 22px; }
+        .md li { margin: 6px 0; }
+        .md li > ul, .md li > ol { margin-top: 6px; margin-bottom: 0; }
+        .md a { color: var(--accent-cyan); text-decoration: none; border-bottom: 1px solid rgba(0,255,255,.35); }
+        .md a:hover { border-bottom-color: var(--accent-cyan); }
+        .md h3 { color: var(--accent-cyan); font-size: 1.25em; margin: 24px 0 12px; }
+        .md h4 { color: var(--text-primary); font-size: 1.05em; margin: 20px 0 10px; }
+        .md h5, .md h6 { color: var(--text-secondary); font-size: .98em; margin: 18px 0 8px; }
+        .md strong { color: #fff; }
+        .md hr { border: 0; border-top: 1px solid var(--border); margin: 26px 0; }
+        .md blockquote { margin: 0 0 14px; padding: 12px 18px; background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-yellow); border-radius: 4px; color: var(--text-secondary); }
+        .md blockquote p:last-child { margin-bottom: 0; }
+        .md :not(pre) > code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: .92em; color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace; }
+        .md pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin: 0 0 16px; overflow-x: auto; }
+        .md pre code { color: var(--text-primary); font-size: .92em; }
+        .md table { width: 100%; border-collapse: collapse; margin: 0 0 16px; display: block; overflow-x: auto; }
+        .md th, .md td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; }
+        .md td { color: var(--text-secondary); }
+        .md img { max-width: 100%; height: auto; }
+        .md > *:last-child { margin-bottom: 0; }
+        /* long identifiers must wrap rather than widen the page on phones */
+        .md p, .md li, .md td, .md th, .md h3, .md h4 { overflow-wrap: break-word; }
+        .md :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+        section { max-width: 100%; overflow-wrap: break-word; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            header { padding: 20px 16px; }
+            h1 { font-size: 1.7em; }
+            h2 { font-size: 1.4em; }
+            section { padding: 18px 16px; }
+        }
+
+
+        /* ─────── GITHUB SPONSORS BUTTON ─────── */
+        .n64-sponsor {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px; line-height: 1;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--spn-fg); text-decoration: none; white-space: nowrap;
+            background: var(--spn-bg);
+            border: 1px solid var(--spn-bd);
+            border-radius: 6px;
+            text-shadow: 0 0 8px var(--spn-halo);
+            box-shadow: 0 0 16px var(--spn-halo), inset 0 0 18px rgba(0, 255, 255, 0.04);
+            transition: color .2s ease, background .2s ease, border-color .2s ease,
+                        box-shadow .2s ease, transform .2s ease;
+        }
+        .n64-sponsor:hover, .n64-sponsor:focus-visible {
+            color: var(--spn-ink); background: var(--spn-fg); border-color: var(--spn-fg);
+            text-shadow: none; box-shadow: 0 0 28px var(--spn-glow); transform: translateY(-1px);
+        }
+        .n64-sponsor:focus-visible { outline: 2px solid var(--spn-fg); outline-offset: 3px; }
+        .n64-sponsor:active { transform: translateY(0); }
+        .n64-sponsor--block { margin-top: 18px; }
+        .n64-sponsor__heart {
+            width: 13px; height: 13px; flex: none; fill: currentColor;
+            transform-origin: 50% 55%; animation: n64SponsorBeat 2.6s ease-in-out infinite;
+        }
+        .n64-sponsor__sep { opacity: .4; font-weight: 400; }
+        .n64-sponsor__handle { opacity: .62; font-weight: 400; letter-spacing: 0.1em; }
+        @keyframes n64SponsorBeat {
+            0%, 70%, 100% { transform: scale(1); } 76% { transform: scale(1.24); }
+            82% { transform: scale(1); } 88% { transform: scale(1.13); } 94% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .n64-sponsor, .n64-sponsor__heart { transition: none; animation: none; }
+        }
+        @media (max-width: 420px) {
+            .n64-sponsor { letter-spacing: 0.08em; padding: 9px 12px; gap: 7px; max-width: 100%; }
+        }
+        .n64-sponsor {
+            --spn-fg: var(--accent-cyan); --spn-ink: var(--bg-primary);
+            --spn-bg: rgba(0, 255, 255, 0.05); --spn-bd: rgba(0, 255, 255, 0.38);
+            --spn-halo: rgba(0, 255, 255, 0.35); --spn-glow: rgba(0, 255, 255, 0.55);
+        }
+    </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B3RDWLFWVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B3RDWLFWVF');
+</script>
+</head>
+<body>
+    <div class="container">
+        <a href="/docs" class="back-link">← Back to Documentation Index</a>
+
+        <header>
+            <h1>README&#x27;s first cart example cannot run in studio mode</h1>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span></a>
+        </header>
+
+        <section class="md">
+<!--
+Ready to file at https://github.com/seacloud9/nova64/issues
+Title is the first line; everything below the rule is the issue body.
+-->
+
+<h1 id="readmes-first-cart-example-cannot-run-in-studio-mode">README's first cart example cannot run in studio mode</h1>
+<hr />
+<p><strong>Package:</strong> <code>nova64@0.5.3</code> (current <code>latest</code>)
+<strong>Verified by:</strong> reading the published tarball (<code>npm pack nova64@0.5.3</code>) and
+running the reproduction below. All paths are inside that tarball.</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="summary">Summary</h2>
+<p>The example under <strong>"Creating Your First 3D Cart"</strong> in <code>README.md</code> (~line 697)
+cannot run in studio mode — the path used by <code>cart-runner.html</code>, <code>hero-embed</code>,
+and every embedding host. It fails three separate ways, and one of them fails
+silently in a way that looks like a working cart.</p>
+<p>This is the first example a new user copies. It also matters more than a normal
+documentation slip, because AI assistants that have read the README emit this
+exact shape confidently — so <em>every</em> generated cart fails, for a reason the
+error text never mentions.</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-js">// repro.mjs — mirrors runtime/studio-executor.js
+globalThis.nova64 = { draw: { print: () =&gt; {} }, scene: { createCube: () =&gt; {} } };
+
+const studioWrap = (src) =&gt; new Function(`${src}
+; return { init: typeof init !== &quot;undefined&quot; ? init : null };`);
+
+// Verbatim shape from the README
+studioWrap(`
+export function init() {
+  const player = createCube(1, 0x0088ff, [0, 1, 0]);
+  print('Score: 0', 10, 10, 0xffffff);
+}`);
+</code></pre>
+<pre><code>$ node repro.mjs
+SyntaxError: Unexpected token 'export'
+</code></pre>
+<p>Remove the <code>export</code> keywords and run <code>init()</code>:</p>
+<pre><code>ReferenceError: createCube is not defined
+</code></pre>
+<p>Remove the <code>createCube</code> call too, leaving only <code>print(...)</code>, and it <strong>does not
+throw</strong> — it calls <code>window.print()</code> and opens the browser print dialog.</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="root-cause">Root cause</h2>
+<h3 id="1-export-is-a-syntax-error-under-the-studio-executor">1. <code>export</code> is a syntax error under the studio executor</h3>
+<p><code>runtime/studio-executor.js:6</code> evaluates cart source with <code>new Function</code>:</p>
+<pre><code class="language-js">export function createStudioCartFunction(userCode) {
+  return new Function(
+    `${userCode}
+; return {
+  init: typeof init !== &quot;undefined&quot; ? init : null,
+  ...
+};`
+  );
+}
+</code></pre>
+<p>A function body is not a module, so a top-level <code>export</code> throws before any cart
+code runs. The README's framing — <em>"Nova64 carts are </em><em>ES modules</em><em>"</em> — is true
+for carts the CLI loads from disk, and false for studio mode. The README does
+not currently distinguish the two (searching it for "studio" returns only
+unrelated hits at lines 214 and 1111).</p>
+<h3 id="2-the-example-calls-bare-globals-that-no-longer-exist">2. The example calls bare globals that no longer exist</h3>
+<p><code>createPlane</code>, <code>createCube</code>, <code>setFog</code>, <code>setAmbientLight</code>, <code>key</code>, <code>setPosition</code>,
+<code>rotateMesh</code>, <code>setCameraPosition</code> and <code>setCameraTarget</code> are all written without a
+namespace. <code>runtime/namespace.js</code> (<code>NAMESPACE_MAP</code>) is authoritative now, and
+nothing under <code>runtime/</code> assigns these onto <code>globalThis</code> — <code>grep -rn
+'globalThis.createCube' runtime/</code> finds no assignment. Each call throws
+<code>ReferenceError</code>.</p>
+<h3 id="3-bare-print-silently-calls-windowprint">3. Bare <code>print</code> silently calls <code>window.print()</code></h3>
+<p>This is the one worth fixing first, because it is the only one that doesn't
+throw.</p>
+<p><code>print</code> is not undefined in a browser — it is <code>window.print</code>. So the README's
+<code>print(\</code>Score: ${score}`, 10, 10, 0xffffff)` opens the <strong>browser print dialog</strong>
+mid-frame, on a cart that otherwise appears to be running.</p>
+<p>The runtime already knows about this collision. <code>runtime/api-2d.js:445</code>:</p>
+<pre><code class="language-js">// Use the grouped namespace's draw.print (NOT globalThis.print, which is window.print).
+function _print(text, x, y, color, scale) {
+  const fn = globalThis.nova64?.draw?.print;
+  if (typeof fn === 'function') fn(text, x, y, color, scale);
+}
+</code></pre>
+<p>The internal helper guards against it. The README still shows the unguarded
+form.</p>
+
+        </section>
+
+        <section class="md">
+<h2 id="suggested-fixes">Suggested fixes</h2>
+<p>Either of the first two resolves all three together:</p>
+<ol>
+<li>
+<p><strong>Document the studio shape as the default.</strong> Show plain <code>function init()</code>
+   declarations with namespaced calls (<code>nova64.scene.createCube</code>,
+   <code>nova64.draw.print</code>), and move the <code>export</code> module form into a clearly
+   separate "CLI / file-based carts" section. Smallest change, removes the
+   ambiguity at the source.</p>
+</li>
+<li>
+<p><strong>Tolerate <code>export</code> in the executor.</strong> Strip or accept top-level <code>export</code> in
+   <code>createStudioCartFunction</code>, so the documented shape runs wherever it is
+   pasted. More forgiving for generated carts, which will keep reproducing the
+   README's form for as long as it is the first example on the page.</p>
+</li>
+<li>
+<p><strong>Worth doing regardless — a better error.</strong> Catch the <code>SyntaxError</code> in
+   <code>createStudioCartFunction</code> and re-throw with something self-answering, e.g.
+   <em>"carts cannot use <code>export</code> in studio mode — declare <code>function init()</code>
+   directly"</em>. Right now the raw <code>Unexpected token 'export'</code> gives no hint that
+   module syntax is the problem.</p>
+</li>
+</ol>
+
+        </section>
+
+        <section class="md">
+<h2 id="note-on-a-workaround-we-chose-not-to-ship">Note on a workaround we chose not to ship</h2>
+<p>A host can fix all three without changing Nova64, by stripping <code>export</code> and
+prepending local bindings before posting <code>EXECUTE_CODE</code> — the prepended source
+lands inside the same <code>new Function</code> body, so <code>const print = nova64.draw.print</code>
+shadows <code>window.print</code>. Verified working.</p>
+<p>We deliberately did not do this. It needs a parser rather than regexes to be
+safe, a naive version breaks carts that declare their own helper
+(<code>SyntaxError: Identifier 'print' has already been declared</code>), and it would make
+carts that run in our host fail in a vanilla one. Mentioned only in case it is
+useful as a stopgap elsewhere — the real fix belongs here.</p>
+        </section>
+
+        <footer>
+            <p>Nova64 Fantasy Console © 2025 | <a href="/docs" style="color: var(--accent-cyan);">Back to Documentation</a></p>
+            <a class="n64-sponsor n64-sponsor--block" href="https://github.com/sponsors/seacloud9" target="_blank" rel="noopener" aria-label="Sponsor seacloud9 on GitHub"><svg class="n64-sponsor__heart" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002Z"/></svg><span>Sponsor</span><span class="n64-sponsor__sep" aria-hidden="true">/</span><span class="n64-sponsor__handle">seacloud9</span></a>
+        </footer>
+    </div>
+</body>
+</html>

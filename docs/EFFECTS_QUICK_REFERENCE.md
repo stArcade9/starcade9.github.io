@@ -5,14 +5,14 @@
 ### Enable Bloom (Glow Effects)
 
 ```javascript
-enableBloom(); // Use defaults
-enableBloom(1.5, 0.5, 0.85); // Custom: strength, radius, threshold
+nova64.fx.enableBloom(); // Use defaults
+nova64.fx.enableBloom(1.5, 0.5, 0.85); // Custom: strength, radius, threshold
 ```
 
 ### Enable Anti-Aliasing
 
 ```javascript
-enableFXAA(); // Smooth edges
+nova64.fx.enableFXAA(); // Smooth edges
 ```
 
 ---
@@ -29,7 +29,7 @@ const holo = createShaderMaterial('holographic', {
   opacity: 0.7,
 });
 const cube = createCube(2, 0xffffff, [0, 0, -5]);
-getMesh(cube).material = holo.material;
+nova64.scene.getMesh(cube).material = holo.material;
 ```
 
 ### Energy Shield
@@ -40,11 +40,11 @@ const shield = createShaderMaterial('shield', {
   opacity: 0.5,
 });
 const sphere = createSphere(3, 0xffffff, [0, 0, 0], 32);
-getMesh(sphere).material = shield.material;
+nova64.scene.getMesh(sphere).material = shield.material;
 
 // Trigger hit effect
-updateShaderUniform(shield.id, 'hitPosition', new THREE.Vector3(x, y, z));
-updateShaderUniform(shield.id, 'hitStrength', 1.0);
+nova64.shader.updateShaderUniform(shield.id, 'hitPosition', new THREE.Vector3(x, y, z));
+nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 1.0);
 ```
 
 ### Water
@@ -57,8 +57,8 @@ const water = createShaderMaterial('water', {
   transparency: 0.8,
 });
 const plane = createPlane(50, 50, [0, -1, 0]);
-getMesh(plane).material = water.material;
-getMesh(plane).rotation.x = -Math.PI / 2; // Horizontal
+nova64.scene.getMesh(plane).material = water.material;
+nova64.scene.getMesh(plane).rotation.x = -Math.PI / 2; // Horizontal
 ```
 
 ### Fire/Plasma
@@ -71,7 +71,7 @@ const fire = createShaderMaterial('fire', {
   speed: 2.0,
 });
 const plane = createPlane(2, 3, [0, 1.5, 0]);
-getMesh(plane).material = fire.material;
+nova64.scene.getMesh(plane).material = fire.material;
 ```
 
 ---
@@ -92,7 +92,7 @@ const explosion = createParticleSystem(500, {
 explosion.position.set(x, y, z);
 
 export function update(dt) {
-  updateParticles(explosion, dt);
+  nova64.fx.updateParticles(explosion, dt);
 }
 ```
 
@@ -144,8 +144,8 @@ let playerShield, engineTrail, shieldId;
 
 export async function init() {
   // Enable effects
-  enableBloom(1.5, 0.5, 0.8);
-  enableFXAA();
+  nova64.fx.enableBloom(1.5, 0.5, 0.8);
+  nova64.fx.enableFXAA();
 
   // Create shield
   const shield = createShaderMaterial('shield', {
@@ -153,7 +153,7 @@ export async function init() {
     opacity: 0.3,
   });
   playerShield = createSphere(2, 0xffffff, [0, 0, 0], 32);
-  getMesh(playerShield).material = shield.material;
+  nova64.scene.getMesh(playerShield).material = shield.material;
   shieldId = shield.id;
 
   // Engine particles
@@ -169,21 +169,21 @@ export async function init() {
 
 export function update(dt) {
   // Update particles
-  updateParticles(engineTrail, dt);
+  nova64.fx.updateParticles(engineTrail, dt);
 
   // Follow player
   engineTrail.position.set(player.x, player.y, player.z + 2);
 
   // Dynamic bloom
-  setBloomStrength(1.0 + player.speed * 0.5);
+  nova64.fx.setBloomStrength(1.0 + player.speed * 0.5);
 }
 
 function onHit(position) {
-  updateShaderUniform(shieldId, 'hitPosition', position);
-  updateShaderUniform(shieldId, 'hitStrength', 1.0);
+  nova64.shader.updateShaderUniform(shieldId, 'hitPosition', position);
+  nova64.shader.updateShaderUniform(shieldId, 'hitStrength', 1.0);
 
   setTimeout(() => {
-    updateShaderUniform(shieldId, 'hitStrength', 0.0);
+    nova64.shader.updateShaderUniform(shieldId, 'hitStrength', 0.0);
   }, 300);
 }
 
@@ -207,10 +207,10 @@ function createExplosion(pos) {
 
 ```javascript
 // Good - only bright objects glow
-setBloomThreshold(0.85);
+nova64.fx.setBloomThreshold(0.85);
 
 // Bad - performance hit
-setBloomThreshold(0.0);
+nova64.fx.setBloomThreshold(0.0);
 ```
 
 ### Particles
@@ -232,8 +232,8 @@ const holoPink = createShaderMaterial('holographic', {
 });
 
 // Use on multiple objects
-getMesh(cube1).material = holoPink.material;
-getMesh(cube2).material = holoPink.material;
+nova64.scene.getMesh(cube1).material = holoPink.material;
+nova64.scene.getMesh(cube2).material = holoPink.material;
 ```
 
 ---
@@ -256,7 +256,7 @@ const material = createN64Material({
 ```javascript
 // Must call every frame!
 export function update(dt) {
-  updateParticles(myParticles, dt);
+  nova64.fx.updateParticles(myParticles, dt);
 }
 ```
 
@@ -291,8 +291,8 @@ const shader = createShaderMaterial('holographic', {
 ### Sci-Fi
 
 ```javascript
-enableBloom(2.0, 0.8, 0.6);  // Bright neon glow
-enableGlitch(0.3);            // Digital distortion
+nova64.fx.enableBloom(2.0, 0.8, 0.6);  // Bright neon glow
+nova64.fx.enableGlitch(0.3);            // Digital distortion
 const holo = createShaderMaterial('holographic', {...});
 const shield = createShaderMaterial('shield', {...});
 ```
@@ -300,7 +300,7 @@ const shield = createShaderMaterial('shield', {...});
 ### Fantasy
 
 ```javascript
-enableBloom(1.2, 0.5, 0.9);  // Subtle magic glow
+nova64.fx.enableBloom(1.2, 0.5, 0.9);  // Subtle magic glow
 const water = createShaderMaterial('water', {...});
 const magic = createParticleSystem(300, {...});
 ```
@@ -309,18 +309,18 @@ const magic = createParticleSystem(300, {...});
 
 ```javascript
 // Glitch + shake + chromatic aberration on hit
-enableGlitch(0.5);
-enableChromaticAberration(0.008);
+nova64.fx.enableGlitch(0.5);
+nova64.fx.enableChromaticAberration(0.008);
 // Fade out over time in update()
-setGlitchIntensity(glitchTimer * 2.0);
+nova64.fx.setGlitchIntensity(glitchTimer * 2.0);
 // When timer expires
-disableGlitch();
+nova64.fx.disableGlitch();
 ```
 
 ### Modern
 
 ```javascript
-enableFXAA(); // Clean visuals
+nova64.fx.enableFXAA(); // Clean visuals
 const rain = createParticleSystem(2000, {
   gravity: -8.0, // Falling rain
 });

@@ -22,22 +22,22 @@ Creates a glow around bright objects for a cinematic look.
 
 ```javascript
 // Enable bloom with default settings
-enableBloom();
+nova64.fx.enableBloom();
 
 // Enable with custom settings
-enableBloom(
+nova64.fx.enableBloom(
   1.5, // strength (0-3, default: 1.0)
   0.5, // radius (0-1, default: 0.5)
   0.85 // threshold (0-1, default: 0.85)
 );
 
 // Adjust bloom at runtime
-setBloomStrength(2.0); // Increase intensity
-setBloomRadius(0.8); // Wider glow
-setBloomThreshold(0.5); // Glow on darker objects
+nova64.fx.setBloomStrength(2.0); // Increase intensity
+nova64.fx.setBloomRadius(0.8); // Wider glow
+nova64.fx.setBloomThreshold(0.5); // Glow on darker objects
 
 // Disable bloom
-disableBloom();
+nova64.fx.disableBloom();
 ```
 
 **Best For**: Sci-fi environments, neon cities, energy effects, explosions
@@ -48,10 +48,10 @@ Smooths jagged edges for cleaner visuals.
 
 ```javascript
 // Enable FXAA
-enableFXAA();
+nova64.fx.enableFXAA();
 
 // Disable FXAA
-disableFXAA();
+nova64.fx.disableFXAA();
 ```
 
 **Best For**: All games - improves visual quality with minimal performance cost
@@ -82,8 +82,8 @@ export async function init() {
 
 // Update at runtime
 export function update(dt) {
-  updateShaderUniform(holo.id, 'color', new THREE.Color(0xff00ff)); // Change color
-  updateShaderUniform(holo.id, 'scanlineSpeed', 5.0); // Faster effect
+  nova64.shader.updateShaderUniform(holo.id, 'color', new THREE.Color(0xff00ff)); // Change color
+  nova64.shader.updateShaderUniform(holo.id, 'scanlineSpeed', 5.0); // Faster effect
 }
 ```
 
@@ -118,12 +118,12 @@ export async function init() {
 
 // Trigger hit effect
 function onShieldHit(position) {
-  updateShaderUniform(shield.id, 'hitPosition', position);
-  updateShaderUniform(shield.id, 'hitStrength', 1.0);
+  nova64.shader.updateShaderUniform(shield.id, 'hitPosition', position);
+  nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 1.0);
 
   // Fade out hit effect
   setTimeout(() => {
-    updateShaderUniform(shield.id, 'hitStrength', 0.0);
+    nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 0.0);
   }, 500);
 }
 ```
@@ -225,7 +225,7 @@ export async function init() {
 
 export function update(dt) {
   // Update particle physics
-  updateParticles(explosionParticles, dt);
+  nova64.fx.updateParticles(explosionParticles, dt);
 }
 ```
 
@@ -282,11 +282,11 @@ let bloomEnabled = false;
 
 export async function init() {
   // Enable bloom for glowing effects
-  enableBloom(1.5, 0.5, 0.8);
+  nova64.fx.enableBloom(1.5, 0.5, 0.8);
   bloomEnabled = true;
 
   // Enable anti-aliasing
-  enableFXAA();
+  nova64.fx.enableFXAA();
 
   // Create player shield
   const shield = createShaderMaterial('shield', {
@@ -313,7 +313,7 @@ export async function init() {
 
 export function update(dt) {
   // Update particle effects
-  updateParticles(engineParticles, dt);
+  nova64.fx.updateParticles(engineParticles, dt);
 
   // Follow player position
   engineParticles.position.copy(player.position);
@@ -321,16 +321,16 @@ export function update(dt) {
 
   // Pulse bloom intensity based on speed
   const bloomIntensity = 1.0 + player.speed * 0.5;
-  setBloomStrength(bloomIntensity);
+  nova64.fx.setBloomStrength(bloomIntensity);
 }
 
 function onPlayerHit(hitPosition) {
   // Flash shield on hit
-  updateShaderUniform(shieldEffect, 'hitPosition', hitPosition);
-  updateShaderUniform(shieldEffect, 'hitStrength', 1.0);
+  nova64.shader.updateShaderUniform(shieldEffect, 'hitPosition', hitPosition);
+  nova64.shader.updateShaderUniform(shieldEffect, 'hitStrength', 1.0);
 
   setTimeout(() => {
-    updateShaderUniform(shieldEffect, 'hitStrength', 0.0);
+    nova64.shader.updateShaderUniform(shieldEffect, 'hitStrength', 0.0);
   }, 300);
 }
 
@@ -360,8 +360,8 @@ let neonGlow;
 
 export async function init() {
   // Enable bloom for neon glow
-  enableBloom(2.0, 0.8, 0.6);
-  enableFXAA();
+  nova64.fx.enableBloom(2.0, 0.8, 0.6);
+  nova64.fx.enableFXAA();
 
   // Create holographic billboards
   for (let i = 0; i < 10; i++) {
@@ -401,9 +401,9 @@ export function update(dt) {
   hologramBillboards.forEach(holoId => {
     if (Math.random() < 0.01) {
       // 1% chance per frame
-      updateShaderUniform(holoId, 'glitchAmount', 0.5);
+      nova64.shader.updateShaderUniform(holoId, 'glitchAmount', 0.5);
       setTimeout(() => {
-        updateShaderUniform(holoId, 'glitchAmount', 0.1);
+        nova64.shader.updateShaderUniform(holoId, 'glitchAmount', 0.1);
       }, 100);
     }
   });
@@ -416,7 +416,7 @@ export function update(dt) {
 let oceanSurface, bubbleParticles;
 
 export async function init() {
-  enableFXAA();
+  nova64.fx.enableFXAA();
 
   // Create animated ocean
   const ocean = createShaderMaterial('water', {
@@ -445,11 +445,11 @@ export async function init() {
 }
 
 export function update(dt) {
-  updateParticles(bubbleParticles, dt);
+  nova64.fx.updateParticles(bubbleParticles, dt);
 
   // Vary wave intensity based on game events
   const waveIntensity = 0.3 + Math.sin(Date.now() * 0.001) * 0.2;
-  updateShaderUniform(oceanSurface, 'waveHeight', waveIntensity);
+  nova64.shader.updateShaderUniform(oceanSurface, 'waveHeight', waveIntensity);
 }
 ```
 
@@ -461,10 +461,10 @@ export function update(dt) {
 
 ```javascript
 // Good - bloom on bright emissive objects
-setBloomThreshold(0.85); // Only very bright objects glow
+nova64.fx.setBloomThreshold(0.85); // Only very bright objects glow
 
 // Bad - everything glows (performance hit)
-setBloomThreshold(0.0);
+nova64.fx.setBloomThreshold(0.0);
 ```
 
 ### 2. **Limit Particle Count**
@@ -485,7 +485,7 @@ const explosionPool = createParticleSystem(1000, {...});
 
 // Bad - new system for each explosion (memory leak!)
 function explode() {
-  createParticleSystem(500, {...}); // Don't do this repeatedly!
+  nova64.fx.createParticleSystem(500, {...}); // Don't do this repeatedly!
 }
 ```
 
@@ -506,7 +506,7 @@ function explode() {
 **Solution**: Check bloom threshold and material emissive
 
 ```javascript
-enableBloom(1.5, 0.5, 0.5); // Lower threshold
+nova64.fx.enableBloom(1.5, 0.5, 0.5); // Lower threshold
 
 // Make materials emissive for bloom
 const material = createN64Material({
@@ -524,7 +524,7 @@ const material = createN64Material({
 
 ```javascript
 export function update(dt) {
-  updateParticles(myParticles, dt); // Must call this!
+  nova64.fx.updateParticles(myParticles, dt); // Must call this!
 }
 ```
 

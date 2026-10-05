@@ -2,7 +2,7 @@
 import { logger } from './logger.js';
 import { listCartResetHooks, runCartResetHooks } from './cart-reset.js';
 
-export const NOVA64_VERSION = '0.4.9';
+export const NOVA64_VERSION = '0.5.6';
 
 export class Nova64 {
   constructor(gpu, manifestInst) {

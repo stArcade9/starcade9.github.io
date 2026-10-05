@@ -21,6 +21,9 @@
       var changed = false;
       if (!qs.has('clearColor')) { qs.set('clearColor', '0x040309'); changed = true; }
       if (!qs.has('demo') && !qs.has('cart')) { qs.set('demo', 'hello-3d'); changed = true; }
+      // This campaign cart has direct tap targets; a virtual gamepad would
+      // cover its invitation buttons inside the compact homepage modal.
+      if (qs.get('demo') === 'the-last-save-file') window.NOVA64_TOUCH_CONTROLS = false;
       if (changed) window.history.replaceState(null, '', '?' + qs.toString());
     })();
   </script>

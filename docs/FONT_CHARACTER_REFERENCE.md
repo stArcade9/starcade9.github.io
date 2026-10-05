@@ -95,51 +95,51 @@ Any character not in the font will be:
 
 ```javascript
 // Basic text
-print('Hello World!', 100, 100, rgba8(255, 255, 255, 255));
+nova64.draw.print('Hello World!', 100, 100, rgba8(255, 255, 255, 255));
 
 // Uppercase
-print('GAME OVER', 200, 150, rgba8(255, 0, 0, 255));
+nova64.draw.print('GAME OVER', 200, 150, rgba8(255, 0, 0, 255));
 
 // Lowercase
-print('score: 1234', 50, 50, rgba8(255, 255, 0, 255));
+nova64.draw.print('score: 1234', 50, 50, rgba8(255, 255, 0, 255));
 
 // Mixed case
-print('Press Space to Start', 150, 200, rgba8(200, 200, 200, 255));
+nova64.draw.print('Press Space to Start', 150, 200, rgba8(200, 200, 200, 255));
 ```
 
 ### With Arrows
 
 ```javascript
 // Control instructions
-print('↑↓ Move  ←→ Strafe', 20, 340, rgba8(255, 255, 255, 255));
+nova64.draw.print('↑↓ Move  ←→ Strafe', 20, 340, rgba8(255, 255, 255, 255));
 
 // Menu navigation
-print('← Back  Select →', 200, 300, rgba8(200, 200, 200, 255));
+nova64.draw.print('← Back  Select →', 200, 300, rgba8(200, 200, 200, 255));
 ```
 
 ### With Special Symbols
 
 ```javascript
 // Game stats
-print('Health: [##########] 100%', 20, 20, rgba8(0, 255, 0, 255));
-print('Score: 1,234,567 pts', 20, 40, rgba8(255, 255, 0, 255));
-print('Ammo: 45/100 rounds', 20, 60, rgba8(255, 150, 0, 255));
+nova64.draw.print('Health: [##########] 100%', 20, 20, rgba8(0, 255, 0, 255));
+nova64.draw.print('Score: 1,234,567 pts', 20, 40, rgba8(255, 255, 0, 255));
+nova64.draw.print('Ammo: 45/100 rounds', 20, 60, rgba8(255, 150, 0, 255));
 
 // Math expressions
-print('Speed: 50% (+10% bonus)', 20, 80, rgba8(100, 200, 255, 255));
+nova64.draw.print('Speed: 50% (+10% bonus)', 20, 80, rgba8(100, 200, 255, 255));
 ```
 
 ### With Emojis (Auto-cleaned)
 
 ```javascript
 // These work automatically - emojis are stripped/replaced
-print('🚀 STAR FOX', 100, 50, rgba8(255, 255, 255, 255));
+nova64.draw.print('🚀 STAR FOX', 100, 50, rgba8(255, 255, 255, 255));
 // Renders as: "STAR FOX"
 
-print('⚡ BOOST ACTIVE', 100, 70, rgba8(255, 255, 0, 255));
+nova64.draw.print('⚡ BOOST ACTIVE', 100, 70, rgba8(255, 255, 0, 255));
 // Renders as: "* BOOST ACTIVE"
 
-print('🎮 Ready Player One', 100, 90, rgba8(0, 255, 0, 255));
+nova64.draw.print('🎮 Ready Player One', 100, 90, rgba8(0, 255, 0, 255));
 // Renders as: "Ready Player One"
 ```
 
@@ -192,18 +192,18 @@ print('🎮 Ready Player One', 100, 90, rgba8(0, 255, 0, 255));
 ### Do ✅
 
 ```javascript
-print('SCORE: 12345', x, y, color); // Clear and readable
-print('Health: [####------] 40%', x, y, color); // Creative use of chars
-print('Press X to Fire!', x, y, color); // Uppercase for keys
-print('← Back    Continue →', x, y, color); // Arrow navigation
+nova64.draw.print('SCORE: 12345', x, y, color); // Clear and readable
+nova64.draw.print('Health: [####------] 40%', x, y, color); // Creative use of chars
+nova64.draw.print('Press X to Fire!', x, y, color); // Uppercase for keys
+nova64.draw.print('← Back    Continue →', x, y, color); // Arrow navigation
 ```
 
 ### Avoid ❌
 
 ```javascript
-print('Pokémon', x, y, color); // Accented chars not supported
-print('日本語', x, y, color); // Non-Latin scripts not supported
-print('   ', x, y, color); // Won't render properly
+nova64.draw.print('Pokémon', x, y, color); // Accented chars not supported
+nova64.draw.print('日本語', x, y, color); // Non-Latin scripts not supported
+nova64.draw.print('   ', x, y, color); // Won't render properly
 ```
 
 ## Summary

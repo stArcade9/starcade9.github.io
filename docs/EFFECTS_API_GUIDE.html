@@ -375,58 +375,65 @@
         </header>
 
         <section class="md">
-<h2>Overview</h2>
+<h2 id="overview">Overview</h2>
 <p>Nova64 now includes a comprehensive effects system with custom shaders, post-processing, and particle effects for creating stunning visual experiences.</p>
+
         </section>
 
         <section class="md">
-<h2>Features</h2>
-<p>✅ <strong>Post-Processing Effects</strong>: Bloom, FXAA anti-aliasing<br>✅ <strong>Custom Shaders</strong>: Holographic, energy shield, water, fire/plasma<br>✅ <strong>Particle Systems</strong>: GPU-accelerated particle effects<br>✅ <strong>Real-time Updates</strong>: Animated shaders with time-based effects<br>✅ <strong>Easy Integration</strong>: Simple API for adding effects to any game</p>
-<hr>
+<h2 id="features">Features</h2>
+<p>✅ <strong>Post-Processing Effects</strong>: Bloom, FXAA anti-aliasing<br />
+✅ <strong>Custom Shaders</strong>: Holographic, energy shield, water, fire/plasma<br />
+✅ <strong>Particle Systems</strong>: GPU-accelerated particle effects<br />
+✅ <strong>Real-time Updates</strong>: Animated shaders with time-based effects<br />
+✅ <strong>Easy Integration</strong>: Simple API for adding effects to any game</p>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Post-Processing Effects</h2>
-<h3>Bloom Effect</h3>
+<h2 id="post-processing-effects">Post-Processing Effects</h2>
+<h3 id="bloom-effect">Bloom Effect</h3>
 <p>Creates a glow around bright objects for a cinematic look.</p>
 <pre><code class="language-javascript">// Enable bloom with default settings
-enableBloom();
+nova64.fx.enableBloom();
 
 // Enable with custom settings
-enableBloom(
+nova64.fx.enableBloom(
   1.5, // strength (0-3, default: 1.0)
   0.5, // radius (0-1, default: 0.5)
   0.85 // threshold (0-1, default: 0.85)
 );
 
 // Adjust bloom at runtime
-setBloomStrength(2.0); // Increase intensity
-setBloomRadius(0.8); // Wider glow
-setBloomThreshold(0.5); // Glow on darker objects
+nova64.fx.setBloomStrength(2.0); // Increase intensity
+nova64.fx.setBloomRadius(0.8); // Wider glow
+nova64.fx.setBloomThreshold(0.5); // Glow on darker objects
 
 // Disable bloom
-disableBloom();
+nova64.fx.disableBloom();
 </code></pre>
 <p><strong>Best For</strong>: Sci-fi environments, neon cities, energy effects, explosions</p>
-<h3>FXAA Anti-Aliasing</h3>
+<h3 id="fxaa-anti-aliasing">FXAA Anti-Aliasing</h3>
 <p>Smooths jagged edges for cleaner visuals.</p>
 <pre><code class="language-javascript">// Enable FXAA
-enableFXAA();
+nova64.fx.enableFXAA();
 
 // Disable FXAA
-disableFXAA();
+nova64.fx.disableFXAA();
 </code></pre>
 <p><strong>Best For</strong>: All games - improves visual quality with minimal performance cost</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Custom Shaders</h2>
-<h3>Holographic Shader</h3>
+<h2 id="custom-shaders">Custom Shaders</h2>
+<h3 id="holographic-shader">Holographic Shader</h3>
 <p>Creates a futuristic holographic effect with scanlines and glitches.</p>
 <pre><code class="language-javascript">export async function init() {
   // Create holographic material
-  const holo = createShaderMaterial(&#39;holographic&#39;, {
+  const holo = createShaderMaterial('holographic', {
     color: new THREE.Color(0x00ffff), // Cyan hologram
     scanlineSpeed: 3.0, // Fast scanlines
     glitchAmount: 0.15, // Subtle glitch
@@ -441,8 +448,8 @@ disableFXAA();
 
 // Update at runtime
 export function update(dt) {
-  updateShaderUniform(holo.id, &#39;color&#39;, new THREE.Color(0xff00ff)); // Change color
-  updateShaderUniform(holo.id, &#39;scanlineSpeed&#39;, 5.0); // Faster effect
+  nova64.shader.updateShaderUniform(holo.id, 'color', new THREE.Color(0xff00ff)); // Change color
+  nova64.shader.updateShaderUniform(holo.id, 'scanlineSpeed', 5.0); // Faster effect
 }
 </code></pre>
 <p><strong>Parameters</strong>:</p>
@@ -453,11 +460,11 @@ export function update(dt) {
 <li><code>opacity</code>: Transparency (0-1)</li>
 </ul>
 <p><strong>Best For</strong>: Holograms, UI elements, data displays, sci-fi terminals</p>
-<h3>Energy Shield Shader</h3>
+<h3 id="energy-shield-shader">Energy Shield Shader</h3>
 <p>Creates a force field effect with hexagon pattern and hit ripples.</p>
 <pre><code class="language-javascript">export async function init() {
   // Create shield material
-  const shield = createShaderMaterial(&#39;shield&#39;, {
+  const shield = createShaderMaterial('shield', {
     color: new THREE.Color(0x0088ff), // Blue shield
     opacity: 0.5, // Transparent
     hitPosition: new THREE.Vector3(0, 0, 0),
@@ -472,12 +479,12 @@ export function update(dt) {
 
 // Trigger hit effect
 function onShieldHit(position) {
-  updateShaderUniform(shield.id, &#39;hitPosition&#39;, position);
-  updateShaderUniform(shield.id, &#39;hitStrength&#39;, 1.0);
+  nova64.shader.updateShaderUniform(shield.id, 'hitPosition', position);
+  nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 1.0);
 
   // Fade out hit effect
   setTimeout(() =&gt; {
-    updateShaderUniform(shield.id, &#39;hitStrength&#39;, 0.0);
+    nova64.shader.updateShaderUniform(shield.id, 'hitStrength', 0.0);
   }, 500);
 }
 </code></pre>
@@ -489,11 +496,11 @@ function onShieldHit(position) {
 <li><code>hitStrength</code>: Impact intensity (0-1)</li>
 </ul>
 <p><strong>Best For</strong>: Force fields, protective barriers, energy shields, bubble effects</p>
-<h3>Water Shader</h3>
+<h3 id="water-shader">Water Shader</h3>
 <p>Animated water surface with waves and caustics.</p>
 <pre><code class="language-javascript">export async function init() {
   // Create water material
-  const water = createShaderMaterial(&#39;water&#39;, {
+  const water = createShaderMaterial('water', {
     color: new THREE.Color(0x0088ff), // Ocean blue
     waveSpeed: 1.0, // Wave animation speed
     waveHeight: 0.3, // Wave amplitude
@@ -515,11 +522,11 @@ function onShieldHit(position) {
 <li><code>transparency</code>: Opacity (0-1)</li>
 </ul>
 <p><strong>Best For</strong>: Oceans, lakes, rivers, liquid surfaces, underwater scenes</p>
-<h3>Fire/Plasma Shader</h3>
+<h3 id="fireplasma-shader">Fire/Plasma Shader</h3>
 <p>Animated fire effect with noise-based flames.</p>
 <pre><code class="language-javascript">export async function init() {
   // Create fire material
-  const fire = createShaderMaterial(&#39;fire&#39;, {
+  const fire = createShaderMaterial('fire', {
     color1: new THREE.Color(0xff4400), // Orange base
     color2: new THREE.Color(0xffff00), // Yellow tips
     intensity: 1.5, // Brightness
@@ -540,13 +547,14 @@ function onShieldHit(position) {
 <li><code>speed</code>: Animation speed (0-5)</li>
 </ul>
 <p><strong>Best For</strong>: Fire, explosions, energy beams, plasma effects, lava</p>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Particle Systems</h2>
+<h2 id="particle-systems">Particle Systems</h2>
 <p>Create GPU-accelerated particle effects for explosions, smoke, sparks, etc.</p>
-<h3>Basic Particle System</h3>
+<h3 id="basic-particle-system">Basic Particle System</h3>
 <pre><code class="language-javascript">let explosionParticles;
 
 export async function init() {
@@ -565,10 +573,10 @@ export async function init() {
 
 export function update(dt) {
   // Update particle physics
-  updateParticles(explosionParticles, dt);
+  nova64.fx.updateParticles(explosionParticles, dt);
 }
 </code></pre>
-<h3>Advanced Examples</h3>
+<h3 id="advanced-examples">Advanced Examples</h3>
 <p><strong>Smoke Effect</strong>:</p>
 <pre><code class="language-javascript">const smoke = createParticleSystem(500, {
   color: 0x888888, // Gray smoke
@@ -599,25 +607,26 @@ export function update(dt) {
   gravity: 0.5, // Slow rise
 });
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Complete Game Examples</h2>
-<h3>Sci-Fi Space Shooter</h3>
+<h2 id="complete-game-examples">Complete Game Examples</h2>
+<h3 id="sci-fi-space-shooter">Sci-Fi Space Shooter</h3>
 <pre><code class="language-javascript">let shieldEffect, engineParticles, explosionEffect;
 let bloomEnabled = false;
 
 export async function init() {
   // Enable bloom for glowing effects
-  enableBloom(1.5, 0.5, 0.8);
+  nova64.fx.enableBloom(1.5, 0.5, 0.8);
   bloomEnabled = true;
 
   // Enable anti-aliasing
-  enableFXAA();
+  nova64.fx.enableFXAA();
 
   // Create player shield
-  const shield = createShaderMaterial(&#39;shield&#39;, {
+  const shield = createShaderMaterial('shield', {
     color: new THREE.Color(0x00ffff),
     opacity: 0.3,
   });
@@ -641,7 +650,7 @@ export async function init() {
 
 export function update(dt) {
   // Update particle effects
-  updateParticles(engineParticles, dt);
+  nova64.fx.updateParticles(engineParticles, dt);
 
   // Follow player position
   engineParticles.position.copy(player.position);
@@ -649,16 +658,16 @@ export function update(dt) {
 
   // Pulse bloom intensity based on speed
   const bloomIntensity = 1.0 + player.speed * 0.5;
-  setBloomStrength(bloomIntensity);
+  nova64.fx.setBloomStrength(bloomIntensity);
 }
 
 function onPlayerHit(hitPosition) {
   // Flash shield on hit
-  updateShaderUniform(shieldEffect, &#39;hitPosition&#39;, hitPosition);
-  updateShaderUniform(shieldEffect, &#39;hitStrength&#39;, 1.0);
+  nova64.shader.updateShaderUniform(shieldEffect, 'hitPosition', hitPosition);
+  nova64.shader.updateShaderUniform(shieldEffect, 'hitStrength', 1.0);
 
   setTimeout(() =&gt; {
-    updateShaderUniform(shieldEffect, &#39;hitStrength&#39;, 0.0);
+    nova64.shader.updateShaderUniform(shieldEffect, 'hitStrength', 0.0);
   }, 300);
 }
 
@@ -679,18 +688,18 @@ function createExplosion(position) {
   }, 1500);
 }
 </code></pre>
-<h3>Cyberpunk City</h3>
+<h3 id="cyberpunk-city">Cyberpunk City</h3>
 <pre><code class="language-javascript">let hologramBillboards = [];
 let neonGlow;
 
 export async function init() {
   // Enable bloom for neon glow
-  enableBloom(2.0, 0.8, 0.6);
-  enableFXAA();
+  nova64.fx.enableBloom(2.0, 0.8, 0.6);
+  nova64.fx.enableFXAA();
 
   // Create holographic billboards
   for (let i = 0; i &lt; 10; i++) {
-    const holo = createShaderMaterial(&#39;holographic&#39;, {
+    const holo = createShaderMaterial('holographic', {
       color: new THREE.Color(Math.random() * 0xffffff),
       scanlineSpeed: 2.0 + Math.random() * 3.0,
       glitchAmount: 0.1,
@@ -726,22 +735,22 @@ export function update(dt) {
   hologramBillboards.forEach(holoId =&gt; {
     if (Math.random() &lt; 0.01) {
       // 1% chance per frame
-      updateShaderUniform(holoId, &#39;glitchAmount&#39;, 0.5);
+      nova64.shader.updateShaderUniform(holoId, 'glitchAmount', 0.5);
       setTimeout(() =&gt; {
-        updateShaderUniform(holoId, &#39;glitchAmount&#39;, 0.1);
+        nova64.shader.updateShaderUniform(holoId, 'glitchAmount', 0.1);
       }, 100);
     }
   });
 }
 </code></pre>
-<h3>Fantasy Water World</h3>
+<h3 id="fantasy-water-world">Fantasy Water World</h3>
 <pre><code class="language-javascript">let oceanSurface, bubbleParticles;
 
 export async function init() {
-  enableFXAA();
+  nova64.fx.enableFXAA();
 
   // Create animated ocean
-  const ocean = createShaderMaterial(&#39;water&#39;, {
+  const ocean = createShaderMaterial('water', {
     color: new THREE.Color(0x0066cc),
     waveSpeed: 0.5,
     waveHeight: 0.5,
@@ -767,56 +776,58 @@ export async function init() {
 }
 
 export function update(dt) {
-  updateParticles(bubbleParticles, dt);
+  nova64.fx.updateParticles(bubbleParticles, dt);
 
   // Vary wave intensity based on game events
   const waveIntensity = 0.3 + Math.sin(Date.now() * 0.001) * 0.2;
-  updateShaderUniform(oceanSurface, &#39;waveHeight&#39;, waveIntensity);
+  nova64.shader.updateShaderUniform(oceanSurface, 'waveHeight', waveIntensity);
 }
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Performance Tips</h2>
-<h3>1. <strong>Use Bloom Wisely</strong></h3>
+<h2 id="performance-tips">Performance Tips</h2>
+<h3 id="1-use-bloom-wisely">1. <strong>Use Bloom Wisely</strong></h3>
 <pre><code class="language-javascript">// Good - bloom on bright emissive objects
-setBloomThreshold(0.85); // Only very bright objects glow
+nova64.fx.setBloomThreshold(0.85); // Only very bright objects glow
 
 // Bad - everything glows (performance hit)
-setBloomThreshold(0.0);
+nova64.fx.setBloomThreshold(0.0);
 </code></pre>
-<h3>2. <strong>Limit Particle Count</strong></h3>
+<h3 id="2-limit-particle-count">2. <strong>Limit Particle Count</strong></h3>
 <pre><code class="language-javascript">// Mobile/Low-end: 500 particles max
 const particles = createParticleSystem(500, {...});
 
 // Desktop/High-end: 2000 particles
 const particles = createParticleSystem(2000, {...});
 </code></pre>
-<h3>3. <strong>Reuse Particle Systems</strong></h3>
+<h3 id="3-reuse-particle-systems">3. <strong>Reuse Particle Systems</strong></h3>
 <pre><code class="language-javascript">// Good - one system for all explosions
 const explosionPool = createParticleSystem(1000, {...});
 
 // Bad - new system for each explosion (memory leak!)
 function explode() {
-  createParticleSystem(500, {...}); // Don&#39;t do this repeatedly!
+  nova64.fx.createParticleSystem(500, {...}); // Don't do this repeatedly!
 }
 </code></pre>
-<h3>4. <strong>Shader Complexity</strong></h3>
+<h3 id="4-shader-complexity">4. <strong>Shader Complexity</strong></h3>
 <ul>
 <li>Holographic: Low cost</li>
 <li>Shield/Water: Medium cost</li>
 <li>Fire: Higher cost (noise calculations)</li>
 </ul>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Troubleshooting</h2>
-<h3>Effects Not Visible</h3>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="effects-not-visible">Effects Not Visible</h3>
 <p><strong>Problem</strong>: Called <code>enableBloom()</code> but no effect visible</p>
 <p><strong>Solution</strong>: Check bloom threshold and material emissive</p>
-<pre><code class="language-javascript">enableBloom(1.5, 0.5, 0.5); // Lower threshold
+<pre><code class="language-javascript">nova64.fx.enableBloom(1.5, 0.5, 0.5); // Lower threshold
 
 // Make materials emissive for bloom
 const material = createN64Material({
@@ -825,27 +836,28 @@ const material = createN64Material({
   emissiveIntensity: 1.0,
 });
 </code></pre>
-<h3>Particles Not Moving</h3>
+<h3 id="particles-not-moving">Particles Not Moving</h3>
 <p><strong>Problem</strong>: Particles created but stationary</p>
 <p><strong>Solution</strong>: Call <code>updateParticles()</code> every frame</p>
 <pre><code class="language-javascript">export function update(dt) {
-  updateParticles(myParticles, dt); // Must call this!
+  nova64.fx.updateParticles(myParticles, dt); // Must call this!
 }
 </code></pre>
-<h3>Shader Appears Black</h3>
+<h3 id="shader-appears-black">Shader Appears Black</h3>
 <p><strong>Problem</strong>: Custom shader shows as black</p>
 <p><strong>Solution</strong>: Check lighting and transparency</p>
-<pre><code class="language-javascript">const shader = createShaderMaterial(&#39;holographic&#39;, {
+<pre><code class="language-javascript">const shader = createShaderMaterial('holographic', {
   color: new THREE.Color(0xff0000), // Ensure color is set
   opacity: 1.0, // Not fully transparent
 });
 </code></pre>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>API Reference</h2>
-<h3>Post-Processing</h3>
+<h2 id="api-reference">API Reference</h2>
+<h3 id="post-processing">Post-Processing</h3>
 <ul>
 <li><code>enableBloom(strength, radius, threshold)</code> - Enable bloom glow</li>
 <li><code>disableBloom()</code> - Disable bloom</li>
@@ -855,24 +867,23 @@ const material = createN64Material({
 <li><code>enableFXAA()</code> - Enable anti-aliasing</li>
 <li><code>disableFXAA()</code> - Disable anti-aliasing</li>
 </ul>
-<h3>Custom Shaders</h3>
+<h3 id="custom-shaders_1">Custom Shaders</h3>
 <ul>
-<li><code>createShaderMaterial(name, uniforms)</code> - Create shader material<ul>
-<li>Shaders: <code>&#39;holographic&#39;</code>, <code>&#39;shield&#39;</code>, <code>&#39;water&#39;</code>, <code>&#39;fire&#39;</code></li>
-</ul>
-</li>
+<li><code>createShaderMaterial(name, uniforms)</code> - Create shader material</li>
+<li>Shaders: <code>'holographic'</code>, <code>'shield'</code>, <code>'water'</code>, <code>'fire'</code></li>
 <li><code>updateShaderUniform(shaderId, name, value)</code> - Update shader parameter</li>
 </ul>
-<h3>Particles</h3>
+<h3 id="particles">Particles</h3>
 <ul>
 <li><code>createParticleSystem(count, options)</code> - Create particle effect</li>
 <li><code>updateParticles(system, deltaTime)</code> - Update particle physics</li>
 </ul>
-<hr>
+<hr />
+
         </section>
 
         <section class="md">
-<h2>Conclusion</h2>
+<h2 id="conclusion">Conclusion</h2>
 <p>The Nova64 effects system brings professional-quality visuals to your games with minimal code. Combine bloom, custom shaders, and particles to create stunning sci-fi, fantasy, or modern environments.</p>
 <p>For more examples, check out the updated game demos in <code>/examples/</code>.</p>
 <p>Happy creating! ✨</p>

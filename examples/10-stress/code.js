@@ -8,15 +8,15 @@ function expect(name, fn) {
   try {
     const ok = !!fn();
     results.push({ name, ok });
-    print(`[10-stress] ${ok ? 'PASS' : 'FAIL'} ${name}`);
+    console.log(`[10-stress] ${ok ? 'PASS' : 'FAIL'} ${name}`);
   } catch (e) {
     results.push({ name, ok: false, error: String(e) });
-    print(`[10-stress] FAIL ${name} threw: ${e}`);
+    console.log(`[10-stress] FAIL ${name} threw: ${e}`);
   }
 }
 
 export function init() {
-  print('[10-stress] allocating ' + N + ' materials');
+  console.log('[10-stress] allocating ' + N + ' materials');
   const createCmds = [];
   for (let i = 0; i < N; i++) {
     createCmds.push(['material.create', { albedo: [Math.random(), Math.random(), Math.random(), 1] }]);

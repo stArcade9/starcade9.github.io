@@ -18,7 +18,7 @@ function call(method, payload) {
 
 export function init() {
   const caps = call('engine.init').capabilities;
-  print('[01-cube] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
+  console.log('[01-cube] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
 
   // Light
   call('light.createDirectional', { color: [1, 1, 1, 1], energy: 1.0 });
@@ -45,7 +45,7 @@ export function init() {
   });
   call('camera.setActive', { handle: cameraHandle });
 
-  print('[01-cube] scene ready cube=' + cubeHandle + ' camera=' + cameraHandle);
+  console.log('[01-cube] scene ready cube=' + cubeHandle + ' camera=' + cameraHandle);
 }
 
 export function update(dt) {

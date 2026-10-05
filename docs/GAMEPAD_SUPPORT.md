@@ -99,7 +99,7 @@ export function update(dt) {
 ```javascript
 // Check if a gamepad is connected
 if (gamepadConnected()) {
-  print('Gamepad Ready!', 10, 10, rgba8(0, 255, 0, 255));
+  nova64.draw.print('Gamepad Ready!', 10, 10, rgba8(0, 255, 0, 255));
 }
 ```
 
@@ -251,9 +251,9 @@ Display appropriate button prompts based on input method:
 ```javascript
 export function draw() {
   if (gamepadConnected()) {
-    print('Press A to Jump', 10, 10, rgba8(255, 255, 255, 255));
+    nova64.draw.print('Press A to Jump', 10, 10, rgba8(255, 255, 255, 255));
   } else {
-    print('Press Z to Jump', 10, 10, rgba8(255, 255, 255, 255));
+    nova64.draw.print('Press Z to Jump', 10, 10, rgba8(255, 255, 255, 255));
   }
 }
 ```
@@ -318,7 +318,7 @@ player.x += leftStickX() * speed * dt;
 
 ```javascript
 if (gamepadConnected()) {
-  print('🎮', 600, 10, rgba8(0, 255, 0, 255));
+  nova64.draw.print('🎮', 600, 10, rgba8(0, 255, 0, 255));
 }
 ```
 

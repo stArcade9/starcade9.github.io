@@ -131,7 +131,7 @@ const spaceship = await loadModel('/assets/ship.glb', [0, 0, 0], 0.5);
 Sets absolute position of a 3D object.
 
 ```js
-setPosition(cube, 5, 2, -3);
+nova64.scene.setPosition(cube, 5, 2, -3);
 ```
 
 #### `setRotation(meshId, x, y, z)`
@@ -139,7 +139,7 @@ setPosition(cube, 5, 2, -3);
 Sets absolute rotation in radians.
 
 ```js
-setRotation(cube, 0, Math.PI / 4, 0); // 45° Y rotation
+nova64.scene.setRotation(cube, 0, Math.PI / 4, 0); // 45° Y rotation
 ```
 
 #### `setScale(meshId, x, y, z)` or `setScale(meshId, uniform)`
@@ -147,8 +147,8 @@ setRotation(cube, 0, Math.PI / 4, 0); // 45° Y rotation
 Sets object scale. Use single number for uniform scaling.
 
 ```js
-setScale(cube, 2); // Double size uniformly
-setScale(cube, 1, 2, 1); // Stretch vertically only
+nova64.scene.setScale(cube, 2); // Double size uniformly
+nova64.scene.setScale(cube, 1, 2, 1); // Stretch vertically only
 ```
 
 #### `rotateMesh(meshId, x, y, z)`
@@ -157,7 +157,7 @@ Rotates by the specified amounts (additive).
 
 ```js
 // Spin cube each frame
-rotateMesh(cube, 0, dt, 0);
+nova64.scene.rotateMesh(cube, 0, dt, 0);
 ```
 
 #### `moveMesh(meshId, x, y, z)`
@@ -165,7 +165,7 @@ rotateMesh(cube, 0, dt, 0);
 Moves by the specified offset (additive).
 
 ```js
-moveMesh(cube, 0, Math.sin(time) * dt, 0); // Bob up and down
+nova64.scene.moveMesh(cube, 0, Math.sin(time) * dt, 0); // Bob up and down
 ```
 
 #### `destroyMesh(meshId)`
@@ -173,7 +173,7 @@ moveMesh(cube, 0, Math.sin(time) * dt, 0); // Bob up and down
 Removes object from scene and frees memory.
 
 ```js
-destroyMesh(cube);
+nova64.scene.destroyMesh(cube);
 ```
 
 ### Camera Controls
@@ -183,7 +183,7 @@ destroyMesh(cube);
 Sets camera position in world space.
 
 ```js
-setCameraPosition(0, 5, 10); // Behind and above origin
+nova64.camera.setCameraPosition(0, 5, 10); // Behind and above origin
 ```
 
 #### `setCameraTarget(x, y, z)`
@@ -191,7 +191,7 @@ setCameraPosition(0, 5, 10); // Behind and above origin
 Sets what the camera looks at.
 
 ```js
-setCameraTarget(0, 0, 0); // Look at origin
+nova64.camera.setCameraTarget(0, 0, 0); // Look at origin
 ```
 
 #### `setCameraFOV(degrees)`
@@ -199,7 +199,7 @@ setCameraTarget(0, 0, 0); // Look at origin
 Sets field of view angle.
 
 ```js
-setCameraFOV(75); // Wide angle view
+nova64.camera.setCameraFOV(75); // Wide angle view
 ```
 
 ### Scene Effects
@@ -213,7 +213,7 @@ Adds atmospheric fog for depth perception.
 - `far` (number): Distance where fog is fully opaque
 
 ```js
-setFog(0x003366, 10, 50); // Blue distance fog
+nova64.light.setFog(0x003366, 10, 50); // Blue distance fog
 ```
 
 #### `setLightDirection(x, y, z)`
@@ -221,7 +221,7 @@ setFog(0x003366, 10, 50); // Blue distance fog
 Sets the main directional light direction.
 
 ```js
-setLightDirection(1, 1, 0.5); // Light from upper-right
+nova64.light.setLightDirection(1, 1, 0.5); // Light from upper-right
 ```
 
 #### `enablePixelation(factor)`
@@ -231,7 +231,7 @@ Applies N64-style pixelation effect.
 - `factor` (number): Pixelation intensity (1 = none, 2+ = pixelated)
 
 ```js
-enablePixelation(2); // Double-pixel rendering
+nova64.fx.enablePixelation(2); // Double-pixel rendering
 ```
 
 #### `enableDithering(enabled)`
@@ -239,7 +239,7 @@ enablePixelation(2); // Double-pixel rendering
 Toggles color dithering for authentic retro look.
 
 ```js
-enableDithering(true);
+nova64.fx.enableDithering(true);
 ```
 
 ### Advanced Features
@@ -311,9 +311,9 @@ let time = 0;
 
 export async function init() {
   // Setup scene
-  setCameraPosition(0, 5, 10);
-  setFog(0x001122, 10, 30);
-  enablePixelation(1.5);
+  nova64.camera.setCameraPosition(0, 5, 10);
+  nova64.light.setFog(0x001122, 10, 30);
+  nova64.fx.enablePixelation(1.5);
 
   // Create objects
   objects.push(createCube(1, 0xff0000, [0, 0, 0]));
@@ -328,23 +328,23 @@ export function update(dt) {
 
   // Animate objects
   objects.forEach((obj, i) => {
-    rotateMesh(obj, 0, dt, 0);
+    nova64.scene.rotateMesh(obj, 0, dt, 0);
   });
 
   // Move camera
   const camX = Math.cos(time * 0.5) * 10;
   const camZ = Math.sin(time * 0.5) * 10;
-  setCameraPosition(camX, 5, camZ);
-  setCameraTarget(0, 0, 0);
+  nova64.camera.setCameraPosition(camX, 5, camZ);
+  nova64.camera.setCameraTarget(0, 0, 0);
 }
 
 export function draw() {
-  cls(); // Clear 2D overlay
+  nova64.draw.cls(); // Clear 2D overlay
   // 3D renders automatically
 
   // Add 2D HUD elements
-  print('3D Scene Active', 8, 8, rgba8(255, 255, 255, 255));
-  print(`Objects: ${objects.length}`, 8, 24, rgba8(200, 200, 200, 255));
+  nova64.draw.print('3D Scene Active', 8, 8, rgba8(255, 255, 255, 255));
+  nova64.draw.print(`Objects: ${objects.length}`, 8, 24, rgba8(200, 200, 200, 255));
 }
 ```
 

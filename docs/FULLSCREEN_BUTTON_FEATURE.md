@@ -80,13 +80,13 @@ Uses standard Fullscreen API with fallbacks:
 ```javascript
 class FullscreenButton {
   constructor(canvas)
-  createButton()           // Creates DOM element with styles
+  nova64.ui.createButton()           // Creates DOM element with styles
   attachListeners()        // Sets up click and keyboard handlers
   toggleFullscreen()       // Toggles between fullscreen/normal
   enterFullscreen()        // Enters fullscreen mode
   exitFullscreen()         // Exits fullscreen mode
   handleFullscreenChange() // Syncs state with browser
-  updateButton()           // Updates icon based on state
+  nova64.ui.updateButton()           // Updates icon based on state
   destroy()                // Cleanup (if needed)
 }
 ```

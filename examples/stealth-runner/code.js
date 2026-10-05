@@ -1,3 +1,5 @@
+const { print } = nova64.draw;
+
 // Nova64 game: Stealth Runner
 // Move through spotlight-lit corridors without being caught.
 // Arrow keys/WASD to move. Reach the exit (green) without touching a spotlight.
