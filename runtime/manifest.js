@@ -7,10 +7,21 @@ import { i18nApi } from './i18n.js';
 import { dataApi } from './data.js';
 import { assetLoaderApi } from './asset-loader.js';
 
-const _exampleMetaModules = import.meta.glob('../examples/**/meta.json', {
-  eager: true,
-  import: 'default',
-});
+// Vite rewrites this call at build time into a map of every bundled meta.json.
+// Served raw (demo-embed.html / player.html load src/main.js directly, with no
+// build step) import.meta.glob simply does not exist and the call throws, so
+// fall back to an empty map — _loadFromCart then fetches the sidecar meta.json
+// the same way it already does for carts outside examples/.
+let _exampleMetaModules = {};
+try {
+  _exampleMetaModules = import.meta.glob('../examples/**/meta.json', {
+    eager: true,
+    import: 'default',
+  });
+} catch {
+  _exampleMetaModules = {};
+}
+const _hasBundledExampleMeta = Object.keys(_exampleMetaModules).length > 0;
 
 // ── Subsystem instances ──────────────────────────────────────
 let _envInst = null;
@@ -136,7 +147,7 @@ export function manifestApi() {
       }
 
       // For non-bundled carts, still try the conventional sidecar meta.json.
-      if (basePath && !basePath.startsWith('/examples/')) {
+      if (basePath && !(_hasBundledExampleMeta && basePath.startsWith('/examples/'))) {
         try {
           const metaUrl = basePath + '/meta.json?t=' + Date.now();
           const res = await fetch(metaUrl);
