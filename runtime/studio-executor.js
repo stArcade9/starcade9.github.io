@@ -12,6 +12,11 @@
 // it would start, then fail somewhere less obvious. Imports keep failing fast,
 // with an error that says why.
 
+// NAMESPACE_MAP is the single source of truth for where each retired flat
+// global moved; explainCartError reads it so the advice can never drift from
+// the runtime. namespace.js is pure data, so this module stays DOM-free.
+import { NAMESPACE_MAP } from './namespace.js';
+
 // Characters after which a `export` keyword can legally begin a statement.
 const STATEMENT_BOUNDARY = new Set([';', '}', '{']);
 
@@ -264,4 +269,38 @@ export function createStudioCartFunction(userCode) {
 
 export function executeStudioCartCode(userCode) {
   return createStudioCartFunction(userCode)();
+}
+
+/**
+ * Turn a bare `X is not defined` from a cart into a message that says where X
+ * went.
+ *
+ * The v0.5.0 namespace push retired the flat globals, so a cart written against
+ * the old API — one saved in the Studio before the move, one copied from a doc
+ * that still taught it, or one an assistant generated from `nova64@0.5.3` —
+ * fails with `createCube is not defined` and nothing else. The name is not gone;
+ * it moved to `nova64.scene.createCube`, and that is the one fact the error
+ * never carried.
+ *
+ * Returns the original message unchanged when the name is not a retired global,
+ * so a genuine typo still reads as a typo.
+ *
+ * @param {unknown} error
+ * @returns {string} a message safe to show the user
+ */
+export function explainCartError(error) {
+  const message = error && typeof error.message === 'string' ? error.message : String(error);
+  if (!(error instanceof ReferenceError)) return message;
+
+  const match = /^(\w[\w$]*) is not defined$/.exec(message);
+  if (!match) return message;
+
+  const name = match[1];
+  const group = Object.keys(NAMESPACE_MAP).find(g => NAMESPACE_MAP[g].includes(name));
+  if (!group) return message;
+
+  return (
+    `${message} — the flat API was retired in v0.5.0. Use nova64.${group}.${name}(...), ` +
+    `or destructure it first: const { ${name} } = nova64.${group};`
+  );
 }
