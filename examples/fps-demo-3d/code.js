@@ -20,7 +20,6 @@ const { btn, key, keyp, mouseDown } = nova64.input;
 const { sfx } = nova64.audio;
 const { WADLoader, WADTextureManager, convertWADMap, setWallUVs, t } = nova64.data;
 const { createShake, triggerShake, updateShake } = nova64.util;
-const { print, printCentered } = nova64.draw;
 
 let gameTime = 0;
 let gameState = 'start'; // start, playing, gameover, levelclear, victory

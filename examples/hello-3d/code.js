@@ -1,5 +1,3 @@
-const { print } = nova64.draw;
-
 // HELLO 3D WORLD - Simple Nintendo 64/PlayStation style 3D demo
 // Demonstrates basic 3D rendering with GPU acceleration
 //
