@@ -25,6 +25,7 @@ const {
   drawTextShadow,
   setFont,
   setTextAlign,
+  uiColors,
   updateAllButtons,
 } = nova64.ui;
 
