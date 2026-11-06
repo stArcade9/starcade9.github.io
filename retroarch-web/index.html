@@ -180,13 +180,17 @@
         const { bytes: cart, name } = await loadCart();
 
         status.textContent = 'Loading Nova64 core…';
-        const { default: createModule } = await import('./nova64_libretro.js');
+        // Resolve the core from a fixed base, not the page URL: hosts with clean
+        // URLs (Vercel cleanUrls/trailingSlash:false) redirect
+        // /retroarch-web/index.html to /retroarch-web, where './' would be '/'.
+        const coreBase = new URL('/retroarch-web/', location.href);
+        const { default: createModule } = await import(new URL('nova64_libretro.js', coreBase).href);
         const mod = await createModule({
           noInitialRun: true,
           canvas,
           print: record,
           printErr: record,
-          locateFile: (path) => new URL(path, import.meta.url).href,
+          locateFile: (path) => new URL(path, coreBase).href,
         });
 
         const home = '/home/web_user/retroarch/userdata';
