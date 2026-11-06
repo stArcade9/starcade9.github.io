@@ -4,7 +4,8 @@
 // persist across full page reloads via saveData/loadData.
 
 const { print, printCentered, rect, rgba8 } = nova64.draw;
-const { createCube, createPlane, createSphere, removeMesh, rotateMesh, setPosition } = nova64.scene;
+const { createCube, createPlane, createSphere, getPosition, removeMesh, rotateMesh, setPosition } =
+  nova64.scene;
 const { setCameraPosition, setCameraTarget } = nova64.camera;
 const { setAmbientLight, setFog } = nova64.light;
 const { key, keyp } = nova64.input;
@@ -78,10 +79,10 @@ export function update(dt) {
   if (key('KeyD') || key('ArrowRight')) mx += speed * dt;
 
   // Move ship — read position, apply delta, write back
-  const pos = getMeshPosition(ship);
-  const nx = Math.max(-13, Math.min(13, pos.x + mx));
-  const nz = Math.max(-13, Math.min(13, pos.z + mz));
-  setPosition(ship, nx, pos.y, nz);
+  const [posX, posY, posZ] = getPosition(ship) || [0, 0, 0];
+  const nx = Math.max(-13, Math.min(13, posX + mx));
+  const nz = Math.max(-13, Math.min(13, posZ + mz));
+  setPosition(ship, nx, posY, nz);
   rotateMesh(ship, 0, dt * 0.5, 0);
 
   // Gem spin and collection

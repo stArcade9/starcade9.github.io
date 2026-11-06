@@ -172,6 +172,8 @@ const {
   updateButton,
 } = nova64.ui;
 const { createGameStore, deleteData, loadData, novaStore, saveData, t } = nova64.data;
+const { scrollingText, setCamera } = nova64.draw;
+
 const {
   HALF_PI,
   QUARTER_PI,

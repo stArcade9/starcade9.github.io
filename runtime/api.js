@@ -199,6 +199,130 @@ export function stdApi(gpu) {
     BitmapFont.draw(fb, text, (x | 0) - camRef.x, (y | 0) - camRef.y, color, scale);
   }
 
+  // ── Glow helpers (parity with the RetroArch core's glowRect & co.) ────────
+  // Each draws its shape plus `radius` fading halo rings. The framebuffer's
+  // pset overwrites pixels, so halo pixels are alpha-blended by hand: a faint
+  // ring must brighten what's underneath, not punch a translucent hole in it.
+  function _blendPx(x, y, r, g, b, a) {
+    x = (x | 0) - camRef.x;
+    y = (y | 0) - camRef.y;
+    if (x < 0 || y < 0 || x >= fb.width || y >= fb.height || a <= 0) return;
+    const p = fb.pixels;
+    const i = (y * fb.width + x) * 4;
+    // Straight-alpha "over": correct on opaque 2D backgrounds and on the
+    // transparent overlay that 3D carts clear with cls3D().
+    const sa = a / 65535;
+    const da = p[i + 3] / 65535;
+    const oa = sa + da * (1 - sa);
+    if (oa <= 0) return;
+    const k = (da * (1 - sa)) / oa;
+    const s = sa / oa;
+    p[i] = r * s + p[i] * k;
+    p[i + 1] = g * s + p[i + 1] * k;
+    p[i + 2] = b * s + p[i + 2] * k;
+    p[i + 3] = Math.min(65535, oa * 65535);
+  }
+  // Halo ring k of n gets alpha peak*(1 - k/(n+1))^2, the core's falloff.
+  function _haloRings(color, radius, peak, drawRing) {
+    const { r, g, b } = _colorToRGBA16(color);
+    for (let step = radius | 0; step >= 1; step--) {
+      const t = 1 - step / (radius + 1);
+      drawRing(step, r, g, b, Math.round(peak * t * t) * 257);
+    }
+  }
+  function _blendRectOutline(x, y, w, h, r, g, b, a) {
+    for (let i = 0; i < w; i++) {
+      _blendPx(x + i, y, r, g, b, a);
+      _blendPx(x + i, y + h - 1, r, g, b, a);
+    }
+    for (let j = 1; j < h - 1; j++) {
+      _blendPx(x, y + j, r, g, b, a);
+      _blendPx(x + w - 1, y + j, r, g, b, a);
+    }
+  }
+  function _blendCircleOutline(cx, cy, rad, r, g, b, a) {
+    let x = rad,
+      y = 0,
+      err = 1 - rad;
+    const seen = new Set();
+    const plot = (px, py) => {
+      const k = px * 4096 + py;
+      if (!seen.has(k)) {
+        seen.add(k);
+        _blendPx(cx + px, cy + py, r, g, b, a);
+      }
+    };
+    while (x >= y) {
+      (plot(x, y), plot(y, x), plot(-y, x), plot(-x, y));
+      (plot(-x, -y), plot(-y, -x), plot(y, -x), plot(x, -y));
+      y++;
+      if (err < 0) err += 2 * y + 1;
+      else {
+        x--;
+        err += 2 * (y - x) + 1;
+      }
+    }
+  }
+  function _blendLine(x0, y0, x1, y1, r, g, b, a) {
+    x0 |= 0;
+    y0 |= 0;
+    x1 |= 0;
+    y1 |= 0;
+    const dx = Math.abs(x1 - x0),
+      sx = x0 < x1 ? 1 : -1;
+    const dy = -Math.abs(y1 - y0),
+      sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+    for (;;) {
+      _blendPx(x0, y0, r, g, b, a);
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy) {
+        err += dy;
+        x0 += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        y0 += sy;
+      }
+    }
+  }
+  function glowRect(x, y, w = 10, h = 10, color = rgba8(255, 255, 255, 255), radius = 4) {
+    _haloRings(color, radius, 60, (s, r, g, b, a) =>
+      _blendRectOutline((x | 0) - s, (y | 0) - s, (w | 0) + s * 2, (h | 0) + s * 2, r, g, b, a)
+    );
+    rect(x, y, w, h, color, false);
+  }
+  function glowRectFill(x, y, w = 10, h = 10, color = rgba8(255, 255, 255, 255), radius = 4) {
+    _haloRings(color, radius, 60, (s, r, g, b, a) =>
+      _blendRectOutline((x | 0) - s, (y | 0) - s, (w | 0) + s * 2, (h | 0) + s * 2, r, g, b, a)
+    );
+    rect(x, y, w, h, color, true);
+  }
+  function glowCircle(cx, cy, radius = 10, color = rgba8(255, 255, 255, 255), glow = 4) {
+    const rad = Math.max(1, radius | 0);
+    _haloRings(color, glow, 60, (s, r, g, b, a) =>
+      _blendCircleOutline(cx | 0, cy | 0, rad + s, r, g, b, a)
+    );
+    circle(cx, cy, rad, color, false);
+  }
+  function glowLine(x1, y1, x2, y2, color = rgba8(255, 255, 255, 255), radius = 3) {
+    _haloRings(color, radius, 55, (s, r, g, b, a) => {
+      _blendLine(x1, y1 - s, x2, y2 - s, r, g, b, a);
+      _blendLine(x1, y1 + s, x2, y2 + s, r, g, b, a);
+      _blendLine(x1 - s, y1, x2 - s, y2, r, g, b, a);
+      _blendLine(x1 + s, y1, x2 + s, y2, r, g, b, a);
+    });
+    line(x1, y1, x2, y2, color);
+  }
+  function glowPset(x, y, color = rgba8(255, 255, 255, 255), radius = 4) {
+    _haloRings(color, radius, 80, (s, r, g, b, a) => {
+      for (let j = -s; j <= s; j++)
+        for (let i = -s; i <= s; i++) _blendPx(x + i, y + j, r, g, b, a);
+    });
+    pset(x, y, color);
+  }
+
   function screenWidth() {
     return fb.width;
   }
@@ -217,6 +341,11 @@ export function stdApi(gpu) {
         rectfill,
         drawRect,
         circle,
+        glowRect,
+        glowRectFill,
+        glowCircle,
+        glowLine,
+        glowPset,
         print,
         packRGBA64,
         rgba8,

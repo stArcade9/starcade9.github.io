@@ -214,7 +214,7 @@ wsl bash -lc 'cd /mnt/c/Users/brend/exp/nova64/nova64-godot/gdextension && scons
 powershell -NoProfile -ExecutionPolicy Bypass -File nova64-godot\scripts\run-cart-smoke.ps1
 
 # Visual parity — minecraft-demo
-wsl bash -lc 'cd /mnt/c/Users/brend/exp/nova64 && source ~/.nvm/nvm.sh; nvm use 20 >/dev/null; pnpm godot:visual -- --cart=minecraft-demo --frames=120 --wait-ms=3000 --max-diff=100'
+wsl bash -lc 'cd /mnt/c/Users/brend/exp/nova64 && source ~/.nvm/nvm.sh; nvm use >/dev/null; pnpm godot:visual -- --cart=minecraft-demo --frames=120 --wait-ms=3000 --max-diff=100'
 
 # Commit pattern (never git push)
 Set-Content -Encoding utf8 .git/COMMIT_MSG_TMP "your message"

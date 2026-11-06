@@ -265,7 +265,7 @@ attract-mode/ad feel.
   vite won't hot-reload edits made from Windows tools — **restart vite** (or edit
   from inside WSL) to pick changes up. A stale vite serves an old transformed
   module even across page reloads.
-  - Start it: `nvm use 20 && node_modules/.bin/vite --host` (run persistent/in
+  - Start it: `nvm use && node_modules/.bin/vite --host` (run persistent/in
     background; a detached `nohup` inside a one-shot shell gets reaped).
 - **Driving the app**: chrome-devtools MCP (CDP) can navigate, `press_key`,
   screenshot, and `evaluate_script`. Useful probes via `window.nova64`:

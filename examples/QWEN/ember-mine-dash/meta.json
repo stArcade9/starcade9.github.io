@@ -1,0 +1,10 @@
+{
+ "name": "ember-mine-dash",
+ "description": "Ember Mine Dash: a miner sprints through a lava-lit tunnel leaping carts and dodging falling rock; orange and ember red",
+ "author": "Qwen (Nova64 Studio)",
+ "version": "0.1.0",
+ "category": "qwen",
+ "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+ "run": "16183d3a-c333-4d58-8d3e-d319d1b18d08",
+ "qwenStatus": "passing"
+}

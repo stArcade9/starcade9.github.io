@@ -2,6 +2,8 @@
 // number of materials/meshes via batched flush to exercise the handle table
 // and ensure no IDs are recycled and destroy() returns ok for all.
 
+const { print } = nova64.draw;
+
 const N = 256;
 const results = [];
 function expect(name, fn) {
@@ -19,29 +21,34 @@ export function init() {
   console.log('[10-stress] allocating ' + N + ' materials');
   const createCmds = [];
   for (let i = 0; i < N; i++) {
-    createCmds.push(['material.create', { albedo: [Math.random(), Math.random(), Math.random(), 1] }]);
+    createCmds.push([
+      'material.create',
+      { albedo: [Math.random(), Math.random(), Math.random(), 1] },
+    ]);
   }
   const created = engine.flush(createCmds);
 
-  expect('all creates succeeded', () => created.every((r) => typeof r.handle === 'number' && r.handle > 0));
+  expect('all creates succeeded', () =>
+    created.every(r => typeof r.handle === 'number' && r.handle > 0)
+  );
 
-  const ids = created.map((r) => r.handle);
+  const ids = created.map(r => r.handle);
   const unique = new Set(ids);
   expect('all handles unique', () => unique.size === ids.length);
 
   const min = Math.min(...ids);
   const max = Math.max(...ids);
-  expect('handles monotonic-ish (max - min >= N - 1)', () => (max - min) >= N - 1);
+  expect('handles monotonic-ish (max - min >= N - 1)', () => max - min >= N - 1);
 
   // Destroy all.
-  const destroyCmds = ids.map((h) => ['material.destroy', { handle: h }]);
+  const destroyCmds = ids.map(h => ['material.destroy', { handle: h }]);
   const destroyed = engine.flush(destroyCmds);
-  expect('all destroys ok', () => destroyed.every((r) => r.ok === true));
+  expect('all destroys ok', () => destroyed.every(r => r.ok === true));
 
   // Re-destroy must error (not silently succeed) — verifies handle table
   // really removed the entry.
-  const reDestroy = engine.flush(ids.slice(0, 4).map((h) => ['material.destroy', { handle: h }]));
-  expect('double destroy returns ok=false', () => reDestroy.every((r) => r.ok === false));
+  const reDestroy = engine.flush(ids.slice(0, 4).map(h => ['material.destroy', { handle: h }]));
+  expect('double destroy returns ok=false', () => reDestroy.every(r => r.ok === false));
 
   // After destruction, allocate again — IDs must be strictly greater than
   // any previously allocated id (no recycling).
@@ -50,7 +57,7 @@ export function init() {
 
   globalThis.__nova64_assert = {
     total: results.length,
-    passed: results.filter((r) => r.ok).length,
+    passed: results.filter(r => r.ok).length,
     results,
   };
 }

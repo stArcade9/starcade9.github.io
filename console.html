@@ -538,6 +538,144 @@
       .btn-b.active {
         background: rgba(168, 85, 247, 0.5);
       }
+
+      /* ── QWEN Arcade: cartridge shelf under the console ─────────────── */
+      .qwen-arcade {
+        width: 100%;
+        max-width: 1060px;
+        margin-top: 22px;
+      }
+      .qwen-arcade[hidden] {
+        display: none;
+      }
+      .qa-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 0 4px 10px;
+      }
+      .qa-badge {
+        font-weight: 800;
+        letter-spacing: 3px;
+        font-size: 13px;
+        background: linear-gradient(90deg, #a78bfa, #22d3ee, #f472b6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .qa-tag {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .qa-link {
+        margin-left: auto;
+        color: var(--accent);
+        font-size: 12px;
+        text-decoration: none;
+      }
+      .qa-link:hover {
+        color: var(--accent-hover);
+      }
+      .qa-shelf {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        padding: 14px 4px 18px;
+        scroll-snap-type: x mandatory;
+        /* the shelf itself: a lit wooden-ish ledge the carts stand on */
+        background: linear-gradient(180deg, transparent 78%, rgba(167, 139, 250, 0.08) 78%, rgba(15, 17, 26, 0.9) 100%);
+        border-bottom: 3px solid rgba(167, 139, 250, 0.25);
+        border-radius: 0 0 10px 10px;
+      }
+      .qa-cart {
+        /* the console styles every <button> as a centred row; carts stack */
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        min-height: 0;
+        width: auto;
+        flex: 0 0 170px;
+        scroll-snap-align: start;
+        position: relative;
+        border: none;
+        padding: 18px 10px 12px;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text);
+        font: inherit;
+        /* grey plastic cartridge shell with a notched top */
+        background: linear-gradient(180deg, #3a3f4f 0%, #262a36 100%);
+        border-radius: 6px 6px 12px 12px;
+        clip-path: polygon(0 10px, 14% 10px, 18% 0, 82% 0, 86% 10px, 100% 10px, 100% 100%, 0 100%);
+        box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.35), 0 8px 18px rgba(0, 0, 0, 0.45);
+        transition: transform 0.18s ease, filter 0.18s ease;
+      }
+      .qa-cart::before {
+        /* grip ridges */
+        content: '';
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 6px;
+        height: 6px;
+        background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0 2px, transparent 2px 6px);
+        border-radius: 2px;
+      }
+      .qa-cart:hover,
+      .qa-cart:focus-visible {
+        transform: translateY(-6px);
+        filter: brightness(1.12);
+        outline: none;
+      }
+      .qa-cart.is-active {
+        box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.35), 0 0 0 2px #a78bfa, 0 0 22px rgba(167, 139, 250, 0.55);
+      }
+      .qa-cart.is-inserting {
+        animation: qa-insert 0.45s ease-in forwards;
+      }
+      @keyframes qa-insert {
+        0% { transform: translateY(-6px); }
+        60% { transform: translateY(-40px) scale(0.96); opacity: 0.9; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+      .qa-label {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        border-radius: 3px;
+        border: 2px solid rgba(0, 0, 0, 0.5);
+        background: #111;
+      }
+      .qa-title {
+        display: block;
+        margin-top: 8px;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        line-height: 1.25;
+      }
+      .qa-blurb {
+        display: block;
+        margin: 3px 0 10px;
+        font-size: 10.5px;
+        color: var(--muted);
+        line-height: 1.3;
+      }
+      .qa-ai {
+        position: absolute;
+        top: 22px;
+        right: 14px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: rgba(124, 58, 237, 0.9);
+        color: #fff;
+      }
     </style>
   <script type="application/json" id="nova64-i18n">
   {
@@ -580,7 +718,7 @@
       }
     }
     </script>
-  <script type="module" crossorigin src="./assets/main-CElGycxl.js"></script>
+  <script type="module" crossorigin src="./assets/main-DXon4KX8.js"></script>
   <!-- Vercel Web Analytics -->
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
@@ -614,6 +752,16 @@
           <div class="btn-touch btn-start" data-keys='["Enter"]'>START</div>
           <div class="btn-touch btn-start" data-keys='["Space"]'>SELECT</div>
         </div>
+
+        <!-- QWEN Arcade: games written by a local Qwen model (examples/QWEN/arcade.json) -->
+        <section class="qwen-arcade" id="qwen-arcade" aria-label="QWEN Arcade" hidden>
+          <div class="qa-head">
+            <span class="qa-badge">✦ QWEN ARCADE</span>
+            <span class="qa-tag" id="qa-tag"></span>
+            <a class="qa-link" id="qa-link" target="_blank" rel="noopener">How a local Qwen made these →</a>
+          </div>
+          <div class="qa-shelf" id="qa-shelf" role="list"></div>
+        </section>
       </div>
       <div class="panel">
         <div>
@@ -899,6 +1047,82 @@
     </div>
 
 
+    <script type="module">
+      // QWEN Arcade: render the cartridge shelf + a dropdown group from the
+      // manifest built by scripts/build-qwen-arcade.mjs. Picking a cart goes
+      // through the normal #cart <select> change path, so loading is unchanged.
+      (async () => {
+        let manifest;
+        try {
+          const res = await fetch('/examples/QWEN/arcade.json');
+          if (!res.ok) return;
+          manifest = await res.json();
+        } catch {
+          return; // no manifest: the shelf stays hidden
+        }
+        const games = Array.isArray(manifest.games) ? manifest.games : [];
+        if (!games.length) return;
+        const select = document.getElementById('cart');
+        const shelf = document.getElementById('qa-shelf');
+        document.getElementById('qa-tag').textContent = manifest.tagline || '';
+        const link = document.getElementById('qa-link');
+        if (manifest.article) link.href = manifest.article;
+        else link.remove();
+
+        const group = document.createElement('optgroup');
+        group.label = '✦ QWEN Arcade (made by a local Qwen model)';
+        for (const g of games) {
+          const opt = document.createElement('option');
+          opt.value = g.path;
+          opt.textContent = '✦ ' + g.title;
+          group.appendChild(opt);
+        }
+        const previous = select.value; // don't change the default cart
+        select.insertBefore(group, select.firstChild);
+        select.value = previous;
+
+        const cards = new Map();
+        const markActive = () => {
+          for (const [path, card] of cards) card.classList.toggle('is-active', path === select.value);
+        };
+        for (const g of games) {
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = 'qa-cart';
+          card.setAttribute('role', 'listitem');
+          card.title = g.description || g.title;
+          const img = g.cover ? `<img class="qa-label" src="${g.cover}" alt="" loading="lazy">` : '<span class="qa-label"></span>';
+          card.innerHTML = `${img}<span class="qa-ai">AI</span><span class="qa-title"></span><span class="qa-blurb"></span>`;
+          card.querySelector('.qa-title').textContent = g.title;
+          card.querySelector('.qa-blurb').textContent = g.blurb || '';
+          card.addEventListener('click', () => {
+            card.classList.remove('is-inserting');
+            void card.offsetWidth; // restart the insert animation
+            card.classList.add('is-inserting');
+            select.value = g.path;
+            select.dispatchEvent(new Event('change'));
+            markActive();
+            document.getElementById('screen')?.focus?.();
+          });
+          card.addEventListener('animationend', () => card.classList.remove('is-inserting'));
+          cards.set(g.path, card);
+          shelf.appendChild(card);
+        }
+        select.addEventListener('change', markActive);
+        markActive();
+        document.getElementById('qwen-arcade').hidden = false;
+
+        // console.html?qwen=<id> (linked from the dashboard) starts that game.
+        const wanted = new URLSearchParams(location.search).get('qwen');
+        const pick = wanted && games.find((g) => g.id === wanted);
+        if (pick) {
+          const start = () => cards.get(pick.path)?.click();
+          if (document.readyState === 'complete') start();
+          else window.addEventListener('load', start, { once: true });
+          cards.get(pick.path)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+      })();
+    </script>
     <script>
       // Virtual controls code mapper
       function handleVirtualButton(element, isDown) {

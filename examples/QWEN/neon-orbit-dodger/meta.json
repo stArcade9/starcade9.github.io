@@ -1,0 +1,10 @@
+{
+ "name": "neon-orbit-dodger",
+ "description": "Neon Orbit Dodger: a glowing ship holds the last energy ring at the edge of space; asteroids and comet hunters swarm in waves; collect energy orbs; deep-space navy with cyan, magenta and solar gold",
+ "author": "Qwen (Nova64 Studio)",
+ "version": "0.1.0",
+ "category": "qwen",
+ "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+ "run": "c1c294f9-1b51-4e11-8b0e-baa40f09afa9",
+ "qwenStatus": "passing"
+}

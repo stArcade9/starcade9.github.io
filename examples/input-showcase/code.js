@@ -6,7 +6,7 @@ const { print, printCentered, pset, rect, rgba8 } = nova64.draw;
 const { createCube, engine, rotateMesh } = nova64.scene;
 const { setCameraPosition, setCameraTarget } = nova64.camera;
 const { setAmbientLight, setFog } = nova64.light;
-const { btn, key } = nova64.input;
+const { btn, key, mouseX, mouseY } = nova64.input;
 const { color } = nova64.util;
 
 const KEY_MAP = [
@@ -49,8 +49,8 @@ export function update(dt) {
   rotateMesh(cube, rx * dt * 2, ry * dt * 2, 0);
 
   // Record mouse trail (last 20 positions)
-  const mx = getMouseX ? getMouseX() : 0;
-  const my = getMouseY ? getMouseY() : 0;
+  const mx = mouseX();
+  const my = mouseY();
   mouseTrail.push({ x: mx, y: my });
   if (mouseTrail.length > 20) mouseTrail.shift();
 }

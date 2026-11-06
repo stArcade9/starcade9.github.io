@@ -7,8 +7,17 @@ function toFiniteNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+// Returns a 0xRRGGBB number. rgba8() colours are BigInts packing four 16-bit
+// channels (R<<48 | G<<32 | B<<16 | A); Number(bigint) lost precision and read
+// the wrong bits, so every rgba8() colour came out wrong on Babylon.
 export function normalizeColorValue(color) {
-  return typeof color === 'bigint' ? Number(color) : (color ?? 0);
+  if (typeof color === 'bigint') {
+    const r = Math.round(Number((color >> 48n) & 0xffffn) / 257);
+    const g = Math.round(Number((color >> 32n) & 0xffffn) / 257);
+    const b = Math.round(Number((color >> 16n) & 0xffffn) / 257);
+    return (r << 16) | (g << 8) | b;
+  }
+  return color ?? 0;
 }
 
 export function hexToColor3(hex) {

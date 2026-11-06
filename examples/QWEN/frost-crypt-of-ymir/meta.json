@@ -1,0 +1,10 @@
+{
+ "name": "frost-crypt-of-ymir",
+ "description": "Frost Crypt of Ymir: an icy Norse burial vault; a party of three (a shieldmaiden, a rune-caster and a hunter) seeks to escape past frost wraiths, draugr and ice wolves; the boss is the Draugr King; pa",
+ "author": "Qwen (Nova64 Studio)",
+ "version": "0.1.0",
+ "category": "qwen",
+ "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+ "run": "bc5df09f-baed-4bb3-85fc-b5ce81692603",
+ "qwenStatus": "passing"
+}

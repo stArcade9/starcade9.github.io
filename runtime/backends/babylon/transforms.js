@@ -1,7 +1,7 @@
 // runtime/backends/babylon/transforms.js
 // Mesh and light transforms for the Babylon backend.
 
-import { normalizeVectorArgs } from './common.js';
+import { hexToColor3, normalizeVectorArgs } from './common.js';
 
 // Helper to extract numeric ID from either a number or a mesh proxy
 function getMeshId(idOrProxy) {
@@ -14,6 +14,17 @@ function getMeshId(idOrProxy) {
     if (typeof val === 'number') return val;
   }
   return null;
+}
+
+// Give a mesh its own material (cloned once) so per-mesh edits stay per-mesh.
+function ownMaterial(mesh) {
+  if (!mesh || !mesh.material) return null;
+  if (!mesh.__nova64OwnMaterial) {
+    const clone = mesh.material.clone?.(`${mesh.material.name || 'mat'}#${mesh.uniqueId ?? ''}`);
+    if (clone) mesh.material = clone;
+    mesh.__nova64OwnMaterial = true;
+  }
+  return mesh.material;
 }
 
 export function createBabylonTransformsApi(self) {
@@ -42,6 +53,69 @@ export function createBabylonTransformsApi(self) {
 
     getMesh(idOrProxy) {
       return resolveMesh(idOrProxy);
+    },
+
+    // ── meshOptions (parity with the Three.js backend's transforms.js) ──────
+    // Materials can be shared between meshes, so a mesh gets its own copy
+    // before its colour/opacity changes; otherwise recolouring one cube would
+    // recolour every cube made with the same material.
+    setMeshColor(idOrProxy, color) {
+      const mat = ownMaterial(resolveMesh(idOrProxy));
+      if (!mat) return false;
+      const c = hexToColor3(color);
+      if ('albedoColor' in mat) mat.albedoColor = c;
+      else if ('diffuseColor' in mat) mat.diffuseColor = c;
+      return true;
+    },
+
+    setMeshEmissive(idOrProxy, color, intensity = 1) {
+      const mat = ownMaterial(resolveMesh(idOrProxy));
+      if (!mat || !('emissiveColor' in mat)) return false;
+      const scale = typeof intensity === 'number' ? intensity : 1;
+      mat.emissiveColor = hexToColor3(color).scale(scale);
+      return true;
+    },
+
+    setMeshOpacity(idOrProxy, opacity) {
+      const mat = ownMaterial(resolveMesh(idOrProxy));
+      if (!mat) return false;
+      const a = Math.max(0, Math.min(1, Number(opacity)));
+      mat.alpha = Number.isFinite(a) ? a : 1;
+      // PBR materials only blend when asked to; 2 = MATERIAL_ALPHABLEND.
+      if ('transparencyMode' in mat) mat.transparencyMode = mat.alpha < 1 ? 2 : null;
+      return true;
+    },
+
+    setFlatShading(idOrProxy, enabled = true) {
+      const mesh = resolveMesh(idOrProxy);
+      if (!mesh) return false;
+      // Babylon flat-shades by splitting shared vertices; it can't be undone,
+      // so it is applied once and later calls only report the state.
+      if (enabled && !mesh.__nova64FlatShaded && typeof mesh.convertToFlatShadedMesh === 'function') {
+        mesh.convertToFlatShadedMesh();
+        mesh.__nova64FlatShaded = true;
+      }
+      return true;
+    },
+
+    setCastShadow(idOrProxy, cast = true) {
+      const mesh = resolveMesh(idOrProxy);
+      if (!mesh) return false;
+      mesh.__nova64CastShadow = !!cast;
+      for (const light of mesh.getScene?.()?.lights ?? []) {
+        const gen = light.getShadowGenerator?.();
+        if (!gen) continue;
+        if (cast) gen.addShadowCaster?.(mesh);
+        else gen.removeShadowCaster?.(mesh);
+      }
+      return true;
+    },
+
+    setReceiveShadow(idOrProxy, receive = true) {
+      const mesh = resolveMesh(idOrProxy);
+      if (!mesh) return false;
+      mesh.receiveShadows = !!receive;
+      return true;
     },
 
     setPosition(idOrProxy, x, y, z) {

@@ -11,6 +11,15 @@
 
 export const NAMESPACE_MAP = {
   draw: [
+    // Libretro-core parity helpers (runtime/core-compat.js)
+    'printBold',
+    'printTight',
+    'printOutlineTight',
+    'printFlash',
+    'hline',
+    'vline',
+    'circ',
+    'circfill',
     // api.js (2D primitives)
     'cls',
     'cls3D',
@@ -70,6 +79,12 @@ export const NAMESPACE_MAP = {
     'resetBlendMode',
     'withBlend',
     'withAlpha',
+    // Glow primitives (parity with the libretro core)
+    'glowRect',
+    'glowRectFill',
+    'glowCircle',
+    'glowLine',
+    'glowPset',
   ],
 
   sprite: [
@@ -86,6 +101,8 @@ export const NAMESPACE_MAP = {
   ],
 
   scene: [
+    // Libretro-core parity helpers (runtime/core-compat.js)
+    'setInstanceTransforms',
     // 3D primitives & transforms
     'engine',
     'getBackendCapabilities',
@@ -146,6 +163,8 @@ export const NAMESPACE_MAP = {
   ],
 
   camera: [
+    // Libretro-core parity helpers (runtime/core-compat.js)
+    'project3DToScreen',
     // 3D camera
     'setCameraPosition',
     'setCameraTarget',
@@ -167,6 +186,9 @@ export const NAMESPACE_MAP = {
   ],
 
   light: [
+    // Libretro-core parity helpers (runtime/core-compat.js)
+    'setSkyColor',
+    'clearSkyColor',
     // Lighting
     'setLightDirection',
     'setLightColor',
@@ -185,6 +207,8 @@ export const NAMESPACE_MAP = {
     'createGradientSkybox',
     'createSolidSkybox',
     'createImageSkybox',
+    'createEnvironmentSkybox',
+    'createHDRSkybox',
     'animateSkybox',
     'setSkyboxSpeed',
     'enableSkyboxAutoAnimate',
@@ -194,6 +218,7 @@ export const NAMESPACE_MAP = {
 
   fx: [
     // Post-processing (api-effects.js)
+    'setToneMapping',
     'enableBloom',
     'disableBloom',
     'setBloomStrength',
@@ -581,6 +606,24 @@ export const NAMESPACE_MAP = {
   ],
 
   util: [
+    // Libretro-core parity helpers (runtime/core-compat.js)
+    'createRng',
+    'rngRandom',
+    'createBurst',
+    'triggerBurst',
+    'updateBurst',
+    'drawBurst',
+    'isBurstDone',
+    'setBurstColors',
+    'destroyBurst',
+    'createWaveManager',
+    'startWave',
+    'nextWave',
+    'enemyDefeated',
+    'getWaveNumber',
+    'isWaveActive',
+    'getRemainingEnemies',
+    'destroyWaveManager',
     // api-2d.js math helpers
     'lerp',
     'clamp',

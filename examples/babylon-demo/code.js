@@ -27,6 +27,21 @@ const { print } = nova64.draw;
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
+const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
+const { print } = nova64.draw;
+const { createPointLight, setAmbientLight, setFog, setLightColor, setLightDirection } =
+  nova64.light;
+const {
+  createCone,
+  createCube,
+  createCylinder,
+  createPlane,
+  createSphere,
+  get3DStats,
+  rotateMesh,
+  setPosition,
+} = nova64.scene;
+
 let cube;
 let sphere;
 let platform;

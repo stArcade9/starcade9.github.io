@@ -4,6 +4,7 @@
 const { circle, cls, line, print, printCentered, screenHeight, screenWidth } = nova64.draw;
 const { createMovieClip, gotoAndStop } = nova64.ui;
 const { color, ellipse } = nova64.util;
+const { ellipsefill } = nova64.util;
 
 let W = 640,
   H = 360;

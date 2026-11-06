@@ -3,6 +3,8 @@
 // Exercises the G2 input slice. WASD / arrows / left stick translate the
 // cube on the X/Z plane; Space/Z/A jumps. Esc/X resets the position.
 
+const { print } = nova64.draw;
+
 let cube = 0;
 let camera = 0;
 const pos = [0, 0.5, 0];
@@ -64,10 +66,18 @@ export function update(dt) {
   if (i.action && pos[1] <= 0.5 + 1e-3) vy = JUMP_V;
   vy += GRAVITY * dt;
   pos[1] += vy * dt;
-  if (pos[1] < 0.5) { pos[1] = 0.5; vy = 0; }
+  if (pos[1] < 0.5) {
+    pos[1] = 0.5;
+    vy = 0;
+  }
 
   // Reset
-  if (i.cancel) { pos[0] = 0; pos[1] = 0.5; pos[2] = 0; vy = 0; }
+  if (i.cancel) {
+    pos[0] = 0;
+    pos[1] = 0.5;
+    pos[2] = 0;
+    vy = 0;
+  }
 
   call('transform.set', { handle: cube, position: pos });
 }

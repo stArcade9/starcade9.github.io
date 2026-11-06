@@ -1,484 +1,379 @@
-// PBR SHOWCASE — Physically Based Rendering Material Gallery
+// PBR SHOWCASE — physically based materials lit by the skybox
 //
-// 6 scenes demonstrating PBR materials:
-//  [1] Material Grid  — 5×5 metalness × roughness sphere matrix
-//  [2] Metals Gallery — gold, silver, copper, chrome, titanium, oxidised
-//  [3] Gems & Glass   — gemstones with emissive glow and glass spheres
-//  [4] Mixed Materials — ceramic, rubber, marble, ice, wax, etc.
-//  [5] Emissive       — glowing neon, lava, energy, holographic objects
-//  [6] Shapes         — varied geometry with contrasting PBR properties
+// Every scene uses createEnvironmentSkybox(): the sky you see is also the
+// reflection/refraction map, so metals mirror it and glass bends it.
 //
-// Controls: 1-6 = scene, WASD = orbit, QE = zoom
+//  [1] Material Matrix — metalness × roughness, 5 × 5
+//  [2] Metals          — gold, chrome, copper… around brushed titanium
+//  [3] Glass & Gems    — refraction (ior), dispersion, coloured absorption
+//  [4] Coatings        — clearcoat car paint, iridescence, velvet sheen
+//  [5] Neon & Mirror   — emissive light on a mirror floor
+//  [6] Showroom        — hero pieces on a turntable
+//  [7] POV-Ray 1995    — checkerboard, chrome & glass, traced line by line
+//
+// Skies: real CC0 HDR panoramas from Poly Haven (public/assets/sky/hdr/) via
+// createHDRSkybox(), plus the procedural createEnvironmentSkybox('neon').
+//
+// Controls: 1-7 / Tab = scene · WASD / arrows = orbit · Q E = zoom · P = pause
+// orbit · R = re-trace (POV-Ray) · Space / Enter (touch A) = next scene
 
-const { drawRoundedRect, print, printCentered, rgba8 } = nova64.draw;
-const {
-  clearScene,
-  createCapsule,
-  createCone,
-  createCube,
-  createCylinder,
-  createPlane,
-  createSphere,
-  createTorus,
-  setPBRProperties,
-  setRotation,
-} = nova64.scene;
+const { print, rectfill, rgba8 } = nova64.draw;
+const HDR = (name) => `/assets/sky/hdr/${name}_1k.hdr`;
+const { clearScene, createCapsule, createCone, createCube, createCylinder, createPlane, createSphere, createTorus, rotateMesh, setPBRProperties, setPosition, setRotation } = nova64.scene;
+const { createEnvironmentSkybox, createGradientSkybox, createHDRSkybox, createPointLight, setAmbientLight, clearFog, setLightColor, setLightDirection, setPointLightPosition } = nova64.light;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const {
-  createGradientSkybox,
-  createImageSkybox,
-  setAmbientLight,
-  setFog,
-  setLightColor,
-  setLightDirection,
-} = nova64.light;
-const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
-const { btnp, key, keyp } = nova64.input;
-const { t } = nova64.data;
-const { arc } = nova64.util;
+const { disableBloom, disableFXAA, disableVignette, enableBloom, enableFXAA, enableVignette, setToneMapping } = nova64.fx;
+const { key, keyp } = nova64.input;
 
-const SPACING = 2.4;
+const SCENES = [
+  { name: 'Material Matrix', sky: 'Studio Small 09', hdr: 'studio_small_09', skyIntensity: 0.45, note: 'left->right: metalness 0->1   top->bottom: roughness 0->1', dist: 15, height: 1.2, sway: 0.35 },
+  { name: 'Metals', sky: 'Venice Sunset', hdr: 'venice_sunset', note: 'conductors tint their reflections; roughness blurs them', dist: 13, height: 3.2 },
+  { name: 'Glass & Gems', sky: 'Neon Photostudio', hdr: 'neon_photostudio', skyIntensity: 0.8, note: 'transmission + ior bend the neon behind; dispersion splits it', dist: 11, height: 2.4 },
+  { name: 'Coatings', sky: 'Kloppenheim sky', hdr: 'kloppenheim_06_puresky', skyIntensity: 0.5, note: 'clearcoat lacquer, thin-film iridescence, cloth sheen', dist: 12, height: 2.6 },
+  { name: 'Neon & Mirror', sky: 'procedural neon', procedural: 'neon', skyIntensity: 0.3, note: 'emissive surfaces reflected in a near-perfect mirror', dist: 14, height: 3.5 },
+  { name: 'Showroom', sky: 'Venice Sunset', hdr: 'venice_sunset', note: 'everything at once: chrome, glass, gold and paint', dist: 12, height: 3 },
+  { name: 'POV-Ray 1995', sky: 'sky_sphere gradient', pov: true, note: 'plane { checker }  sphere { finish { reflection 0.8 } }  -- R to re-trace', dist: 13, height: 3.2 },
+];
 
-let meshIds = [];
-let floorId = null;
-let orbitAngle = Math.PI * 0.15;
-let orbitDist = 15.5;
-let orbitY = 1.5;
-let time = 0;
+// POV-Ray mode: reveal the frame one scanline at a time like a 486 tracing it.
+const POV_LINES = 240;
+const POV_SECONDS = 9;
+let povStart = 0; // wall-clock ms, so the trace takes POV_SECONDS on any GPU
+const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
 let scene = 0;
-
-const SCENE_NAMES = ['Material Grid', 'Metals', 'Gems & Glass', 'Mixed', 'Emissive', 'Shapes'];
-
-async function applyShowcaseSkybox() {
-  try {
-    await createImageSkybox([
-      '/assets/sky/studio/px.png',
-      '/assets/sky/studio/nx.png',
-      '/assets/sky/studio/py.png',
-      '/assets/sky/studio/ny.png',
-      '/assets/sky/studio/pz.png',
-      '/assets/sky/studio/nz.png',
-    ]);
-  } catch (e) {
-    createGradientSkybox(0x0c1828, 0x040810);
-  }
-}
-
-// ── Init ────────────────────────────────────────────────────────────────────
-export async function init() {
-  setCameraFOV(58);
-  await applyShowcaseSkybox();
-
-  setFog(0x060e1a, 22, 60);
-  setAmbientLight(0x2a3a55, 1.6);
-  setLightDirection(-0.6, -1.0, -0.5);
-  setLightColor(0xffffff);
-  enableBloom(0.5, 0.35, 0.35);
-  enableVignette(1.0, 0.75);
-  enableFXAA();
-
-  await buildScene(0);
-}
-
-function clearMeshes() {
-  meshIds = [];
-  floorId = null;
-}
-
-function buildFloor() {
-  floorId = createPlane(50, 50, 0x080c14, [0, -3.3, 0]);
-  setRotation(floorId, -Math.PI / 2, 0, 0);
-  setPBRProperties(floorId, { metalness: 0.85, roughness: 0.08, envMapIntensity: 1.5 });
-}
-
-async function buildScene(idx) {
-  clearMeshes();
-  clearScene();
-  // Re-apply lighting after clearScene
-  setAmbientLight(0x2a3a55, 1.6);
-  setLightDirection(-0.6, -1.0, -0.5);
-  setLightColor(0xffffff);
-  enableBloom(0.5, 0.35, 0.35);
-  enableVignette(1.0, 0.75);
-  enableFXAA();
-  setFog(0x060e1a, 22, 60);
-
-  await applyShowcaseSkybox();
-
-  buildFloor();
-
-  if (idx === 0) buildMaterialGrid();
-  else if (idx === 1) buildMetals();
-  else if (idx === 2) buildGems();
-  else if (idx === 3) buildMixed();
-  else if (idx === 4) buildEmissive();
-  else if (idx === 5) buildShapes();
-
-  orbitAngle = Math.PI * 0.15;
-  orbitDist = 15.5;
-  orbitY = 1.5;
-}
-
-// ── Scene 0: 5×5 Material Grid ─────────────────────────────────────────────
-function buildMaterialGrid() {
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
-      const metalness = col / 4;
-      const roughness = row / 4;
-      const x = (col - 2) * SPACING;
-      const y = (2 - row) * SPACING;
-      const color = lerpHex(0xd4c0a8, 0xc8d4e0, metalness);
-      const id = createSphere(0.95, color, [x, y, 0], 32, {});
-      setPBRProperties(id, { metalness, roughness });
-      meshIds.push(id);
-    }
-  }
-}
-
-// ── Scene 1: Metals Gallery ─────────────────────────────────────────────────
-function buildMetals() {
-  const metals = [
-    { name: 'Gold', color: 0xffd700, metalness: 1.0, roughness: 0.15, envMap: 2.0 },
-    { name: 'Silver', color: 0xd0d0d0, metalness: 1.0, roughness: 0.08, envMap: 2.5 },
-    { name: 'Copper', color: 0xdd7744, metalness: 1.0, roughness: 0.2, envMap: 1.8 },
-    { name: 'Chrome', color: 0xeeeeee, metalness: 1.0, roughness: 0.02, envMap: 3.0 },
-    { name: 'Titanium', color: 0x888899, metalness: 0.95, roughness: 0.3, envMap: 1.5 },
-    { name: 'Bronze', color: 0xcc8844, metalness: 0.9, roughness: 0.4, envMap: 1.2 },
-    { name: 'Oxidised', color: 0x446655, metalness: 0.7, roughness: 0.65, envMap: 0.8 },
-    { name: 'Gun Metal', color: 0x333340, metalness: 0.95, roughness: 0.25, envMap: 2.0 },
-    { name: 'Rose Gold', color: 0xe8a0a0, metalness: 1.0, roughness: 0.12, envMap: 2.2 },
-    { name: 'Brass', color: 0xccaa44, metalness: 0.9, roughness: 0.35, envMap: 1.4 },
-    { name: 'Platinum', color: 0xccccdd, metalness: 1.0, roughness: 0.05, envMap: 2.8 },
-    { name: 'Rust Iron', color: 0x884422, metalness: 0.5, roughness: 0.85, envMap: 0.4 },
-  ];
-
-  const cols = 4;
-  for (let i = 0; i < metals.length; i++) {
-    const m = metals[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = (col - (cols - 1) / 2) * 3.0;
-    const y = (1 - row) * 3.0;
-    const id = createSphere(1.1, m.color, [x, y, 0], 32, {});
-    setPBRProperties(id, {
-      metalness: m.metalness,
-      roughness: m.roughness,
-      envMapIntensity: m.envMap,
-    });
-    meshIds.push(id);
-  }
-}
-
-// ── Scene 2: Gems & Glass ───────────────────────────────────────────────────
-function buildGems() {
-  const gems = [
-    { name: 'Ruby', color: 0xcc1133, emissive: 0x660011, roughness: 0.05 },
-    { name: 'Emerald', color: 0x22cc44, emissive: 0x116622, roughness: 0.08 },
-    { name: 'Sapphire', color: 0x2244cc, emissive: 0x112266, roughness: 0.05 },
-    { name: 'Amethyst', color: 0x9933cc, emissive: 0x441166, roughness: 0.1 },
-    { name: 'Diamond', color: 0xeeeeff, emissive: 0x8888ff, roughness: 0.0 },
-    { name: 'Topaz', color: 0xffaa22, emissive: 0x884400, roughness: 0.06 },
-    { name: 'Opal', color: 0xddccee, emissive: 0x8866aa, roughness: 0.15 },
-    { name: 'Obsidian', color: 0x111115, emissive: 0x050508, roughness: 0.02 },
-  ];
-
-  // Gem spheres in an arc
-  for (let i = 0; i < gems.length; i++) {
-    const g = gems[i];
-    const angle = ((i - (gems.length - 1) / 2) / gems.length) * Math.PI * 0.6;
-    const r = 6;
-    const x = Math.sin(angle) * r;
-    const z = Math.cos(angle) * r - r;
-    const y = 0;
-    const id = createSphere(0.9, g.color, [x, y, z], 32, {
-      material: 'standard',
-      emissive: g.emissive,
-      emissiveIntensity: 1.5,
-    });
-    setPBRProperties(id, {
-      metalness: 0.1,
-      roughness: g.roughness,
-      envMapIntensity: 3.0,
-    });
-    meshIds.push(id);
-  }
-
-  // Glass spheres floating above
-  const glassColors = [0xeeffff, 0xffeeff, 0xeeffee, 0xffffee, 0xeeeeff];
-  for (let i = 0; i < glassColors.length; i++) {
-    const angle = ((i - 2) / 5) * Math.PI * 0.5;
-    const x = Math.sin(angle) * 4;
-    const z = Math.cos(angle) * 4 - 4;
-    const id = createSphere(0.6, glassColors[i], [x, 3, z], 32, {
-      material: 'standard',
-      emissive: glassColors[i],
-      emissiveIntensity: 0.3,
-    });
-    setPBRProperties(id, {
-      metalness: 0.0,
-      roughness: 0.0,
-      envMapIntensity: 4.0,
-    });
-    meshIds.push(id);
-  }
-}
-
-// ── Scene 3: Mixed Materials ────────────────────────────────────────────────
-function buildMixed() {
-  const materials = [
-    { name: 'Ceramic', color: 0xeeddcc, metalness: 0.0, roughness: 0.3, envMap: 1.0 },
-    { name: 'Rubber', color: 0x222222, metalness: 0.0, roughness: 0.95, envMap: 0.2 },
-    { name: 'Marble', color: 0xdddddd, metalness: 0.0, roughness: 0.15, envMap: 1.5 },
-    { name: 'Clay', color: 0xbb6633, metalness: 0.0, roughness: 0.85, envMap: 0.3 },
-    { name: 'Plastic', color: 0xee3333, metalness: 0.0, roughness: 0.35, envMap: 0.8 },
-    { name: 'Ice', color: 0xaaddff, metalness: 0.05, roughness: 0.02, envMap: 2.5 },
-    { name: 'Wax', color: 0xeedd99, metalness: 0.0, roughness: 0.5, envMap: 0.6 },
-    { name: 'Charcoal', color: 0x1a1a1a, metalness: 0.0, roughness: 1.0, envMap: 0.1 },
-    { name: 'Pearl', color: 0xeeeedd, metalness: 0.2, roughness: 0.1, envMap: 2.0 },
-    { name: 'Stone', color: 0x888877, metalness: 0.0, roughness: 0.75, envMap: 0.4 },
-    { name: 'Lacquer', color: 0x110022, metalness: 0.05, roughness: 0.04, envMap: 2.0 },
-    { name: 'Concrete', color: 0x999999, metalness: 0.0, roughness: 0.9, envMap: 0.2 },
-  ];
-
-  const cols = 4;
-  for (let i = 0; i < materials.length; i++) {
-    const m = materials[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = (col - (cols - 1) / 2) * 3.0;
-    const y = (1 - row) * 3.0;
-
-    // Use cubes for some variety
-    let id;
-    if (i % 3 === 1) {
-      id = createCube(1.6, m.color, [x, y, 0], { material: 'standard' });
-    } else if (i % 3 === 2) {
-      id = createCylinder(0.8, 1.8, m.color, [x, y, 0], { material: 'standard' });
-    } else {
-      id = createSphere(0.95, m.color, [x, y, 0], 32, {});
-    }
-    setPBRProperties(id, {
-      metalness: m.metalness,
-      roughness: m.roughness,
-      envMapIntensity: m.envMap,
-    });
-    meshIds.push(id);
-  }
-}
-
-// ── Scene 4: Emissive — glowing neon, lava, energy objects ──────────────────
-function buildEmissive() {
-  const emissives = [
-    { name: 'Neon Red', color: 0xff0033, emissive: 0xff0033, intensity: 4.0 },
-    { name: 'Neon Blue', color: 0x0066ff, emissive: 0x0066ff, intensity: 4.0 },
-    { name: 'Neon Green', color: 0x00ff44, emissive: 0x00ff44, intensity: 3.5 },
-    { name: 'Neon Pink', color: 0xff00ff, emissive: 0xff00ff, intensity: 3.0 },
-    { name: 'Lava', color: 0xff4400, emissive: 0xff2200, intensity: 5.0 },
-    { name: 'Molten Gold', color: 0xffaa00, emissive: 0xff8800, intensity: 4.0 },
-    { name: 'Plasma', color: 0x4488ff, emissive: 0x2266ff, intensity: 6.0 },
-    { name: 'Radioactive', color: 0x44ff00, emissive: 0x22ff00, intensity: 5.0 },
-    { name: 'White Hot', color: 0xffffff, emissive: 0xffeedd, intensity: 3.0 },
-    { name: 'Void', color: 0x220044, emissive: 0x440088, intensity: 2.0 },
-    { name: 'Energy Core', color: 0x00ffff, emissive: 0x00cccc, intensity: 5.0 },
-    { name: 'Ember', color: 0xcc3300, emissive: 0x881100, intensity: 2.5 },
-  ];
-
-  const cols = 4;
-  for (let i = 0; i < emissives.length; i++) {
-    const e = emissives[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = (col - (cols - 1) / 2) * 3.0;
-    const y = (1 - row) * 3.0;
-    let id;
-    if (i % 3 === 0) {
-      id = createSphere(0.95, e.color, [x, y, 0], 32, {
-        material: 'standard',
-        emissive: e.emissive,
-        emissiveIntensity: e.intensity,
-      });
-    } else if (i % 3 === 1) {
-      id = createCube(1.5, e.color, [x, y, 0], {
-        material: 'standard',
-        emissive: e.emissive,
-        emissiveIntensity: e.intensity,
-      });
-    } else {
-      id = createTorus(0.7, 0.25, e.color, [x, y, 0], {
-        material: 'standard',
-        emissive: e.emissive,
-        emissiveIntensity: e.intensity,
-      });
-    }
-    setPBRProperties(id, { metalness: 0.3, roughness: 0.2, envMapIntensity: 1.0 });
-    meshIds.push(id);
-  }
-}
-
-// ── Scene 5: Shapes — varied geometry with contrasting PBR ──────────────────
-function buildShapes() {
-  const shapes = [
-    {
-      type: 'sphere',
-      color: 0xffd700,
-      metalness: 1.0,
-      roughness: 0.1,
-      envMap: 2.5,
-      pos: [-4, 2, 0],
-    },
-    {
-      type: 'cube',
-      color: 0xcc2222,
-      metalness: 0.0,
-      roughness: 0.4,
-      envMap: 0.8,
-      pos: [-1.5, 2, 0],
-    },
-    {
-      type: 'cylinder',
-      color: 0x2255cc,
-      metalness: 0.8,
-      roughness: 0.15,
-      envMap: 2.0,
-      pos: [1.5, 2, 0],
-    },
-    {
-      type: 'torus',
-      color: 0x22cc88,
-      metalness: 0.6,
-      roughness: 0.3,
-      envMap: 1.5,
-      pos: [4, 2, 0],
-    },
-    {
-      type: 'cone',
-      color: 0xee8833,
-      metalness: 0.0,
-      roughness: 0.7,
-      envMap: 0.5,
-      pos: [-4, -1.5, 0],
-    },
-    {
-      type: 'capsule',
-      color: 0xcc44cc,
-      metalness: 0.9,
-      roughness: 0.05,
-      envMap: 3.0,
-      pos: [-1.5, -1.5, 0],
-    },
-    {
-      type: 'sphere',
-      color: 0x111111,
-      metalness: 0.0,
-      roughness: 1.0,
-      envMap: 0.1,
-      pos: [1.5, -1.5, 0],
-    },
-    {
-      type: 'cube',
-      color: 0xeeeeff,
-      metalness: 1.0,
-      roughness: 0.0,
-      envMap: 3.5,
-      pos: [4, -1.5, 0],
-    },
-  ];
-
-  for (const s of shapes) {
-    let id;
-    if (s.type === 'sphere') id = createSphere(1.0, s.color, s.pos, 32, { material: 'standard' });
-    else if (s.type === 'cube') id = createCube(1.6, s.color, s.pos, { material: 'standard' });
-    else if (s.type === 'cylinder')
-      id = createCylinder(0.7, 2.0, s.color, s.pos, { material: 'standard' });
-    else if (s.type === 'torus')
-      id = createTorus(0.8, 0.3, s.color, s.pos, { material: 'standard' });
-    else if (s.type === 'cone') id = createCone(0.9, 2.0, s.color, s.pos, { material: 'standard' });
-    else if (s.type === 'capsule')
-      id = createCapsule(0.5, 1.2, s.color, s.pos, { material: 'standard' });
-    setPBRProperties(id, {
-      metalness: s.metalness,
-      roughness: s.roughness,
-      envMapIntensity: s.envMap,
-    });
-    meshIds.push(id);
-  }
-}
-
-// ── Update ───────────────────────────────────────────────────────────────────
-export function update(dt) {
-  time += dt;
-
-  // Keyboard orbit controls
-  if (key('KeyA') || key('ArrowLeft')) orbitAngle -= dt * 1.0;
-  if (key('KeyD') || key('ArrowRight')) orbitAngle += dt * 1.0;
-  if (key('KeyW') || key('ArrowUp')) orbitY = Math.min(12, orbitY + dt * 4);
-  if (key('KeyS') || key('ArrowDown')) orbitY = Math.max(-4, orbitY - dt * 4);
-  if (key('KeyQ')) orbitDist = Math.min(30, orbitDist + dt * 6);
-  if (key('KeyE')) orbitDist = Math.max(8, orbitDist - dt * 6);
-
-  // Slow auto-orbit when no input
-  if (!key('KeyA') && !key('KeyD') && !key('ArrowLeft') && !key('ArrowRight')) {
-    orbitAngle += dt * 0.16;
-  }
-
-  const camX = Math.sin(orbitAngle) * orbitDist;
-  const camZ = Math.cos(orbitAngle) * orbitDist;
-  const camY = orbitY + Math.sin(time * 0.22) * 0.8;
-
-  setCameraPosition(camX, camY, camZ);
-  setCameraTarget(0, 0, 0);
-
-  // Scene switch
-  for (let i = 0; i < 6; i++) {
-    if (keyp('Digit' + (i + 1)) || keyp('Numpad' + (i + 1)) || btnp(13 + i)) {
-      if (scene !== i) {
-        scene = i;
-        void buildScene(i);
-      }
-    }
-  }
-}
-
-// ── Draw (2D HUD) ─────────────────────────────────────────────────────────────
-export function draw() {
-  drawRoundedRect(0, 0, 320, 14, 0, rgba8(0, 0, 0, 150));
-  printCentered(
-    '[1]Grid [2]Metal [3]Gem [4]Mix [5]Glow [6]Shape',
-    160,
-    2,
-    rgba8(220, 200, 150, 255)
-  );
-
-  // Scene-specific info
-  if (scene === 0) {
-    print('METALNESS  0 ──────── 1', 50, 218, 0x6aadcc, 1);
-    print('R', 2, 80, 0xcc8844, 1);
-    print('O', 2, 88, 0xcc8844, 1);
-    print('U', 2, 96, 0xcc8844, 1);
-    print('G', 2, 104, 0xcc8844, 1);
-    print('H', 2, 112, 0xcc8844, 1);
-  }
-
-  drawRoundedRect(0, 224, 320, 16, 0, rgba8(0, 0, 0, 130));
-  print(
-    'Scene: ' + SCENE_NAMES[scene] + '   [WASD] Orbit  [QE] Zoom',
-    6,
-    226,
-    rgba8(110, 110, 110, 220)
-  );
-}
+let time = 0;
+let orbit = 0;
+let tilt = 0;
+let zoom = 1;
+let autoOrbit = true;
+let spinners = []; // { id, axis: [x,y,z], speed }
+let bobbers = []; // { id, x, y, z, amp, phase }
+let legend = []; // { name, props }
+let sweepLight = null;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function lerpHex(a, b, t) {
-  const ar = (a >> 16) & 0xff,
-    ag = (a >> 8) & 0xff,
-    ab = a & 0xff;
-  const br = (b >> 16) & 0xff,
-    bg = (b >> 8) & 0xff,
-    bb = b & 0xff;
-  return (
-    (Math.round(ar + (br - ar) * t) << 16) |
-    (Math.round(ag + (bg - ag) * t) << 8) |
-    Math.round(ab + (bb - ab) * t)
-  );
+function sphere(r, color, pos, props, segments = 64) {
+  const id = createSphere(r, color, pos, segments);
+  setPBRProperties(id, { color, ...props });
+  return id;
+}
+
+function pedestal(x, z, h = 0.5, r = 0.9) {
+  const id = createCylinder(r, r * 1.08, h, 0x1a1d24, [x, -3 + h / 2, z]);
+  setPBRProperties(id, { metalness: 0.2, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.15 });
+  return id;
+}
+
+function mirrorFloor(roughness = 0.12) {
+  const id = createPlane(80, 80, 0x0b0d12, [0, -3, 0]);
+  setRotation(id, -Math.PI / 2, 0, 0);
+  setPBRProperties(id, { metalness: 0.9, roughness, envMapIntensity: 1.2 });
+}
+
+function note(name, props) {
+  legend.push({ name, props });
+}
+
+// ── Scenes ───────────────────────────────────────────────────────────────────
+function buildMatrix() {
+  const S = 2.3;
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      sphere(0.92, 0xe8c07a, [(col - 2) * S, (2 - row) * S + 1.2, 0], {
+        metalness: col / 4,
+        roughness: row / 4,
+        envMapIntensity: 1.2,
+      });
+    }
+  }
+  note('Gold-tinted base', '');
+  note('metalness', '0 -> 1 across');
+  note('roughness', '0 -> 1 down');
+}
+
+function buildMetals() {
+  mirrorFloor(0.2);
+  const metals = [
+    ['Gold', 0xffc94d, 0.12],
+    ['Chrome', 0xf2f4f7, 0.02],
+    ['Copper', 0xf08a5d, 0.18],
+    ['Rose Gold', 0xf3b3a6, 0.1],
+    ['Silver', 0xdcdfe4, 0.25],
+    ['Brass', 0xd6b04a, 0.32],
+    ['Cobalt', 0x5c7cff, 0.14],
+    ['Gunmetal', 0x4a4e58, 0.4],
+  ];
+  metals.forEach(([name, color, roughness], i) => {
+    const a = (i / metals.length) * Math.PI * 2;
+    const x = Math.cos(a) * 5.4;
+    const z = Math.sin(a) * 5.4;
+    pedestal(x, z);
+    const id = sphere(0.95, color, [x, -1.55, z], { metalness: 1, roughness, envMapIntensity: 1.3 });
+    bobbers.push({ id, x, y: -1.55, z, amp: 0.12, phase: i });
+    note(name, `rough ${roughness.toFixed(2)}`);
+  });
+  const ring = createTorus(1.7, 0.55, 0xb8bcc6, [0, 0.4, 0]);
+  // (anisotropy needs per-vertex tangents the built-in torus doesn't have; it
+  // produced NaNs that bloom spread across the whole frame.)
+  setPBRProperties(ring, { metalness: 1, roughness: 0.22, clearcoat: 0.6, envMapIntensity: 1.4 });
+  spinners.push({ id: ring, axis: [0.4, 0.9, 0.2], speed: 0.6 });
+  note('Titanium ring', 'metal + clearcoat');
+}
+
+function buildGems() {
+  mirrorFloor(0.08);
+  // Neon bars behind the glass so the refraction has something to bend.
+  [0x22e6ff, 0xff2bd6, 0xffd23f, 0x7cff4f, 0x6a5cff].forEach((c, i) => {
+    const id = createCube(0.35, 7, 0.35, c, [(i - 2) * 1.6, 0.5, -4.5]);
+    setPBRProperties(id, { color: c, emissive: c, emissiveIntensity: 2.5, roughness: 0.4 });
+  });
+  const gems = [
+    ['Clear glass', 0xffffff, { transmission: 1, ior: 1.5, thickness: 1.6, roughness: 0.02 }, 64],
+    ['Water', 0xd8f4ff, { transmission: 1, ior: 1.33, thickness: 2, roughness: 0.04, attenuationColor: 0x58b8ff, attenuationDistance: 3 }, 64],
+    ['Diamond', 0xffffff, { transmission: 1, ior: 2.33, thickness: 1.2, roughness: 0, dispersion: 6 }, 7],
+    ['Ruby', 0xffd0d6, { transmission: 1, ior: 1.77, thickness: 1.4, roughness: 0.02, attenuationColor: 0xff1f4b, attenuationDistance: 0.8, dispersion: 2 }, 9],
+    ['Emerald', 0xd8ffe6, { transmission: 1, ior: 1.58, thickness: 1.4, roughness: 0.03, attenuationColor: 0x15d66b, attenuationDistance: 0.8, dispersion: 1.5 }, 10],
+    ['Sapphire', 0xd8e4ff, { transmission: 1, ior: 1.77, thickness: 1.4, roughness: 0.02, attenuationColor: 0x2a5cff, attenuationDistance: 0.8, dispersion: 2 }, 8],
+  ];
+  gems.forEach(([name, color, props, segments], i) => {
+    const x = (i - 2.5) * 2.1;
+    pedestal(x, 0, 0.45, 0.75);
+    const id = sphere(0.85, color, [x, -1.65, 0], { metalness: 0, envMapIntensity: 1.2, ...props }, segments);
+    spinners.push({ id, axis: [0.15, 1, 0], speed: 0.5 + i * 0.05 });
+    note(name, `ior ${props.ior}${props.dispersion ? ` disp ${props.dispersion}` : ''}`);
+  });
+}
+
+function buildCoatings() {
+  mirrorFloor(0.25);
+  const items = [
+    ['Candy paint', 0xb3001e, { metalness: 0.6, roughness: 0.45, clearcoat: 1, clearcoatRoughness: 0.03 }, 'clearcoat'],
+    ['Pearl', 0xf4efe6, { metalness: 0, roughness: 0.3, iridescence: 1, iridescenceIOR: 1.6, sheen: 0.4, sheenColor: 0xffe0f0 }, 'iridescence+sheen'],
+    ['Soap bubble', 0xffffff, { transmission: 1, ior: 1.1, thickness: 0.05, roughness: 0, iridescence: 1, iridescenceIOR: 1.33 }, 'thin film'],
+    ['Velvet', 0x5b1a8c, { metalness: 0, roughness: 0.9, sheen: 1, sheenColor: 0xd28cff, sheenRoughness: 0.35 }, 'sheen'],
+    ['Glazed ceramic', 0x2f8f9d, { metalness: 0, roughness: 0.55, clearcoat: 1, clearcoatRoughness: 0.08 }, 'clearcoat'],
+  ];
+  items.forEach(([name, color, props, label], i) => {
+    const x = (i - 2) * 2.6;
+    pedestal(x, 0);
+    const id = sphere(1, color, [x, -1.5, 0], { envMapIntensity: 1.2, ...props });
+    bobbers.push({ id, x, y: -1.5, z: 0, amp: 0.1, phase: i * 1.3 });
+    note(name, label);
+  });
+}
+
+function buildNeon() {
+  mirrorFloor(0.04);
+  [
+    [0x22e6ff, -4],
+    [0xff2bd6, 0],
+    [0xffd23f, 4],
+  ].forEach(([c, x], i) => {
+    const ring = createTorus(1.4, 0.16, c, [x, 0, 0]);
+    setPBRProperties(ring, { color: c, emissive: c, emissiveIntensity: 1.6, roughness: 0.3 });
+    spinners.push({ id: ring, axis: [0, 1, 0.3], speed: 0.4 + i * 0.2 });
+    const cap = createCapsule(0.35, 1.6, c, [x, -2, 2.5]);
+    setPBRProperties(cap, { color: c, emissive: c, emissiveIntensity: 1.1, roughness: 0.2 });
+  });
+  const ball = sphere(1.2, 0xf2f4f7, [0, -1.8, -3.5], { metalness: 1, roughness: 0.02 });
+  bobbers.push({ id: ball, x: 0, y: -1.8, z: -3.5, amp: 0.25, phase: 0 });
+  note('Neon rings', 'emissive 1.6');
+  note('Mirror floor', 'rough 0.04');
+  note('Chrome sphere', 'rough 0.02');
+}
+
+function buildShowroom() {
+  mirrorFloor(0.15);
+  const disc = createCylinder(5, 5.2, 0.4, 0x15171d, [0, -2.8, 0]);
+  setPBRProperties(disc, { metalness: 0.5, roughness: 0.25, clearcoat: 1 });
+  spinners.push({ id: disc, axis: [0, 1, 0], speed: 0.2 });
+
+  const chrome = sphere(1.1, 0xf2f4f7, [-2.6, -1.4, 0], { metalness: 1, roughness: 0.03 });
+  const glass = createTorus(1.1, 0.42, 0xffffff, [0, -0.9, -1.6]);
+  setPBRProperties(glass, { transmission: 1, ior: 1.5, thickness: 1, roughness: 0.02, dispersion: 3 });
+  const gold = createCapsule(0.6, 1.6, 0xffc94d, [2.6, -1.3, 0]);
+  setPBRProperties(gold, { color: 0xffc94d, metalness: 1, roughness: 0.15 });
+  const paint = createCone(0.9, 1.9, 0x0a3cff, [0, -1.5, 2]);
+  setPBRProperties(paint, { color: 0x0a3cff, metalness: 0.5, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.04 });
+  for (const id of [chrome, glass, gold, paint]) spinners.push({ id, axis: [0.2, 1, 0], speed: 0.35 });
+  note('Chrome sphere', '');
+  note('Glass torus', 'disp 3');
+  note('Gold capsule', '');
+  note('Paint cone', 'clearcoat');
+}
+
+function buildPovRay() {
+  // The classic: an infinite checkerboard, a mirror ball, a glass ball and a
+  // shiny red one under a blue sky_sphere.
+  const N = 12;
+  const T = 2.5;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const white = (i + j) % 2 === 0;
+      const c = white ? 0xf2f2f2 : 0x101010;
+      const id = createPlane(T, T, c, [(i - N / 2 + 0.5) * T, -3, (j - N / 2 + 0.5) * T]);
+      setRotation(id, -Math.PI / 2, 0, 0);
+      setPBRProperties(id, { color: c, metalness: 0, roughness: 0.25, clearcoat: 0.6, clearcoatRoughness: 0 });
+    }
+  }
+  sphere(1.6, 0xffffff, [-2.4, -1.4, 0], { metalness: 1, roughness: 0 });
+  sphere(1.2, 0xffffff, [1.6, -1.8, 1.4], { transmission: 1, ior: 1.5, thickness: 2, roughness: 0 });
+  sphere(1, 0xd01010, [2.8, -2, -2.4], { metalness: 0, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0 });
+  const t = createTorus(1, 0.3, 0xffcc33, [-0.4, -2.7, 3]);
+  setRotation(t, Math.PI / 2, 0, 0);
+  setPBRProperties(t, { color: 0xffcc33, metalness: 1, roughness: 0.15 });
+  note('plane', 'checker White Black');
+  note('sphere', 'reflection 0.8');
+  note('sphere', 'ior 1.5 (glass)');
+  note('sphere', 'phong 1 (red)');
+  note('torus', 'metal gold');
+  povStart = nowMs();
+}
+
+const BUILDERS = [buildMatrix, buildMetals, buildGems, buildCoatings, buildNeon, buildShowroom, buildPovRay];
+
+function buildScene(idx) {
+  scene = (idx + SCENES.length) % SCENES.length;
+  clearScene();
+  spinners = [];
+  bobbers = [];
+  legend = [];
+  const s = SCENES[scene];
+  applySky(s);
+  applySceneLook(s);
+  clearFog();
+  setAmbientLight(0x202634, 0.35);
+  setLightDirection(-0.5, -1, -0.4);
+  setLightColor(0xffffff);
+  sweepLight = createPointLight(0xffffff, 18, 30, 0, 4, 6);
+  BUILDERS[scene]();
+  orbit = scene === 0 ? 0 : 0.6;
+  tilt = 0;
+  zoom = 1;
+}
+
+// Skies. HDR photo skies and procedural environment skies are web-runtime
+// features; hosts without them (e.g. the RetroArch core) get a gradient sky.
+function applySky(s) {
+  if (s.hdr && typeof createHDRSkybox === 'function') {
+    const p = createHDRSkybox(HDR(s.hdr), { blur: scene === 0 ? 0.3 : 0.05, intensity: s.skyIntensity ?? 1 });
+    p?.catch?.(() => createEnvironmentSkybox?.('studio'));
+  } else if (typeof createEnvironmentSkybox === 'function') {
+    if (s.pov) createEnvironmentSkybox('studio', { top: 0x1c48d8, horizon: 0xcfe4ff, bottom: 0x7f9fd6, intensity: 0.5 });
+    else createEnvironmentSkybox(s.procedural || 'neon', { blur: 0.05, intensity: s.skyIntensity ?? 1 });
+  } else {
+    createGradientSkybox?.(s.pov ? 0x1c48d8 : 0x1a2a6b, s.pov ? 0xcfe4ff : 0xff8a3d);
+  }
+}
+
+// Modern scenes: filmic tone mapping, bloom, FXAA. POV-Ray: none of that --
+// hard aliased edges and plain linear output, like a 1995 TGA. (Pixelation
+// would also blur the 2D status bar, so the retro look comes from no AA.)
+function applySceneLook(s) {
+  if (s.pov) {
+    disableBloom();
+    disableVignette();
+    disableFXAA();
+    setToneMapping?.('linear', 1);
+  } else {
+    setToneMapping?.('aces', 1.15);
+    enableBloom(0.9, 0.5, 0.82);
+    enableVignette(0.9, 0.85);
+    enableFXAA();
+  }
+}
+
+// ── Lifecycle ────────────────────────────────────────────────────────────────
+export function init() {
+  setCameraFOV(52);
+  buildScene(0);
+}
+
+export function update(dt) {
+  time += dt;
+  for (let i = 0; i < SCENES.length; i++) {
+    if (keyp(`Digit${i + 1}`)) buildScene(i);
+  }
+  if (keyp('Tab') || keyp('Space') || keyp('Enter')) buildScene(scene + 1);
+  if (keyp('KeyP')) autoOrbit = !autoOrbit;
+  if (keyp('KeyR') && SCENES[scene].pov) povStart = nowMs();
+
+  const s = SCENES[scene];
+  if (key('KeyA') || key('ArrowLeft')) orbit -= dt * 1.2;
+  if (key('KeyD') || key('ArrowRight')) orbit += dt * 1.2;
+  if (key('KeyW') || key('ArrowUp')) tilt = Math.min(1, tilt + dt);
+  if (key('KeyS') || key('ArrowDown')) tilt = Math.max(-0.6, tilt - dt);
+  if (key('KeyQ')) zoom = Math.max(0.55, zoom - dt * 0.6);
+  if (key('KeyE')) zoom = Math.min(1.6, zoom + dt * 0.6);
+  // The matrix sways gently so it stays readable; the other sets orbit slowly.
+  // POV-Ray holds still: you don't move the camera mid-trace.
+  if (autoOrbit && !s.sway && !s.pov) orbit += dt * 0.12;
+
+  const yaw = s.sway && autoOrbit ? orbit + Math.sin(time * 0.35) * s.sway : orbit;
+  const dist = s.dist * zoom;
+  setCameraPosition(Math.sin(yaw) * dist, s.height + tilt * 4, Math.cos(yaw) * dist);
+  setCameraTarget(0, scene === 0 ? 1.2 : -1, 0);
+
+  for (const sp of spinners) {
+    rotateMesh(sp.id, sp.axis[0] * sp.speed * dt, sp.axis[1] * sp.speed * dt, sp.axis[2] * sp.speed * dt);
+  }
+  for (const b of bobbers) setPosition(b.id, b.x, b.y + Math.sin(time * 1.4 + b.phase) * b.amp, b.z);
+  // A light that sweeps around the set so highlights glide across surfaces.
+  if (sweepLight) setPointLightPosition(sweepLight, Math.cos(time * 0.6) * 8, 5, Math.sin(time * 0.6) * 8);
+}
+
+function drawPovRay() {
+  const elapsed = (nowMs() - povStart) / 1000;
+  const line = Math.min(POV_LINES, Math.floor((elapsed / POV_SECONDS) * POV_LINES));
+  const y = Math.floor((line / POV_LINES) * 330);
+  // Not traced yet: black, like the VGA screen before the scanline reaches it.
+  if (y < 330) rectfill(0, y, 640, 330 - y, rgba8(0, 0, 0, 255));
+  if (line < POV_LINES) rectfill(0, Math.max(0, y - 1), 640, 2, rgba8(255, 255, 255, 140));
+  // DOS status bar
+  rectfill(0, 330, 640, 30, rgba8(0, 0, 170, 255));
+  print('POV-Ray for DOS 2.2   pbr.pov  320x240  +A0.3 +Q9', 8, 334, rgba8(255, 255, 85, 255));
+  if (line < POV_LINES) {
+    print(`Rendering line ${line + 1} of ${POV_LINES}...`, 8, 347, rgba8(255, 255, 255, 255));
+    rectfill(300, 348, 200, 7, rgba8(0, 0, 90, 255));
+    rectfill(300, 348, Math.floor((line / POV_LINES) * 200), 7, rgba8(85, 255, 255, 255));
+  } else {
+    const secs = POV_SECONDS * 37.2; // what it took on a 486DX2/66
+    print(`Done. Total time ${Math.floor(secs / 60)}m ${Math.round(secs % 60)}s   76800 pixels   R = re-trace`, 8, 347, rgba8(85, 255, 85, 255));
+  }
+}
+
+export function draw() {
+  if (SCENES[scene].pov) {
+    drawPovRay();
+    print('7 POV-Ray 1995   1-6 modern scenes   Tab next', 8, 6, rgba8(170, 170, 170, 255));
+    return;
+  }
+  // Scene tabs
+  rectfill(0, 0, 640, 18, rgba8(6, 8, 14, 190));
+  let x = 6;
+  SCENES.forEach((sc, i) => {
+    const label = `${i + 1} ${sc.name}`;
+    const w = label.length * 6 + 6;
+    if (i === scene) rectfill(x - 3, 2, w, 14, rgba8(120, 90, 255, 200));
+    print(label, x, 6, i === scene ? rgba8(255, 255, 255, 255) : rgba8(150, 160, 190, 255));
+    x += w + 2;
+  });
+
+  // Caption
+  const s = SCENES[scene];
+  rectfill(0, 330, 640, 30, rgba8(6, 8, 14, 170));
+  print(`${s.name.toUpperCase()}  skybox: ${s.sky}`, 8, 335, rgba8(255, 214, 120, 255));
+  print(s.note, 8, 347, rgba8(190, 200, 225, 255));
+
+  // Material legend
+  const lh = 11;
+  const top = 26;
+  rectfill(458, top - 4, 180, legend.length * lh + 8, rgba8(6, 8, 14, 150));
+  legend.forEach((l, i) => {
+    print(l.name, 464, top + i * lh, rgba8(235, 240, 255, 255));
+    if (l.props) print(l.props, 556, top + i * lh, rgba8(140, 150, 185, 255));
+  });
+
+  print('1-7/Tab scene  WASD orbit  QE zoom  P pause', 8, 22, rgba8(110, 120, 150, 255));
 }

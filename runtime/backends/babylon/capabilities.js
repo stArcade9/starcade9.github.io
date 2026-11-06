@@ -8,6 +8,7 @@ export const BABYLON_BACKEND_CAPABILITIES = Object.freeze({
   rendererAccess: true,
   pointLights: true,
   instancing: true,
+  meshOptions: true,
   lod: true,
   voxModels: true,
   raycast: true,

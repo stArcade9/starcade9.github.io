@@ -3,7 +3,9 @@
 // Spawns N small cubes via a single MultiMeshInstance3D and animates them
 // in a wave grid. One draw call regardless of count.
 
-const N = 32;        // grid side
+const { print } = nova64.draw;
+
+const N = 32; // grid side
 const COUNT = N * N; // total instances
 let multi = 0;
 let elapsed = 0;
@@ -58,12 +60,15 @@ export function update(dt) {
     const z = Math.floor(i / N) - N / 2;
     const d = Math.sqrt(x * x + z * z);
     const y = Math.sin(d * 0.45 - elapsed * 2.5) * 0.9;
-    cmds[i] = ['instance.setTransform', {
-      handle: multi,
-      index: i,
-      position: [x, y, z],
-      rotation: [0, elapsed * 0.5 + i * 0.01, 0],
-    }];
+    cmds[i] = [
+      'instance.setTransform',
+      {
+        handle: multi,
+        index: i,
+        position: [x, y, z],
+        rotation: [0, elapsed * 0.5 + i * 0.01, 0],
+      },
+    ];
   }
   engine.flush(cmds);
 }

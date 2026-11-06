@@ -121,8 +121,8 @@ nova64.draw.pset(x, y, color);
 // Shapes
 nova64.draw.rectfill(x, y, w, h, color);
 nova64.draw.rect(x, y, w, h, color);
-circfill(x, y, r, color);
-circ(x, y, r, color);
+nova64.draw.circfill(x, y, r, color);
+nova64.draw.circ(x, y, r, color);
 nova64.draw.line(x0, y0, x1, y1, color);
 
 // Text

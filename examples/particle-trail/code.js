@@ -2,7 +2,7 @@
 // Shows: createEmitter2D, following pointer/touch, color gradients, BM.ADD
 
 const { BM, cls, line, print, screenHeight, screenWidth } = nova64.draw;
-const { createEmitter2D, drawEmitter2D, updateEmitter2D } = nova64.fx;
+const { burstEmitter2D, createEmitter2D, drawEmitter2D, updateEmitter2D } = nova64.fx;
 const { color } = nova64.util;
 
 let W = 640,
@@ -113,7 +113,7 @@ export function update(dt) {
 
   // Occasional spark burst when moving fast
   if (spd > 100 && Math.random() < 0.15) {
-    burst(sparkEmitter, (8 + 0) | (Math.random() * 12));
+    burstEmitter2D(sparkEmitter, (8 + 0) | (Math.random() * 12));
   }
 
   updateEmitter2D(trailEmitter, dt);

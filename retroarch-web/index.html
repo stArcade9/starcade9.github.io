@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nova64 RetroArch Web</title>
+    <style>
+      :root {
+        --bg: #000;
+        --fg: #9fb4ff;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font: 13px/1.4 ui-monospace, Menlo, monospace;
+        overflow: hidden;
+      }
+      #canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        image-rendering: pixelated;
+      }
+      #status {
+        position: absolute;
+        left: 12px;
+        bottom: 10px;
+        pointer-events: none;
+        white-space: pre;
+      }
+      #status.hidden {
+        display: none;
+      }
+      /* On-screen gamepad for touch devices (phones/tablets have no keyboard).
+         Shown on coarse pointers or with ?touch=1; ?touch=0 hides it. */
+      #touchpad {
+        position: fixed;
+        inset: auto 0 0 0;
+        display: none;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-bottom));
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+        z-index: 5;
+      }
+      #touchpad.on {
+        display: flex;
+      }
+      .tp-btn {
+        pointer-events: auto;
+        touch-action: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.85);
+        font: 700 13px system-ui, sans-serif;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1.5px solid rgba(255, 255, 255, 0.28);
+        backdrop-filter: blur(6px);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .tp-btn.down {
+        background: rgba(167, 139, 250, 0.55);
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+      .tp-dpad {
+        display: grid;
+        grid-template-columns: repeat(3, 52px);
+        grid-template-rows: repeat(3, 52px);
+        gap: 4px;
+      }
+      .tp-dpad .tp-btn {
+        border-radius: 10px;
+        font-size: 18px;
+      }
+      .tp-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 60px);
+        gap: 10px;
+        align-items: end;
+      }
+      .tp-actions .tp-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 16px;
+      }
+      .tp-actions .tp-start {
+        grid-column: span 2;
+        width: auto;
+        height: 34px;
+        border-radius: 17px;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" tabindex="0"></canvas>
+    <div id="touchpad" aria-hidden="true">
+      <div class="tp-dpad">
+        <span></span><div class="tp-btn" data-key="ArrowUp">▲</div><span></span>
+        <div class="tp-btn" data-key="ArrowLeft">◀</div><span></span><div class="tp-btn" data-key="ArrowRight">▶</div>
+        <span></span><div class="tp-btn" data-key="ArrowDown">▼</div><span></span>
+      </div>
+      <div class="tp-actions">
+        <div class="tp-btn" data-key="KeyX">X</div>
+        <div class="tp-btn" data-key="Space">A</div>
+        <div class="tp-btn" data-key="KeyZ">B</div>
+        <span></span>
+        <div class="tp-btn tp-start" data-key="Enter">START</div>
+      </div>
+    </div>
+    <div id="status">Loading Nova64 core…</div>
+    <script type="module">
+      // Boots RetroArch web with the Nova64 libretro core and runs one cart.
+      //   ?cart=/examples/hello-world/code.js   (same-origin path or URL)
+      //   ?cart=message                         (cart bytes sent via postMessage)
+      //   &name=my-game.nova                    (optional file name; keeps .nova)
+      // Exposes window.nova64RetroArch.state for tests: loading | running | error.
+      const status = document.getElementById('status');
+      const canvas = document.getElementById('canvas');
+      const api = (window.nova64RetroArch = { state: 'loading', log: [] });
+      const params = new URLSearchParams(location.search);
+      const cartUrl = params.get('cart') || '/examples/hello-world/code.js';
+
+      function fail(message) {
+        api.state = 'error';
+        api.error = message;
+        status.textContent = 'Error: ' + message;
+        status.classList.remove('hidden');
+      }
+
+      function record(text) {
+        api.log.push(text);
+        if (api.log.length > 500) api.log.shift();
+        console.log('[retroarch]', text);
+      }
+
+      // Cart file name inside the core's filesystem. Keeps .js / .nova so the
+      // core picks the right loader; anything else becomes <name>.js.
+      function cartFileName(raw) {
+        const base = String(raw || 'cart.js').replace(/[^A-Za-z0-9._-]/g, '-').slice(-80) || 'cart.js';
+        return base.endsWith('.js') || base.endsWith('.nova') ? base : base + '.js';
+      }
+
+      // ?cart=message: the embedding page sends the cart bytes instead of a
+      // URL (used for files dropped into the OS shell, which a cross-origin
+      // iframe can't fetch). Handshake: we post {type:'nova64:ready'} to the
+      // parent; it replies {type:'nova64:cart', name, bytes: ArrayBuffer}.
+      function receiveCart() {
+        status.textContent = 'Waiting for cart…';
+        return new Promise((resolve) => {
+          window.addEventListener('message', function onMessage(e) {
+            if (e.source !== window.parent || !e.data || e.data.type !== 'nova64:cart') return;
+            window.removeEventListener('message', onMessage);
+            resolve({ bytes: new Uint8Array(e.data.bytes), name: cartFileName(e.data.name) });
+          });
+          window.parent.postMessage({ type: 'nova64:ready' }, '*');
+        });
+      }
+
+      async function loadCart() {
+        if (cartUrl === 'message') return receiveCart();
+        status.textContent = 'Fetching cart ' + cartUrl + '…';
+        const res = await fetch(cartUrl);
+        if (!res.ok) throw new Error('cart fetch failed: ' + res.status + ' ' + cartUrl);
+        const derived = cartUrl.split('?')[0].split('/').filter(Boolean).slice(-2).join('-');
+        return { bytes: new Uint8Array(await res.arrayBuffer()), name: cartFileName(params.get('name') || derived) };
+      }
+
+      async function boot() {
+        const { bytes: cart, name } = await loadCart();
+
+        status.textContent = 'Loading Nova64 core…';
+        const { default: createModule } = await import('./nova64_libretro.js');
+        const mod = await createModule({
+          noInitialRun: true,
+          canvas,
+          print: record,
+          printErr: record,
+          locateFile: (path) => new URL(path, import.meta.url).href,
+        });
+
+        const home = '/home/web_user/retroarch/userdata';
+        mod.FS.mkdirTree(home + '/content');
+        mod.FS.writeFile(
+          home + '/retroarch.cfg',
+          [
+            'video_driver = "gl"',
+            'audio_driver = "openal"',
+            'menu_driver = "rgui"',
+            'pause_nonactive = "false"',
+            'video_font_enable = "false"',
+            'input_menu_toggle = "f1"',
+            '',
+          ].join('\n')
+        );
+        const cartPath = home + '/content/' + name;
+        mod.FS.writeFile(cartPath, cart);
+
+        // RetroArch reads the canvas backing size at boot ("Could not get
+        // screen dimensions" otherwise) — match it to the window.
+        const fit = () => {
+          const dpr = window.devicePixelRatio || 1;
+          const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+          const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+          if (canvas.width !== w || canvas.height !== h) {
+            if (mod.setCanvasSize) mod.setCanvasSize(w, h);
+            else {
+              canvas.width = w;
+              canvas.height = h;
+            }
+          }
+        };
+        fit();
+        window.addEventListener('resize', fit);
+
+        api.module = mod;
+        mod.callMain(['-v', '-c', home + '/retroarch.cfg', cartPath]);
+        api.state = 'running';
+        status.classList.add('hidden');
+        canvas.focus();
+        canvas.addEventListener('pointerdown', () => canvas.focus());
+      }
+
+      boot().catch((err) => fail(err && err.message ? err.message : String(err)));
+
+      // ── Touch gamepad ─────────────────────────────────────────────────────
+      // Each button sends the keyboard key RetroArch already maps (arrows →
+      // d-pad, X/Z → A/B, Enter → Start); carts also read Space/Enter directly.
+      // Multi-touch: every pointer tracks its own button, so a d-pad direction
+      // and an action can be held together.
+      (function setupTouchpad() {
+        const pad = document.getElementById('touchpad');
+        const pref = params.get('touch');
+        const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (pref === '0' || (pref !== '1' && !coarse)) return;
+        pad.classList.add('on');
+        const KEY_INFO = {
+          ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], ArrowLeft: ['ArrowLeft', 37],
+          ArrowRight: ['ArrowRight', 39], KeyX: ['x', 88], KeyZ: ['z', 90], Space: [' ', 32], Enter: ['Enter', 13],
+        };
+        const held = new Map(); // pointerId -> code
+        function send(type, code) {
+          const [key, keyCode] = KEY_INFO[code];
+          const ev = new KeyboardEvent(type, { key, code, bubbles: true, cancelable: true });
+          // Emscripten's handlers read the legacy keyCode/which fields.
+          Object.defineProperty(ev, 'keyCode', { get: () => keyCode });
+          Object.defineProperty(ev, 'which', { get: () => keyCode });
+          (document.activeElement || document).dispatchEvent(ev);
+        }
+        function press(id, btn) {
+          const code = btn.dataset.key;
+          if (held.get(id) === code) return;
+          release(id);
+          held.set(id, code);
+          btn.classList.add('down');
+          send('keydown', code);
+        }
+        function release(id) {
+          const code = held.get(id);
+          if (!code) return;
+          held.delete(id);
+          if (![...held.values()].includes(code)) {
+            pad.querySelectorAll(`[data-key="${code}"]`).forEach((b) => b.classList.remove('down'));
+            send('keyup', code);
+          }
+        }
+        const btnAt = (x, y) => {
+          const el = document.elementFromPoint(x, y);
+          return el && el.closest ? el.closest('#touchpad .tp-btn') : null;
+        };
+        pad.addEventListener('pointerdown', (e) => {
+          const btn = e.target.closest('.tp-btn');
+          if (!btn) return;
+          e.preventDefault();
+          canvas.focus();
+          press(e.pointerId, btn);
+        });
+        // Sliding a thumb across the d-pad switches direction without lifting.
+        window.addEventListener('pointermove', (e) => {
+          if (!held.has(e.pointerId)) return;
+          const btn = btnAt(e.clientX, e.clientY);
+          if (btn) press(e.pointerId, btn);
+          else release(e.pointerId);
+        });
+        for (const t of ['pointerup', 'pointercancel']) window.addEventListener(t, (e) => release(e.pointerId));
+        api.touchpad = true;
+      })();
+    </script>
+  </body>
+</html>

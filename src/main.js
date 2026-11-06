@@ -49,6 +49,7 @@ import { particles2DApi } from '../runtime/api-particles-2d.js';
 import { tweenApi } from '../runtime/tween.js';
 import { DebugPanel } from '../runtime/debug-panel.js';
 import { registerCartResetHook } from '../runtime/cart-reset.js';
+import { createCoreCompat } from '../runtime/core-compat.js';
 import { createStudioCartFunction } from '../runtime/studio-executor.js';
 import { createG1WebBridge } from '../runtime/g1-web-bridge.js';
 import { acceptExecuteCode, StudioMessageType } from '../runtime/studio-protocol.js';
@@ -237,6 +238,39 @@ canvasUIApi().exposeTo(nova64api);
 // Connect input system to UI system for mouse events
 iApi.connectUI(uiApiInstance.setMousePosition, uiApiInstance.setMouseButton);
 
+// Libretro-core parity helpers (printBold, hline, setSkyColor, bursts, wave
+// manager, ...). Built on the primitives above; never overrides a native API.
+const coreCompat = createCoreCompat({
+  print: (t, x, y, c, s) => nova64api.print(t, x, y, c, s),
+  line: (a, b, c, d, col) => nova64api.line(a, b, c, d, col),
+  circle: (x, y, r, c, fill) => nova64api.circle(x, y, r, c, fill),
+  pset: (x, y, c) => nova64api.pset(x, y, c),
+  setInstanceTransform: (...a) => nova64api.setInstanceTransform(...a),
+  createGradientSkybox: (top, bottom) => nova64api.createGradientSkybox(top, bottom),
+  clearSkybox: () => nova64api.clearSkybox(),
+  white: nova64api.rgba8(255, 255, 255, 255),
+  project: (x, y, z) => {
+    const cam = nova64api.getCamera?.();
+    if (!cam?.isCamera) return { x: 0, y: 0, z: 1, visible: false };
+    cam.updateMatrixWorld();
+    const v = new THREE.Vector3(x, y, z).project(cam);
+    const w = nova64api.screenWidth?.() ?? 640;
+    const h = nova64api.screenHeight?.() ?? 360;
+    return {
+      x: (v.x + 1) * 0.5 * w,
+      y: (1 - v.y) * 0.5 * h,
+      z: v.z,
+      visible: v.z > -1 && v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1,
+    };
+  },
+});
+for (const group of ['draw', 'light', 'scene', 'camera', 'util']) {
+  for (const [name, fn] of Object.entries(coreCompat[group])) {
+    if (!(name in nova64api)) nova64api[name] = fn;
+  }
+}
+registerCartResetHook('core-compat', () => coreCompat.reset());
+
 // Expose grouped-only namespace. Carts use nova64.draw.cls(), nova64.scene.createCube(), etc.
 globalThis.nova64 = buildNamespace(nova64api, NAMESPACE_MAP);
 
@@ -257,6 +291,8 @@ globalThis.nova64.post = {
   setVignette: (darkness, offset) => globalThis.nova64.fx.enableVignette(darkness, offset),
   setFXAA: () => globalThis.nova64.fx.enableFXAA(),
   setGlitch: intensity => globalThis.nova64.fx.enableGlitch(intensity),
+  // Libretro-core carts call setCRT(true); there is no CRT pass on web yet (BACKLOG).
+  setCRT: () => {},
   disable: () => {
     globalThis.nova64.fx.disableBloom?.();
     globalThis.nova64.fx.disableChromaticAberration?.();
@@ -324,9 +360,51 @@ registerCartResetHook('voxel', ({ modulePath }) => {
   nova64api.resetVoxelWorld?.({ restoreDefaults: true, cartPath: modulePath });
 });
 
+// ── Cart error reporting ─────────────────────────────────────────────────────
+// update()/draw() errors are caught so one bad frame doesn't stop the loop, but
+// a broken cart throws the same error every frame (60+ identical console lines
+// a second). Log each distinct error once with its stack, then only a repeat
+// count every few seconds. globalThis.__nova64CartErrors() lists them all for
+// tooling and tests.
+const cartErrors = new Map(); // key -> { phase, message, stack, count, firstAt, lastReport }
+const CART_ERROR_REPEAT_MS = 5000;
+function reportCartError(phase, e) {
+  const message = e && e.message ? e.message : String(e);
+  const key = `${phase}:${message}`;
+  const now = performance.now();
+  const seen = cartErrors.get(key);
+  if (!seen) {
+    cartErrors.set(key, {
+      phase,
+      message,
+      stack: e?.stack || '',
+      count: 1,
+      firstAt: now,
+      lastReport: now,
+    });
+    console.error(`❌ Cart ${phase}() error:`, message, e?.stack || '');
+    return;
+  }
+  seen.count++;
+  if (now - seen.lastReport >= CART_ERROR_REPEAT_MS) {
+    seen.lastReport = now;
+    console.error(`❌ Cart ${phase}() error (repeated ${seen.count}x so far):`, message);
+  }
+}
+globalThis.__nova64CartErrors = () => [...cartErrors.values()].map(x => ({ ...x }));
+
+registerCartResetHook('cart-errors', () => {
+  cartErrors.clear();
+});
+
 registerCartResetHook('scene', () => {
   nova64api.clearScene?.();
   nova64api.clearSkybox?.();
+});
+
+registerCartResetHook('tone-mapping', () => {
+  // setToneMapping is opt-in per cart; the default stays NoToneMapping.
+  nova64api.setToneMapping?.('none', 1);
 });
 
 registerCartResetHook('camera', () => {
@@ -533,7 +611,7 @@ function loop() {
         }
         nova.cart.update(dt);
       } catch (e) {
-        console.error('❌ Cart update() error:', e.message);
+        reportCartError('update', e);
       }
     }
 
@@ -552,7 +630,7 @@ function loop() {
       try {
         nova.cart.draw();
       } catch (e) {
-        console.error('❌ Cart draw() error:', e.message, e.stack);
+        reportCartError('draw', e);
       }
     }
 

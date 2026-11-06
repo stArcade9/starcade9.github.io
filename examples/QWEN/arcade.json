@@ -1,0 +1,87 @@
+{
+  "title": "QWEN Arcade",
+  "tagline": "Games written by a local Qwen model in Nova64 Studio",
+  "article": "/examples/QWEN/blog/teaching-a-local-qwen-to-make-games.html",
+  "games": [
+    {
+      "id": "crystal-cave-collector",
+      "title": "Crystal Cave Collector",
+      "blurb": "A small drone gathers glowing crystals in a dark amethyst cave while…",
+      "description": "Crystal Cave Collector: a small drone gathers glowing crystals in a dark amethyst cave while bats swoop, shadow wisps hunt and rock golems charge; 60 seconds of tense collecting; violet, magenta and i",
+      "path": "/examples/QWEN/crystal-cave-collector/code.js",
+      "cover": "/examples/QWEN/blog/crystal-cave-collector-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "crystal-cave-styled",
+      "title": "Crystal Cave Collector (Styled)",
+      "blurb": "The player pilots a small low-poly drone through a dark cave chamber…",
+      "description": "Crystal Cave Collector: the player pilots a small low-poly drone through a dark cave chamber with WASD/arrows, collecting glowing crystals while avoiding bats that swoop in patterns; a 60-second timer",
+      "path": "/examples/QWEN/crystal-cave-styled/code.js",
+      "cover": "/examples/QWEN/blog/crystal-cave-styled-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "ember-mine-dash",
+      "title": "Ember Mine Dash",
+      "blurb": "A miner sprints through a lava-lit tunnel leaping carts and dodging…",
+      "description": "Ember Mine Dash: a miner sprints through a lava-lit tunnel leaping carts and dodging falling rock; orange and ember red",
+      "path": "/examples/QWEN/ember-mine-dash/code.js",
+      "cover": "/examples/QWEN/blog/ember-mine-dash-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "frost-crypt-of-ymir",
+      "title": "Frost Crypt of Ymir",
+      "blurb": "An icy Norse burial vault",
+      "description": "Frost Crypt of Ymir: an icy Norse burial vault; a party of three (a shieldmaiden, a rune-caster and a hunter) seeks to escape past frost wraiths, draugr and ice wolves; the boss is the Draugr King; pa",
+      "path": "/examples/QWEN/frost-crypt-of-ymir/code.js",
+      "cover": "/examples/QWEN/blog/frost-crypt-of-ymir-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "neon-archive",
+      "title": "Neon Archive",
+      "blurb": "A lone data-runner named VEX breaks into a corrupted corporate archive…",
+      "description": "Neon Archive: a lone data-runner named VEX breaks into a corrupted corporate archive server; enemies are virus swarms, ICE sentinels and rogue cleaners; the boss is the Archive Warden AI; magenta and ",
+      "path": "/examples/QWEN/neon-archive/code.js",
+      "cover": "/examples/QWEN/blog/neon-archive-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "neon-orbit-dodger",
+      "title": "Neon Orbit Dodger",
+      "blurb": "A glowing ship holds the last energy ring at the edge of space",
+      "description": "Neon Orbit Dodger: a glowing ship holds the last energy ring at the edge of space; asteroids and comet hunters swarm in waves; collect energy orbs; deep-space navy with cyan, magenta and solar gold",
+      "path": "/examples/QWEN/neon-orbit-dodger/code.js",
+      "cover": "/examples/QWEN/blog/neon-orbit-dodger-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "shardgrid-runner",
+      "title": "Shardgrid Runner",
+      "blurb": "A neon cyber-grid hover racer in the Indie Odyssey style",
+      "description": "Shardgrid Runner: a neon cyber-grid hover racer in the Indie Odyssey style (teal, magenta and gold on deep navy); steer between lanes to collect data shards and leap firewall gates, speed ramps up, te",
+      "path": "/examples/QWEN/shardgrid-runner/code.js",
+      "cover": "/examples/QWEN/blog/shardgrid-runner-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    },
+    {
+      "id": "torchlit-crypt-run",
+      "title": "Torchlit Crypt Run",
+      "blurb": "A dash down a stone crypt corridor lined with flickering torches",
+      "description": "Torchlit Crypt Run: a dash down a stone crypt corridor lined with flickering torches; dodge fallen pillars, leap swinging blades, grab gold relics; a cursed pharaoh's tomb collapsing behind you; sands",
+      "path": "/examples/QWEN/torchlit-crypt-run/code.js",
+      "cover": "/examples/QWEN/blog/torchlit-crypt-run-title.png",
+      "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+      "status": "passing"
+    }
+  ]
+}

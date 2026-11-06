@@ -4,6 +4,8 @@
 const { cls, print, rectfill, screenHeight, screenWidth } = nova64.draw;
 const { engine } = nova64.scene;
 const { Ease, createTween } = nova64.tween;
+const { ellipsefill } = nova64.util;
+
 const BALLS = [];
 let W = 640,
   H = 360;

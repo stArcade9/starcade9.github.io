@@ -4,6 +4,8 @@
 // box geometry, mesh instance, transform, camera. The cube rotates on its
 // Y axis so the renderer is visibly active.
 
+const { print } = nova64.draw;
+
 let cubeHandle = 0;
 let cameraHandle = 0;
 let elapsed = 0;
@@ -11,7 +13,7 @@ let elapsed = 0;
 function call(method, payload) {
   const r = engine.call(method, payload || {});
   if (r && r.error) {
-	throw new Error(method + ' failed: ' + r.error);
+    throw new Error(method + ' failed: ' + r.error);
   }
   return r;
 }
@@ -25,9 +27,9 @@ export function init() {
 
   // Material
   const mat = call('material.create', {
-	albedo: [0.4, 0.7, 1.0, 1.0],
-	metallic: 0.1,
-	roughness: 0.5,
+    albedo: [0.4, 0.7, 1.0, 1.0],
+    metallic: 0.1,
+    roughness: 0.5,
   }).handle;
 
   // Geometry + mesh
@@ -39,9 +41,9 @@ export function init() {
   // Camera
   cameraHandle = call('camera.create', {}).handle;
   call('transform.set', {
-	handle: cameraHandle,
-	position: [0, 1.5, 4],
-	rotation: [-0.3, 0, 0],
+    handle: cameraHandle,
+    position: [0, 1.5, 4],
+    rotation: [-0.3, 0, 0],
   });
   call('camera.setActive', { handle: cameraHandle });
 
@@ -51,10 +53,10 @@ export function init() {
 export function update(dt) {
   elapsed += dt;
   if (cubeHandle) {
-	call('transform.set', {
-	  handle: cubeHandle,
-	  rotation: [0, elapsed, 0],
-	});
+    call('transform.set', {
+      handle: cubeHandle,
+      rotation: [0, elapsed, 0],
+    });
   }
 }
 

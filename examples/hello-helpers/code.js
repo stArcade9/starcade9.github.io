@@ -14,6 +14,8 @@
 // and walk through with Enter / Space. Read the comments in each handler
 // for the API contract.
 
+const { drawText } = nova64.ui;
+
 let screen = 'boot';
 let level = null;
 let timer = 0;

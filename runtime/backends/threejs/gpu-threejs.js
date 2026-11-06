@@ -382,13 +382,13 @@ export class GpuThreeJS {
 
   setLightColor(color) {
     if (this.mainLight) {
-      this.mainLight.color.setHex(color);
+      this.mainLight.color.setHex(normalizeColorToHex(color));
     }
   }
 
   setAmbientLight(color, intensity) {
     if (this.lights && this.lights.ambient) {
-      this.lights.ambient.color.setHex(color);
+      this.lights.ambient.color.setHex(normalizeColorToHex(color));
       if (typeof intensity === 'number') {
         this.lights.ambient.intensity = intensity;
       }

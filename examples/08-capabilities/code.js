@@ -1,6 +1,8 @@
 // 08-capabilities.js — verifies the capability descriptor shape matches
 // the engine adapter contract v1.0.0.
 
+const { print } = nova64.draw;
+
 const results = [];
 function expect(name, fn) {
   try {
@@ -42,7 +44,7 @@ export function init() {
 
   globalThis.__nova64_assert = {
     total: results.length,
-    passed: results.filter((r) => r.ok).length,
+    passed: results.filter(r => r.ok).length,
     results,
   };
 }

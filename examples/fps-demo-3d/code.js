@@ -20,6 +20,7 @@ const { btn, key, keyp, mouseDown } = nova64.input;
 const { sfx } = nova64.audio;
 const { WADLoader, WADTextureManager, convertWADMap, setWallUVs, t } = nova64.data;
 const { createShake, triggerShake, updateShake } = nova64.util;
+const { print, printCentered } = nova64.draw;
 
 let gameTime = 0;
 let gameState = 'start'; // start, playing, gameover, levelclear, victory
@@ -854,10 +855,16 @@ export function update(dt) {
       }
       // Start triggers — use real key codes / integer btn indices.
       // btn(4) = KeyZ (action A), btn(12) = Enter, btn(13) = Space.
-      if (!pickerConsumed && (
-        mouseDown() || key('Space') || key('Enter') || key('Return') ||
-        btn(4) || btn(12) || btn(13)
-      )) {
+      if (
+        !pickerConsumed &&
+        (mouseDown() ||
+          key('Space') ||
+          key('Enter') ||
+          key('Return') ||
+          btn(4) ||
+          btn(12) ||
+          btn(13))
+      ) {
         startGame(1);
       }
     }

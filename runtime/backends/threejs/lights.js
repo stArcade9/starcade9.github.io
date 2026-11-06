@@ -2,6 +2,7 @@
 // Dynamic point lights created by carts at runtime
 
 import * as THREE from 'three';
+import { normalizeColorToHex } from './materials.js';
 
 export function lightsModule({ scene, cartLights, counters }) {
   function normalizeVectorArgs(x, y, z) {
@@ -48,7 +49,7 @@ export function lightsModule({ scene, cartLights, counters }) {
     z = 0
   ) {
     const { distance, position } = normalizePointLightArgs(distanceOrPosition, x, y, z);
-    const light = new THREE.PointLight(color, intensity, distance);
+    const light = new THREE.PointLight(normalizeColorToHex(color), intensity, distance);
     light.position.set(position[0], position[1], position[2]);
     scene.add(light);
     const id = ++counters.light;
@@ -67,7 +68,7 @@ export function lightsModule({ scene, cartLights, counters }) {
   function setPointLightColor(lightId, color) {
     const light = cartLights.get(lightId);
     if (!light) return false;
-    light.color.setHex(color);
+    light.color.setHex(normalizeColorToHex(color));
     return true;
   }
 

@@ -970,10 +970,34 @@ export function effectsApi(gpu) {
     }
   }
 
+  // === TONE MAPPING ===
+  // The renderer defaults to NoToneMapping so flat cart colours stay vivid.
+  // PBR scenes with bright reflections want a filmic curve instead; carts opt
+  // in, and src/main.js resets it to 'none' when the next cart loads.
+  const TONE_MAPPINGS = {
+    none: THREE.NoToneMapping,
+    linear: THREE.LinearToneMapping,
+    reinhard: THREE.ReinhardToneMapping,
+    cineon: THREE.CineonToneMapping,
+    aces: THREE.ACESFilmicToneMapping,
+    agx: THREE.AgXToneMapping,
+    neutral: THREE.NeutralToneMapping,
+  };
+  function setToneMapping(mode = 'aces', exposure = 1) {
+    const renderer = gpu?.renderer;
+    if (!renderer) return false;
+    const tm = TONE_MAPPINGS[String(mode).toLowerCase()];
+    if (tm === undefined) return false;
+    renderer.toneMapping = tm;
+    renderer.toneMappingExposure = typeof exposure === 'number' && exposure > 0 ? exposure : 1;
+    return true;
+  }
+
   // === EXPOSE API ===
   return {
     exposeTo(target) {
       Object.assign(target, {
+        setToneMapping,
         // Post-processing
         enableBloom: enableBloom,
         disableBloom: disableBloom,

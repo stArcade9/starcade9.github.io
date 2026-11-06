@@ -92,7 +92,15 @@ export function createBabylonPbrApi(self) {
     },
 
     setPBRProperties(meshId, opts = {}) {
-      const root = self._meshes.get(meshId);
+      // Meshes are handed to carts as proxies; resolve them to their numeric id
+      // (looking the proxy up directly never matched, so this always failed).
+      const id =
+        typeof meshId === 'number'
+          ? meshId
+          : typeof meshId?.__meshId === 'number'
+            ? meshId.__meshId
+            : meshId?.valueOf?.();
+      const root = self._meshes.get(id);
       const targets = getMeshTargets(root);
       if (targets.length === 0) return false;
 
@@ -113,6 +121,40 @@ export function createBabylonPbrApi(self) {
         }
         if (opts.opacity !== undefined) {
           material.alpha = clamp01(opts.opacity, material.alpha ?? 1);
+        }
+        if (opts.emissiveIntensity !== undefined && 'emissiveIntensity' in material) {
+          material.emissiveIntensity = Math.max(0, Number(opts.emissiveIntensity) || 0);
+        }
+        // Physical extensions, mapped onto Babylon's PBRMaterial layers so the
+        // same cart reads the same on both backends.
+        if (opts.transmission !== undefined && material.subSurface) {
+          const t = clamp01(opts.transmission, 0);
+          material.subSurface.isRefractionEnabled = t > 0;
+          material.subSurface.refractionIntensity = t;
+          if (opts.ior !== undefined) material.subSurface.indexOfRefraction = Number(opts.ior) || 1.5;
+          if (opts.attenuationColor !== undefined) material.subSurface.tintColor = hexToColor3(opts.attenuationColor);
+        } else if (opts.ior !== undefined) {
+          material.indexOfRefraction = Number(opts.ior) || 1.5;
+        }
+        if (opts.clearcoat !== undefined && material.clearCoat) {
+          material.clearCoat.isEnabled = opts.clearcoat > 0;
+          material.clearCoat.intensity = clamp01(opts.clearcoat, 0);
+          if (opts.clearcoatRoughness !== undefined) {
+            material.clearCoat.roughness = clamp01(opts.clearcoatRoughness, 0);
+          }
+        }
+        if (opts.sheen !== undefined && material.sheen) {
+          material.sheen.isEnabled = opts.sheen > 0;
+          material.sheen.intensity = clamp01(opts.sheen, 0);
+          if (opts.sheenColor !== undefined) material.sheen.color = hexToColor3(opts.sheenColor);
+          if (opts.sheenRoughness !== undefined) material.sheen.roughness = clamp01(opts.sheenRoughness, 0);
+        }
+        if (opts.iridescence !== undefined && material.iridescence) {
+          material.iridescence.isEnabled = opts.iridescence > 0;
+          material.iridescence.intensity = clamp01(opts.iridescence, 0);
+          if (opts.iridescenceIOR !== undefined) {
+            material.iridescence.indexOfRefraction = Number(opts.iridescenceIOR) || 1.3;
+          }
         }
       }
 

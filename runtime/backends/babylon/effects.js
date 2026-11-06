@@ -208,6 +208,11 @@ export function createBabylonEffectsApi(self) {
   }
 
   // === BLOOM ===
+  // Three.js bloom strength -> Babylon DefaultRenderingPipeline bloomWeight.
+  function bloomWeightFor(strength) {
+    return Math.max(0, Number(strength) || 0) * 0.35;
+  }
+
   function normalizeBloomArgs(strengthOrOptions = 1.0, radius = 0.5, threshold = 0.6) {
     if (strengthOrOptions && typeof strengthOrOptions === 'object') {
       return {
@@ -232,11 +237,15 @@ export function createBabylonEffectsApi(self) {
     const p = initPipeline();
     const needsLargeGlow = strength >= 1.0;
     p.bloomEnabled = true;
-    p.bloomWeight = needsLargeGlow ? strength * 5.0 : strength * 2.8;
+    // Calibrated against the Three.js backend (UnrealBloomPass strength) on
+    // hello-world: the old x5 weight + 0.3x threshold were tuned while
+    // setMeshEmissive didn't exist on Babylon, and once emissive surfaces
+    // rendered they blew the frame out to white.
+    p.bloomWeight = bloomWeightFor(strength);
     p.bloomKernel = Math.max(32, Math.round(bloomRadius * (needsLargeGlow ? 768 : 384)));
-    p.bloomThreshold = needsLargeGlow ? Math.max(0, bloomThreshold * 0.3) : bloomThreshold * 0.55;
+    p.bloomThreshold = Math.max(bloomThreshold, 0.7);
     p.bloomScale = needsLargeGlow ? 0.25 : 0.5;
-    enableGlow(Math.max(0.18, strength * 0.8), Math.max(24, Math.round(bloomRadius * 96)));
+    enableGlow(Math.min(0.5, strength * 0.2), Math.max(24, Math.round(bloomRadius * 96)));
     return true;
   }
 
@@ -248,7 +257,7 @@ export function createBabylonEffectsApi(self) {
 
   function setBloomStrength(strength) {
     if (pipeline) {
-      pipeline.bloomWeight = strength >= 1 ? strength * 5.0 : strength * 2.8;
+      pipeline.bloomWeight = bloomWeightFor(strength);
     }
   }
 

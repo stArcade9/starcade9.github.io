@@ -1,0 +1,10 @@
+{
+ "name": "torchlit-crypt-run",
+ "description": "Torchlit Crypt Run: a dash down a stone crypt corridor lined with flickering torches; dodge fallen pillars, leap swinging blades, grab gold relics; a cursed pharaoh's tomb collapsing behind you; sands",
+ "author": "Qwen (Nova64 Studio)",
+ "version": "0.1.0",
+ "category": "qwen",
+ "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+ "run": "3fca0658-23f4-42d9-9934-6e8da504df0b",
+ "qwenStatus": "passing"
+}

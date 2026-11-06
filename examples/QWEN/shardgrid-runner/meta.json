@@ -1,0 +1,10 @@
+{
+ "name": "shardgrid-runner",
+ "description": "Shardgrid Runner: a neon cyber-grid hover racer in the Indie Odyssey style (teal, magenta and gold on deep navy); steer between lanes to collect data shards and leap firewall gates, speed ramps up, te",
+ "author": "Qwen (Nova64 Studio)",
+ "version": "0.1.0",
+ "category": "qwen",
+ "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-6bit-DWQ",
+ "run": "60147c93-f773-438f-a577-af31c1409091",
+ "qwenStatus": "passing"
+}

@@ -5,6 +5,8 @@ const { cls, line, print, rectfill, screenHeight, screenWidth } = nova64.draw;
 const { cam2DFollow, createCamera2D } = nova64.camera;
 const { key, keyp } = nova64.input;
 const { color } = nova64.util;
+const { cam2DApply, cam2DReset } = nova64.camera;
+const { ellipsefill } = nova64.util;
 
 let W = 640,
   H = 360;

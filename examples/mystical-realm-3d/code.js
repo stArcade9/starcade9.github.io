@@ -26,6 +26,7 @@ const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignet
 const { key, keyp } = nova64.input;
 const { sfx } = nova64.audio;
 const {
+  centerX,
   centerY,
   createButton,
   createPanel,
