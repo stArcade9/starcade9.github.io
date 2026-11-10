@@ -23,6 +23,8 @@ export function materialsModule({ gpu, materialCache }) {
       material: options.material || 'standard',
       color: options.color || 0xffffff,
       emissive: options.emissive || 0x000000,
+      emissiveIntensity: options.emissiveIntensity,
+      intensity: options.intensity,
       metalness: options.metalness,
       roughness: options.roughness,
       transparent: options.transparent,
@@ -35,7 +37,11 @@ export function materialsModule({ gpu, materialCache }) {
     const normalized = {
       ...options,
       color: normalizeColorToHex(options.color ?? 0xffffff),
-      ...(options.emissive !== undefined && { emissive: normalizeColorToHex(options.emissive) }),
+      ...(options.emissive !== undefined && {
+        emissive: normalizeColorToHex(
+          options.emissive === true ? (options.color ?? 0xffffff) : options.emissive
+        ),
+      }),
     };
     const key = getMaterialKey(normalized);
     if (materialCache.has(key)) return materialCache.get(key);

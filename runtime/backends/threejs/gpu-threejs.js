@@ -404,7 +404,7 @@ export class GpuThreeJS {
       roughnessMap = null,
       aoMap = null,
       metallic = false,
-      emissive = 0x000000,
+      emissive: authoredEmissive = options.material === 'emissive' ? color : 0x000000,
       emissiveIntensity = 0,
       roughness = 0.6,
       transparent = false,
@@ -414,13 +414,17 @@ export class GpuThreeJS {
       holographic = false,
     } = options;
 
+    const emissive = normalizeColorToHex(authoredEmissive === true ? color : authoredEmissive);
+    // The legacy intensity alias changes emission only, not opacity or shading.
+    const aliasIntensity = options.emissiveIntensity === undefined ? options.intensity : undefined;
+    const glowIntensity = aliasIntensity ?? Math.max(emissiveIntensity, 0.3);
     let material;
 
     if (holographic || emissiveIntensity > 0.5) {
       material = new THREE.MeshStandardMaterial({
         color: color,
         emissive: new THREE.Color(emissive),
-        emissiveIntensity: Math.max(emissiveIntensity, 0.4),
+        emissiveIntensity: aliasIntensity ?? Math.max(emissiveIntensity, 0.4),
         metalness: 0.8,
         roughness: 0.1,
         envMapIntensity: 2.5,
@@ -449,7 +453,7 @@ export class GpuThreeJS {
       material = new THREE.MeshLambertMaterial({
         color: color,
         emissive: emissive !== 0x000000 ? new THREE.Color(emissive) : new THREE.Color(0),
-        emissiveIntensity: emissive !== 0x000000 ? Math.max(emissiveIntensity, 0.3) : 0,
+        emissiveIntensity: emissive !== 0x000000 ? glowIntensity : 0,
         transparent: transparent,
         opacity,
         alphaTest: alphaTest,

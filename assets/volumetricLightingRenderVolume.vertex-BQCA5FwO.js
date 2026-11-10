@@ -1,0 +1,2 @@
+import{x_ as o}from"./studio-protocol-CZq4DLWN.js";const e="volumetricLightingRenderVolumeVertexShader",r="#include<__decl__sceneVertex>\n#include<__decl__meshVertex>\nattribute vec3 position;varying vec4 vWorldPos;void main(void) {vec4 worldPos=world*vec4(position,1.0);vWorldPos=worldPos;gl_Position=viewProjection*worldPos;}\n";o.ShadersStore[e]||(o.ShadersStore[e]=r);const i={name:e,shader:r};export{i as volumetricLightingRenderVolumeVertexShader};
+//# sourceMappingURL=volumetricLightingRenderVolume.vertex-BQCA5FwO.js.map

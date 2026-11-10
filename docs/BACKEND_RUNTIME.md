@@ -255,3 +255,28 @@ When behavior is backend-specific:
 1. Add an explicit capability flag.
 2. Fail safely instead of throwing in normal cart usage.
 3. Cover the limitation with a focused regression or compatibility test.
+
+## Three.js authored emission (after v0.5.10)
+
+The N64 material path accepts `intensity` as an emission-only alias when
+`emissiveIntensity` is absent. It does not switch a Lambert mesh to reflective,
+transparent PBR merely because the alias is bright. Existing canonical
+`emissiveIntensity` behavior remains unchanged. `emissive: true` uses the mesh
+color, and `material: 'emissive'` without an emission color uses that same color.
+The material cache includes both intensity fields. Defaults and global bloom
+settings are unchanged. Regression coverage runs in `tests/test-color-compat.js`.
+
+This compatibility correction is confined to Three.js. Babylon's primitive
+path still reads `emissiveIntensity`; its emission and bloom are not visually
+identical. Use the canonical field for cross-backend authored intensity.
+
+Validation: the focused material regressions passed (five failures reproduced
+before the fix). Seven affected carts loaded before/after with no runtime errors
+on Apple M4 Pro via ANGLE Metal. Matched captures freeze cart updates and use a
+seeded cart RNG for 240 simulated frames; they are visual evidence, not a GPU
+performance benchmark. See [smoke results](../tests/artifacts/bloom/smoke-report.json),
+[matched results](../tests/artifacts/bloom/matched-report.json),
+[QWEN before](../tests/artifacts/bloom/QWEN-neon-orbit-dodger-before.png),
+[QWEN after](../tests/artifacts/bloom/QWEN-neon-orbit-dodger-after.png),
+[F-Zero before](../tests/artifacts/bloom/f-zero-nova-3d-before.png) and
+[F-Zero after](../tests/artifacts/bloom/f-zero-nova-3d-after.png).

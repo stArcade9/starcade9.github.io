@@ -1,0 +1,2 @@
+import{x_ as o}from"./studio-protocol-CZq4DLWN.js";const r="oitFinalSimpleBlendPixelShader",e="precision highp float;uniform sampler2D uFrontColor;void main() {ivec2 fragCoord=ivec2(gl_FragCoord.xy);vec4 frontColor=texelFetch(uFrontColor,fragCoord,0);glFragColor=frontColor;}\n";o.ShadersStore[r]||(o.ShadersStore[r]=e);const t={name:r,shader:e};export{t as oitFinalSimpleBlendPixelShader};
+//# sourceMappingURL=oitFinalSimpleBlend.fragment-C1Zb-X7z.js.map

@@ -9,6 +9,8 @@ here are the tag-scoped, publish-ready versions.
 
 | Tag | Date | Theme |
 | --- | --- | --- |
+| [v0.5.11](v0.5.11.md) | 2026-11-09 | Authored neon glow and refreshed npm documentation |
+| [v0.5.10](v0.5.10.md) | 2026-11-09 | New homepage, orbital racers and procedural skies |
 | [v0.5.3](v0.5.3.md) | 2026-07-06 | Metaverse + Lemon Squeezy release pipeline |
 | [v0.5.2](v0.5.2.md) | 2026-06-02 | _Hippie Sunshine_ — RetroArch core parity + cross-platform cores |
 | [v0.5.1](v0.5.1.md) | 2026-05-10 | Godot voxel/WAD parity push |
