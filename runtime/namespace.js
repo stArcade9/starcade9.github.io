@@ -209,6 +209,8 @@ export const NAMESPACE_MAP = {
     'createImageSkybox',
     'createEnvironmentSkybox',
     'createHDRSkybox',
+    'createSkyPreset',
+    'getSkyPresets',
     'animateSkybox',
     'setSkyboxSpeed',
     'enableSkyboxAutoAnimate',

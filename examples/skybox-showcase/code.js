@@ -3,7 +3,7 @@
 //
 // Controls: 1-5 = skybox type, WASD = orbit, QE = zoom, SPACE = toggle auto-rotate
 
-const { drawRoundedRect, print, printCentered, rgba8 } = nova64.draw;
+const { drawGlowText, drawGradient, drawRoundedRect, print, rectfill, rgba8 } = nova64.draw;
 const {
   clearScene,
   createCone,
@@ -14,6 +14,7 @@ const {
   createTorus,
   rotateMesh,
   setPBRProperties,
+  setPosition,
   setRotation,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
@@ -23,6 +24,7 @@ const {
   createImageSkybox,
   createPointLight,
   createSolidSkybox,
+  createSkyPreset,
   createSpaceSkybox,
   enableSkyboxAutoAnimate,
   setAmbientLight,
@@ -32,7 +34,6 @@ const {
 } = nova64.light;
 const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
 const { btnp, key, keyp } = nova64.input;
-const { rotate } = nova64.util;
 
 let scene = 0;
 let orbitAngle = 0;
@@ -41,8 +42,45 @@ let orbitY = 3;
 let time = 0;
 let autoRotate = true;
 let propIds = [];
+let targetY = 0; // per-scene look-at height (sky scenes look up)
 
-const SCENE_NAMES = ['Deep Space', 'Dense Starfield', 'Sunset Gradient', 'Studio IBL', 'Void'];
+// name, one-line pitch, HUD accent colour [r, g, b]
+const SCENES = [
+  { name: 'Deep Space', tag: 'domain-warped nebula + galactic band', accent: [190, 120, 255] },
+  {
+    name: 'Dense Starfield',
+    tag: '6000 twinkling stars, faint teal haze',
+    accent: [120, 220, 255],
+  },
+  { name: 'Golden Sunset', tag: 'sun corona, lit clouds, god rays', accent: [255, 160, 80] },
+  { name: 'Studio IBL', tag: 'cube-map image skybox + reflections', accent: [200, 210, 230] },
+  { name: 'Void', tag: 'nothing but neon', accent: [255, 60, 140] },
+  {
+    name: 'Ocean Horizon',
+    tag: 'waves, fresnel sky reflection, sun glitter',
+    accent: [80, 200, 255],
+  },
+  { name: 'Toon Meadow', tag: 'cel sky, ink-lined clouds, rainbow', accent: [120, 230, 90] },
+  {
+    name: 'Sky Highlands',
+    tag: 'painterly clouds, light shafts, floating isles',
+    accent: [255, 210, 120],
+  },
+  {
+    name: 'Aurora Night',
+    tag: 'rippling aurora, shooting stars, still sea',
+    accent: [60, 255, 170],
+  },
+  {
+    name: 'Candy Cosmos',
+    tag: 'hot-pink nebula, ringed planet, sugar moons',
+    accent: [255, 110, 200],
+  },
+];
+// Scenes whose props float in space and look good slowly spinning.
+const SPIN_SCENES = new Set([0, 1, 3, 4]);
+let cardT = 0; // seconds since the last scene switch (drives the title card)
+let bobbers = []; // { id, x, y, z, amp, speed, phase, hop?, orbit? }
 
 async function applyStudioSkybox() {
   try {
@@ -66,6 +104,11 @@ export async function init() {
 
 async function buildScene(idx) {
   propIds = [];
+  bobbers = [];
+  targetY = 0;
+  orbitDist = 12;
+  orbitY = 3;
+  cardT = 0;
   clearScene();
 
   // Common setup
@@ -81,11 +124,22 @@ async function buildScene(idx) {
   else if (idx === 2) buildSunset();
   else if (idx === 3) await buildStudio();
   else if (idx === 4) buildVoid();
+  else if (idx === 5) buildOcean();
+  else if (idx === 6) buildMeadow();
+  else if (idx === 7) buildHighlands();
+  else if (idx === 8) buildAurora();
+  else if (idx === 9) buildCosmos();
 }
 
 // ── Scene 0: Deep Space — sparse stars with nebula ──────────────────────────
 function buildDeepSpace() {
-  createSpaceSkybox({ starCount: 2000, starSize: 2.0, nebulae: true, nebulaColor: 0x220044 });
+  createSpaceSkybox({
+    starCount: 2500,
+    starSize: 2.0,
+    nebulae: true,
+    nebulaColor: 0x8a2be2,
+    nebulaIntensity: 1.3,
+  });
   enableSkyboxAutoAnimate(0.3);
   setFog(0x000008, 30, 80);
 
@@ -116,7 +170,12 @@ function buildDeepSpace() {
 
 // ── Scene 1: Dense Starfield — maximum stars, no nebula ─────────────────────
 function buildDenseStars() {
-  createSpaceSkybox({ starCount: 6000, starSize: 1.5, nebulae: false });
+  createSpaceSkybox({
+    starCount: 6000,
+    starSize: 1.5,
+    nebulaColor: 0x10b0c8,
+    nebulaIntensity: 0.5,
+  });
   enableSkyboxAutoAnimate(0.5);
   setFog(0x000002, 40, 100);
 
@@ -144,7 +203,8 @@ function buildDenseStars() {
 
 // ── Scene 2: Sunset Gradient — warm sky with landscape ──────────────────────
 function buildSunset() {
-  createGradientSkybox(0xff6622, 0x1a0533);
+  createSkyPreset('sunset');
+
   setFog(0x331108, 15, 50);
   setAmbientLight(0x442211, 1.4);
   setLightColor(0xffaa55);
@@ -281,6 +341,261 @@ function buildVoid() {
   createPointLight(0xffffff, 4, 15, 0, 0, 0);
 }
 
+// ── Scene 5: Ocean Horizon — open sea, sun glitter, trade-wind clouds ───────
+function buildOcean() {
+  createSkyPreset('ocean');
+
+  setFog(0xcfeaff, 25, 90);
+  enableBloom(0.25, 0.4, 0.97);
+  setAmbientLight(0x88aacc, 1.3);
+  setLightColor(0xfff1c8);
+  setLightDirection(-0.5, -0.4, 1);
+
+  // A small sandy islet with palms and a lighthouse.
+  const sand = createCylinder(5, 0.6, 0xe8d29a, [0, -2.2, 0], {
+    material: 'standard',
+    roughness: 0.95,
+  });
+  propIds.push(sand);
+  const palms = [
+    [-2.5, 1.2],
+    [2.2, -1.6],
+    [-0.8, -3],
+  ];
+  for (const [px, pz] of palms) {
+    propIds.push(createCylinder(0.15, 3.5, 0x8a6a3a, [px, -0.2, pz], { material: 'standard' }));
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2;
+      const leaf = createCone(
+        0.35,
+        2.2,
+        0x2fae4a,
+        [px + Math.cos(a) * 0.9, 1.6, pz + Math.sin(a) * 0.9],
+        {
+          material: 'standard',
+        }
+      );
+      setRotation(leaf, Math.sin(a) * 1.4, 0, -Math.cos(a) * 1.4);
+      propIds.push(leaf);
+    }
+  }
+  for (let i = 0; i < 4; i++) {
+    const col = i % 2 ? 0xd8202a : 0xf4f4f4;
+    propIds.push(
+      createCylinder(0.7 - i * 0.08, 1.4, col, [3, -1.2 + i * 1.4, 2], { material: 'standard' })
+    );
+  }
+  const lamp = createSphere(0.5, 0xfff2a0, [3, 4.6, 2], 16, {
+    material: 'standard',
+    emissive: 0xffe066,
+    emissiveIntensity: 4,
+  });
+  propIds.push(lamp);
+}
+
+// ── Scene 6: Sunny Meadow — saturated toon sky, puffy clouds, rainbow ───────
+function buildMeadow() {
+  targetY = 3.5;
+  orbitY = 0.5;
+  orbitDist = 6.5;
+  createSkyPreset('meadow');
+
+  setFog(0xc8f0ff, 40, 120);
+  setAmbientLight(0xcce6ff, 2.0);
+  setLightColor(0xffffff);
+  enableBloom(0.2, 0.3, 0.97);
+
+  const grass = createPlane(80, 80, 0x5ed04a, [0, -2, 0], { material: 'standard', roughness: 1 });
+  setRotation(grass, -Math.PI / 2, 0, 0);
+  // Round bubbly trees.
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    const r = 9 + (i % 3) * 3;
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    propIds.push(createCylinder(0.3, 2, 0x9a6233, [x, -1, z], { material: 'standard' }));
+    propIds.push(
+      createSphere(1.5, i % 2 ? 0x36b84a : 0x49c95a, [x, 1.2, z], 12, { material: 'standard' })
+    );
+  }
+  // Cosy house with a red roof.
+  propIds.push(createCube(3, 0xfff3d6, [0, -0.5, -4], { material: 'standard' }));
+  const roof = createCone(2.6, 1.8, 0xe8423a, [0, 1.9, -4], { material: 'standard' });
+  propIds.push(roof);
+  // Flower dots.
+  const petals = [0xff5fa2, 0xffe14a, 0xffffff, 0x9a7bff];
+  for (let i = 0; i < 40; i++) {
+    const x = (Math.random() - 0.5) * 24;
+    const z = (Math.random() - 0.5) * 24;
+    if (Math.hypot(x, z + 4) < 3) continue;
+    propIds.push(createSphere(0.18, petals[i % 4], [x, -1.85, z], 6, { material: 'standard' }));
+  }
+  // Bouncy blob buddies with googly eyes.
+  const blobs = [0xff7ab8, 0x7ad7ff, 0xffd23f, 0xb48cff];
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + 0.6;
+    const x = Math.cos(a) * 3.2;
+    const z = Math.sin(a) * 3.2;
+    const phase = i * 1.3;
+    const body = createSphere(0.55, blobs[i], [x, -1.4, z], 16, {
+      material: 'standard',
+      roughness: 0.35,
+    });
+    bobbers.push({ id: body, x, y: -1.4, z, amp: 0.6, speed: 5, phase, hop: true });
+    // Eyes face outward from the meadow centre.
+    const ox = Math.cos(a) * 0.48;
+    const oz = Math.sin(a) * 0.48;
+    const px = -Math.sin(a) * 0.2;
+    const pz = Math.cos(a) * 0.2;
+    for (const side of [1, -1]) {
+      const ex = x + ox + px * side;
+      const ez = z + oz + pz * side;
+      const eye = createSphere(0.12, 0x111122, [ex, -1.25, ez], 8, { material: 'standard' });
+      bobbers.push({ id: eye, x: ex, y: -1.25, z: ez, amp: 0.6, speed: 5, phase, hop: true });
+    }
+  }
+}
+
+// ── Scene 7: Sky Highlands — painterly cel clouds, god rays, floating isles ─
+function buildHighlands() {
+  targetY = 4;
+  orbitY = 1;
+  orbitDist = 14;
+  createSkyPreset('highlands');
+
+  setFog(0xe8d8b0, 40, 120);
+  setAmbientLight(0x8899bb, 1.4);
+  setLightColor(0xffe0a8);
+  setLightDirection(-0.6, -0.5, 1);
+  enableBloom(0.35, 0.5, 0.95);
+
+  const hill = createSphere(14, 0x6fae4f, [0, -15, 0], 24, { material: 'standard', roughness: 1 });
+  propIds.push(hill);
+  // Ruined pillars in a ring.
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2;
+    const h = 1.5 + (i % 3) * 1.2;
+    propIds.push(
+      createCylinder(0.35, h, 0xd8cdb4, [Math.cos(a) * 4, -1.2 + h / 2, Math.sin(a) * 4], {
+        material: 'standard',
+        roughness: 0.9,
+      })
+    );
+  }
+  // Floating islands drifting in the distance.
+  const isles = [
+    [-10, 6, -14, 2.5],
+    [12, 9, -10, 1.8],
+    [4, 12, -20, 3.2],
+    [-14, 3, 6, 1.5],
+  ];
+  for (const [x, y, z, r] of isles) {
+    const rock = createCone(r, r * 2, 0x7a6450, [x, y - r, z], { material: 'standard' });
+    setRotation(rock, Math.PI, 0, 0);
+    propIds.push(rock);
+    propIds.push(createCylinder(r, 0.5, 0x5fb04a, [x, y + 0.2, z], { material: 'standard' }));
+    propIds.push(
+      createSphere(r * 0.45, 0x3f8f3a, [x + r * 0.3, y + r * 0.5, z], 10, { material: 'standard' })
+    );
+  }
+  // Glowing shrine crystal.
+  const crystal = createCone(0.6, 2, 0x7ff0ff, [0, 0, 0], {
+    material: 'standard',
+    emissive: 0x33d0ff,
+    emissiveIntensity: 3,
+  });
+  propIds.push(crystal);
+  createPointLight(0x55ddff, 3, 12, 0, 0.5, 0);
+}
+
+// ── Scene 8: Aurora Night — curtains of light over a frozen shore ───────────
+function buildAurora() {
+  targetY = 3;
+  orbitY = 0.8;
+  orbitDist = 11;
+  createSkyPreset('aurora');
+  setFog(0x08202a, 30, 110);
+  setAmbientLight(0x2a5a6a, 1.0);
+  setLightColor(0x88ffd0);
+  setLightDirection(0.3, -0.6, -1);
+  enableBloom(0.9, 0.6, 0.55);
+
+  propIds.push(
+    createCylinder(7, 0.6, 0xe8f4ff, [0, -2.2, 0], { material: 'standard', roughness: 0.6 })
+  );
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2;
+    const r = 4.5 + (i % 2) * 1.5;
+    const h = 2.4 + (i % 3) * 0.8;
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    propIds.push(createCylinder(0.15, 0.8, 0x3a2a1a, [x, -1.5, z], { material: 'standard' }));
+    for (let k = 0; k < 3; k++) {
+      const tint = k === 2 ? 0xdff2ff : 0x0f3a32; // snow-capped tip
+      propIds.push(
+        createCone(1.0 - k * 0.25, h * 0.5, tint, [x, -1.1 + k * 0.7 + h * 0.25, z], {
+          material: 'standard',
+          roughness: 0.8,
+        })
+      );
+    }
+  }
+  // Campfire.
+  const fire = createSphere(0.35, 0xff8a2a, [0, -1.6, 0], 12, {
+    material: 'standard',
+    emissive: 0xff6a00,
+    emissiveIntensity: 5,
+  });
+  bobbers.push({ id: fire, x: 0, y: -1.6, z: 0, amp: 0.06, speed: 11, phase: 0 });
+  createPointLight(0xff8a3a, 5, 10, 0, -1, 0);
+}
+
+// ── Scene 9: Candy Cosmos — saturated nebula, ringed planet, orbiting moons ─
+function buildCosmos() {
+  targetY = 1;
+  orbitY = 2;
+  orbitDist = 15;
+  createSkyPreset('cosmos');
+  enableSkyboxAutoAnimate(0.6);
+  setFog(0x1a0420, 60, 160);
+  setAmbientLight(0x6a3a8a, 1.2);
+  setLightColor(0xffe0f4);
+  setLightDirection(-0.7, -0.3, -0.6);
+  enableBloom(0.6, 0.5, 0.8);
+
+  const planet = createSphere(3.2, 0xff9ad5, [0, 0, 0], 48, {
+    material: 'standard',
+    roughness: 0.45,
+  });
+  setPBRProperties(planet, { metalness: 0.2, roughness: 0.45, envMapIntensity: 1.5 });
+  const ring = createTorus(5.2, 0.35, 0x8ff7ff, [0, 0, 0], {
+    material: 'standard',
+    emissive: 0x33c8ff,
+    emissiveIntensity: 1.6,
+  });
+  setRotation(ring, Math.PI / 2 - 0.35, 0.2, 0);
+  const ring2 = createTorus(6.3, 0.12, 0xffe36a, [0, 0, 0], {
+    material: 'standard',
+    emissive: 0xffc23a,
+    emissiveIntensity: 2.2,
+  });
+  setRotation(ring2, Math.PI / 2 - 0.35, 0.2, 0);
+  const moons = [
+    [0xfff07a, 8.5, 0.6, 0.0],
+    [0x7affc8, 10.5, 0.45, 2.1],
+    [0xb08cff, 12.5, 0.8, 4.0],
+  ];
+  for (const [c, r, size, ph] of moons) {
+    const id = createSphere(size, c, [r, 0, 0], 24, {
+      material: 'standard',
+      emissive: c,
+      emissiveIntensity: 0.6,
+    });
+    setPBRProperties(id, { metalness: 0.6, roughness: 0.15 });
+    bobbers.push({ id, orbit: r, speed: 1.6 / r, phase: ph, y: Math.sin(ph) * 1.5 });
+  }
+}
+
 export function update(dt) {
   time += dt;
 
@@ -303,29 +618,76 @@ export function update(dt) {
   const cx = Math.sin(orbitAngle) * orbitDist;
   const cz = Math.cos(orbitAngle) * orbitDist;
   setCameraPosition(cx, orbitY, cz);
-  setCameraTarget(0, 0, 0);
+  setCameraTarget(0, targetY, 0);
 
-  // Scene switch
-  for (let i = 0; i < 5; i++) {
-    if (keyp('Digit' + (i + 1)) || keyp('Numpad' + (i + 1))) {
-      if (scene !== i) {
-        scene = i;
-        void buildScene(i);
-      }
-    }
+  cardT += dt;
+
+  // Scene switch: 1-9, 0 for the tenth, [ ] or Tab to step.
+  let next = -1;
+  for (let i = 0; i < SCENES.length; i++) {
+    const k = (i + 1) % 10;
+    if (keyp('Digit' + k) || keyp('Numpad' + k)) next = i;
+  }
+  if (keyp('BracketRight') || keyp('Tab') || btnp(5)) next = (scene + 1) % SCENES.length;
+  if (keyp('BracketLeft') || btnp(4)) next = (scene + SCENES.length - 1) % SCENES.length;
+  if (next >= 0 && next !== scene) {
+    scene = next;
+    void buildScene(next);
   }
 
-  // Rotate props slowly for visual interest
-  for (let i = 0; i < propIds.length; i++) {
-    rotateMesh(propIds[i], 0, dt * 0.15 * ((i % 3) - 1), 0);
+  if (SPIN_SCENES.has(scene)) {
+    for (let i = 0; i < propIds.length; i++) {
+      rotateMesh(propIds[i], 0, dt * 0.15 * ((i % 3) - 1), 0);
+    }
+  }
+  for (const b of bobbers) {
+    const t = time * b.speed + b.phase;
+    if (b.orbit) {
+      setPosition(b.id, Math.cos(t) * b.orbit, b.y + Math.sin(t * 2) * 0.4, Math.sin(t) * b.orbit);
+    } else if (b.hop) {
+      setPosition(b.id, b.x, b.y + Math.abs(Math.sin(t)) * b.amp, b.z);
+    } else {
+      setPosition(b.id, b.x, b.y + Math.sin(t) * b.amp, b.z);
+    }
   }
 }
 
-export function draw() {
-  drawRoundedRect(0, 0, 320, 14, 0, rgba8(0, 0, 0, 150));
-  printCentered('[1]Space [2]Stars [3]Sunset [4]IBL [5]Void', 160, 2, rgba8(220, 200, 150, 255));
+function col(c, a = 255) {
+  return rgba8(c[0], c[1], c[2], a);
+}
 
-  drawRoundedRect(0, 222, 320, 18, 0, rgba8(0, 0, 0, 130));
-  print('Skybox: ' + SCENE_NAMES[scene], 6, 224, rgba8(180, 255, 180, 255));
-  print('TAP/[SPACE] Auto-rot  [WASD] Orbit  [QE] Zoom', 6, 232, rgba8(110, 110, 110, 220));
+export function draw() {
+  const sc = SCENES[scene];
+  const acc = sc.accent;
+
+  // Flash + slide-in title card on every scene switch.
+  if (cardT < 0.35) {
+    rectfill(0, 0, 640, 360, rgba8(255, 255, 255, Math.round(160 * (1 - cardT / 0.35))));
+  }
+  const e = Math.min(1, cardT / 0.45);
+  const slide = Math.round(-420 * Math.pow(1 - e, 3));
+
+  // Bottom glass panel (screen is 640x360).
+  drawGradient(0, 284, 640, 76, rgba8(0, 0, 0, 0), rgba8(4, 6, 16, 225), 'v');
+  rectfill(16 + slide, 302, 4, 34, col(acc));
+  drawGlowText(sc.name.toUpperCase(), 28 + slide, 302, rgba8(255, 255, 255, 255), col(acc, 170), 3);
+  print(sc.tag, 28 + slide, 328, col(acc, 235));
+
+  // Page dots.
+  for (let i = 0; i < SCENES.length; i++) {
+    const active = i === scene;
+    const w = active ? 18 : 8;
+    drawRoundedRect(28 + i * 22, 344, w, 6, 3, active ? col(acc) : rgba8(120, 130, 160, 150));
+  }
+  print(
+    String(scene + 1).padStart(2, '0') + ' / ' + SCENES.length,
+    580,
+    342,
+    rgba8(200, 210, 240, 210)
+  );
+
+  // Controls hint, top-right: bright after a switch, then stays faint.
+  const hintA = cardT < 4 ? 230 : 100;
+  drawRoundedRect(404, 6, 230, 16, 4, rgba8(0, 0, 0, Math.round(hintA * 0.6)));
+  print('1-0/[ ] sky  WASD orbit  SPC spin', 420, 10, rgba8(210, 220, 255, hintA));
 }
