@@ -25,7 +25,7 @@ const BUTTONS = [
   },
   {
     label: 'SEE LOST GAMES',
-    url: 'https://nova64.io/console',
+    url: '/examples/gallery?gCampaign=1&intro=random',
     key: 'gallery',
   },
   {
@@ -249,7 +249,8 @@ function setupRoom() {
   }
 
   if (nova64.video && typeof nova64.video.loadTexture === 'function') {
-    tv = nova64.video.loadTexture('/assets/nova64-demo-reel-long-2x.mp4', {
+    tv = nova64.video.loadTexture('/assets/sample.mp4', {
+      nativeUrl: 'assets/video/sample.ogv', // Godot (same clip as tv-demo)
       muted: true,
       loop: true,
     });
@@ -1201,8 +1202,8 @@ function chooseButton(index) {
   memory.lastPlayedAt = new Date().toISOString();
   nova64.data.saveData(SAVE_KEY, memory);
   playSound('confirm');
-  if (typeof window !== 'undefined' && typeof window.open === 'function') {
-    window.open(choice.url, '_blank', 'noopener,noreferrer');
+  if (typeof window !== 'undefined' && window.location) {
+    window.location.href = choice.url;
   }
 }
 

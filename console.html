@@ -401,12 +401,6 @@
       }
 
       /* Mobile Controls Styling */
-      /* Nova64 0.5.6 supplies its own touch gamepad. Keep the legacy controls
-         only as a fallback when the runtime overlay is disabled. */
-      body:has(#nova64-touch-controls) .mobile-controls {
-        display: none !important;
-      }
-
       .mobile-controls {
         display: none; /* hidden on desktop */
         width: 100%;
@@ -718,9 +712,8 @@
       }
     }
     </script>
-  <script type="module" crossorigin src="./assets/main-6Xo3b7xs.js"></script>
-  <!-- Vercel Web Analytics -->
-  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+  <script type="module" crossorigin src="./assets/console-DPsjH9_V.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/main-6Xo3b7xs.js">
 </head>
   <body>
     <div class="shell">
@@ -808,14 +801,12 @@
             <option value="/examples/space-harrier-3d/code.js">
               🛸 Space Harrier (2.5D Rail Shooter)
             </option>
-            <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
             <option value="/examples/hello-namespaced/code.js">
               📦 Hello Namespaced (nova64.* API)
             </option>
             <option value="/examples/crystal-cathedral-3d/code.js">
               🏛️ Crystal Cathedral (Graphics)
             </option>
-            <option value="/examples/mystical-realm-3d/code.js">🏰 Mystical Realm (World)</option>
             <option value="/examples/star-fox-nova-3d/code.js">
               🚀 Star Fox Nova (Space Combat)
             </option>
@@ -823,7 +814,6 @@
             <option value="/examples/cyberpunk-city-3d/code.js">
               🌃 Cyberpunk City (Open World)
             </option>
-            <option value="/examples/fps-demo-3d/code.js">🔫 FPS Action Mode (Shooter)</option>
             <option value="/examples/wad-demo/code.js">💀 FreeDoom WAD Explorer (Classic FPS)</option>
             <option value="/examples/adventure-comic-3d/code.js">
               🕵️ The Verdict (Comic Adventure)
@@ -1047,82 +1037,6 @@
     </div>
 
 
-    <script type="module">
-      // QWEN Arcade: render the cartridge shelf + a dropdown group from the
-      // manifest built by scripts/build-qwen-arcade.mjs. Picking a cart goes
-      // through the normal #cart <select> change path, so loading is unchanged.
-      (async () => {
-        let manifest;
-        try {
-          const res = await fetch('/examples/QWEN/arcade.json');
-          if (!res.ok) return;
-          manifest = await res.json();
-        } catch {
-          return; // no manifest: the shelf stays hidden
-        }
-        const games = Array.isArray(manifest.games) ? manifest.games : [];
-        if (!games.length) return;
-        const select = document.getElementById('cart');
-        const shelf = document.getElementById('qa-shelf');
-        document.getElementById('qa-tag').textContent = manifest.tagline || '';
-        const link = document.getElementById('qa-link');
-        if (manifest.article) link.href = manifest.article;
-        else link.remove();
-
-        const group = document.createElement('optgroup');
-        group.label = '✦ QWEN Arcade (made by a local Qwen model)';
-        for (const g of games) {
-          const opt = document.createElement('option');
-          opt.value = g.path;
-          opt.textContent = '✦ ' + g.title;
-          group.appendChild(opt);
-        }
-        const previous = select.value; // don't change the default cart
-        select.insertBefore(group, select.firstChild);
-        select.value = previous;
-
-        const cards = new Map();
-        const markActive = () => {
-          for (const [path, card] of cards) card.classList.toggle('is-active', path === select.value);
-        };
-        for (const g of games) {
-          const card = document.createElement('button');
-          card.type = 'button';
-          card.className = 'qa-cart';
-          card.setAttribute('role', 'listitem');
-          card.title = g.description || g.title;
-          const img = g.cover ? `<img class="qa-label" src="${g.cover}" alt="" loading="lazy">` : '<span class="qa-label"></span>';
-          card.innerHTML = `${img}<span class="qa-ai">AI</span><span class="qa-title"></span><span class="qa-blurb"></span>`;
-          card.querySelector('.qa-title').textContent = g.title;
-          card.querySelector('.qa-blurb').textContent = g.blurb || '';
-          card.addEventListener('click', () => {
-            card.classList.remove('is-inserting');
-            void card.offsetWidth; // restart the insert animation
-            card.classList.add('is-inserting');
-            select.value = g.path;
-            select.dispatchEvent(new Event('change'));
-            markActive();
-            document.getElementById('screen')?.focus?.();
-          });
-          card.addEventListener('animationend', () => card.classList.remove('is-inserting'));
-          cards.set(g.path, card);
-          shelf.appendChild(card);
-        }
-        select.addEventListener('change', markActive);
-        markActive();
-        document.getElementById('qwen-arcade').hidden = false;
-
-        // console.html?qwen=<id> (linked from the dashboard) starts that game.
-        const wanted = new URLSearchParams(location.search).get('qwen');
-        const pick = wanted && games.find((g) => g.id === wanted);
-        if (pick) {
-          const start = () => cards.get(pick.path)?.click();
-          if (document.readyState === 'complete') start();
-          else window.addEventListener('load', start, { once: true });
-          cards.get(pick.path)?.scrollIntoView({ block: 'nearest', inline: 'center' });
-        }
-      })();
-    </script>
     <script>
       // Virtual controls code mapper
       function handleVirtualButton(element, isDown) {

@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://1343tuymts6o"
+path="res://.godot/imported/meta.json-5917b66d1c71eda21747a9c82c854851.res"
+
+[deps]
+
+source_file="res://carts/QWEN/neon-orbit-dodger/meta.json"
+dest_files=["res://.godot/imported/meta.json-5917b66d1c71eda21747a9c82c854851.res"]
+
+[params]
+

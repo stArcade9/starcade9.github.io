@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bhypnrunqck1h"
+path="res://.godot/imported/meta.json-826ef32763b6e93b6cfdc09c6285c2ff.res"
+
+[deps]
+
+source_file="res://carts/QWEN/shardgrid-runner/meta.json"
+dest_files=["res://.godot/imported/meta.json-826ef32763b6e93b6cfdc09c6285c2ff.res"]
+
+[params]
+

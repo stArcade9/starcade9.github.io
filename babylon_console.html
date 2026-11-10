@@ -402,11 +402,6 @@
       }
 
       /* Mobile Controls Styling */
-      /* Avoid showing both the legacy gamepad and Nova64's runtime controls. */
-      body:has(#nova64-touch-controls) .mobile-controls {
-        display: none !important;
-      }
-
       .mobile-controls {
         display: none; /* hidden on desktop */
         width: 100%;
@@ -570,8 +565,6 @@
 
   gtag('config', 'G-B3RDWLFWVF');
 </script>
-<!-- Vercel Web Analytics -->
-<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
   <body>
     <div class="shell">
@@ -647,14 +640,12 @@
             <option value="/examples/space-harrier-3d/code.js">
               🛸 Space Harrier (2.5D Rail Shooter)
             </option>
-            <option value="/examples/hello-3d/code.js">👋 Hello 3D World (Basic Demo)</option>
             <option value="/examples/hello-namespaced/code.js">
               📦 Hello Namespaced (nova64.* API)
             </option>
             <option value="/examples/crystal-cathedral-3d/code.js">
               🏛️ Crystal Cathedral (Graphics)
             </option>
-            <option value="/examples/mystical-realm-3d/code.js">🏰 Mystical Realm (World)</option>
             <option value="/examples/star-fox-nova-3d/code.js">
               🚀 Star Fox Nova (Space Combat)
             </option>
@@ -662,7 +653,6 @@
             <option value="/examples/cyberpunk-city-3d/code.js">
               🌃 Cyberpunk City (Open World)
             </option>
-            <option value="/examples/fps-demo-3d/code.js">🔫 FPS Action Mode (Shooter)</option>
             <option value="/examples/wad-demo/code.js">💀 FreeDoom WAD Explorer (Classic FPS)</option>
             <option value="/examples/adventure-comic-3d/code.js">
               🕵️ The Verdict (Comic Adventure)
@@ -891,11 +881,7 @@
         "three": "https://esm.sh/three@0.182.0",
         "three/tsl": "https://esm.sh/three@0.182.0/tsl",
         "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
-        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/",
-        "@babylonjs/core": "https://esm.sh/@babylonjs/core@9.4.1",
-        "@babylonjs/core/": "https://esm.sh/@babylonjs/core@9.4.1/",
-        "@babylonjs/loaders": "https://esm.sh/@babylonjs/loaders@9.4.1",
-        "@babylonjs/loaders/": "https://esm.sh/@babylonjs/loaders@9.4.1/"
+        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
       }
     }
     </script>

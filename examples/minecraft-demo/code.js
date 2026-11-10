@@ -2,7 +2,7 @@
 const { print, rect, rectfill, rgba8 } = nova64.draw;
 const { engine } = nova64.scene;
 const { setCameraPosition, setCameraTarget } = nova64.camera;
-const { setFog } = nova64.light;
+const { setFog, createSkyPreset, enableSkyboxAutoAnimate } = nova64.light;
 const { F } = nova64.fx;
 const { btnp, key, keyp } = nova64.input;
 const {
@@ -254,14 +254,6 @@ function createVoxelTexture() {
   });
 }
 
-function getSkyColorForTime(t) {
-  const dayPhase = (Math.sin(t * Math.PI * 2) + 1) * 0.5;
-  const skyR = Math.round(10 + 125 * dayPhase);
-  const skyG = Math.round(10 + 196 * dayPhase);
-  const skyB = Math.round(20 + 215 * dayPhase);
-  return (skyR << 16) | (skyG << 8) | skyB;
-}
-
 export function init() {
   if (typeof window !== 'undefined') {
     window.VOXEL_MATERIAL = null;
@@ -278,8 +270,12 @@ export function init() {
   }
 
   // Fog end must match render distance (3 chunks × 16 = 48 blocks)
-  const skyColor = getSkyColorForTime(FIXED_DAY_TIME);
-  setFog(skyColor, 25, 50);
+  // Blocky toon sky (ink-outlined clouds) — horizon colour == fog colour so the
+  // chunk edge melts seamlessly into the sky dome.
+  const skyColor = 0xa8dcf5;
+  createSkyPreset?.('meadow', { horizonColor: skyColor, bottom: skyColor, rainbow: 0 });
+  enableSkyboxAutoAnimate?.(0.4);
+  setFog(skyColor, 22, 48);
   globalThis.setClearColor?.(skyColor);
   if (typeof setVoxelDayTime === 'function') {
     lastDayTime = FIXED_DAY_TIME;

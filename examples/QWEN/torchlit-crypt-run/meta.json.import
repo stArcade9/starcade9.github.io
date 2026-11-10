@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://cqo5ug0hk2lr"
+path="res://.godot/imported/meta.json-aec6a0feba987bb243c5d97860ed6ce5.res"
+
+[deps]
+
+source_file="res://carts/QWEN/torchlit-crypt-run/meta.json"
+dest_files=["res://.godot/imported/meta.json-aec6a0feba987bb243c5d97860ed6ce5.res"]
+
+[params]
+

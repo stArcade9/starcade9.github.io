@@ -30,7 +30,7 @@ function buildCheckerboard(size, tile) {
 
 export function init() {
   const caps = call('engine.init').capabilities;
-  console.log('[03-texture] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
+  print('[03-texture] booted on ' + caps.backend + ' adapter=' + caps.adapterVersion);
 
   call('light.createDirectional', { color: [1, 1, 1, 1], energy: 1.0 });
 
@@ -55,7 +55,7 @@ export function init() {
   call('transform.set', { handle: cam, position: [0, 1.5, 4], rotation: [-0.3, 0, 0] });
   call('camera.setActive', { handle: cam });
 
-  console.log('[03-texture] ready');
+  print('[03-texture] ready');
 }
 
 export function update(dt) {

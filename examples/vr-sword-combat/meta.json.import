@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://dqvadx3ub305w"
+path="res://.godot/imported/meta.json-4ac00a88247e1d9eb66b7f4f77bc75c9.res"
+
+[deps]
+
+source_file="res://carts/vr-sword-combat/meta.json"
+dest_files=["res://.godot/imported/meta.json-4ac00a88247e1d9eb66b7f4f77bc75c9.res"]
+
+[params]
+

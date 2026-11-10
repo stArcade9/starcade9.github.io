@@ -91,7 +91,11 @@ export function createBabylonTransformsApi(self) {
       if (!mesh) return false;
       // Babylon flat-shades by splitting shared vertices; it can't be undone,
       // so it is applied once and later calls only report the state.
-      if (enabled && !mesh.__nova64FlatShaded && typeof mesh.convertToFlatShadedMesh === 'function') {
+      if (
+        enabled &&
+        !mesh.__nova64FlatShaded &&
+        typeof mesh.convertToFlatShadedMesh === 'function'
+      ) {
         mesh.convertToFlatShadedMesh();
         mesh.__nova64FlatShaded = true;
       }
@@ -197,34 +201,6 @@ export function createBabylonTransformsApi(self) {
       const mesh = resolveMesh(idOrProxy);
       if (!mesh) return false;
       mesh.isVisible = visible;
-      return true;
-    },
-
-    setMeshOpacity(idOrProxy, opacity) {
-      const mesh = resolveMesh(idOrProxy);
-      if (!mesh?.material) return false;
-      mesh.material.alpha = opacity;
-      return true;
-    },
-
-    setReceiveShadow(idOrProxy, receive) {
-      const mesh = resolveMesh(idOrProxy);
-      if (!mesh) return false;
-      mesh.receiveShadows = receive;
-      return true;
-    },
-
-    setCastShadow(idOrProxy, cast) {
-      const mesh = resolveMesh(idOrProxy);
-      if (!mesh) return false;
-      mesh.castShadow = cast;
-      return true;
-    },
-
-    setFlatShading(idOrProxy, enabled = true) {
-      const mesh = resolveMesh(idOrProxy);
-      if (!mesh || !enabled || typeof mesh.convertToFlatShadedMesh !== 'function') return false;
-      mesh.convertToFlatShadedMesh();
       return true;
     },
   };

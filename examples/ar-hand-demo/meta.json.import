@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://c0ds5cbpmfrt0"
+path="res://.godot/imported/meta.json-c96e95f61728ffde574210035df48bba.res"
+
+[deps]
+
+source_file="res://carts/ar-hand-demo/meta.json"
+dest_files=["res://.godot/imported/meta.json-c96e95f61728ffde574210035df48bba.res"]
+
+[params]
+

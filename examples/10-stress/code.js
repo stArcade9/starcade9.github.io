@@ -10,15 +10,15 @@ function expect(name, fn) {
   try {
     const ok = !!fn();
     results.push({ name, ok });
-    console.log(`[10-stress] ${ok ? 'PASS' : 'FAIL'} ${name}`);
+    print(`[10-stress] ${ok ? 'PASS' : 'FAIL'} ${name}`);
   } catch (e) {
     results.push({ name, ok: false, error: String(e) });
-    console.log(`[10-stress] FAIL ${name} threw: ${e}`);
+    print(`[10-stress] FAIL ${name} threw: ${e}`);
   }
 }
 
 export function init() {
-  console.log('[10-stress] allocating ' + N + ' materials');
+  print('[10-stress] allocating ' + N + ' materials');
   const createCmds = [];
   for (let i = 0; i < N; i++) {
     createCmds.push([

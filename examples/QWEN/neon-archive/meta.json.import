@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://vif4tmh3l37x"
+path="res://.godot/imported/meta.json-e06896a50856ec534605343762a3882f.res"
+
+[deps]
+
+source_file="res://carts/QWEN/neon-archive/meta.json"
+dest_files=["res://.godot/imported/meta.json-e06896a50856ec534605343762a3882f.res"]
+
+[params]
+

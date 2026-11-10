@@ -11,7 +11,7 @@ const { setAmbientLight, setFog, setLightDirection } = nova64.light;
 // Libretro-core parity helpers
 const { printBold, printFlash, printOutlineTight, printTight } = nova64.draw;
 const { setInstanceTransforms } = nova64.scene;
-const { setSkyColor } = nova64.light;
+const { createGradientSkybox, enableSkyboxAutoAnimate } = nova64.light;
 const {
   createCube,
   createInstancedMesh,
@@ -50,8 +50,6 @@ const COL_PLAYER = rgba8(80, 255, 230, 255);
 const COL_BULLET = rgba8(255, 240, 120, 255);
 const COL_ENEMY_A = rgba8(255, 80, 120, 255);
 const COL_ENEMY_B = rgba8(255, 180, 60, 255);
-const COL_SKY_TOP = rgba8(225, 60, 180, 255);
-const COL_SKY_BOT = rgba8(40, 6, 60, 255);
 
 let tilePlanes = [];
 let playerMesh = null;
@@ -181,7 +179,17 @@ export function init() {
   setAmbientLight(rgba8(220, 180, 240, 255), 1.1);
   setLightDirection(-0.2, -1, -0.4);
   setFog(rgba8(180, 60, 200, 255), 18, 92);
-  setSkyColor(COL_SKY_TOP, COL_SKY_BOT);
+  // Synthwave dusk dome: starry zenith, glowing sun on the horizon. The
+  // horizon colour equals the fog colour so the track fades into the sky.
+  createGradientSkybox?.(0x2a0640, 0xe13cb4, {
+    horizonColor: 0xb43cc8,
+    clouds: 0.35,
+    rays: 0.5,
+    stars: 1,
+    meteors: 1,
+    sun: { dir: [0, 0.08, -1], color: 0xffd060, size: 2.6 },
+  });
+  enableSkyboxAutoAnimate?.(1);
 
   nova64.post.setBloom(2.2);
   nova64.post.setChromatic(0.005);

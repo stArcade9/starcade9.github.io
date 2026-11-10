@@ -16,7 +16,34 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
+
+// Per-zone sky dome; each horizonColor matches that zone's fog colour.
+const ZONE_SKIES = [
+  {
+    preset: 'meadow',
+    fog: 0x7cbcec,
+    opts: { top: 0x1a62d0, bottom: 0x6cb4ec, rainbow: 0.6, reflectIntensity: 0.5 },
+  },
+  {
+    preset: 'sunset',
+    fog: 0xddaa66,
+    opts: { top: 0x3a6ab8, bottom: 0xf0b070, clouds: 0.3, rays: 0.4 },
+  },
+  { preset: 'highlands', fog: 0x889fbb, opts: { top: 0x46607e, bottom: 0xaabbd0, clouds: 0.9 } },
+];
+
+function applyZoneSky(zone) {
+  const z = ZONE_SKIES[zone];
+  createSkyPreset?.(z.preset, { ...z.opts, horizonColor: z.fog });
+}
 const { enableBloom, enableFXAA } = nova64.fx;
 const { btn, key, keyp } = nova64.input;
 const { sfx } = nova64.audio;
@@ -108,8 +135,11 @@ export function init() {
   setLightDirection(1, 2, 1);
   setLightColor(0xffffff);
 
-  setFog(C.sky, 60, 180);
-  enableBloom(0.4, 0.5, 0.4);
+  applyZoneSky(0);
+  enableSkyboxAutoAnimate?.(0.6);
+  setFog(ZONE_SKIES[0].fog, 60, 180);
+  // High threshold keeps the bright sky from flooding the screen with glow.
+  enableBloom(0.35, 0.4, 0.9);
   enableFXAA();
 
   shake = createShake({ decay: 0.88, maxMag: 6 });
@@ -564,21 +594,104 @@ function spawnChomp(x, y, z) {
 }
 
 // ── Plumber Build ──────────────────────────────────────────
+// Chunky N64-style hero assembled from primitives. Each part has a local
+// offset (ox/oy/oz, +z = facing direction) and an optional `limb` tag that
+// updatePlayerMeshes() uses to animate running and jumping.
 function buildPlumber() {
-  const body = createCube(1.2, C.plumberBody, [0, 0, 0], { material: 'standard', roughness: 0.8 });
-  setScale(body, 1, 1.2, 1);
-  const head = createSphere(0.8, C.plumberFace, [0, 1.2, 0], 12, { material: 'standard' });
-  const hat = createSphere(0.82, C.plumberHat, [0, 1.5, 0], 12, { material: 'standard' });
-  setScale(hat, 1, 0.5, 1);
-  const brim = createCube(1, C.plumberHat, [0, 1.4, 0.5], { material: 'standard' });
-  setScale(brim, 1.2, 0.1, 0.6);
+  const std = { material: 'standard', roughness: 0.6 };
+  const shiny = { material: 'standard', roughness: 0.25, metalness: 0.4 };
+  const parts = [];
+  const add = (m, ox, oy, oz, limb = null, side = 0, sx = 1, sy = 1, sz = 1) => {
+    if (sx !== 1 || sy !== 1 || sz !== 1) setScale(m, sx, sy, sz);
+    parts.push({ m, ox, oy, oz, limb, side });
+  };
 
-  g.p.meshGroup = [
-    { m: body, ox: 0, oy: 0.6, oz: 0 },
-    { m: head, ox: 0, oy: 1.6, oz: 0 },
-    { m: hat, ox: 0, oy: 2.0, oz: 0 },
-    { m: brim, ox: 0, oy: 1.9, oz: 0.5 },
-  ];
+  // Boots + overall legs
+  for (const side of [-1, 1]) {
+    add(
+      createCube(1, 0x5a2e12, [0, 0, 0], std),
+      0.27 * side,
+      0.14,
+      0.1,
+      'leg',
+      side,
+      0.42,
+      0.28,
+      0.62
+    );
+    add(
+      createCylinder(0.19, 0.17, 0.5, C.plumberBody, [0, 0, 0], std),
+      0.27 * side,
+      0.5,
+      0,
+      'leg',
+      side
+    );
+  }
+  // Overalls torso, red shirt, straps and gold buttons
+  add(createSphere(0.62, C.plumberBody, [0, 0, 0], 16, std), 0, 1.05, 0, null, 0, 1, 0.85, 0.85);
+  add(createSphere(0.6, C.plumberHat, [0, 0, 0], 16, std), 0, 1.42, -0.02, null, 0, 1, 0.6, 0.85);
+  for (const side of [-1, 1]) {
+    add(
+      createCube(1, C.plumberBody, [0, 0, 0], std),
+      0.24 * side,
+      1.42,
+      0.42,
+      null,
+      0,
+      0.16,
+      0.42,
+      0.1
+    );
+    add(createSphere(0.08, 0xffd23a, [0, 0, 0], 8, shiny), 0.24 * side, 1.26, 0.5);
+  }
+  // Arms (red sleeves) + white gloves
+  for (const side of [-1, 1]) {
+    add(
+      createCylinder(0.15, 0.14, 0.55, C.plumberHat, [0, 0, 0], std),
+      0.68 * side,
+      1.2,
+      0,
+      'arm',
+      side
+    );
+    add(createSphere(0.2, 0xffffff, [0, 0, 0], 10, std), 0.72 * side, 0.88, 0.05, 'arm', side);
+  }
+  // Head: face, big nose, mustache, eyes, ears
+  add(createSphere(0.5, C.plumberFace, [0, 0, 0], 16, std), 0, 2.02, 0);
+  add(createSphere(0.17, 0xffb08a, [0, 0, 0], 10, std), 0, 1.98, 0.5);
+  add(createCube(1, 0x2a160a, [0, 0, 0], std), 0, 1.82, 0.42, null, 0, 0.6, 0.13, 0.14);
+  for (const side of [-1, 1]) {
+    add(
+      createSphere(0.1, 0xffffff, [0, 0, 0], 8, std),
+      0.16 * side,
+      2.15,
+      0.42,
+      null,
+      0,
+      0.8,
+      1.2,
+      0.6
+    );
+    add(createSphere(0.055, 0x1a3aaa, [0, 0, 0], 8, std), 0.16 * side, 2.15, 0.49);
+    add(
+      createSphere(0.12, C.plumberFace, [0, 0, 0], 8, std),
+      0.49 * side,
+      2.0,
+      0,
+      null,
+      0,
+      0.5,
+      1,
+      1
+    );
+  }
+  // Cap: dome, brim and white emblem badge
+  add(createSphere(0.54, C.plumberHat, [0, 0, 0], 16, std), 0, 2.26, -0.03, null, 0, 1, 0.62, 1);
+  add(createCube(1, C.plumberHat, [0, 0, 0], std), 0, 2.2, 0.44, null, 0, 0.78, 0.08, 0.4);
+  add(createSphere(0.14, 0xffffff, [0, 0, 0], 10, std), 0, 2.42, 0.42, null, 0, 1, 1, 0.4);
+
+  g.p.meshGroup = parts;
 }
 
 function createFX(cx, cy, cz, color, count = 10, speed = 10) {
@@ -659,14 +772,15 @@ function getZone(z) {
 }
 
 function updateAtmosphere(zone) {
+  applyZoneSky(zone);
   if (zone === 0) {
-    setFog(0x44aaff, 60, 180);
+    setFog(ZONE_SKIES[0].fog, 60, 180);
     setAmbientLight(0xffffff, 0.75);
   } else if (zone === 1) {
-    setFog(0xddaa66, 50, 150);
+    setFog(ZONE_SKIES[1].fog, 50, 150);
     setAmbientLight(0xffeedd, 0.85);
   } else {
-    setFog(0x889fbb, 40, 130);
+    setFog(ZONE_SKIES[2].fog, 40, 130);
     setAmbientLight(0xccddff, 0.6);
   }
 }
@@ -838,18 +952,40 @@ function updatePlayerMeshes() {
   const visible = isVisible(playerHit, t);
   const cr = Math.cos(p.rotY),
     sr = Math.sin(p.rotY);
+  const running = p.isGrounded && (Math.abs(p.vx) > 1 || Math.abs(p.vz) > 1);
+  const stride = running ? Math.sin(t * 16) : 0;
+  const bob = running ? Math.abs(Math.cos(t * 16)) * 0.12 : Math.sin(t * 2.5) * 0.02;
+  const air = !p.isGrounded;
 
   p.meshGroup.forEach(part => {
     if (!visible) {
       setPosition(part.m, 0, -100, 0);
       return;
     }
-    const rx = part.ox * cr + part.oz * sr;
-    const rz = -part.ox * sr + part.oz * cr;
-    let animY = 0;
-    if (p.isGrounded && (Math.abs(p.vx) > 1 || Math.abs(p.vz) > 1))
-      animY = Math.abs(Math.sin(t * 15)) * 0.2;
-    setPosition(part.m, p.x + rx, p.y + part.oy + animY, p.z + rz);
+    let ox = part.ox,
+      oy = part.oy + bob,
+      oz = part.oz;
+    if (part.limb === 'leg') {
+      if (air) {
+        // Tuck one leg up, kick the other back — classic jump pose.
+        oy += part.side > 0 ? 0.25 : 0.05;
+        oz += part.side > 0 ? 0.2 : -0.2;
+      } else {
+        oz += stride * part.side * 0.32;
+        oy += Math.max(0, stride * part.side) * 0.18 - bob;
+      }
+    } else if (part.limb === 'arm') {
+      if (air) {
+        // Fist pump: the right arm shoots up, the left swings out.
+        if (part.side > 0) oy += 0.9;
+        else ox -= 0.12;
+      } else {
+        oz -= stride * part.side * 0.28;
+      }
+    }
+    const rx = ox * cr + oz * sr;
+    const rz = -ox * sr + oz * cr;
+    setPosition(part.m, p.x + rx, p.y + oy, p.z + rz);
     setRotation(part.m, 0, p.rotY, 0);
   });
 }

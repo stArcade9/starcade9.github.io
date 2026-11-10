@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://evq7kcs88iqw"
+path="res://.godot/imported/meta.json-761058977f3338045dd2238140688585.res"
+
+[deps]
+
+source_file="res://carts/hello-helpers/meta.json"
+dest_files=["res://.godot/imported/meta.json-761058977f3338045dd2238140688585.res"]
+
+[params]
+

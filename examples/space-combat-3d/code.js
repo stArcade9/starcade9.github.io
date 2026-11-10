@@ -8,7 +8,14 @@
 const { circle, line, print, rect, rgba8 } = nova64.draw;
 const { createCube, createSphere, destroyMesh, setPosition, setRotation, setScale } = nova64.scene;
 const { setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const { enableBloom, enableFXAA, enableVignette } = nova64.fx;
 const { btn, isKeyDown, isKeyPressed } = nova64.input;
 const { sfx } = nova64.audio;
@@ -178,6 +185,10 @@ export async function init() {
 
   // Setup lighting
   setAmbientLight(0x333333);
+  // Nebula sky dome + faint deep-space haze so distant ships fade in.
+  createSkyPreset?.('deepspace');
+  enableSkyboxAutoAnimate?.(0.3);
+  setFog(0x0a0618, 500, 1500);
   setLightColor(0xffffff);
   setLightDirection(0.5, -0.5, 0.5);
 

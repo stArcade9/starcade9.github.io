@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://muqnl7jry422"
+path="res://.godot/imported/meta.json-b91bde2e88632841863ff350adab8109.res"
+
+[deps]
+
+source_file="res://carts/QWEN/frost-crypt-of-ymir/meta.json"
+dest_files=["res://.godot/imported/meta.json-b91bde2e88632841863ff350adab8109.res"]
+
+[params]
+

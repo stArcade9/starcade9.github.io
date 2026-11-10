@@ -27,7 +27,14 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const {
   disableGlitch,
   enableBloom,
@@ -136,12 +143,35 @@ export async function init() {
     setAmbientLight(0xffffff, 1.0);
     setLightDirection(-0.5, -1, -0.5);
     setLightColor(0xfff0dd);
-    setFog(PALETTE.sky, 30, 150);
+    // Psychedelic alien sky: violet zenith, hot-pink horizon, toon clouds.
+    // Fog uses the horizon colour so the checkerboard dissolves into the sky.
+    // Twilight alien sky: starry indigo zenith, a band of ink-outlined
+    // cel-shaded clouds hugging a hot-magenta horizon, and a big low sun.
+    createSkyPreset?.('highlands', {
+      top: 0x12043a,
+      bottom: 0xc0309c,
+      horizonColor: 0xb04ab8,
+      inkColor: 0x1a0440,
+      clouds: 0.28,
+      cloudsLow: 1,
+      cloudScale: 0.5,
+      toon: 1,
+      toonBands: 3,
+      outline: 0.8,
+      rays: 0,
+      stars: 0.8,
+      meteors: 1,
+      reflectIntensity: 0.4,
+      sun: { dir: [0.35, 0.2, -1], color: 0xff9a3a, size: 1.1 },
+    });
+    enableSkyboxAutoAnimate?.(1.5);
+    setFog(0xb04ab8, 40, 160);
 
     // Retro presentation with modern shader touch
     if (typeof enablePixelation === 'function') enablePixelation(1);
     if (typeof enableDithering === 'function') enableDithering(true);
-    enableBloom(1.0, 0.5, 0.3); // Alien sky & bullet glow
+    // High threshold: only bullets/explosions glow, not the whole sky.
+    enableBloom(0.9, 0.45, 0.85);
     enableFXAA();
     enableVignette(1.0, 0.95);
 

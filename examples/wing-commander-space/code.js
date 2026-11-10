@@ -5,7 +5,14 @@
 const { print, printCentered, rect, rgba8 } = nova64.draw;
 const { createCube, createSphere, destroyMesh, setPosition, setRotation, setScale } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const { enableBloom, enableChromaticAberration, enableFXAA, enableVignette } = nova64.fx;
 const { isKeyDown, isKeyPressed } = nova64.input;
 const { sfx } = nova64.audio;
@@ -181,6 +188,10 @@ function setupCamera() {
 function setupLighting() {
   // Space lighting - dim ambient with directional sun
   setAmbientLight(0x222244);
+  // Nebula sky dome + faint deep-space haze so distant ships fade in.
+  createSkyPreset?.('cosmos');
+  enableSkyboxAutoAnimate?.(0.3);
+  setFog(0x0a0618, 500, 1500);
   setLightColor(0xffffee);
   setLightDirection(0.3, -0.5, -0.8);
   // Post-processing for cinematic cockpit feel

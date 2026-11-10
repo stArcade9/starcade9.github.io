@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://6qk40xfq4cft"
+path="res://.godot/imported/meta.json-d143f1a5e91bfa3453984f5b2e7cb7d0.res"
+
+[deps]
+
+source_file="res://carts/vr-demo/meta.json"
+dest_files=["res://.godot/imported/meta.json-d143f1a5e91bfa3453984f5b2e7cb7d0.res"]
+
+[params]
+

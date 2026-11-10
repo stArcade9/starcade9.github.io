@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://dsnk8mavtlgy7"
+path="res://.godot/imported/meta.json-c0779e9ff89bf30c440394b4a8053cc3.res"
+
+[deps]
+
+source_file="res://carts/QWEN/crystal-cave-styled/meta.json"
+dest_files=["res://.godot/imported/meta.json-c0779e9ff89bf30c440394b4a8053cc3.res"]
+
+[params]
+

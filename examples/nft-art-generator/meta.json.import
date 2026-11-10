@@ -1,0 +1,14 @@
+[remap]
+
+importer="nova64.cart"
+type="Resource"
+uid="uid://bkdtweh0ijqyj"
+path="res://.godot/imported/meta.json-49c99c1bf1ea91316193d4e6bcfdfa08.res"
+
+[deps]
+
+source_file="res://carts/nft-art-generator/meta.json"
+dest_files=["res://.godot/imported/meta.json-49c99c1bf1ea91316193d4e6bcfdfa08.res"]
+
+[params]
+
