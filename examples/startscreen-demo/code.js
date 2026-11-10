@@ -77,7 +77,7 @@ const MAIN_MENU_XML = `<ui>
   <!-- Version badge -->
   <rect x="0" y="348" width="640" height="12" fill="#ffffff08" />
   <text x="8" y="349" color="#555577" size="8" font="monospace">v0.4.8</text>
-  <text x="632" y="349" anchor-x="right" color="#555577" size="8" font="monospace">STARCADE9</text>
+  <text x="632" y="349" anchor-x="right" color="#555577" size="8" font="monospace">stArcade9</text>
 </ui>`;
 
 const OPTIONS_PANEL_XML = `<ui>
@@ -106,7 +106,7 @@ const CREDITS_PANEL_XML = `<ui>
     <text x="150" y="48"  anchor-x="center" color="#ffffff" size="11" bold="true">Nova64 Fantasy Console</text>
     <text x="150" y="68"  anchor-x="center" color="#aaaacc" size="9">Built with Three.js + WebGL</text>
     <text x="150" y="90"  anchor-x="center" color="#ffaacc" size="10">Engine Design</text>
-    <text x="150" y="106" anchor-x="center" color="#ffffff" size="9">Starcade9 / Brendon Smith</text>
+    <text x="150" y="106" anchor-x="center" color="#ffffff" size="9">stArcade9 / Brendon Smith</text>
     <text x="150" y="126" anchor-x="center" color="#ffaacc" size="10">Open Source — MIT License</text>
     <path d="M 30 152 L 270 152" stroke="#ff449966" fill="none" stroke-width="1" />
     <text x="150" y="158" anchor-x="center" color="#666688" size="8">github.com/starcade9/nova64</text>
