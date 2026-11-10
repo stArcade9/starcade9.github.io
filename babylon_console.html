@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>NOVA-64 Babylon Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/os9-shell/nova-icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./os9-shell/nova-icon.svg" type="image/svg+xml" />
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
@@ -565,6 +565,26 @@
 
   gtag('config', 'G-B3RDWLFWVF');
 </script>
+<style>
+  /* Engine switch: reopen the current cart in the other renderer's console. */
+  .engine-switch { display: flex; gap: 0; margin: 0 0 8px; border: 1px solid rgba(120, 140, 255, 0.35); border-radius: 8px; overflow: hidden; }
+  .engine-switch a { flex: 1; text-align: center; padding: 7px 0; font: 600 12px/1 system-ui, sans-serif; letter-spacing: 0.04em; color: #9aa4d6; text-decoration: none; background: rgba(20, 22, 40, 0.6); }
+  .engine-switch a + a { border-left: 1px solid rgba(120, 140, 255, 0.35); }
+  .engine-switch a:hover { color: #fff; background: rgba(60, 70, 140, 0.55); }
+  .engine-switch a.active { color: #0a0b14; background: linear-gradient(90deg, #22e0c8, #7b8bff); cursor: default; }
+</style>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://esm.sh/three@0.182.0",
+        "three/tsl": "https://esm.sh/three@0.182.0/tsl",
+        "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
+        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
+      }
+    }
+    </script>
+  <script type="module" crossorigin src="./assets/babylon-console-W6aYi0Te.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/studio-protocol-CIJHjwTp.js">
   <!-- Vercel Web Analytics -->
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
@@ -651,6 +671,7 @@
             <option value="/examples/star-fox-nova-3d/code.js">
               🚀 Star Fox Nova (Space Combat)
             </option>
+            <option value="/examples/breakwater-circuit/code.js">🌊 Breakwater Circuit (Racing)</option>
             <option value="/examples/f-zero-nova-3d/code.js">🏁 F-Zero Nova (Racing)</option>
             <option value="/examples/cyberpunk-city-3d/code.js">
               🌃 Cyberpunk City (Open World)
@@ -779,6 +800,10 @@
             <span data-i18n="console.btn.snap">Snap</span>
           </button>
         </div>
+        <div class="engine-switch" role="group" aria-label="Rendering engine">
+          <a href="console.html" data-engine-link="three">Three.js</a>
+          <a href="babylon_console.html" data-engine-link="babylon" class="active" aria-current="page">Babylon.js</a>
+        </div>
         <button id="fullscreen" title="Toggle Fullscreen" style="width: 100%">
           <svg
             width="14"
@@ -877,17 +902,7 @@
       </div>
     </div>
 
-    <script type="importmap">
-    {
-      "imports": {
-        "three": "https://esm.sh/three@0.182.0",
-        "three/tsl": "https://esm.sh/three@0.182.0/tsl",
-        "three/webgpu": "https://esm.sh/three@0.182.0/webgpu",
-        "three/examples/jsm/": "https://esm.sh/three@0.182.0/examples/jsm/"
-      }
-    }
-    </script>
-    <script type="module" src="/src/main.js?backend=babylon"></script>
+
     <script>
       // Virtual controls code mapper
       function handleVirtualButton(element, isDown) {
@@ -983,6 +998,7 @@
           const demoMap = {
             'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
             'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
+            'breakwater-circuit': '/examples/breakwater-circuit/code.js',
             'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
             'minecraft-demo': '/examples/minecraft-demo/code.js',
             'super-plumber-64': '/examples/super-plumber-64/code.js',
@@ -1014,6 +1030,13 @@
             'flash-demo': '/examples/flash-demo/code.js',
             'indie-odyssey': '/examples/indie-odyssey/code.js',
           };
+          // Any cart folder name works too (used by the engine switch). If the
+          // cart isn't in the dropdown yet, add it so it can still be launched.
+          const target = demoMap[demoParam] || '/examples/' + demoParam + '/code.js';
+          if (/^[\w-]+$/.test(demoParam) && ![...select.options].some(o => o.value === target)) {
+            select.add(new Option('🎮 ' + demoParam, target));
+          }
+          demoMap[demoParam] = target;
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];
           }
@@ -1069,5 +1092,26 @@
 }());
 </script>
 
-  </body>
+  <script>
+  // Engine switch: carry the selected cart across to the other console.
+  (function () {
+    var select = document.getElementById('cart');
+    var links = document.querySelectorAll('[data-engine-link]');
+    function cartName() {
+      var m = select && /\/examples\/(.+)\/code\.js$/.exec(select.value || '');
+      return m ? m[1] : '';
+    }
+    function sync() {
+      var name = cartName();
+      links.forEach(function (a) {
+        var base = a.getAttribute('href').split('?')[0];
+        a.setAttribute('href', name ? base + '?demo=' + encodeURIComponent(name) : base);
+      });
+    }
+    if (select) select.addEventListener('change', sync);
+    window.addEventListener('load', sync);
+    sync();
+  })();
+</script>
+</body>
 </html>

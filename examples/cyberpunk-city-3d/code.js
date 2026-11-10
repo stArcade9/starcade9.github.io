@@ -30,7 +30,14 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createGradientSkybox,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const {
   enableBloom,
   enableChromaticAberration,
@@ -437,7 +444,17 @@ export async function init() {
   setAmbientLight(0x664488); // Much brighter purple ambient
 
   // 🌫️ Atmospheric fog with neon tint
-  setFog(0x441166, 30, 180); // Purple/magenta fog
+  // Night-city sky: starry black zenith, smoggy magenta glow on the horizon.
+  createGradientSkybox?.(0x05010f, 0x5a1a7a, {
+    horizonColor: 0x441166,
+    clouds: 0.35,
+    cloudsLow: 1,
+    stars: 0.7,
+    meteors: 0.5,
+    sun: { dir: [-0.4, 0.35, -1], color: 0xffe0f0, size: 0.6 },
+  });
+  enableSkyboxAutoAnimate?.(0.5);
+  setFog(0x441166, 30, 180); // Purple/magenta fog, matches the sky horizon
 
   // 🎨 Enable ALL visual effects for maximum impact
   enablePixelation(1);

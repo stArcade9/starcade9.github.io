@@ -17,7 +17,7 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setFog, setLightDirection } = nova64.light;
+const { createSkyPreset, enableSkyboxAutoAnimate, setFog, setLightDirection } = nova64.light;
 const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignette } = nova64.fx;
 const { btn, btnp, isKeyPressed, key } = nova64.input;
 const { sfx } = nova64.audio;
@@ -83,12 +83,15 @@ export async function init() {
 
   // Setup dramatic space lighting
   setLightDirection(-0.5, -1, -0.8);
+  // Nebula space dome behind the dogfight; dark fog fades distant fighters.
+  createSkyPreset?.('deepspace');
+  enableSkyboxAutoAnimate?.(0.3);
   setFog(0x000511, 20, 80);
 
   // Enable retro effects + post-processing
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(1.0, 0.4, 0.4); // Weapon fire & engine trail
+  enableBloom(1.0, 0.4, 0.6); // Weapon fire & engine trail (threshold keeps the nebula crisp)
   enableFXAA();
   enableVignette(1.4, 0.88);
 

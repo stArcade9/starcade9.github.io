@@ -21,13 +21,9 @@ export function createBabylonLightsApi(self) {
         self.scene.ambientColor = col3.scale(adjustedIntensity);
       }
 
-      // Update hemisphere light to provide fill lighting
-      if (self._hemisphereLight) {
-        self._hemisphereLight.diffuse = col3;
-        // Boost hemisphere intensity to compensate for Babylon's different lighting model
-        self._hemisphereLight.intensity = adjustedIntensity * 1.2;
-        self._hemisphereLight.groundColor = col3.scale(0.3);
-      }
+      // Parity with the Three.js backend: setAmbientLight only changes the
+      // ambient term. The hemisphere fill light keeps its bootstrap values;
+      // overriding it here lit every scene twice and washed colours out.
     },
 
     setLightDirection(x, y, z) {

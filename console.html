@@ -702,6 +702,14 @@
 
   gtag('config', 'G-B3RDWLFWVF');
 </script>
+<style>
+  /* Engine switch: reopen the current cart in the other renderer's console. */
+  .engine-switch { display: flex; gap: 0; margin: 0 0 8px; border: 1px solid rgba(120, 140, 255, 0.35); border-radius: 8px; overflow: hidden; }
+  .engine-switch a { flex: 1; text-align: center; padding: 7px 0; font: 600 12px/1 system-ui, sans-serif; letter-spacing: 0.04em; color: #9aa4d6; text-decoration: none; background: rgba(20, 22, 40, 0.6); }
+  .engine-switch a + a { border-left: 1px solid rgba(120, 140, 255, 0.35); }
+  .engine-switch a:hover { color: #fff; background: rgba(60, 70, 140, 0.55); }
+  .engine-switch a.active { color: #0a0b14; background: linear-gradient(90deg, #22e0c8, #7b8bff); cursor: default; }
+</style>
     <script type="importmap">
     {
       "imports": {
@@ -712,8 +720,9 @@
       }
     }
     </script>
-  <script type="module" crossorigin src="./assets/console-DPsjH9_V.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/main-6Xo3b7xs.js">
+  <script type="module" crossorigin src="./assets/console-XmP4BMpw.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/studio-protocol-CIJHjwTp.js">
+  <link rel="modulepreload" crossorigin href="./assets/main-efZ0HqUZ.js">
   <!-- Vercel Web Analytics -->
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
@@ -812,6 +821,7 @@
             <option value="/examples/star-fox-nova-3d/code.js">
               🚀 Star Fox Nova (Space Combat)
             </option>
+            <option value="/examples/breakwater-circuit/code.js">🌊 Breakwater Circuit (Racing)</option>
             <option value="/examples/f-zero-nova-3d/code.js">🏁 F-Zero Nova (Racing)</option>
             <option value="/examples/cyberpunk-city-3d/code.js">
               🌃 Cyberpunk City (Open World)
@@ -939,6 +949,10 @@
             </svg>
             <span data-i18n="console.btn.snap">Snap</span>
           </button>
+        </div>
+        <div class="engine-switch" role="group" aria-label="Rendering engine">
+          <a href="console.html" data-engine-link="three" class="active" aria-current="page">Three.js</a>
+          <a href="babylon_console.html" data-engine-link="babylon">Babylon.js</a>
         </div>
         <button id="fullscreen" title="Toggle Fullscreen" style="width: 100%">
           <svg
@@ -1135,6 +1149,7 @@
           const select = document.getElementById('cart');
           const demoMap = {
             'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
+            'breakwater-circuit': '/examples/breakwater-circuit/code.js',
             'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
             'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
             'minecraft-demo': '/examples/minecraft-demo/code.js',
@@ -1169,6 +1184,13 @@
             'dungeon-crawler-3d': '/examples/dungeon-crawler-3d/code.js',
             'indie-odyssey': '/examples/indie-odyssey/code.js',
           };
+          // Any cart folder name works too (used by the engine switch). If the
+          // cart isn't in the dropdown yet, add it so it can still be launched.
+          const target = demoMap[demoParam] || '/examples/' + demoParam + '/code.js';
+          if (/^[\w-]+$/.test(demoParam) && ![...select.options].some(o => o.value === target)) {
+            select.add(new Option('🎮 ' + demoParam, target));
+          }
+          demoMap[demoParam] = target;
           if (demoMap[demoParam]) {
             select.value = demoMap[demoParam];
             select.dispatchEvent(new Event('change'));
@@ -1225,5 +1247,26 @@
 }());
 </script>
 
-  </body>
+  <script>
+  // Engine switch: carry the selected cart across to the other console.
+  (function () {
+    var select = document.getElementById('cart');
+    var links = document.querySelectorAll('[data-engine-link]');
+    function cartName() {
+      var m = select && /\/examples\/(.+)\/code\.js$/.exec(select.value || '');
+      return m ? m[1] : '';
+    }
+    function sync() {
+      var name = cartName();
+      links.forEach(function (a) {
+        var base = a.getAttribute('href').split('?')[0];
+        a.setAttribute('href', name ? base + '?demo=' + encodeURIComponent(name) : base);
+      });
+    }
+    if (select) select.addEventListener('change', sync);
+    window.addEventListener('load', sync);
+    sync();
+  })();
+</script>
+</body>
 </html>

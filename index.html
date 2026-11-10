@@ -984,6 +984,8 @@ class Component extends DCLogic {
       { id: 'star-fox-nova-3d',  label: 'Star Fox Nova', tag: 'RAIL SHOOTER' },
       { id: 'space-harrier-3d',  label: 'Space Harrier', tag: 'ARCADE' },
       { id: 'cyberpunk-city-3d', label: 'Cyberpunk City', tag: 'NEON CITY' },
+      { id: 'breakwater-circuit', label: 'Breakwater Circuit', tag: 'ANTIGRAV RACER' },
+      { id: 'super-plumber-64',   label: 'Super Plumber 64', tag: 'PLATFORMER' },
     ];
     const activeDemo = this.state.activeDemo;
     const demos = demoData.map((d) => {
@@ -1016,6 +1018,8 @@ class Component extends DCLogic {
     // Browse grid of real carts. Each "Insert disc" opens the full console
     // (console.html?demo=<id>) — the same runtime, framed in the CRT bezel.
     const vault = [
+      { id: 'breakwater-circuit',   name: 'Breakwater Circuit', genre: 'Racer', color: '#22e0c8' },
+      { id: 'skybox-showcase',      name: 'Sky Showcase',      genre: 'Skies', color: '#a35bff' },
       { id: 'crystal-cathedral-3d', name: 'Crystal Cathedral', genre: 'Showcase',  color: '#7ad9ff' },
       { id: 'f-zero-nova-3d',       name: 'F-Zero Nova',       genre: 'Racer',      color: '#ff6ed3' },
       { id: 'cyberpunk-city-3d',    name: 'Cyberpunk City',    genre: 'Open World', color: '#c886ff' },

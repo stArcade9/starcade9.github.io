@@ -25,7 +25,14 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignette } = nova64.fx;
 const { isKeyPressed } = nova64.input;
 const {
@@ -90,6 +97,15 @@ export async function init() {
   setLightDirection(-0.3, -1, -0.2);
   setLightColor(0xffffff);
   setAmbientLight(0x202040);
+  // Aurora night sky over the cathedral; its horizon sits in the same dark
+  // blue-violet range the animated fog cycles through.
+  createSkyPreset?.('aurora', {
+    horizonColor: 0x140c2c,
+    bottom: 0x10082a,
+    ocean: false,
+    auroraColors: [0x4bf0ff, 0xc04bff],
+  });
+  enableSkyboxAutoAnimate?.(0.8);
   setFog(0x000011, 40, 120);
 
   // Initialize start screen

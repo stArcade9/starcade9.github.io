@@ -245,11 +245,15 @@ class Input {
     const gamepad = gamepads[0]; // Use first connected gamepad
 
     if (gamepad) {
-      // Read button states
+      // A/Start and B/Select share virtual buttons; combine aliases for this poll.
+      this.gamepadButtons.clear();
       gamepad.buttons.forEach((button, index) => {
         const mappedButton = GAMEPAD_BUTTONS[index];
         if (mappedButton !== undefined) {
-          this.gamepadButtons.set(mappedButton, button.pressed);
+          this.gamepadButtons.set(
+            mappedButton,
+            !!this.gamepadButtons.get(mappedButton) || button.pressed
+          );
         }
       });
 

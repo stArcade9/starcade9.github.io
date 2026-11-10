@@ -5,7 +5,8 @@
 const { print, printCentered, rect, rgba8 } = nova64.draw;
 const { createCube, destroyMesh, engine, setPosition, setScale } = nova64.scene;
 const { setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightDirection } = nova64.light;
+const { createSkyPreset, enableSkyboxAutoAnimate, setAmbientLight, setFog, setLightDirection } =
+  nova64.light;
 const { enableBloom } = nova64.fx;
 const { keyp } = nova64.input;
 const { remove } = nova64.data;
@@ -206,8 +207,11 @@ export function init() {
 
   setAmbientLight(0xffffff, 0.3);
   setLightDirection(-1, -2, -1);
+  // Cosmic backdrop for the cellular automaton.
+  createSkyPreset?.('cosmos');
+  enableSkyboxAutoAnimate?.(0.3);
   setFog(0x050510, 30, 80);
-  enableBloom(1.0, 0.4, 0.3);
+  enableBloom(1.0, 0.4, 0.65); // Threshold keeps the nebula from blooming out
 
   loadPattern(0);
   gameState = 'start';

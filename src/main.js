@@ -75,7 +75,8 @@ canvas.width = _paramW;
 canvas.height = _paramH;
 
 const _requestedBackend = (_qs.get('backend') || '').toLowerCase();
-const _isBabylonPage = window.location.pathname.endsWith('/babylon_console.html');
+// Match both /babylon_console.html and the clean URL /babylon_console (Vercel).
+const _isBabylonPage = /\/babylon_console(\.html)?$/.test(window.location.pathname);
 const _useBabylon = _requestedBackend === 'babylon' || _isBabylonPage;
 
 // Select renderer backend (default: Three.js)
@@ -810,6 +811,7 @@ const demoMap = {
   'tv-demo': '/examples/tv-demo/code.js',
   'crystal-cathedral-3d': '/examples/crystal-cathedral-3d/code.js',
   'f-zero-nova-3d': '/examples/f-zero-nova-3d/code.js',
+  'breakwater-circuit': '/examples/breakwater-circuit/code.js',
   'star-fox-nova-3d': '/examples/star-fox-nova-3d/code.js',
   'minecraft-demo': '/examples/minecraft-demo/code.js',
   'super-plumber-64': '/examples/super-plumber-64/code.js',

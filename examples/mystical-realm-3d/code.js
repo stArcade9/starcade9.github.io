@@ -21,7 +21,14 @@ const {
   setRotation,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignette } = nova64.fx;
 const { key, keyp } = nova64.input;
 const { sfx } = nova64.audio;
@@ -105,6 +112,7 @@ export async function init() {
   cls();
 
   console.log('🏰 Initializing Mystical Realm 3D...');
+  currentSkyPhase = null; // force the sky to rebuild on restart
 
   shake = createShake({ decay: 5 });
   magicCD = createCooldown(0.35);
@@ -117,7 +125,7 @@ export async function init() {
   // Enable all retro effects for maximum N64/PSX nostalgia
   enablePixelation(1);
   enableDithering(true);
-  enableBloom(0.7, 0.5, 0.5); // Soft magical glow
+  enableBloom(0.7, 0.5, 0.82); // Soft magical glow (high threshold keeps the sky clean)
   enableFXAA(); // Smooth edges
   enableVignette(1.2, 0.9); // Cinematic border
 
@@ -868,6 +876,29 @@ function updateWeather(dt) {
   }
 }
 
+// One sky per time of day; horizonColor always equals that phase's fog colour.
+const PHASE_SKIES = {
+  night: () =>
+    createSkyPreset?.('aurora', { horizonColor: 0x101030, bottom: 0x14143a, ocean: false }),
+  dawn: () =>
+    createSkyPreset?.('sunset', {
+      top: 0x2a3a7a,
+      bottom: 0xe08a5a,
+      horizonColor: 0xc08060,
+      sun: { dir: [0.6, 0.08, -1], color: 0xffc080, size: 1.4 },
+    }),
+  day: () =>
+    createSkyPreset?.('highlands', { top: 0x2a68c0, bottom: 0x88b8e0, horizonColor: 0x9cc4e4 }),
+  dusk: () =>
+    createSkyPreset?.('sunset', {
+      top: 0x1a1048,
+      bottom: 0xc04a3a,
+      horizonColor: 0x7a3a3a,
+      sun: { dir: [-0.6, 0.05, -1], color: 0xff7040, size: 1.6 },
+    }),
+};
+let currentSkyPhase = null;
+
 function updateLighting() {
   // Day/night cycle
   const dayPhase = (Math.sin(dayNightCycle) + 1) * 0.5;
@@ -876,27 +907,32 @@ function updateLighting() {
   let lightColor = 0xffffff;
   let ambientColor = 0x404040;
   let fogColor = 0x202040;
+  let phase = 'day';
 
   if (dayPhase < 0.3) {
     // Night
     lightColor = 0x4444aa;
     ambientColor = 0x202040;
     fogColor = 0x101030;
+    phase = 'night';
   } else if (dayPhase < 0.5) {
     // Dawn
     lightColor = 0xffaa44;
     ambientColor = 0x404030;
-    fogColor = 0x403020;
+    fogColor = 0xc08060;
+    phase = 'dawn';
   } else if (dayPhase < 0.8) {
     // Day
     lightColor = 0xffffdd;
     ambientColor = 0x606060;
-    fogColor = 0x808080;
+    fogColor = 0x9cc4e4;
+    phase = 'day';
   } else {
     // Dusk
     lightColor = 0xff6644;
     ambientColor = 0x404020;
-    fogColor = 0x402010;
+    fogColor = 0x7a3a3a;
+    phase = 'dusk';
   }
 
   // Apply lighting
@@ -904,6 +940,13 @@ function updateLighting() {
   setLightColor(lightColor);
   setAmbientLight(ambientColor);
   setFog(fogColor, 30, 80);
+
+  // Swap the sky dome only when the phase changes (rebuilding is not per-frame work).
+  if (phase !== currentSkyPhase) {
+    currentSkyPhase = phase;
+    PHASE_SKIES[phase]();
+    enableSkyboxAutoAnimate?.(0.6);
+  }
 }
 
 function updateParticles(dt) {

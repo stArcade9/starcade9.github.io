@@ -15,7 +15,14 @@ const {
   setScale,
 } = nova64.scene;
 const { setCameraFOV, setCameraPosition, setCameraTarget } = nova64.camera;
-const { setAmbientLight, setFog, setLightColor, setLightDirection } = nova64.light;
+const {
+  createSkyPreset,
+  enableSkyboxAutoAnimate,
+  setAmbientLight,
+  setFog,
+  setLightColor,
+  setLightDirection,
+} = nova64.light;
 const { enableBloom, enableDithering, enableFXAA, enablePixelation, enableVignette } = nova64.fx;
 const { key } = nova64.input;
 const {
@@ -62,6 +69,9 @@ export async function init() {
   enableBloom(1.0, 0.4, 0.5); // Capital ship engine glow
   enableFXAA(); // Smooth ship silhouettes
   enableVignette(1.3, 0.9); // Cinematic space feel
+  // Pink-violet nebula behind the capital ships.
+  createSkyPreset?.('cosmos');
+  enableSkyboxAutoAnimate?.(0.3);
   setFog(0x0a0a30, 50, 150); // Lighter space fog with blue tint
 
   // 💡 PROPER LIGHTING SETUP - Make scene visible!

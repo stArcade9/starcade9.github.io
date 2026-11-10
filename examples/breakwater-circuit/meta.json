@@ -1,0 +1,8 @@
+{
+  "name": "Breakwater Circuit",
+  "description": "The Spillway: midnight freight-port antigravity racing. Three laps, six hydrofoils, Slip Charge and solo Time Trial.",
+  "author": "Nova64",
+  "version": "0.1.0",
+  "category": "game",
+  "source": "examples/breakwater-circuit"
+}

@@ -13,7 +13,7 @@ const { setAmbientLight, setFog, setLightDirection } = nova64.light;
 const { circ, circfill, hline, printBold, printFlash, printTight, vline } = nova64.draw;
 const { rngRandom } = nova64.util;
 const { setInstanceTransforms } = nova64.scene;
-const { setSkyColor } = nova64.light;
+const { createSkyPreset, enableSkyboxAutoAnimate } = nova64.light;
 const {
   createCube,
   createInstancedMesh,
@@ -110,11 +110,13 @@ export function init() {
   planets = [];
   drones = [];
 
-  setSkyColor(rgba8(8, 4, 28, 255), rgba8(0, 0, 8, 255));
+  // Deep-space nebula dome around the asteroid field.
+  createSkyPreset?.('deepspace');
+  enableSkyboxAutoAnimate?.(0.25);
   setFog(rgba8(0, 5, 17, 255), 80, 420);
   setAmbientLight(rgba8(40, 50, 90, 255), 1.0);
   setLightDirection(-0.4, -1, -0.3);
-  nova64.post.setBloom(1.4);
+  nova64.post.setBloom(1.3, 0.6, 0.75); // threshold keeps the nebula from washing out
   nova64.post.setChromatic(0.003);
   nova64.post.setVignette(0.1, 0.85);
   nova64.post.setCRT(true);
