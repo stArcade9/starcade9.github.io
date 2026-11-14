@@ -1,0 +1,1 @@
+import{o1 as t,zn as e}from"./nativeXRFrame-DqPWkLok.js";import"./preload-helper-D1Gmxyhk.js";class a{constructor(){this.supportCascades=!1}loadCubeData(){throw".env not supported in Cube."}loadData(a,r,o){const s=new Uint8Array(a.buffer,a.byteOffset,a.byteLength),n=t(s);o(n.width,n.height,r.generateMipMaps,!1,()=>{e(r,s)})}}export{a as _TGATextureLoader};

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>NOVA-64 Babylon Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="./os9-shell/nova-icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/os9-shell/nova-icon.svg" type="image/svg+xml" />
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
@@ -84,6 +84,14 @@
           0 -1px 0 rgba(0, 0, 0, 0.9),
           0 1px 0 rgba(255, 255, 255, 0.2);
         font-weight: bold;
+      }
+
+      .runtime-package {
+        display: block;
+        margin: 10px 0;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
       }
 
       .screen-container {
@@ -583,11 +591,11 @@
       }
     }
     </script>
-  <script type="module" crossorigin src="./assets/babylon-console-_R803X-D.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/studio-protocol-CZq4DLWN.js">
-  <!-- Vercel Web Analytics -->
-  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="module" crossorigin src="./console-upgrade/assets/babylon-console-Bg3F_46m.js"></script>
+  <link rel="modulepreload" crossorigin href="./console-upgrade/assets/preload-helper-D1Gmxyhk.js">
+  <link rel="modulepreload" crossorigin href="./console-upgrade/assets/nativeXRFrame-DqPWkLok.js">
+  <link rel="modulepreload" crossorigin href="./console-upgrade/assets/Pass-DbBNK-4J.js">
+  <link rel="modulepreload" crossorigin href="./console-upgrade/assets/studio-protocol-BfM0IDr5.js">
 </head>
   <body>
     <div class="shell">
@@ -600,6 +608,8 @@
           </div>
           <div class="hardware-brand">NOVA-64</div>
         </div>
+
+        <a class="runtime-package" id="runtime-package" href="https://www.npmjs.com/package/nova64" target="_blank" rel="noopener noreferrer">Nova64 runtime · npm ↗</a>
 
         <!-- Mobile Virtual Controls -->
         <div class="mobile-controls">
@@ -752,7 +762,19 @@
             <option value="/examples/test-2d-overlay/code.js">🧪 Test 2D Overlay</option>
             <option value="/examples/test-font/code.js">🧪 Test Font</option>
             <option value="/examples/test-minimal/code.js">🧪 Test Minimal</option>
-          </select>
+          <optgroup label="NEW — Gaussian Worlds"><option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;worldSet=storybook">Moonbloom — Voxel Fantasy Grove</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;worldSet=storybook&amp;startWorld=zen-garden">Stillwater — Zen Garden</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js">Scan Worlds — Explore the Apartment &amp; Relic</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=apartment">AFTERIMAGE / THE ROOM REMEMBERS</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=relic">RELIC / MATTER INTO SIGNAL</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=blueprint">BLUEPRINT / ARCHITECTURE IN LIGHT</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=spectrum">SPECTRUM / A CHROMATIC RELIC</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=echo">ECHO / SIGNALS THROUGH MATTER</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=ember">EMBER / AN ARTIFACT REFORGED</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=nocturne">NOCTURNE / A ROOM AFTER DARK</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=porcelain">PORCELAIN / THE DRAWN RELIC</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=tide">TIDE / MEMORIES UNDERWATER</option>
+<option data-console-world value="/babylon_console.html?path=%2Fconsole-upgrade%2Fassets%2Fsplat-worlds-C0-br5ug.js&amp;splatDemo=portal">THRESHOLD / TWO PLACES, ONE DOOR</option></optgroup></select>
         </div>
 
         <div class="row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px">
@@ -1114,5 +1136,32 @@
     sync();
   })();
 </script>
+<script>
+  (function(){
+    var select=document.getElementById('cart');
+    var options=Array.from(select.querySelectorAll('[data-console-world]'));
+    var keys=['worldSet','startWorld','splatDemo'];
+    var current=new URLSearchParams(location.search);
+    if(current.get('path')==="/console-upgrade/assets/splat-worlds-C0-br5ug.js"){
+      var match=options.find(function(option){var q=new URL(option.value,location.origin).searchParams;return keys.every(function(key){return q.get(key)===current.get(key);});});
+      if(match)select.value=match.value;
+    }
+    select.addEventListener('change',function(event){
+      var option=select.selectedOptions[0];
+      if(option&&option.hasAttribute('data-console-world')){event.stopImmediatePropagation();location.assign(option.value);}
+    },true);
+    // Carry the current Gaussian world across the existing backend switch.
+    window.addEventListener('load',function(){
+      if(current.get('path')!=="/console-upgrade/assets/splat-worlds-C0-br5ug.js")return;
+      document.querySelectorAll('[data-engine-link]').forEach(function(link){
+        var url=new URL(link.getAttribute('href').split('?')[0],location.href);
+        url.search=current.toString();link.href=url.pathname+url.search;
+      });
+    });
+    var credits=document.createElement('a');credits.href='/console-upgrade/credits.html';
+    credits.textContent='Gaussian world credits';credits.style.cssText='display:block;margin-top:8px;font-size:12px;color:inherit';
+    select.insertAdjacentElement('afterend',credits);
+  })();
+  </script>
 </body>
 </html>
